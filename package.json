@@ -1,0 +1,78 @@
+{
+  "name": "nuxt-ui-mongocamp",
+  "version": "1.0.0",
+  "description": "My new Nuxt module",
+  "repository": "your-org/my-module",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "main": "./dist/module.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "workspaces": [
+    "playground"
+  ],
+  "scripts": {
+    "prepack": "nuxt-module-build build",
+    "dev": "npm run dev:prepare && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
+    "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^4.4.8",
+    "@nuxt/ui": "4.9.0",
+    "@sfxcode/nuxt-mongocamp-server": "^1.4.3",
+    "@sfxcode/nuxt-ui-formkit": "^1.1.1"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^3.2.4",
+    "@nuxt/eslint-config": "^1.15.2",
+    "@nuxt/module-builder": "^1.0.2",
+    "@nuxt/schema": "^4.4.8",
+    "@nuxt/test-utils": "^4.0.3",
+    "@nuxt/ui": "4.9.0",
+    "@tiptap/core": "^3.27.1",
+    "@tiptap/extension-bubble-menu": "^3.27.1",
+    "@tiptap/extension-code": "^3.27.1",
+    "@tiptap/extension-collaboration": "^3.27.1",
+    "@tiptap/extension-drag-handle": "^3.27.1",
+    "@tiptap/extension-drag-handle-vue-3": "^3.27.1",
+    "@tiptap/extension-floating-menu": "^3.27.1",
+    "@tiptap/extension-horizontal-rule": "^3.27.1",
+    "@tiptap/extension-image": "^3.27.1",
+    "@tiptap/extension-mention": "^3.27.1",
+    "@tiptap/extension-node-range": "^3.27.1",
+    "@tiptap/extension-placeholder": "^3.27.1",
+    "@tiptap/markdown": "^3.27.1",
+    "@tiptap/pm": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1",
+    "@tiptap/suggestion": "^3.27.1",
+    "@tiptap/vue-3": "^3.27.1",
+    "@types/node": "latest",
+    "changelogen": "^0.6.2",
+    "eslint": "^10.4.1",
+    "nuxt": "^4.4.8",
+    "tailwindcss": "^4.3.1",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.8",
+    "vue-tsc": "^3.3.3"
+  }
+}
