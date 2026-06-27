@@ -1,5 +1,10 @@
+import NuxtUIMongocamp from '..'
+
 export default defineNuxtConfig({
-  modules: ['nuxt-ui-mongocamp'],
+  modules: [
+    NuxtUIMongocamp,
+  ],
+  ssr: false,
   devtools: { enabled: true },
   compatibilityDate: 'latest',
   // Configured directly via the mongocamp module's own config key
