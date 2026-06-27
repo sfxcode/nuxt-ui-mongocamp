@@ -15,6 +15,11 @@ export default createConfigForNuxt({
     ],
   },
 })
-  .append(
-    // your custom flat config here...
-  )
+  .append({
+    // Nuxt route files are named after the URL segment (e.g. `index.vue`),
+    // so the multi-word component name rule does not apply to pages/layouts.
+    files: ['**/pages/**/*.vue', '**/layouts/**/*.vue', '**/app.vue', '**/error.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  })

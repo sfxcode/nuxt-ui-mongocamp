@@ -1,0 +1,8 @@
+shamefullyHoist: true
+strictPeerDependencies: false
+minimumReleaseAge: 0
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+  unrs-resolver: false
+  vue-demi: false
