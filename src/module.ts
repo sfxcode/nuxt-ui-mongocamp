@@ -1,6 +1,7 @@
-import { defineNuxtModule, addPlugin, createResolver } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImportsDir } from '@nuxt/kit'
 
 // Module options TypeScript interface definition
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- public extension point; options are forwarded to dependencies
 export interface ModuleOptions {}
 
 export default defineNuxtModule<ModuleOptions>({
@@ -16,6 +17,8 @@ export default defineNuxtModule<ModuleOptions>({
 
   moduleDependencies: {
     '@nuxt/ui': {},
+    'unocss-nuxt-ui': {},
+    '@formkit/nuxt': {},
     '@sfxcode/nuxt-ui-formkit': {},
     '@sfxcode/nuxt-mongocamp-server': {
       defaults: {
@@ -26,9 +29,14 @@ export default defineNuxtModule<ModuleOptions>({
     },
   },
   setup(_options, _nuxt) {
-    const resolver = createResolver(import.meta.url)
+    const { resolve } = createResolver(import.meta.url)
+    const runtimeDir = resolve('./runtime')
 
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
-    addPlugin(resolver.resolve('./runtime/plugin'))
+    addPlugin(resolve(runtimeDir, 'plugin'))
+
+    addComponentsDir({ path: resolve(runtimeDir, 'components') })
+
+    addImportsDir(resolve(runtimeDir, 'composables'))
   },
 })
