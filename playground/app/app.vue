@@ -1,20 +1,12 @@
-<script setup lang="ts">
-</script>
-
 <template>
   <UApp>
-    <UHeader title="Nuxt UI MongoCamp" />
+    <AppHeader />
     <UMain>
       <NuxtLayout>
-        <UContainer>
-          <NuxtPage />
-        </UContainer>
+        <NuxtPage />
       </NuxtLayout>
     </UMain>
-
-    <UFooter>
-      <MongocampVersion />
-    </UFooter>
+    <AppFooter />
   </UApp>
 </template>
 

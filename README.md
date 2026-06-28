@@ -12,9 +12,9 @@ A Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.co
 ## Features
 
 - **Auth middleware** — global route guard that protects `/secured/**` (login required) and `/admin/**` (admin role required)
-- **Ready-made components** — login form, user management table, role management table, server version badge
+- **Ready-made components** — login form, user/role management tables, collection browser with stats and paginated data table, server version badge
 - **FormKit-powered forms** — schema-driven forms via `@sfxcode/nuxt-ui-formkit` with `nuxtUIInput`, `nuxtUISwitch`, `nuxtUIListbox`, and `nuxtUISelectMenu` inputs
-- **Composables** — `useMongocampAdmin`, `useMongocampCollection`, `useMongocampDocument` auto-imported into your app
+- **Composables** — `useMongocampAdmin`, `useMongocampCollection`, `useMongocampDocument`, `useMongocampSchema` auto-imported into your app
 - **Zero extra config** — peer modules (`@nuxt/ui`, `@formkit/nuxt`, `unocss-nuxt-ui`) are declared as `moduleDependencies` and configured automatically
 
 ## Module Dependencies
@@ -83,6 +83,51 @@ Full CRUD table for managing roles — create, edit (admin flag, collection gran
 </template>
 ```
 
+### `<MongocampRoleGrants />`
+
+Per-role collection grant management — lists grants for a named role, with add/edit/delete. Filters the collection picker to exclude already-granted collections.
+
+```vue
+<template>
+  <MongocampRoleGrants role-name="myRole" />
+</template>
+```
+
+### `<MongocampCollections />`
+
+Table of all collections with document count, storage size, and index count. Each row links to the collection info and data pages.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `infoPath` | `string` | `/secured/admin/collections` | Base path for the info page link |
+| `dataPath` | `string` | `/secured/admin/collections` | Base path for the data page link (`<dataPath>/<name>/data`) |
+
+```vue
+<template>
+  <MongocampCollections />
+</template>
+```
+
+### `<MongocampCollectionInfos />`
+
+Stat-card grid for a single collection — document count, data size, storage size, avg doc size, index count, total index size, and a per-index size table.
+
+```vue
+<template>
+  <MongocampCollectionInfos collection-name="myCollection" />
+</template>
+```
+
+### `<MongocampCollectionData />`
+
+Schema-driven paginated data table for a collection. Fetches the JSON schema to derive typed columns (date-time values are formatted; MongoDB `$oid`/`$date` extended JSON is unwrapped). Falls back to first-row key derivation when the schema has no properties. Includes a reload button and pagination footer.
+
+```vue
+<template>
+  <MongocampCollectionData collection-name="myCollection" />
+</template>
+```
+
 ### `<MongocampVersion />`
 
 Displays the connected MongoCamp server name and version as a `UBadge`. Shows a neutral "unavailable" badge when the server cannot be reached.
@@ -140,6 +185,20 @@ const {
   updateFromPartial, // <T>(obj: T, updates: Partial<T>) => T
 } = useMongocampDocument()
 ```
+
+### `useMongocampSchema()`
+
+Converts a `JsonSchemaDefinition` to typed table column definitions. Used internally by `MongocampCollectionData`.
+
+```ts
+const { schemaToColumnDefinition } = useMongocampSchema()
+
+// schemaToColumnDefinition(definition, fields) => ColumnDefinition[]
+// ColumnDefinition: { columnName, columnKey, columnType }
+// columnType: 'string' | 'number' | 'date-time'
+```
+
+Fields are sorted with `_id` first, then other id-containing fields, then the rest alphabetically.
 
 ## Route Protection
 

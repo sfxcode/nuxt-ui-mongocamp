@@ -12,7 +12,7 @@ export interface ColumnDefinition {
   columnType: string
 }
 
-export function useJsonSchema() {
+export function useMongocampSchema() {
   function schemaToColumnDefinition(definition: JsonSchemaDefinition, fields: string[]): ColumnDefinition[] {
     const result: ColumnDefinition[] = []
     const properties = definition.properties

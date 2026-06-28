@@ -3,8 +3,8 @@ import { useMongocampStorage } from '#imports'
 interface MetaData {
   createdBy: string
   updatedBy: string
-  created: string
-  updated: string
+  created: string | Date
+  updated: string | Date
 }
 
 export default () => {
@@ -12,7 +12,7 @@ export default () => {
     const storage = useMongocampStorage()
 
     const userId = storage.value?.profile.user ?? ''
-    const now = new Date().toISOString()
+    const now = new Date()
 
     if (!data.metaData || !data.metaData.createdBy) {
       data.metaData = { createdBy: userId, updatedBy: userId, created: now, updated: now }
