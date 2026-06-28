@@ -56,7 +56,8 @@ Runs on app boot. Fetches the MongoCamp server version via `informationApi.versi
 |---|---|
 | `MongocampLogin` | FormKit schema-driven login form; persists last userId in a cookie |
 | `MongocampUsers` | Full CRUD table for users — add/edit (with role transfer listbox) / delete via UModal |
-| `MongocampRoles` | Full CRUD table for roles — add/edit (with collection grants) / delete via UModal |
+| `MongocampRoles` | Full CRUD table for roles — add/edit / delete via UModal; key icon links to grant management page (configurable via `grantsPath` prop) |
+| `MongocampRoleGrants` | Per-role grant CRUD — lists collection grants for a named role, add/edit/delete; filters available collections to exclude already-granted ones |
 | `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
 
 UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.
@@ -66,12 +67,13 @@ UTable columns with custom cells use `h()` + `resolveComponent()` (not `<templat
 - **`useMongocampAdmin`** — wraps `adminApi` and `collectionApi` from `useMongocampApi()` for user and role CRUD (`listUsers`, `addUser`, `deleteUser`, `updateUserRoles`, `updateUserPassword`, `listRoles`, `addRole`, `updateRole`, `deleteRole`, `listCollections`)
 - **`useMongocampCollection`** — reactive state for paginated collection queries: `filter`, `sort`, `projection`, `pagination` (pageIndex + pageSize), `total`
 - **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
+- **`useMongocampSchema`** — exports `useJsonSchema()` with `schemaToColumnDefinition(definition, fields)` for mapping a `JsonSchemaDefinition` to UTable column configs; sorts `_id` first, then id-containing fields, then others; detects `date-time` and `number` types
 
 ### FormKit / @sfxcode/nuxt-ui-formkit conventions
 
 Forms use FormKit schema arrays (not template markup). The key custom input types are `nuxtUIInput`, `nuxtUISwitch`, `nuxtUIListbox`, and `nuxtUISelectMenu` — all provided by `@sfxcode/nuxt-ui-formkit`. The `FUDataEdit` component wraps schema + submit logic. See `playground/formkit.config.ts` for how inputs are registered.
 
-Listbox in transfer mode requires `displayMode: 'transfer'` and options as `{ value, label }` objects. SelectMenu options can be plain strings. Do **not** use the FormKit `options` key for `nuxtUIListbox` or `nuxtUISelectMenu` — use the prop directly on the schema node.
+Listbox in transfer mode requires `displayMode: 'transfer'` and options as `{ value, label }` objects. SelectMenu options can be plain strings. Use `options` (not `items`) as the schema key for both `nuxtUIListbox` and `nuxtUISelectMenu` — set it directly on the schema node object. Inputs are bulk-registered via `nuxtUIInputs` and `nuxtUIOutputs` spreads from `@sfxcode/nuxt-ui-formkit/definitions` — see `playground/formkit.config.ts`.
 
 ### Playground — `playground/`
 
