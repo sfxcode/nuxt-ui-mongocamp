@@ -1,84 +1,220 @@
-<!--
-Get your module up and running quickly.
-
-Find and replace all on all files (CMD+SHIFT+F):
-- Name: My Module
-- Package name: my-module
-- Description: My new Nuxt module
--->
-
-# My Module
+# nuxt-ui-mongocamp
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-My new Nuxt module for doing amazing things.
+A Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.com/package/@sfxcode/nuxt-mongocamp-server) with ready-made UI components, composables, and a runtime plugin. Add the module to your Nuxt app and get MongoCamp authentication, user/role management, and collection access out of the box — built on [Nuxt UI](https://ui.nuxt.com) and [FormKit](https://formkit.com).
 
-- [✨ &nbsp;Release Notes](/CHANGELOG.md)
-<!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
-<!-- - [📖 &nbsp;Documentation](https://example.com) -->
+- [✨ Release Notes](/CHANGELOG.md)
 
 ## Features
 
-<!-- Highlight some of the features your module provide here -->
-- ⛰ &nbsp;Foo
-- 🚠 &nbsp;Bar
-- 🌲 &nbsp;Baz
+- **Auth middleware** — global route guard that protects `/secured/**` (login required) and `/admin/**` (admin role required)
+- **Ready-made components** — login form, user management table, role management table, server version badge
+- **FormKit-powered forms** — schema-driven forms via `@sfxcode/nuxt-ui-formkit` with `nuxtUIInput`, `nuxtUISwitch`, `nuxtUIListbox`, and `nuxtUISelectMenu` inputs
+- **Composables** — `useMongocampAdmin`, `useMongocampCollection`, `useMongocampDocument` auto-imported into your app
+- **Zero extra config** — peer modules (`@nuxt/ui`, `@formkit/nuxt`, `unocss-nuxt-ui`) are declared as `moduleDependencies` and configured automatically
+
+## Module Dependencies
+
+These modules are declared as `moduleDependencies` and are automatically set up — you do not need to add them manually to your `nuxt.config.ts`:
+
+| Module | Purpose |
+|---|---|
+| [`@nuxt/ui`](https://ui.nuxt.com) | Component library (UTable, UModal, UBadge, UPageCard, …) |
+| [`unocss-nuxt-ui`](https://www.npmjs.com/package/unocss-nuxt-ui) | UnoCSS preset that matches Nuxt UI's design tokens |
+| [`@formkit/nuxt`](https://formkit.com/getting-started/installation#with-nuxt) | FormKit core integration for Nuxt |
+| [`@sfxcode/nuxt-ui-formkit`](https://www.npmjs.com/package/@sfxcode/nuxt-ui-formkit) | Nuxt UI input types for FormKit (`nuxtUIInput`, `nuxtUISwitch`, `nuxtUIListbox`, `nuxtUISelectMenu`) |
+| [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.com/package/@sfxcode/nuxt-mongocamp-server) | MongoCamp REST API client, auth state, and `useMongocampApi()` / `useMongocampAuth()` composables |
 
 ## Quick Setup
 
-Install the module to your Nuxt application with one command:
-
 ```bash
-npx nuxt module add my-module
+npm install nuxt-ui-mongocamp
 ```
 
-That's it! You can now use My Module in your Nuxt app ✨
+Add the module to `nuxt.config.ts`:
 
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-ui-mongocamp'],
+
+  mongocamp: {
+    url: process.env.MONGOCAMP_URL,
+  },
+})
+```
+
+The `mongocamp` key is forwarded to `@sfxcode/nuxt-mongocamp-server`. Set `MONGOCAMP_URL` (and optionally `MONGOCAMP_ADMIN_USER` / `MONGOCAMP_ADMIN_PASSWORD`) in your `.env` file.
+
+## Components
+
+All components are auto-imported.
+
+### `<MongocampLogin />`
+
+FormKit schema-driven login form. Persists the last user ID in a cookie (`mongocamp_login`) and redirects to `/secured` on success.
+
+```vue
+<template>
+  <MongocampLogin />
+</template>
+```
+
+### `<MongocampUsers />`
+
+Full CRUD table for managing users — create, edit (roles via transfer listbox, password change), and delete, all via modal dialogs.
+
+```vue
+<template>
+  <MongocampUsers />
+</template>
+```
+
+### `<MongocampRoles />`
+
+Full CRUD table for managing roles — create, edit (admin flag, collection grants), and delete.
+
+```vue
+<template>
+  <MongocampRoles />
+</template>
+```
+
+### `<MongocampVersion />`
+
+Displays the connected MongoCamp server name and version as a `UBadge`. Shows a neutral "unavailable" badge when the server cannot be reached.
+
+```vue
+<template>
+  <MongocampVersion />
+</template>
+```
+
+## Composables
+
+All composables are auto-imported.
+
+### `useMongocampAdmin()`
+
+Wraps the `adminApi` and `collectionApi` for user and role management.
+
+```ts
+const {
+  listUsers,          // (filter?: string) => Promise<UserProfile[]>
+  addUser,            // (userId, password, apiKey?, roles?) => Promise<UserProfile>
+  deleteUser,         // (userId) => Promise<void>
+  updateUserRoles,    // (userId, roles) => Promise<UserProfile>
+  updateUserPassword, // (userId, password) => Promise<void>
+  listRoles,          // (filter?: string) => Promise<Role[]>
+  addRole,            // (name, isAdmin?, collectionGrants?) => Promise<Role>
+  updateRole,         // (roleName, isAdmin, collectionGrants?) => Promise<Role>
+  deleteRole,         // (roleName) => Promise<void>
+  listCollections,    // () => Promise<string[]>
+} = useMongocampAdmin()
+```
+
+### `useMongocampCollection()`
+
+Reactive state for paginated collection queries.
+
+```ts
+const {
+  filter,     // Ref<string | undefined>       — MongoDB filter expression
+  sort,       // Ref<string[] | undefined>      — sort fields
+  projection, // Ref<string[] | undefined>      — field projection
+  pagination, // Ref<{ pageIndex: number, pageSize: number }>
+  total,      // Ref<number>                    — total document count
+} = useMongocampCollection()
+```
+
+### `useMongocampDocument()`
+
+Helpers for document-level operations.
+
+```ts
+const {
+  ensureMetaData,   // <T>(data: T) => T  — stamps createdBy/updatedBy/timestamps from logged-in user
+  updateFromPartial, // <T>(obj: T, updates: Partial<T>) => T
+} = useMongocampDocument()
+```
+
+## Route Protection
+
+The module registers a global route middleware at startup:
+
+| Path pattern | Requirement |
+|---|---|
+| `/secured/**` | User must be logged in; redirects to `/` otherwise |
+| `/admin/**` or `/secured/admin/**` | User must be logged in **and** have the admin role; redirects to `/secured` otherwise |
+| `/logout` | Calls `logout()` and redirects to `/` |
+
+## Runtime Plugin
+
+The plugin provides `$mongocampVersion` (a `Ref` to the server's version info) via `useNuxtApp()`:
+
+```ts
+const { $mongocampVersion } = useNuxtApp()
+// $mongocampVersion.value?.name
+// $mongocampVersion.value?.version
+```
+
+## Configuration
+
+The module's own config key is `nuxtUiMongocamp` (currently no options). The MongoCamp server is configured under the `mongocamp` key (provided by `@sfxcode/nuxt-mongocamp-server`):
+
+```ts
+mongocamp: {
+  url: 'https://your-mongocamp-server',
+  paginationSize: 500,   // default: 500
+  refreshToken: true,    // default: true
+  tokenRefreshIntervall: 5000, // ms, default: 5000
+}
+```
 
 ## Contribution
 
-<details>
-  <summary>Local development</summary>
-  
-  ```bash
-  # Install dependencies
-  npm install
-  
-  # Generate type stubs
-  npm run dev:prepare
-  
-  # Develop with the playground
-  npm run dev
-  
-  # Build the playground
-  npm run dev:build
-  
-  # Run ESLint
-  npm run lint
-  
-  # Run Vitest
-  npm run test
-  npm run test:watch
-  
-  # Release new version
-  npm run release
-  ```
+```bash
+# Install dependencies
+pnpm install
 
-</details>
+# Build stubs + prepare the playground (run once after clone)
+pnpm run dev:prepare
 
+# Start playground dev server
+pnpm run dev
+
+# Lint
+pnpm run lint
+
+# Run tests (Vitest + @nuxt/test-utils e2e)
+pnpm run test
+pnpm run test:watch
+
+# Type-check
+pnpm run test:types
+
+# Build for publishing
+pnpm run prepack
+```
+
+The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`.
+
+## License
+
+[MIT](./LICENSE)
 
 <!-- Badges -->
-[npm-version-src]: https://img.shields.io/npm/v/my-module/latest.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-version-href]: https://npmjs.com/package/my-module
+[npm-version-src]: https://img.shields.io/npm/v/nuxt-ui-mongocamp/latest.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-version-href]: https://npmjs.com/package/nuxt-ui-mongocamp
 
-[npm-downloads-src]: https://img.shields.io/npm/dm/my-module.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-downloads-href]: https://npm.chart.dev/my-module
+[npm-downloads-src]: https://img.shields.io/npm/dm/nuxt-ui-mongocamp.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-downloads-href]: https://npm.chart.dev/nuxt-ui-mongocamp
 
-[license-src]: https://img.shields.io/npm/l/my-module.svg?style=flat&colorA=020420&colorB=00DC82
-[license-href]: https://npmjs.com/package/my-module
+[license-src]: https://img.shields.io/npm/l/nuxt-ui-mongocamp.svg?style=flat&colorA=020420&colorB=00DC82
+[license-href]: https://npmjs.com/package/nuxt-ui-mongocamp
 
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt
 [nuxt-href]: https://nuxt.com
