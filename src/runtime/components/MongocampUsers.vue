@@ -97,8 +97,8 @@ async function fetchUsers() {
 async function fetchRoles() {
   const roles = await listRoles()
   const items = roles.map(r => ({ value: r.name, label: r.name }))
-  addUserSchema[2].options = items
-  editUserSchema[1].options = items
+  addUserSchema[2]!.options = items
+  editUserSchema[1]!.options = items
 }
 
 async function handleAddUser() {
@@ -110,8 +110,8 @@ async function handleAddUser() {
     newUser.value = { userId: '', password: '', roles: [] }
     await fetchUsers()
   }
-  catch (e: any) {
-    errorMessage.value = e?.message || 'Failed to add user'
+  catch (e: unknown) {
+    errorMessage.value = e instanceof Error ? e.message : 'Failed to add user'
   }
 }
 
@@ -135,8 +135,8 @@ async function handleEditUser() {
     isEditModalOpen.value = false
     await fetchUsers()
   }
-  catch (e: any) {
-    errorMessage.value = e?.message || 'Failed to update user'
+  catch (e: unknown) {
+    errorMessage.value = e instanceof Error ? e.message : 'Failed to update user'
   }
 }
 

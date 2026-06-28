@@ -80,7 +80,7 @@ async function fetchRoles() {
 
 async function fetchCollections() {
   const collections = await listCollections()
-  addGrantSchema[0].options = collections
+  addGrantSchema[0]!.options = collections
 }
 
 async function handleAddRole() {
@@ -91,8 +91,8 @@ async function handleAddRole() {
     newRole.value = { name: '', isAdmin: false }
     await fetchRoles()
   }
-  catch (e: any) {
-    errorMessage.value = e?.message || 'Failed to add role'
+  catch (e: unknown) {
+    errorMessage.value = e instanceof Error ? e.message : 'Failed to add role'
   }
 }
 
@@ -109,8 +109,8 @@ async function handleEditRole() {
     isEditModalOpen.value = false
     await fetchRoles()
   }
-  catch (e: any) {
-    errorMessage.value = e?.message || 'Failed to update role'
+  catch (e: unknown) {
+    errorMessage.value = e instanceof Error ? e.message : 'Failed to update role'
   }
 }
 
@@ -119,8 +119,9 @@ function removeGrant(index: number) {
 }
 
 async function handleAddGrant() {
+  const selectOption = newGrant.value.collectionName as unknown as { value?: string, label?: string }
   const collectionName = typeof newGrant.value.collectionName === 'object'
-    ? (newGrant.value.collectionName as any).value ?? (newGrant.value.collectionName as any).label
+    ? selectOption.value ?? selectOption.label ?? ''
     : newGrant.value.collectionName
   editGrants.value.push({
     name: collectionName,
@@ -292,18 +293,18 @@ fetchCollections()
             >
               <span class="text-sm truncate">{{ grant.name }}</span>
               <USwitch
-                v-model="editGrants[index].read"
+                v-model="editGrants[index]!.read"
                 size="sm"
                 :label="grant.read ? 'R' : 'R'"
                 :color="grant.read ? 'primary' : 'neutral'"
               />
               <USwitch
-                v-model="editGrants[index].write"
+                v-model="editGrants[index]!.write"
                 size="sm"
                 :color="grant.write ? 'primary' : 'neutral'"
               />
               <USwitch
-                v-model="editGrants[index].administrate"
+                v-model="editGrants[index]!.administrate"
                 size="sm"
                 :color="grant.administrate ? 'primary' : 'neutral'"
               />
