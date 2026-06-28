@@ -1,0 +1,82 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this project is
+
+A Nuxt module (`nuxt-ui-mongocamp`) that wraps `@sfxcode/nuxt-mongocamp-server` with ready-made UI components, composables, and a runtime plugin. Consumers add the module to their Nuxt app and get MongoCamp auth, user/role management, and collection access out of the box.
+
+## Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build stubs + prepare the playground (run once after clone, and after module source changes)
+pnpm run dev:prepare
+
+# Start playground dev server (hot-reloads module changes)
+pnpm run dev
+
+# Lint
+pnpm run lint
+
+# Run tests (Vitest + @nuxt/test-utils e2e against the fixture app)
+pnpm run test
+pnpm run test:watch
+
+# Type-check
+pnpm run test:types
+
+# Build for publishing
+pnpm run prepack
+```
+
+The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`.
+
+## Architecture
+
+### Module entry — `src/module.ts`
+
+Declares `moduleDependencies` for `@nuxt/ui`, `unocss-nuxt-ui`, `@formkit/nuxt`, `@sfxcode/nuxt-ui-formkit`, and `@sfxcode/nuxt-mongocamp-server`. On setup it registers:
+- The runtime plugin (`src/runtime/plugin.ts`)
+- All components in `src/runtime/components/` (auto-imported)
+- All composables in `src/runtime/composables/` (auto-imported)
+
+### Runtime plugin — `src/runtime/plugin.ts`
+
+Runs on app boot. Fetches the MongoCamp server version via `informationApi.version()` and provides it as `$mongocampVersion`. Registers a global route middleware that:
+- Redirects unauthenticated users away from `/secured/**`
+- Blocks non-admins from `/admin/**` and `/secured/admin/**`
+- Calls `logout()` on `/logout`
+
+### Components — `src/runtime/components/`
+
+| Component | Purpose |
+|---|---|
+| `MongocampLogin` | FormKit schema-driven login form; persists last userId in a cookie |
+| `MongocampUsers` | Full CRUD table for users — add/edit (with role transfer listbox) / delete via UModal |
+| `MongocampRoles` | Full CRUD table for roles — add/edit (with collection grants) / delete via UModal |
+| `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
+
+UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.
+
+### Composables — `src/runtime/composables/`
+
+- **`useMongocampAdmin`** — wraps `adminApi` and `collectionApi` from `useMongocampApi()` for user and role CRUD (`listUsers`, `addUser`, `deleteUser`, `updateUserRoles`, `updateUserPassword`, `listRoles`, `addRole`, `updateRole`, `deleteRole`, `listCollections`)
+- **`useMongocampCollection`** — reactive state for paginated collection queries: `filter`, `sort`, `projection`, `pagination` (pageIndex + pageSize), `total`
+- **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
+
+### FormKit / @sfxcode/nuxt-ui-formkit conventions
+
+Forms use FormKit schema arrays (not template markup). The key custom input types are `nuxtUIInput`, `nuxtUISwitch`, `nuxtUIListbox`, and `nuxtUISelectMenu` — all provided by `@sfxcode/nuxt-ui-formkit`. The `FUDataEdit` component wraps schema + submit logic. See `playground/formkit.config.ts` for how inputs are registered.
+
+Listbox in transfer mode requires `displayMode: 'transfer'` and options as `{ value, label }` objects. SelectMenu options can be plain strings. Do **not** use the FormKit `options` key for `nuxtUIListbox` or `nuxtUISelectMenu` — use the prop directly on the schema node.
+
+### Playground — `playground/`
+
+SSR is disabled (`ssr: false`). The playground registers the module directly via the local import (`import NuxtUIMongocamp from '..'`). Pages under `/secured/` are protected by the global auth middleware from the plugin. The `mongocamp` config key in `nuxt.config.ts` passes through to `@sfxcode/nuxt-mongocamp-server`.
+
+### Tests — `test/`
+
+E2e tests via `@nuxt/test-utils`. The fixture app in `test/fixtures/basic/` is a minimal Nuxt app that loads the module. Run a single test file with `pnpm vitest run test/basic.test.ts`.
