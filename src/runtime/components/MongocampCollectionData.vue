@@ -3,15 +3,13 @@ import { h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import { useMongocampApi } from '#imports'
-import { useMongocampSchema } from '../composables/useMongocampSchema'
 import useMongocampCollection from '../composables/useMongocampCollection'
 
 const props = defineProps<{
   collectionName: string
 }>()
 
-const { collectionApi, documentApi } = useMongocampApi()
-const { schemaToColumnDefinition } = useMongocampSchema()
+const { documentApi } = useMongocampApi()
 const { pagination, total } = useMongocampCollection()
 
 const UButton = resolveComponent('UButton')
@@ -39,14 +37,30 @@ const columns = ref<TableColumn<Row>[]>([])
 const documents = ref<Row[]>([])
 const loading = ref(false)
 const filterText = ref('')
+const filterableColumns = ref<string[]>([])
 const sorting = ref<SortEntry[]>([])
 const isInitializing = ref(false)
 const detailOpen = ref(false)
 const detailContent = ref('')
+let filterTimer: ReturnType<typeof setTimeout> | undefined
 
 function openDetail(value: unknown) {
   detailContent.value = JSON.stringify(value, null, 2)
   detailOpen.value = true
+}
+
+function buildLuceneFilter(term: string): string | undefined {
+  const t = term.trim()
+  if (!t || filterableColumns.value.length === 0) return undefined
+  return filterableColumns.value.map(col => `${col}: *${t}*`).join(' OR ')
+}
+
+function onFilterInput() {
+  clearTimeout(filterTimer)
+  filterTimer = setTimeout(() => {
+    pagination.value.pageIndex = 1
+    fetchDocuments()
+  }, 300)
 }
 
 function sortingToMongoSort(s: SortEntry[]): string[] {
@@ -149,28 +163,6 @@ function makeCell(key: string, type: string) {
   }
 }
 
-async function initSchema() {
-  try {
-    const jsonSchema = await collectionApi.getJsonSchema({ collectionName: props.collectionName })
-    const defKey = jsonSchema.$ref.replace('#/definitions/', '')
-    const definition = jsonSchema.definitions[defKey]
-    if (!definition || Object.keys(definition.properties ?? {}).length === 0) {
-      columns.value = []
-      return
-    }
-    const fields = Object.keys(definition.properties)
-    const colDefs = schemaToColumnDefinition(definition, fields)
-    columns.value = colDefs.map(col => ({
-      accessorKey: col.columnKey,
-      header: ({ column }: { column: Column<Row> }) => sortHeader(column, col.columnName),
-      cell: makeCell(col.columnKey, col.columnType),
-    }))
-  }
-  catch {
-    columns.value = []
-  }
-}
-
 async function fetchDocuments() {
   loading.value = true
   try {
@@ -179,6 +171,7 @@ async function fetchDocuments() {
       rowsPerPage: pagination.value.pageSize,
       page: pagination.value.pageIndex,
       sort: sorting.value.length ? sortingToMongoSort(sorting.value) : undefined,
+      filter: buildLuceneFilter(filterText.value),
     })
     total.value = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
     const rows = (await res.value()) as Row[]
@@ -197,6 +190,7 @@ async function fetchDocuments() {
         header: ({ column }: { column: Column<Row> }) => sortHeader(column, key),
         cell: makeCell(key, 'string'),
       }))
+      filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
     }
   }
   finally {
@@ -209,9 +203,9 @@ async function init() {
   sorting.value = []
   pagination.value.pageIndex = 1
   filterText.value = ''
+  filterableColumns.value = []
   columns.value = []
   documents.value = []
-  await initSchema()
   await fetchDocuments()
   isInitializing.value = false
 }
@@ -228,6 +222,8 @@ watch(() => props.collectionName, init, { immediate: true })
         placeholder="Filter rows..."
         size="sm"
         class="flex-1 max-w-xs"
+        :disabled="filterableColumns.length === 0"
+        @input="onFilterInput"
       />
       <div class="flex items-center gap-2">
         <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
@@ -250,7 +246,6 @@ watch(() => props.collectionName, init, { immediate: true })
       </div>
     </div>
     <UTable
-      v-model:global-filter="filterText"
       v-model:sorting="sorting"
       :sorting-options="{ manualSorting: true }"
       :data="documents"
