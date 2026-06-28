@@ -3,6 +3,11 @@ import { h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { useMongocampApi } from '#imports'
 
+const props = defineProps<{
+  infoPath?: string
+  dataPath?: string
+}>()
+
 interface CollectionRow {
   name: string
   count: number
@@ -57,6 +62,29 @@ const columns: TableColumn<CollectionRow>[] = [
   {
     accessorKey: 'indexCount',
     header: 'Indexes',
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) =>
+      h('div', { class: 'flex gap-1 justify-end' }, [
+        h(UButton, {
+          'icon': 'i-lucide-info',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': 'Collection info',
+          'to': `${props.infoPath ?? '/secured/admin/collections'}/${row.original.name}`,
+        }),
+        h(UButton, {
+          'icon': 'i-lucide-table',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': 'Collection data',
+          'to': `${props.dataPath ?? '/secured/admin/collections'}/${row.original.name}/data`,
+        }),
+      ]),
   },
 ]
 

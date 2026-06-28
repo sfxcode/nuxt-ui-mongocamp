@@ -1,11 +1,25 @@
 import type { JsonSchemaDefinition } from '@sfxcode/nuxt-mongocamp-server'
 
+interface PropSchema {
+  type?: string
+  format?: string
+  oneOf?: Array<{ type?: string, format?: string }>
+}
+
+export interface ColumnDefinition {
+  columnName: string
+  columnKey: string
+  columnType: string
+}
+
 export function useJsonSchema() {
-  function schemaToColumnDefinition(definition: JsonSchemaDefinition, fields: string[]): any[] {
-    const result: any[] = []
+  function schemaToColumnDefinition(definition: JsonSchemaDefinition, fields: string[]): ColumnDefinition[] {
+    const result: ColumnDefinition[] = []
     const properties = definition.properties
     const sortedFields: string[] = []
-    if (fields.includes('_id')) { sortedFields.push('_id') }
+    if (fields.includes('_id')) {
+      sortedFields.push('_id')
+    }
     const idFields = fields.filter((f) => {
       return f !== '_id' && f.toLowerCase().includes('id')
     }).sort()
@@ -17,25 +31,24 @@ export function useJsonSchema() {
 
     sortedFields.forEach((key) => {
       let possibleType: string = 'string'
-      const prop = properties[key] as any
+      const prop = properties[key] as PropSchema | undefined
       if (!prop) {
         result.push({ columnName: key, columnKey: key, columnType: possibleType })
         return
       }
-      if (prop.format && prop.format === 'date-time') {
+      if (prop.format === 'date-time') {
         possibleType = 'date-time'
       }
       else if (prop.type) {
         possibleType = prop.type
       }
       else if (prop.oneOf) {
-        const possibleTypesArray: any[] = prop.oneOf
-        const possibleTypes = possibleTypesArray.map((entry: any) => entry.type)
-        const possibleFormats = possibleTypesArray.map((entry: any) => entry.format)
-        if (possibleFormats.includes('date-time')) {
+        const types = prop.oneOf.map(e => e.type)
+        const formats = prop.oneOf.map(e => e.format)
+        if (formats.includes('date-time')) {
           possibleType = 'date-time'
         }
-        else if (possibleTypes.includes('number')) {
+        else if (types.includes('number')) {
           possibleType = 'number'
         }
       }
