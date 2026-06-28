@@ -21,6 +21,13 @@
         variant="outline"
         size="lg"
       />
+      <UButton
+        label="Collections"
+        icon="i-lucide-database"
+        to="/secured/admin/collections"
+        variant="outline"
+        size="lg"
+      />
     </div>
   </div>
 </template>
