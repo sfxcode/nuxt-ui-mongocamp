@@ -80,3 +80,22 @@ SSR is disabled (`ssr: false`). The playground registers the module directly via
 ### Tests — `test/`
 
 E2e tests via `@nuxt/test-utils`. The fixture app in `test/fixtures/basic/` is a minimal Nuxt app that loads the module. Run a single test file with `pnpm vitest run test/basic.test.ts`.
+
+## Commit messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+```
+
+Common types: `feat`, `fix`, `refactor`, `docs`, `chore`, `test`, `style`.  
+Scope is optional but useful (e.g. `feat(users)`, `fix(plugin)`, `docs(readme)`).
+
+Examples:
+```
+feat(roles): add collection grant management to MongocampRoles
+fix(plugin): redirect to / instead of /secured on logout
+docs: add CLAUDE.md with architecture overview
+chore: bump @nuxt/ui to 4.9.0
+```
