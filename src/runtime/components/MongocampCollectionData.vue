@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { h, ref, watch } from 'vue'
+import { h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/vue-table'
 import { useMongocampApi } from '#imports'
 import { useMongocampSchema } from '../composables/useMongocampSchema'
 import useMongocampCollection from '../composables/useMongocampCollection'
@@ -13,11 +14,50 @@ const { collectionApi, documentApi } = useMongocampApi()
 const { schemaToColumnDefinition } = useMongocampSchema()
 const { pagination, total } = useMongocampCollection()
 
+const UButton = resolveComponent('UButton')
+
 type Row = Record<string, unknown>
+type SortEntry = { id: string, desc: boolean }
+
+function sortHeader(column: Column<Row>, label: string) {
+  const isSorted = column.getIsSorted()
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label,
+    icon: isSorted === 'asc'
+      ? 'i-lucide-arrow-up-narrow-wide'
+      : isSorted === 'desc'
+        ? 'i-lucide-arrow-down-wide-narrow'
+        : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => column.toggleSorting(isSorted === 'asc'),
+  })
+}
 
 const columns = ref<TableColumn<Row>[]>([])
 const documents = ref<Row[]>([])
 const loading = ref(false)
+const filterText = ref('')
+const sorting = ref<SortEntry[]>([])
+const isInitializing = ref(false)
+const detailOpen = ref(false)
+const detailContent = ref('')
+
+function openDetail(value: unknown) {
+  detailContent.value = JSON.stringify(value, null, 2)
+  detailOpen.value = true
+}
+
+function sortingToMongoSort(s: SortEntry[]): string[] {
+  return s.map(col => (col.desc ? `-${col.id}` : col.id))
+}
+
+watch(sorting, () => {
+  if (isInitializing.value) return
+  pagination.value.pageIndex = 1
+  fetchDocuments()
+})
 
 function toIso(value: unknown): string {
   if (!value) return ''
@@ -53,19 +93,8 @@ function toDateDisplay(value: unknown): string {
   }
 }
 
-function cellValue(value: unknown): string {
-  if (value === null || value === undefined) return ''
-  if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>
-    if ('$oid' in obj) return String(obj.$oid)
-    if ('$date' in obj) return toDateDisplay(obj)
-    return JSON.stringify(value)
-  }
-  return String(value)
-}
-
 function isMetaData(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== 'object' || value === null) return false
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
   const obj = value as Record<string, unknown>
   return 'created' in obj || 'updated' in obj
 }
@@ -76,30 +105,47 @@ function makeCell(key: string, type: string) {
     if (type === 'date-time' && raw) {
       return h('span', toDateDisplay(raw))
     }
-    if (isMetaData(raw)) {
-      const meta = raw as Record<string, unknown>
-      const rows: ReturnType<typeof h>[] = []
-      if (meta.created) {
-        rows.push(h('div', [
-          h('span', { class: 'text-dimmed' }, 'created: '),
-          h('span', toDateDisplay(meta.created)),
-        ]))
-      }
-      if (meta.updated && meta.updated !== meta.created) {
-        rows.push(h('div', [
-          h('span', { class: 'text-dimmed' }, 'updated: '),
-          h('span', toDateDisplay(meta.updated)),
-        ]))
-      }
-      if (meta.createdBy) {
-        rows.push(h('div', [
-          h('span', { class: 'text-dimmed' }, 'by: '),
-          h('span', String(meta.createdBy)),
-        ]))
-      }
-      return h('div', { class: 'flex flex-col gap-0.5 text-xs py-1' }, rows)
+    if (raw === null || raw === undefined) {
+      return h('span', '')
     }
-    return h('span', cellValue(raw))
+    if (typeof raw === 'object') {
+      if (!Array.isArray(raw)) {
+        const obj = raw as Record<string, unknown>
+        if ('$oid' in obj) return h('span', { class: 'font-mono text-xs' }, String(obj.$oid))
+        if ('$date' in obj) return h('span', toDateDisplay(obj))
+        if (isMetaData(obj)) {
+          const rows: ReturnType<typeof h>[] = []
+          if (obj.created) {
+            rows.push(h('div', [
+              h('span', { class: 'text-dimmed' }, 'created: '),
+              h('span', toDateDisplay(obj.created)),
+            ]))
+          }
+          if (obj.updated && obj.updated !== obj.created) {
+            rows.push(h('div', [
+              h('span', { class: 'text-dimmed' }, 'updated: '),
+              h('span', toDateDisplay(obj.updated)),
+            ]))
+          }
+          if (obj.createdBy) {
+            rows.push(h('div', [
+              h('span', { class: 'text-dimmed' }, 'by: '),
+              h('span', String(obj.createdBy)),
+            ]))
+          }
+          return h('div', { class: 'flex flex-col gap-0.5 text-xs py-1' }, rows)
+        }
+      }
+      return h(UButton, {
+        'icon': Array.isArray(raw) ? 'i-lucide-list' : 'i-lucide-braces',
+        'color': 'neutral',
+        'variant': 'ghost',
+        'size': 'xs',
+        'aria-label': Array.isArray(raw) ? 'View array' : 'View object',
+        'onClick': () => openDetail(raw),
+      })
+    }
+    return h('span', String(raw))
   }
 }
 
@@ -116,7 +162,7 @@ async function initSchema() {
     const colDefs = schemaToColumnDefinition(definition, fields)
     columns.value = colDefs.map(col => ({
       accessorKey: col.columnKey,
-      header: col.columnName,
+      header: ({ column }: { column: Column<Row> }) => sortHeader(column, col.columnName),
       cell: makeCell(col.columnKey, col.columnType),
     }))
   }
@@ -132,6 +178,7 @@ async function fetchDocuments() {
       collectionName: props.collectionName,
       rowsPerPage: pagination.value.pageSize,
       page: pagination.value.pageIndex,
+      sort: sorting.value.length ? sortingToMongoSort(sorting.value) : undefined,
     })
     total.value = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
     const rows = (await res.value()) as Row[]
@@ -139,9 +186,15 @@ async function fetchDocuments() {
     // fallback: derive columns from first row if schema produced nothing
     const firstRow = rows[0]
     if (columns.value.length === 0 && firstRow) {
-      columns.value = Object.keys(firstRow).map(key => ({
+      const keys = Object.keys(firstRow)
+      const orderedKeys = [
+        ...keys.filter(k => k === '_id'),
+        ...keys.filter(k => k !== '_id' && k !== 'metaData').sort(),
+        ...keys.filter(k => k === 'metaData'),
+      ]
+      columns.value = orderedKeys.map(key => ({
         accessorKey: key,
-        header: key,
+        header: ({ column }: { column: Column<Row> }) => sortHeader(column, key),
         cell: makeCell(key, 'string'),
       }))
     }
@@ -152,11 +205,15 @@ async function fetchDocuments() {
 }
 
 async function init() {
+  isInitializing.value = true
+  sorting.value = []
   pagination.value.pageIndex = 1
+  filterText.value = ''
   columns.value = []
   documents.value = []
   await initSchema()
   await fetchDocuments()
+  isInitializing.value = false
 }
 
 watch(() => props.collectionName, init, { immediate: true })
@@ -164,11 +221,18 @@ watch(() => props.collectionName, init, { immediate: true })
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <span class="text-sm text-gray-500 dark:text-gray-400">
-        {{ total }} documents
-      </span>
+    <div class="flex items-center justify-between gap-4">
+      <UInput
+        v-model="filterText"
+        icon="i-lucide-search"
+        placeholder="Filter rows..."
+        size="sm"
+        class="flex-1 max-w-xs"
+      />
       <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
+          {{ total }} documents
+        </span>
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
@@ -186,9 +250,21 @@ watch(() => props.collectionName, init, { immediate: true })
       </div>
     </div>
     <UTable
+      v-model:global-filter="filterText"
+      v-model:sorting="sorting"
+      :sorting-options="{ manualSorting: true }"
       :data="documents"
       :columns="columns"
       :loading="loading"
     />
+
+    <UModal
+      v-model:open="detailOpen"
+      title="Details"
+    >
+      <template #body>
+        <pre class="text-xs overflow-auto max-h-[60vh] whitespace-pre-wrap break-all">{{ detailContent }}</pre>
+      </template>
+    </UModal>
   </div>
 </template>

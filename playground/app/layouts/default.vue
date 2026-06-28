@@ -2,18 +2,25 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const { isLoggedIn } = useMongocampAuth()
+const storage = useMongocampStorage()
+const isAdmin = computed(() => storage.value?.profile?.isAdmin ?? false)
 
-const items: NavigationMenuItem[][] = [
+const baseItems: NavigationMenuItem[][] = [
   [
-    { label: 'Home', icon: 'i-lucide-home', to: '/' },
-  ],
-  [
-    { type: 'label', label: 'Admin' },
-    { label: 'Users', icon: 'i-lucide-users', to: '/secured/admin/users' },
-    { label: 'Roles', icon: 'i-lucide-shield', to: '/secured/admin/roles' },
-    { label: 'Collections', icon: 'i-lucide-database', to: '/secured/admin/collections' },
+    { label: 'Home', icon: 'i-lucide-home', to: '/secured' },
   ],
 ]
+
+const adminItems: NavigationMenuItem[] = [
+  { type: 'label', label: 'Admin' },
+  { label: 'Users', icon: 'i-lucide-users', to: '/secured/admin/users' },
+  { label: 'Roles', icon: 'i-lucide-shield', to: '/secured/admin/roles' },
+  { label: 'Collections', icon: 'i-lucide-database', to: '/secured/admin/collections' },
+]
+
+const items = computed<NavigationMenuItem[][]>(() =>
+  isAdmin.value ? [...baseItems, adminItems] : baseItems,
+)
 </script>
 
 <template>

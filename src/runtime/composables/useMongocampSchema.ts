@@ -20,14 +20,11 @@ export function useMongocampSchema() {
     if (fields.includes('_id')) {
       sortedFields.push('_id')
     }
-    const idFields = fields.filter((f) => {
-      return f !== '_id' && f.toLowerCase().includes('id')
-    }).sort()
-    sortedFields.push(...idFields)
-    const otherFields = fields.filter((f) => {
-      return f !== '_id' && !f.toLowerCase().includes('id')
-    }).sort()
-    sortedFields.push(...otherFields)
+    const middleFields = fields.filter(f => f !== '_id' && f !== 'metaData').sort()
+    sortedFields.push(...middleFields)
+    if (fields.includes('metaData')) {
+      sortedFields.push('metaData')
+    }
 
     sortedFields.forEach((key) => {
       let possibleType: string = 'string'

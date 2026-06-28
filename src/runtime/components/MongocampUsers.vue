@@ -1,6 +1,7 @@
 <script setup lang='ts'>
 import { h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/vue-table'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 
@@ -13,6 +14,9 @@ const { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, lis
 
 const users = ref<UserProfile[]>([])
 const loading = ref(false)
+const filterText = ref('')
+const sorting = ref<{ id: string, desc: boolean }[]>([])
+let filterTimer: ReturnType<typeof setTimeout> | undefined
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
@@ -87,11 +91,16 @@ const editUserSchema = reactive([
 async function fetchUsers() {
   loading.value = true
   try {
-    users.value = await listUsers()
+    users.value = await listUsers(filterText.value)
   }
   finally {
     loading.value = false
   }
+}
+
+function onFilterInput() {
+  clearTimeout(filterTimer)
+  filterTimer = setTimeout(() => fetchUsers(), 300)
 }
 
 async function fetchRoles() {
@@ -154,14 +163,30 @@ async function handleDeleteUser() {
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 
+function sortHeader(column: Column<UserProfile>, label: string) {
+  const isSorted = column.getIsSorted()
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label,
+    icon: isSorted === 'asc'
+      ? 'i-lucide-arrow-up-narrow-wide'
+      : isSorted === 'desc'
+        ? 'i-lucide-arrow-down-wide-narrow'
+        : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => column.toggleSorting(isSorted === 'asc'),
+  })
+}
+
 const columns: TableColumn<UserProfile>[] = [
   {
     accessorKey: 'user',
-    header: 'User',
+    header: ({ column }) => sortHeader(column, 'User'),
   },
   {
     accessorKey: 'isAdmin',
-    header: 'Admin',
+    header: ({ column }) => sortHeader(column, 'Admin'),
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.isAdmin ? 'Admin' : 'User',
@@ -214,11 +239,19 @@ fetchRoles()
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
         Users
       </h2>
-      <div class="flex gap-2">
+      <div class="flex flex-1 items-center gap-2">
+        <UInput
+          v-model="filterText"
+          icon="i-lucide-search"
+          placeholder="Search users..."
+          size="sm"
+          class="flex-1 max-w-xs"
+          @input="onFilterInput"
+        />
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
@@ -236,6 +269,7 @@ fetchRoles()
     </div>
 
     <UTable
+      v-model:sorting="sorting"
       :data="users"
       :columns="columns"
       :loading="loading"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/vue-table'
 import { useMongocampApi } from '#imports'
 
 const props = defineProps<{
@@ -46,22 +47,41 @@ async function fetchCollections() {
 
 const UButton = resolveComponent('UButton')
 
+const globalFilter = ref('')
+const sorting = ref<{ id: string, desc: boolean }[]>([])
+
+function sortHeader<T>(column: Column<T>, label: string) {
+  const isSorted = column.getIsSorted()
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label,
+    icon: isSorted === 'asc'
+      ? 'i-lucide-arrow-up-narrow-wide'
+      : isSorted === 'desc'
+        ? 'i-lucide-arrow-down-wide-narrow'
+        : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => column.toggleSorting(isSorted === 'asc'),
+  })
+}
+
 const columns: TableColumn<CollectionRow>[] = [
   {
     accessorKey: 'name',
-    header: 'Collection',
+    header: ({ column }) => sortHeader(column, 'Collection'),
   },
   {
     accessorKey: 'count',
-    header: 'Documents',
+    header: ({ column }) => sortHeader(column, 'Documents'),
   },
   {
     accessorKey: 'sizekb',
-    header: 'Size (KB)',
+    header: ({ column }) => sortHeader(column, 'Size (KB)'),
   },
   {
     accessorKey: 'indexCount',
-    header: 'Indexes',
+    header: ({ column }) => sortHeader(column, 'Indexes'),
   },
   {
     id: 'actions',
@@ -93,21 +113,32 @@ fetchCollections()
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
         Collections
       </h2>
-      <UButton
-        icon="i-lucide-refresh-cw"
-        color="neutral"
-        variant="ghost"
-        :loading="loading"
-        aria-label="Refresh"
-        @click="fetchCollections"
-      />
+      <div class="flex flex-1 items-center gap-2">
+        <UInput
+          v-model="globalFilter"
+          icon="i-lucide-search"
+          placeholder="Filter collections..."
+          size="sm"
+          class="flex-1 max-w-xs"
+        />
+        <UButton
+          icon="i-lucide-refresh-cw"
+          color="neutral"
+          variant="ghost"
+          :loading="loading"
+          aria-label="Refresh"
+          @click="fetchCollections"
+        />
+      </div>
     </div>
 
     <UTable
+      v-model:global-filter="globalFilter"
+      v-model:sorting="sorting"
       :data="collections"
       :columns="columns"
       :loading="loading"

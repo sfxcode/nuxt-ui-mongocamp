@@ -1,6 +1,7 @@
 <script setup lang='ts'>
 import { h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/vue-table'
 import type { Grant, Role } from '@sfxcode/nuxt-mongocamp-server'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 
@@ -12,6 +13,9 @@ const { listRoles, addRole, updateRole, deleteRole } = useMongocampAdmin()
 
 const roles = ref<Role[]>([])
 const loading = ref(false)
+const filterText = ref('')
+const sorting = ref<{ id: string, desc: boolean }[]>([])
+let filterTimer: ReturnType<typeof setTimeout> | undefined
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
@@ -47,11 +51,16 @@ const editRoleSchema = reactive([
 async function fetchRoles() {
   loading.value = true
   try {
-    roles.value = await listRoles()
+    roles.value = await listRoles(filterText.value)
   }
   finally {
     loading.value = false
   }
+}
+
+function onFilterInput() {
+  clearTimeout(filterTimer)
+  filterTimer = setTimeout(() => fetchRoles(), 300)
 }
 
 async function handleAddRole() {
@@ -99,10 +108,26 @@ async function handleDeleteRole() {
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 
+function sortHeader(column: Column<Role>, label: string) {
+  const isSorted = column.getIsSorted()
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label,
+    icon: isSorted === 'asc'
+      ? 'i-lucide-arrow-up-narrow-wide'
+      : isSorted === 'desc'
+        ? 'i-lucide-arrow-down-wide-narrow'
+        : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => column.toggleSorting(isSorted === 'asc'),
+  })
+}
+
 const columns: TableColumn<Role>[] = [
   {
     accessorKey: 'name',
-    header: 'Role',
+    header: ({ column }) => sortHeader(column, 'Role'),
   },
   {
     accessorKey: 'isAdmin',
@@ -162,11 +187,19 @@ fetchRoles()
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
         Roles
       </h2>
-      <div class="flex gap-2">
+      <div class="flex flex-1 items-center gap-2">
+        <UInput
+          v-model="filterText"
+          icon="i-lucide-search"
+          placeholder="Search roles..."
+          size="sm"
+          class="flex-1 max-w-xs"
+          @input="onFilterInput"
+        />
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
@@ -184,6 +217,7 @@ fetchRoles()
     </div>
 
     <UTable
+      v-model:sorting="sorting"
       :data="roles"
       :columns="columns"
       :loading="loading"
