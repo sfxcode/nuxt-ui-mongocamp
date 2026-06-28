@@ -1,4 +1,4 @@
-import type { JsonSchemaDefinition } from '@sfxcode/nuxt-mongocamp-server/dist/runtime/api/models/JsonSchemaDefinition'
+import type { JsonSchemaDefinition } from '@sfxcode/nuxt-mongocamp-server'
 
 export function useJsonSchema() {
   function schemaToColumnDefinition(definition: JsonSchemaDefinition, fields: string[]): any[] {
@@ -17,20 +17,21 @@ export function useJsonSchema() {
 
     sortedFields.forEach((key) => {
       let possibleType: string = 'string'
-      if (properties[key].format && properties[key].format === 'date-time') {
+      const prop = properties[key] as any
+      if (!prop) {
+        result.push({ columnName: key, columnKey: key, columnType: possibleType })
+        return
+      }
+      if (prop.format && prop.format === 'date-time') {
         possibleType = 'date-time'
       }
-      else if (properties[key].type) {
-        possibleType = properties[key].type
+      else if (prop.type) {
+        possibleType = prop.type
       }
-      else if (properties[key].oneOf) {
-        const possibleTypesArray: [any] = properties[key].oneOf
-        const possibleTypes = possibleTypesArray.map((entry) => {
-          return entry.type
-        })
-        const possibleFormats = possibleTypesArray.map((entry) => {
-          return entry.format
-        })
+      else if (prop.oneOf) {
+        const possibleTypesArray: any[] = prop.oneOf
+        const possibleTypes = possibleTypesArray.map((entry: any) => entry.type)
+        const possibleFormats = possibleTypesArray.map((entry: any) => entry.format)
         if (possibleFormats.includes('date-time')) {
           possibleType = 'date-time'
         }

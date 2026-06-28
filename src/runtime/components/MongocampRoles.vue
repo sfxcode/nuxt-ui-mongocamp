@@ -4,7 +4,11 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Grant, Role } from '@sfxcode/nuxt-mongocamp-server'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 
-const { listRoles, addRole, updateRole, deleteRole, listCollections } = useMongocampAdmin()
+const props = defineProps<{
+  grantsPath?: string
+}>()
+
+const { listRoles, addRole, updateRole, deleteRole } = useMongocampAdmin()
 
 const roles = ref<Role[]>([])
 const loading = ref(false)
@@ -17,8 +21,6 @@ const errorMessage = ref('')
 const newRole = ref({ name: '', isAdmin: false })
 const editRole = ref({ roleName: '', isAdmin: false })
 const editGrants = ref<Grant[]>([])
-
-const newGrant = ref({ collectionName: '', read: false, write: false, administrate: false })
 
 const addRoleSchema = reactive([
   {
@@ -42,32 +44,6 @@ const editRoleSchema = reactive([
   },
 ])
 
-const addGrantSchema = reactive([
-  {
-    $formkit: 'nuxtUISelectMenu',
-    name: 'collectionName',
-    label: 'Collection',
-    class: 'w-full',
-    options: [] as string[],
-    validation: 'required',
-  },
-  {
-    $formkit: 'nuxtUISwitch',
-    name: 'read',
-    label: 'Read',
-  },
-  {
-    $formkit: 'nuxtUISwitch',
-    name: 'write',
-    label: 'Write',
-  },
-  {
-    $formkit: 'nuxtUISwitch',
-    name: 'administrate',
-    label: 'Administrate',
-  },
-])
-
 async function fetchRoles() {
   loading.value = true
   try {
@@ -76,11 +52,6 @@ async function fetchRoles() {
   finally {
     loading.value = false
   }
-}
-
-async function fetchCollections() {
-  const collections = await listCollections()
-  addGrantSchema[0]!.options = collections
 }
 
 async function handleAddRole() {
@@ -112,26 +83,6 @@ async function handleEditRole() {
   catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : 'Failed to update role'
   }
-}
-
-function removeGrant(index: number) {
-  editGrants.value.splice(index, 1)
-}
-
-async function handleAddGrant() {
-  const selectOption = newGrant.value.collectionName as unknown as { value?: string, label?: string }
-  const collectionName = typeof newGrant.value.collectionName === 'object'
-    ? selectOption.value ?? selectOption.label ?? ''
-    : newGrant.value.collectionName
-  editGrants.value.push({
-    name: collectionName,
-    read: newGrant.value.read,
-    write: newGrant.value.write,
-    administrate: newGrant.value.administrate,
-    grantType: 'COLLECTION',
-  })
-  await handleEditRole()
-  newGrant.value = { collectionName: '', read: false, write: false, administrate: false }
 }
 
 function confirmDelete(roleName: string) {
@@ -179,6 +130,14 @@ const columns: TableColumn<Role>[] = [
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
         h(UButton, {
+          'icon': 'i-lucide-key',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': 'Manage grants',
+          'to': props.grantsPath ? `${props.grantsPath}/${row.original.name}` : `/secured/admin/roles/${row.original.name}`,
+        }),
+        h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
@@ -199,7 +158,6 @@ const columns: TableColumn<Role>[] = [
 ]
 
 fetchRoles()
-fetchCollections()
 </script>
 
 <template>
@@ -266,88 +224,6 @@ fetchCollections()
           submit-icon="i-lucide-save"
           @data-saved="handleEditRole"
         />
-
-        <USeparator class="my-4" />
-
-        <!-- Collection Grants -->
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium">Collection Grants</span>
-            <UBadge
-              v-if="editGrants.length"
-              :label="String(editGrants.length)"
-              color="primary"
-              variant="subtle"
-            />
-          </div>
-
-          <!-- Grants list -->
-          <div
-            v-if="editGrants.length"
-            class="flex flex-col gap-1 max-h-48 overflow-y-auto"
-          >
-            <div
-              v-for="(grant, index) in editGrants"
-              :key="grant.name"
-              class="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3 px-3 py-2 rounded-md bg-elevated"
-            >
-              <span class="text-sm truncate">{{ grant.name }}</span>
-              <USwitch
-                v-model="editGrants[index]!.read"
-                size="sm"
-                :label="grant.read ? 'R' : 'R'"
-                :color="grant.read ? 'primary' : 'neutral'"
-              />
-              <USwitch
-                v-model="editGrants[index]!.write"
-                size="sm"
-                :color="grant.write ? 'primary' : 'neutral'"
-              />
-              <USwitch
-                v-model="editGrants[index]!.administrate"
-                size="sm"
-                :color="grant.administrate ? 'primary' : 'neutral'"
-              />
-              <UButton
-                icon="i-lucide-trash-2"
-                color="error"
-                variant="ghost"
-                size="xs"
-                aria-label="Remove grant"
-                @click="removeGrant(index)"
-              />
-            </div>
-            <!-- Header legend -->
-            <div class="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3 px-3 text-xs text-dimmed">
-              <span />
-              <span class="w-8 text-center">Read</span>
-              <span class="w-8 text-center">Write</span>
-              <span class="w-8 text-center">Admin</span>
-              <span class="w-8" />
-            </div>
-          </div>
-          <p
-            v-else
-            class="text-sm text-dimmed"
-          >
-            No grants defined.
-          </p>
-
-          <USeparator />
-
-          <!-- Add grant form -->
-          <p class="text-sm font-medium">
-            Add Grant
-          </p>
-          <FUDataEdit
-            :data="newGrant"
-            :schema="addGrantSchema"
-            submit-label="Add Grant"
-            submit-icon="i-lucide-plus"
-            @data-saved="handleAddGrant"
-          />
-        </div>
-
         <p
           v-if="errorMessage"
           class="mt-2 text-sm text-error-500"
