@@ -65,7 +65,7 @@ FormKit schema-driven login form. Persists the last user ID in a cookie (`mongoc
 
 ### `<MongocampUsers />`
 
-Full CRUD table for managing users — create, edit (roles via transfer listbox, password change), and delete, all via modal dialogs.
+Full CRUD table for managing users — create, edit (roles via transfer listbox, password change), and delete, all via modal dialogs. Includes a server-side debounced search input and sortable column headers.
 
 ```vue
 <template>
@@ -75,7 +75,7 @@ Full CRUD table for managing users — create, edit (roles via transfer listbox,
 
 ### `<MongocampRoles />`
 
-Full CRUD table for managing roles — create, edit (admin flag, collection grants), and delete.
+Full CRUD table for managing roles — create, edit (admin flag, collection grants), and delete. Includes a server-side debounced search input and sortable column headers.
 
 ```vue
 <template>
@@ -95,7 +95,7 @@ Per-role collection grant management — lists grants for a named role, with add
 
 ### `<MongocampCollections />`
 
-Table of all collections with document count, storage size, and index count. Each row links to the collection info and data pages.
+Table of all collections with document count, storage size, and index count. Each row links to the collection info and data pages. Includes a client-side filter input and sortable column headers.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -120,7 +120,17 @@ Stat-card grid for a single collection — document count, data size, storage si
 
 ### `<MongocampCollectionData />`
 
-Schema-driven paginated data table for a collection. Fetches the JSON schema to derive typed columns (date-time values are formatted; MongoDB `$oid`/`$date` extended JSON is unwrapped). Falls back to first-row key derivation when the schema has no properties. Includes a reload button and pagination footer.
+Schema-driven paginated data table for a collection.
+
+- **Columns** derived from the collection's JSON schema; falls back to first-row key derivation when no schema properties exist. Column order: `_id` first, `metaData` last, all others sorted A–Z.
+- **Sorting** — clickable column headers trigger server-side sort via the MongoCamp API (`field` / `-field`).
+- **Filtering** — debounced search input sends a Lucene query (`col1: *term* OR col2: *term*`) across all string-typed columns to the API; disabled until the schema is loaded.
+- **Cell rendering**:
+  - `date-time` columns and MongoDB `$date` extended JSON → locale-formatted date string
+  - MongoDB `$oid` → monospaced ID string
+  - `metaData` objects (with `created`/`updated` fields) → structured `created / updated / by` rows
+  - All other objects and arrays → icon button (`{}` / list); click opens a modal with pretty-printed JSON in a `<pre>` tag
+- Includes a reload button and paginated footer.
 
 ```vue
 <template>
@@ -198,7 +208,7 @@ const { schemaToColumnDefinition } = useMongocampSchema()
 // columnType: 'string' | 'number' | 'date-time'
 ```
 
-Fields are sorted with `_id` first, then other id-containing fields, then the rest alphabetically.
+Fields are sorted with `_id` first, `metaData` last, and all other fields alphabetically.
 
 ## Route Protection
 
