@@ -48,6 +48,11 @@ async function fetchCollections() {
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
+const UTooltip = resolveComponent('UTooltip')
+
+function withTooltip(text: string, node: ReturnType<typeof h>) {
+  return h(UTooltip, { text }, { default: () => node })
+}
 
 const globalFilter = ref('')
 const sorting = ref<{ id: string, desc: boolean }[]>([])
@@ -127,27 +132,27 @@ const columns: TableColumn<CollectionRow>[] = [
     header: '',
     cell: ({ row }) => {
       const buttons = [
-        h(UButton, {
+        withTooltip('Collection info', h(UButton, {
           'icon': 'i-lucide-info',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Collection info',
           'to': `${props.infoPath ?? '/secured/admin/collections'}/${row.original.name}`,
-        }),
-        h(UButton, {
+        })),
+        withTooltip('Collection data', h(UButton, {
           'icon': 'i-lucide-table',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Collection data',
           'to': `${props.dataPath ?? '/secured/admin/collections'}/${row.original.name}/data`,
-        }),
+        })),
       ]
       if (isBucketCollection(row.original.name)) {
         const bucketName = bucketNameFor(row.original.name)
         buttons.push(
-          h(UButton, {
+          withTooltip('Clear bucket', h(UButton, {
             'icon': 'i-lucide-eraser',
             'color': 'warning',
             'variant': 'ghost',
@@ -155,8 +160,8 @@ const columns: TableColumn<CollectionRow>[] = [
             'aria-label': 'Clear bucket',
             'loading': bucketActionInFlight.value.has(bucketName),
             'onClick': () => confirmClearBucket(bucketName),
-          }),
-          h(UButton, {
+          })),
+          withTooltip('Delete bucket', h(UButton, {
             'icon': 'i-lucide-trash-2',
             'color': 'error',
             'variant': 'ghost',
@@ -164,7 +169,7 @@ const columns: TableColumn<CollectionRow>[] = [
             'aria-label': 'Delete bucket',
             'loading': bucketActionInFlight.value.has(bucketName),
             'onClick': () => confirmDeleteBucket(bucketName),
-          }),
+          })),
         )
       }
       return h('div', { class: 'flex gap-1 justify-end' }, buttons)
@@ -189,14 +194,16 @@ fetchCollections()
           size="sm"
           class="flex-1 max-w-xs"
         />
-        <UButton
-          icon="i-lucide-refresh-cw"
-          color="neutral"
-          variant="ghost"
-          :loading="loading"
-          aria-label="Refresh"
-          @click="fetchCollections"
-        />
+        <UTooltip text="Refresh">
+          <UButton
+            icon="i-lucide-refresh-cw"
+            color="neutral"
+            variant="ghost"
+            :loading="loading"
+            aria-label="Refresh"
+            @click="fetchCollections"
+          />
+        </UTooltip>
       </div>
     </div>
 

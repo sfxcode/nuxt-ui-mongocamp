@@ -162,6 +162,11 @@ async function handleDeleteUser() {
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
+const UTooltip = resolveComponent('UTooltip')
+
+function withTooltip(text: string, node: ReturnType<typeof h>) {
+  return h(UTooltip, { text }, { default: () => node })
+}
 
 function sortHeader(column: Column<UserProfile>, label: string) {
   const isSorted = column.getIsSorted()
@@ -213,22 +218,22 @@ const columns: TableColumn<UserProfile>[] = [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
-        h(UButton, {
+        withTooltip('Edit user', h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Edit user',
           'onClick': () => openEdit(row.original),
-        }),
-        h(UButton, {
+        })),
+        withTooltip('Delete user', h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Delete user',
           'onClick': () => confirmDelete(row.original.user),
-        }),
+        })),
       ]),
   },
 ]
@@ -252,14 +257,16 @@ fetchRoles()
           class="flex-1 max-w-xs"
           @input="onFilterInput"
         />
-        <UButton
-          icon="i-lucide-refresh-cw"
-          color="neutral"
-          variant="ghost"
-          :loading="loading"
-          aria-label="Refresh"
-          @click="fetchUsers"
-        />
+        <UTooltip text="Refresh">
+          <UButton
+            icon="i-lucide-refresh-cw"
+            color="neutral"
+            variant="ghost"
+            :loading="loading"
+            aria-label="Refresh"
+            @click="fetchUsers"
+          />
+        </UTooltip>
         <UButton
           icon="i-lucide-plus"
           label="Add User"

@@ -30,6 +30,11 @@ async function handleFileSelected(event: Event) {
 }
 
 const UButton = resolveComponent('UButton')
+const UTooltip = resolveComponent('UTooltip')
+
+function withTooltip(text: string, node: ReturnType<typeof h>) {
+  return h(UTooltip, { text }, { default: () => node })
+}
 
 type Row = Record<string, unknown>
 type SortEntry = { id: string, desc: boolean }
@@ -124,7 +129,7 @@ function makeActionsColumn(): TableColumn<Row> {
       if (isBucketCollection(props.collectionName)) {
         const fileId = fileIdForRow(props.collectionName, row.original)
         if (fileId) {
-          buttons.push(h(UButton, {
+          buttons.push(withTooltip('Download file', h(UButton, {
             'icon': 'i-lucide-download',
             'color': 'neutral',
             'variant': 'ghost',
@@ -132,26 +137,26 @@ function makeActionsColumn(): TableColumn<Row> {
             'aria-label': 'Download file',
             'loading': downloadingFileIds.value.has(fileId),
             'onClick': () => downloadFile(props.collectionName, fileId),
-          }))
+          })))
         }
       }
       buttons.push(
-        h(UButton, {
+        withTooltip('Edit document', h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Edit document',
           'onClick': () => openEdit(row.original),
-        }),
-        h(UButton, {
+        })),
+        withTooltip('Delete document', h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Delete document',
           'onClick': () => confirmDelete(row.original),
-        }),
+        })),
       )
       return h('div', { class: 'flex gap-1 justify-end' }, buttons)
     },
@@ -291,14 +296,15 @@ function makeCell(key: string, type: string) {
           return h('div', { class: 'flex flex-col gap-0.5 text-xs py-1' }, rows)
         }
       }
-      return h(UButton, {
+      const viewLabel = Array.isArray(raw) ? 'View array' : 'View object'
+      return withTooltip(viewLabel, h(UButton, {
         'icon': Array.isArray(raw) ? 'i-lucide-list' : 'i-lucide-braces',
         'color': 'neutral',
         'variant': 'ghost',
         'size': 'xs',
-        'aria-label': Array.isArray(raw) ? 'View array' : 'View object',
+        'aria-label': viewLabel,
         'onClick': () => openDetail(raw),
-      })
+      }))
     }
     return h('span', String(raw))
   }
@@ -371,39 +377,49 @@ watch(() => props.collectionName, init, { immediate: true })
         <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
           {{ total }} documents
         </span>
-        <UButton
+        <UTooltip
           v-if="isBucketCollection(collectionName)"
-          icon="i-lucide-upload"
-          color="primary"
-          variant="ghost"
-          size="sm"
-          :loading="uploading"
-          aria-label="Upload file"
-          @click="openFilePicker"
-        />
-        <UButton
+          text="Upload file"
+        >
+          <UButton
+            icon="i-lucide-upload"
+            color="primary"
+            variant="ghost"
+            size="sm"
+            :loading="uploading"
+            aria-label="Upload file"
+            @click="openFilePicker"
+          />
+        </UTooltip>
+        <UTooltip
           v-else
-          icon="i-lucide-plus"
-          color="primary"
-          variant="ghost"
-          size="sm"
-          aria-label="Insert document"
-          @click="openInsert"
-        />
+          text="Insert document"
+        >
+          <UButton
+            icon="i-lucide-plus"
+            color="primary"
+            variant="ghost"
+            size="sm"
+            aria-label="Insert document"
+            @click="openInsert"
+          />
+        </UTooltip>
         <input
           ref="fileInputRef"
           type="file"
           class="hidden"
           @change="handleFileSelected"
         >
-        <UButton
-          icon="i-lucide-refresh-cw"
-          color="neutral"
-          variant="ghost"
-          :loading="loading"
-          aria-label="Reload"
-          @click="init"
-        />
+        <UTooltip text="Reload">
+          <UButton
+            icon="i-lucide-refresh-cw"
+            color="neutral"
+            variant="ghost"
+            :loading="loading"
+            aria-label="Reload"
+            @click="init"
+          />
+        </UTooltip>
         <UPagination
           v-model:page="pagination.pageIndex"
           :total="total"

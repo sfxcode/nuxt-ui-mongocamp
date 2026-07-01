@@ -107,6 +107,11 @@ async function handleDeleteRole() {
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
+const UTooltip = resolveComponent('UTooltip')
+
+function withTooltip(text: string, node: ReturnType<typeof h>) {
+  return h(UTooltip, { text }, { default: () => node })
+}
 
 function sortHeader(column: Column<Role>, label: string) {
   const isSorted = column.getIsSorted()
@@ -154,30 +159,30 @@ const columns: TableColumn<Role>[] = [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
-        h(UButton, {
+        withTooltip('Manage grants', h(UButton, {
           'icon': 'i-lucide-key',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Manage grants',
           'to': props.grantsPath ? `${props.grantsPath}/${row.original.name}` : `/secured/admin/roles/${row.original.name}`,
-        }),
-        h(UButton, {
+        })),
+        withTooltip('Edit role', h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Edit role',
           'onClick': () => openEdit(row.original),
-        }),
-        h(UButton, {
+        })),
+        withTooltip('Delete role', h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Delete role',
           'onClick': () => confirmDelete(row.original.name),
-        }),
+        })),
       ]),
   },
 ]
@@ -200,14 +205,16 @@ fetchRoles()
           class="flex-1 max-w-xs"
           @input="onFilterInput"
         />
-        <UButton
-          icon="i-lucide-refresh-cw"
-          color="neutral"
-          variant="ghost"
-          :loading="loading"
-          aria-label="Refresh"
-          @click="fetchRoles"
-        />
+        <UTooltip text="Refresh">
+          <UButton
+            icon="i-lucide-refresh-cw"
+            color="neutral"
+            variant="ghost"
+            :loading="loading"
+            aria-label="Refresh"
+            @click="fetchRoles"
+          />
+        </UTooltip>
         <UButton
           icon="i-lucide-plus"
           label="Add Role"

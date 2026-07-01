@@ -147,6 +147,11 @@ function openAdd() {
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
+const UTooltip = resolveComponent('UTooltip')
+
+function withTooltip(text: string, node: ReturnType<typeof h>) {
+  return h(UTooltip, { text }, { default: () => node })
+}
 
 const columns: TableColumn<Grant>[] = [
   {
@@ -198,22 +203,22 @@ const columns: TableColumn<Grant>[] = [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
-        h(UButton, {
+        withTooltip('Edit grant', h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Edit grant',
           'onClick': () => openEdit(row.index),
-        }),
-        h(UButton, {
+        })),
+        withTooltip('Remove grant', h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': 'Remove grant',
           'onClick': () => removeGrant(row.index),
-        }),
+        })),
       ]),
   },
 ]
@@ -229,14 +234,16 @@ fetchCollections()
         Grants: {{ roleName }}
       </h2>
       <div class="flex gap-2">
-        <UButton
-          icon="i-lucide-refresh-cw"
-          color="neutral"
-          variant="ghost"
-          :loading="loading"
-          aria-label="Refresh"
-          @click="fetchRole"
-        />
+        <UTooltip text="Refresh">
+          <UButton
+            icon="i-lucide-refresh-cw"
+            color="neutral"
+            variant="ghost"
+            :loading="loading"
+            aria-label="Refresh"
+            @click="fetchRole"
+          />
+        </UTooltip>
         <UButton
           icon="i-lucide-plus"
           label="Add Grant"

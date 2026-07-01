@@ -19,6 +19,11 @@ const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpi
 const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
 const UButton = resolveComponent('UButton')
+const UTooltip = resolveComponent('UTooltip')
+
+function withTooltip(text: string, node: ReturnType<typeof h>) {
+  return h(UTooltip, { text }, { default: () => node })
+}
 
 const info = ref<CollectionStatus | null>(null)
 const columnDefinitions = ref<ColumnDefinition[]>([])
@@ -260,14 +265,14 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       row.original.name === '_id_'
         ? null
         : h('div', { class: 'flex justify-end' }, [
-            h(UButton, {
+            withTooltip('Delete index', h(UButton, {
               'icon': 'i-lucide-trash-2',
               'color': 'error',
               'variant': 'ghost',
               'size': 'sm',
               'aria-label': 'Delete index',
               'onClick': () => confirmDeleteIndex(row.original.name),
-            }),
+            })),
           ]),
   },
 ]
