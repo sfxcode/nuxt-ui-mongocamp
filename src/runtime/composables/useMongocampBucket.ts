@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useMongocampApi, useToast } from '#imports'
+import type { BucketInformation } from '@sfxcode/nuxt-mongocamp-server'
 
 const BUCKET_COLLECTION_SUFFIX = /\.(?:files|chunks)$/
 
@@ -23,11 +24,12 @@ function triggerBrowserDownload(blob: Blob, filename: string) {
 }
 
 export function useMongocampBucket() {
-  const { fileApi } = useMongocampApi()
+  const { fileApi, bucketApi } = useMongocampApi()
   const toast = useToast()
 
   const downloadingFileIds = ref<Set<string>>(new Set())
   const uploading = ref(false)
+  const bucketActionInFlight = ref<Set<string>>(new Set())
 
   function isBucketCollection(collectionName: string): boolean {
     return BUCKET_COLLECTION_SUFFIX.test(collectionName)
@@ -74,5 +76,58 @@ export function useMongocampBucket() {
     }
   }
 
-  return { isBucketCollection, bucketNameFor, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile }
+  async function listBuckets(): Promise<string[]> {
+    return bucketApi.listBuckets()
+  }
+
+  async function getBucketInfo(bucketName: string): Promise<BucketInformation> {
+    return bucketApi.getBucket({ bucketName })
+  }
+
+  async function clearBucket(bucketName: string): Promise<boolean> {
+    bucketActionInFlight.value.add(bucketName)
+    try {
+      const result = await bucketApi.clearBucket({ bucketName })
+      toast.add({ title: 'Bucket cleared', description: `All files in "${bucketName}" were deleted.`, color: 'success' })
+      return result.value
+    }
+    catch {
+      toast.add({ title: 'Clear failed', description: `Could not clear bucket "${bucketName}".`, color: 'error' })
+      return false
+    }
+    finally {
+      bucketActionInFlight.value.delete(bucketName)
+    }
+  }
+
+  async function deleteBucket(bucketName: string): Promise<boolean> {
+    bucketActionInFlight.value.add(bucketName)
+    try {
+      const result = await bucketApi.deleteBucket({ bucketName })
+      toast.add({ title: 'Bucket deleted', description: `Bucket "${bucketName}" was deleted.`, color: 'success' })
+      return result.value
+    }
+    catch {
+      toast.add({ title: 'Delete failed', description: `Could not delete bucket "${bucketName}".`, color: 'error' })
+      return false
+    }
+    finally {
+      bucketActionInFlight.value.delete(bucketName)
+    }
+  }
+
+  return {
+    isBucketCollection,
+    bucketNameFor,
+    fileIdForRow,
+    downloadingFileIds,
+    uploading,
+    downloadFile,
+    uploadFile,
+    bucketActionInFlight,
+    listBuckets,
+    getBucketInfo,
+    clearBucket,
+    deleteBucket,
+  }
 }

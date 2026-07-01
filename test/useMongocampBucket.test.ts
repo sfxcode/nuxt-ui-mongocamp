@@ -6,10 +6,17 @@ const mockFileApi = {
   insertFile: vi.fn(),
 }
 
+const mockBucketApi = {
+  listBuckets: vi.fn(),
+  getBucket: vi.fn(),
+  clearBucket: vi.fn(),
+  deleteBucket: vi.fn(),
+}
+
 const mockToastAdd = vi.fn()
 
 vi.mock('#imports', () => ({
-  useMongocampApi: () => ({ fileApi: mockFileApi }),
+  useMongocampApi: () => ({ fileApi: mockFileApi, bucketApi: mockBucketApi }),
   useToast: () => ({ add: mockToastAdd }),
 }))
 
@@ -171,5 +178,84 @@ describe('uploadFile', () => {
     expect(result).toBe(false)
     expect(uploading.value).toBe(false)
     expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+  })
+})
+
+describe('listBuckets', () => {
+  it('passes through the bucket name list', async () => {
+    mockBucketApi.listBuckets.mockResolvedValueOnce(['test_images', 'test_docs'])
+
+    const { listBuckets } = useMongocampBucket()
+    const result = await listBuckets()
+
+    expect(mockBucketApi.listBuckets).toHaveBeenCalledWith()
+    expect(result).toEqual(['test_images', 'test_docs'])
+  })
+})
+
+describe('getBucketInfo', () => {
+  it('calls bucketApi.getBucket with the bucket name', async () => {
+    const info = { name: 'test_images', files: 3, size: 1024, avgObjectSize: 341 }
+    mockBucketApi.getBucket.mockResolvedValueOnce(info)
+
+    const { getBucketInfo } = useMongocampBucket()
+    const result = await getBucketInfo('test_images')
+
+    expect(mockBucketApi.getBucket).toHaveBeenCalledWith({ bucketName: 'test_images' })
+    expect(result).toBe(info)
+  })
+})
+
+describe('clearBucket', () => {
+  it('tracks in-flight state, shows a success toast, and returns the API boolean', async () => {
+    mockBucketApi.clearBucket.mockResolvedValueOnce({ value: true })
+
+    const { clearBucket, bucketActionInFlight } = useMongocampBucket()
+    const promise = clearBucket('test_images')
+    expect(bucketActionInFlight.value.has('test_images')).toBe(true)
+    const result = await promise
+
+    expect(mockBucketApi.clearBucket).toHaveBeenCalledWith({ bucketName: 'test_images' })
+    expect(result).toBe(true)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'success' }))
+    expect(bucketActionInFlight.value.has('test_images')).toBe(false)
+  })
+
+  it('shows an error toast, clears in-flight state and returns false when the call fails', async () => {
+    mockBucketApi.clearBucket.mockRejectedValueOnce(new Error('boom'))
+
+    const { clearBucket, bucketActionInFlight } = useMongocampBucket()
+    const result = await clearBucket('test_images')
+
+    expect(result).toBe(false)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+    expect(bucketActionInFlight.value.has('test_images')).toBe(false)
+  })
+})
+
+describe('deleteBucket', () => {
+  it('tracks in-flight state, shows a success toast, and returns the API boolean', async () => {
+    mockBucketApi.deleteBucket.mockResolvedValueOnce({ value: true })
+
+    const { deleteBucket, bucketActionInFlight } = useMongocampBucket()
+    const promise = deleteBucket('test_images')
+    expect(bucketActionInFlight.value.has('test_images')).toBe(true)
+    const result = await promise
+
+    expect(mockBucketApi.deleteBucket).toHaveBeenCalledWith({ bucketName: 'test_images' })
+    expect(result).toBe(true)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'success' }))
+    expect(bucketActionInFlight.value.has('test_images')).toBe(false)
+  })
+
+  it('shows an error toast, clears in-flight state and returns false when the call fails', async () => {
+    mockBucketApi.deleteBucket.mockRejectedValueOnce(new Error('boom'))
+
+    const { deleteBucket, bucketActionInFlight } = useMongocampBucket()
+    const result = await deleteBucket('test_images')
+
+    expect(result).toBe(false)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+    expect(bucketActionInFlight.value.has('test_images')).toBe(false)
   })
 })

@@ -1,16 +1,21 @@
 # useMongocampBucket
 
-Detection and file operations for GridFS bucket collections. Powers the upload/download support in [`MongocampCollectionData`](/components/mongocamp-collection-data).
+Detection and file operations for GridFS bucket collections. Powers the upload/download support in [`MongocampCollectionData`](/components/mongocamp-collection-data), and the bucket-level actions in [`MongocampCollections`](/components/mongocamp-collections).
 
 ```ts
 const {
-  isBucketCollection, // (collectionName: string) => boolean
-  bucketNameFor,      // (collectionName: string) => string
-  fileIdForRow,       // (collectionName: string, row: Record<string, unknown>) => string | undefined
-  downloadingFileIds, // Ref<Set<string>>
-  uploading,          // Ref<boolean>
-  downloadFile,       // (collectionName: string, fileId: string) => Promise<void>
-  uploadFile,         // (collectionName: string, file: File) => Promise<boolean>
+  isBucketCollection,   // (collectionName: string) => boolean
+  bucketNameFor,        // (collectionName: string) => string
+  fileIdForRow,         // (collectionName: string, row: Record<string, unknown>) => string | undefined
+  downloadingFileIds,   // Ref<Set<string>>
+  uploading,            // Ref<boolean>
+  downloadFile,         // (collectionName: string, fileId: string) => Promise<void>
+  uploadFile,           // (collectionName: string, file: File) => Promise<boolean>
+  bucketActionInFlight, // Ref<Set<string>> — bucket names with a clear/delete in progress
+  listBuckets,          // () => Promise<string[]>
+  getBucketInfo,        // (bucketName: string) => Promise<BucketInformation>
+  clearBucket,          // (bucketName: string) => Promise<boolean>
+  deleteBucket,         // (bucketName: string) => Promise<boolean>
 } = useMongocampBucket()
 ```
 
@@ -59,3 +64,17 @@ if (success) await fetchDocuments() // refresh the table
 ```
 
 Uploads via `fileApi.insertFile`, targeting the bucket regardless of whether `collectionName` was the `.files` or `.chunks` half. Tracks the in-flight upload in `uploading` and shows a success/error toast; returns `true`/`false` so the caller knows whether to refresh.
+
+## Bucket-level operations
+
+Unlike the per-file methods above, these operate on the whole bucket (both its `.files` and `.chunks` collections at once) via the raw `bucketApi`, not `fileApi`:
+
+```ts
+const buckets = await listBuckets()                 // ['images', 'avatars', ...]
+const info = await getBucketInfo('images')           // { name, files, size, avgObjectSize }
+const cleared = await clearBucket('images')          // deletes every file in the bucket, keeps the bucket
+const deleted = await deleteBucket('images')         // drops both images.files and images.chunks entirely
+```
+
+`clearBucket`/`deleteBucket` follow the same convention as `uploadFile`: they track their own loading state (`bucketActionInFlight`, keyed by bucket name — bind `:loading="bucketActionInFlight.has(bucketName)"`), show a success/error toast, and return a boolean so the caller knows whether to refresh.
+
