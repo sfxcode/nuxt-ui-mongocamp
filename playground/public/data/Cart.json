@@ -1,0 +1,8569 @@
+[
+  {
+    "id": 1,
+    "customerId": 229,
+    "status": "active",
+    "items": [
+      {
+        "productId": 755,
+        "quantity": 1,
+        "unitPrice": 170.79
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-09-03T18:27:00Z"
+  },
+  {
+    "id": 2,
+    "customerId": 518,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 28,
+        "quantity": 5,
+        "unitPrice": 53.72
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-11-23T17:26:00Z"
+  },
+  {
+    "id": 3,
+    "customerId": 891,
+    "status": "active",
+    "items": [
+      {
+        "productId": 778,
+        "quantity": 2,
+        "unitPrice": 176.04
+      },
+      {
+        "productId": 349,
+        "quantity": 3,
+        "unitPrice": 43.09
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5614 Main Street",
+      "city": "Dormansville",
+      "postalCode": 22156,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-02-12T11:38:00Z"
+  },
+  {
+    "id": 4,
+    "customerId": 550,
+    "status": "active",
+    "items": [
+      {
+        "productId": 997,
+        "quantity": 4,
+        "unitPrice": 24.31
+      },
+      {
+        "productId": 301,
+        "quantity": 5,
+        "unitPrice": 221.94
+      },
+      {
+        "productId": 371,
+        "quantity": 5,
+        "unitPrice": 52.11
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1239 Main Street",
+      "city": "Dormansville",
+      "postalCode": 96673,
+      "country": "United States of America"
+    },
+    "tags": [
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-02-13T08:29:00Z"
+  },
+  {
+    "id": 5,
+    "customerId": 687,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 719,
+        "quantity": 1,
+        "unitPrice": 154.24
+      },
+      {
+        "productId": 176,
+        "quantity": 5,
+        "unitPrice": 183.64
+      },
+      {
+        "productId": 168,
+        "quantity": 4,
+        "unitPrice": 97.97
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9225 Main Street",
+      "city": "Springfield",
+      "postalCode": 99733,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-01-08T01:51:00Z"
+  },
+  {
+    "id": 6,
+    "customerId": 936,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 898,
+        "quantity": 3,
+        "unitPrice": 57.09
+      },
+      {
+        "productId": 512,
+        "quantity": 4,
+        "unitPrice": 221.75
+      },
+      {
+        "productId": 659,
+        "quantity": 4,
+        "unitPrice": 40.0
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2387 Main Street",
+      "city": "Springfield",
+      "postalCode": 83579,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-05-24T18:27:00Z"
+  },
+  {
+    "id": 7,
+    "customerId": 142,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 506,
+        "quantity": 1,
+        "unitPrice": 190.17
+      },
+      {
+        "productId": 882,
+        "quantity": 1,
+        "unitPrice": 42.45
+      },
+      {
+        "productId": 164,
+        "quantity": 4,
+        "unitPrice": 151.12
+      },
+      {
+        "productId": 395,
+        "quantity": 4,
+        "unitPrice": 150.99
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7768 Main Street",
+      "city": "Fairview",
+      "postalCode": 42953,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-11-18T08:49:00Z"
+  },
+  {
+    "id": 8,
+    "customerId": 465,
+    "status": "active",
+    "items": [
+      {
+        "productId": 977,
+        "quantity": 3,
+        "unitPrice": 243.11
+      },
+      {
+        "productId": 781,
+        "quantity": 2,
+        "unitPrice": 129.38
+      },
+      {
+        "productId": 109,
+        "quantity": 3,
+        "unitPrice": 211.21
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "subscription",
+      "priority",
+      "gift"
+    ],
+    "createdAt": "2024-06-25T05:34:00Z"
+  },
+  {
+    "id": 9,
+    "customerId": 115,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 900,
+        "quantity": 3,
+        "unitPrice": 63.67
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4046 Main Street",
+      "city": "Fairview",
+      "postalCode": 20322,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "gift",
+      "backorder"
+    ],
+    "createdAt": "2024-03-05T21:30:00Z"
+  },
+  {
+    "id": 10,
+    "customerId": 434,
+    "status": "active",
+    "items": [
+      {
+        "productId": 952,
+        "quantity": 5,
+        "unitPrice": 190.04
+      },
+      {
+        "productId": 707,
+        "quantity": 2,
+        "unitPrice": 179.67
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6637 Main Street",
+      "city": "Rivertown",
+      "postalCode": 67422,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-04-03T10:01:00Z"
+  },
+  {
+    "id": 11,
+    "customerId": 725,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 61,
+        "quantity": 2,
+        "unitPrice": 21.51
+      },
+      {
+        "productId": 33,
+        "quantity": 3,
+        "unitPrice": 22.36
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3999 Main Street",
+      "city": "Rivertown",
+      "postalCode": 97684,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-04-18T04:46:00Z"
+  },
+  {
+    "id": 12,
+    "customerId": 417,
+    "status": "active",
+    "items": [
+      {
+        "productId": 97,
+        "quantity": 1,
+        "unitPrice": 166.45
+      },
+      {
+        "productId": 363,
+        "quantity": 4,
+        "unitPrice": 105.72
+      },
+      {
+        "productId": 885,
+        "quantity": 1,
+        "unitPrice": 169.97
+      },
+      {
+        "productId": 662,
+        "quantity": 1,
+        "unitPrice": 19.85
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5659 Main Street",
+      "city": "Dormansville",
+      "postalCode": 42591,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-08-05T13:11:00Z"
+  },
+  {
+    "id": 13,
+    "customerId": 78,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 828,
+        "quantity": 5,
+        "unitPrice": 28.99
+      },
+      {
+        "productId": 668,
+        "quantity": 5,
+        "unitPrice": 209.83
+      },
+      {
+        "productId": 993,
+        "quantity": 1,
+        "unitPrice": 231.96
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3972 Main Street",
+      "city": "Springfield",
+      "postalCode": 63269,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "sale"
+    ],
+    "createdAt": "2024-01-06T12:00:00Z"
+  },
+  {
+    "id": 14,
+    "customerId": 466,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 434,
+        "quantity": 5,
+        "unitPrice": 167.16
+      },
+      {
+        "productId": 499,
+        "quantity": 2,
+        "unitPrice": 51.52
+      },
+      {
+        "productId": 223,
+        "quantity": 1,
+        "unitPrice": 146.9
+      },
+      {
+        "productId": 556,
+        "quantity": 1,
+        "unitPrice": 188.25
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1036 Main Street",
+      "city": "Dormansville",
+      "postalCode": 86569,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "priority",
+      "gift"
+    ],
+    "createdAt": "2024-09-03T05:04:00Z"
+  },
+  {
+    "id": 15,
+    "customerId": 123,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 253,
+        "quantity": 5,
+        "unitPrice": 150.66
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1443 Main Street",
+      "city": "Lakeview",
+      "postalCode": 96163,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-10-17T10:59:00Z"
+  },
+  {
+    "id": 16,
+    "customerId": 245,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 406,
+        "quantity": 2,
+        "unitPrice": 169.56
+      },
+      {
+        "productId": 308,
+        "quantity": 4,
+        "unitPrice": 82.46
+      },
+      {
+        "productId": 770,
+        "quantity": 1,
+        "unitPrice": 7.28
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9324 Main Street",
+      "city": "Dormansville",
+      "postalCode": 19602,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-05-05T11:56:00Z"
+  },
+  {
+    "id": 17,
+    "customerId": 162,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 854,
+        "quantity": 5,
+        "unitPrice": 177.37
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8766 Main Street",
+      "city": "Dormansville",
+      "postalCode": 97538,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-05-22T03:56:00Z"
+  },
+  {
+    "id": 18,
+    "customerId": 761,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 160,
+        "quantity": 3,
+        "unitPrice": 74.03
+      },
+      {
+        "productId": 216,
+        "quantity": 3,
+        "unitPrice": 54.88
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4425 Main Street",
+      "city": "Fairview",
+      "postalCode": 74032,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-11-14T08:02:00Z"
+  },
+  {
+    "id": 19,
+    "customerId": 269,
+    "status": "active",
+    "items": [
+      {
+        "productId": 760,
+        "quantity": 4,
+        "unitPrice": 140.16
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7107 Main Street",
+      "city": "Fairview",
+      "postalCode": 11267,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-02-23T04:34:00Z"
+  },
+  {
+    "id": 20,
+    "customerId": 152,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 131,
+        "quantity": 1,
+        "unitPrice": 80.52
+      }
+    ],
+    "shippingAddress": {
+      "line1": "753 Main Street",
+      "city": "Rivertown",
+      "postalCode": 37535,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-06-25T17:56:00Z"
+  },
+  {
+    "id": 21,
+    "customerId": 948,
+    "status": "active",
+    "items": [
+      {
+        "productId": 886,
+        "quantity": 2,
+        "unitPrice": 244.17
+      },
+      {
+        "productId": 831,
+        "quantity": 2,
+        "unitPrice": 220.95
+      },
+      {
+        "productId": 26,
+        "quantity": 2,
+        "unitPrice": 185.46
+      },
+      {
+        "productId": 341,
+        "quantity": 4,
+        "unitPrice": 201.55
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4165 Main Street",
+      "city": "Rivertown",
+      "postalCode": 30866,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-01-28T15:14:00Z"
+  },
+  {
+    "id": 22,
+    "customerId": 313,
+    "status": "active",
+    "items": [
+      {
+        "productId": 229,
+        "quantity": 1,
+        "unitPrice": 166.71
+      },
+      {
+        "productId": 409,
+        "quantity": 3,
+        "unitPrice": 73.26
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1237 Main Street",
+      "city": "Rivertown",
+      "postalCode": 56025,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-02-09T05:37:00Z"
+  },
+  {
+    "id": 23,
+    "customerId": 354,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 806,
+        "quantity": 3,
+        "unitPrice": 111.92
+      },
+      {
+        "productId": 524,
+        "quantity": 1,
+        "unitPrice": 99.37
+      },
+      {
+        "productId": 591,
+        "quantity": 2,
+        "unitPrice": 67.41
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "sale",
+      "gift",
+      "backorder"
+    ],
+    "createdAt": "2024-09-22T23:47:00Z"
+  },
+  {
+    "id": 24,
+    "customerId": 681,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 639,
+        "quantity": 3,
+        "unitPrice": 167.53
+      },
+      {
+        "productId": 128,
+        "quantity": 3,
+        "unitPrice": 129.25
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6791 Main Street",
+      "city": "Rivertown",
+      "postalCode": 62743,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-05-18T04:12:00Z"
+  },
+  {
+    "id": 25,
+    "customerId": 767,
+    "status": "active",
+    "items": [
+      {
+        "productId": 631,
+        "quantity": 5,
+        "unitPrice": 78.73
+      },
+      {
+        "productId": 562,
+        "quantity": 1,
+        "unitPrice": 79.45
+      },
+      {
+        "productId": 216,
+        "quantity": 4,
+        "unitPrice": 197.51
+      },
+      {
+        "productId": 622,
+        "quantity": 3,
+        "unitPrice": 118.92
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7344 Main Street",
+      "city": "Springfield",
+      "postalCode": 77000,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-12-06T21:05:00Z"
+  },
+  {
+    "id": 26,
+    "customerId": 344,
+    "status": "active",
+    "items": [
+      {
+        "productId": 839,
+        "quantity": 2,
+        "unitPrice": 169.83
+      },
+      {
+        "productId": 231,
+        "quantity": 2,
+        "unitPrice": 41.1
+      },
+      {
+        "productId": 48,
+        "quantity": 2,
+        "unitPrice": 246.06
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1293 Main Street",
+      "city": "Lakeview",
+      "postalCode": 64321,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "sale",
+      "subscription"
+    ],
+    "createdAt": "2024-07-08T04:41:00Z"
+  },
+  {
+    "id": 27,
+    "customerId": 907,
+    "status": "active",
+    "items": [
+      {
+        "productId": 798,
+        "quantity": 4,
+        "unitPrice": 58.62
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8586 Main Street",
+      "city": "Lakeview",
+      "postalCode": 16582,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-08-05T14:42:00Z"
+  },
+  {
+    "id": 28,
+    "customerId": 628,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 914,
+        "quantity": 5,
+        "unitPrice": 109.55
+      },
+      {
+        "productId": 929,
+        "quantity": 5,
+        "unitPrice": 114.25
+      },
+      {
+        "productId": 163,
+        "quantity": 4,
+        "unitPrice": 115.27
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4150 Main Street",
+      "city": "Rivertown",
+      "postalCode": 78327,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-02-23T09:15:00Z"
+  },
+  {
+    "id": 29,
+    "customerId": 83,
+    "status": "active",
+    "items": [
+      {
+        "productId": 155,
+        "quantity": 2,
+        "unitPrice": 98.84
+      },
+      {
+        "productId": 157,
+        "quantity": 2,
+        "unitPrice": 20.74
+      },
+      {
+        "productId": 418,
+        "quantity": 3,
+        "unitPrice": 137.94
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6912 Main Street",
+      "city": "Dormansville",
+      "postalCode": 37110,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-10-13T15:00:00Z"
+  },
+  {
+    "id": 30,
+    "customerId": 914,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 552,
+        "quantity": 5,
+        "unitPrice": 200.97
+      },
+      {
+        "productId": 920,
+        "quantity": 2,
+        "unitPrice": 124.62
+      },
+      {
+        "productId": 280,
+        "quantity": 4,
+        "unitPrice": 123.98
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6471 Main Street",
+      "city": "Rivertown",
+      "postalCode": 97670,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-07-24T05:53:00Z"
+  },
+  {
+    "id": 31,
+    "customerId": 547,
+    "status": "active",
+    "items": [
+      {
+        "productId": 929,
+        "quantity": 4,
+        "unitPrice": 150.01
+      },
+      {
+        "productId": 679,
+        "quantity": 1,
+        "unitPrice": 25.57
+      },
+      {
+        "productId": 439,
+        "quantity": 2,
+        "unitPrice": 217.38
+      },
+      {
+        "productId": 187,
+        "quantity": 1,
+        "unitPrice": 68.74
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5463 Main Street",
+      "city": "Springfield",
+      "postalCode": 69598,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-07-09T02:30:00Z"
+  },
+  {
+    "id": 32,
+    "customerId": 975,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 230,
+        "quantity": 1,
+        "unitPrice": 196.4
+      }
+    ],
+    "shippingAddress": {
+      "line1": "759 Main Street",
+      "city": "Dormansville",
+      "postalCode": 42411,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-01-20T04:15:00Z"
+  },
+  {
+    "id": 33,
+    "customerId": 971,
+    "status": "active",
+    "items": [
+      {
+        "productId": 477,
+        "quantity": 3,
+        "unitPrice": 192.89
+      },
+      {
+        "productId": 172,
+        "quantity": 5,
+        "unitPrice": 153.78
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1976 Main Street",
+      "city": "Springfield",
+      "postalCode": 50768,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-10-01T09:36:00Z"
+  },
+  {
+    "id": 34,
+    "customerId": 78,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 708,
+        "quantity": 2,
+        "unitPrice": 29.97
+      },
+      {
+        "productId": 792,
+        "quantity": 3,
+        "unitPrice": 213.32
+      },
+      {
+        "productId": 615,
+        "quantity": 1,
+        "unitPrice": 200.08
+      },
+      {
+        "productId": 580,
+        "quantity": 1,
+        "unitPrice": 90.06
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7118 Main Street",
+      "city": "Rivertown",
+      "postalCode": 19038,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-08-04T13:23:00Z"
+  },
+  {
+    "id": 35,
+    "customerId": 752,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 989,
+        "quantity": 3,
+        "unitPrice": 155.9
+      },
+      {
+        "productId": 942,
+        "quantity": 5,
+        "unitPrice": 194.79
+      },
+      {
+        "productId": 477,
+        "quantity": 4,
+        "unitPrice": 207.3
+      },
+      {
+        "productId": 607,
+        "quantity": 3,
+        "unitPrice": 83.96
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4122 Main Street",
+      "city": "Dormansville",
+      "postalCode": 46559,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-10-20T21:24:00Z"
+  },
+  {
+    "id": 36,
+    "customerId": 187,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 218,
+        "quantity": 3,
+        "unitPrice": 200.47
+      },
+      {
+        "productId": 349,
+        "quantity": 3,
+        "unitPrice": 220.68
+      },
+      {
+        "productId": 719,
+        "quantity": 3,
+        "unitPrice": 141.17
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "priority",
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-12-14T15:35:00Z"
+  },
+  {
+    "id": 37,
+    "customerId": 503,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 812,
+        "quantity": 1,
+        "unitPrice": 27.8
+      },
+      {
+        "productId": 227,
+        "quantity": 4,
+        "unitPrice": 174.49
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5116 Main Street",
+      "city": "Fairview",
+      "postalCode": 58368,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "backorder",
+      "priority"
+    ],
+    "createdAt": "2024-12-18T10:22:00Z"
+  },
+  {
+    "id": 38,
+    "customerId": 124,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 198,
+        "quantity": 3,
+        "unitPrice": 34.29
+      },
+      {
+        "productId": 549,
+        "quantity": 2,
+        "unitPrice": 51.93
+      },
+      {
+        "productId": 757,
+        "quantity": 4,
+        "unitPrice": 72.74
+      },
+      {
+        "productId": 604,
+        "quantity": 5,
+        "unitPrice": 151.21
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1747 Main Street",
+      "city": "Springfield",
+      "postalCode": 48829,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-06-06T09:00:00Z"
+  },
+  {
+    "id": 39,
+    "customerId": 567,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 715,
+        "quantity": 2,
+        "unitPrice": 161.28
+      },
+      {
+        "productId": 771,
+        "quantity": 4,
+        "unitPrice": 30.13
+      }
+    ],
+    "shippingAddress": {
+      "line1": "300 Main Street",
+      "city": "Fairview",
+      "postalCode": 47268,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-03-02T08:55:00Z"
+  },
+  {
+    "id": 40,
+    "customerId": 504,
+    "status": "active",
+    "items": [
+      {
+        "productId": 591,
+        "quantity": 1,
+        "unitPrice": 42.17
+      },
+      {
+        "productId": 831,
+        "quantity": 5,
+        "unitPrice": 237.54
+      },
+      {
+        "productId": 88,
+        "quantity": 2,
+        "unitPrice": 34.02
+      },
+      {
+        "productId": 783,
+        "quantity": 4,
+        "unitPrice": 153.55
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-10-08T16:24:00Z"
+  },
+  {
+    "id": 41,
+    "customerId": 603,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 313,
+        "quantity": 5,
+        "unitPrice": 157.15
+      },
+      {
+        "productId": 625,
+        "quantity": 1,
+        "unitPrice": 237.16
+      },
+      {
+        "productId": 213,
+        "quantity": 2,
+        "unitPrice": 69.84
+      },
+      {
+        "productId": 84,
+        "quantity": 2,
+        "unitPrice": 63.77
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9143 Main Street",
+      "city": "Dormansville",
+      "postalCode": 30517,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-07-15T22:38:00Z"
+  },
+  {
+    "id": 42,
+    "customerId": 724,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 720,
+        "quantity": 4,
+        "unitPrice": 22.44
+      },
+      {
+        "productId": 240,
+        "quantity": 3,
+        "unitPrice": 198.02
+      },
+      {
+        "productId": 641,
+        "quantity": 5,
+        "unitPrice": 166.99
+      },
+      {
+        "productId": 957,
+        "quantity": 2,
+        "unitPrice": 109.16
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9022 Main Street",
+      "city": "Springfield",
+      "postalCode": 94886,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-05-27T04:04:00Z"
+  },
+  {
+    "id": 43,
+    "customerId": 767,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 944,
+        "quantity": 3,
+        "unitPrice": 112.59
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7779 Main Street",
+      "city": "Rivertown",
+      "postalCode": 62757,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-18T15:28:00Z"
+  },
+  {
+    "id": 44,
+    "customerId": 753,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 619,
+        "quantity": 3,
+        "unitPrice": 11.34
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3850 Main Street",
+      "city": "Fairview",
+      "postalCode": 86955,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-08-17T20:28:00Z"
+  },
+  {
+    "id": 45,
+    "customerId": 651,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 993,
+        "quantity": 1,
+        "unitPrice": 120.15
+      },
+      {
+        "productId": 419,
+        "quantity": 3,
+        "unitPrice": 83.66
+      },
+      {
+        "productId": 108,
+        "quantity": 2,
+        "unitPrice": 85.8
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8217 Main Street",
+      "city": "Rivertown",
+      "postalCode": 96846,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift",
+      "sale",
+      "subscription"
+    ],
+    "createdAt": "2024-06-09T10:07:00Z"
+  },
+  {
+    "id": 46,
+    "customerId": 2,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 891,
+        "quantity": 5,
+        "unitPrice": 118.18
+      },
+      {
+        "productId": 56,
+        "quantity": 2,
+        "unitPrice": 132.02
+      },
+      {
+        "productId": 638,
+        "quantity": 4,
+        "unitPrice": 158.23
+      },
+      {
+        "productId": 779,
+        "quantity": 1,
+        "unitPrice": 54.87
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9098 Main Street",
+      "city": "Springfield",
+      "postalCode": 47752,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "gift",
+      "subscription"
+    ],
+    "createdAt": "2024-11-20T07:45:00Z"
+  },
+  {
+    "id": 47,
+    "customerId": 418,
+    "status": "active",
+    "items": [
+      {
+        "productId": 231,
+        "quantity": 1,
+        "unitPrice": 118.05
+      },
+      {
+        "productId": 121,
+        "quantity": 2,
+        "unitPrice": 127.1
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4881 Main Street",
+      "city": "Fairview",
+      "postalCode": 45838,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-08-16T07:29:00Z"
+  },
+  {
+    "id": 48,
+    "customerId": 521,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 901,
+        "quantity": 2,
+        "unitPrice": 216.69
+      },
+      {
+        "productId": 283,
+        "quantity": 4,
+        "unitPrice": 88.27
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8418 Main Street",
+      "city": "Rivertown",
+      "postalCode": 10336,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-08-18T15:22:00Z"
+  },
+  {
+    "id": 49,
+    "customerId": 467,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 891,
+        "quantity": 2,
+        "unitPrice": 245.29
+      },
+      {
+        "productId": 245,
+        "quantity": 5,
+        "unitPrice": 98.83
+      },
+      {
+        "productId": 877,
+        "quantity": 4,
+        "unitPrice": 15.69
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7849 Main Street",
+      "city": "Lakeview",
+      "postalCode": 60604,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-03-17T18:21:00Z"
+  },
+  {
+    "id": 50,
+    "customerId": 539,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 16,
+        "quantity": 2,
+        "unitPrice": 105.44
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2629 Main Street",
+      "city": "Dormansville",
+      "postalCode": 71537,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-11-03T10:54:00Z"
+  },
+  {
+    "id": 51,
+    "customerId": 909,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 894,
+        "quantity": 5,
+        "unitPrice": 13.8
+      },
+      {
+        "productId": 71,
+        "quantity": 2,
+        "unitPrice": 159.63
+      },
+      {
+        "productId": 944,
+        "quantity": 3,
+        "unitPrice": 249.37
+      },
+      {
+        "productId": 765,
+        "quantity": 1,
+        "unitPrice": 111.32
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1712 Main Street",
+      "city": "Dormansville",
+      "postalCode": 68153,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-06-26T01:18:00Z"
+  },
+  {
+    "id": 52,
+    "customerId": 544,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 580,
+        "quantity": 2,
+        "unitPrice": 46.65
+      },
+      {
+        "productId": 81,
+        "quantity": 5,
+        "unitPrice": 218.36
+      },
+      {
+        "productId": 635,
+        "quantity": 2,
+        "unitPrice": 126.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9654 Main Street",
+      "city": "Springfield",
+      "postalCode": 40433,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-11-09T14:16:00Z"
+  },
+  {
+    "id": 53,
+    "customerId": 295,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 560,
+        "quantity": 2,
+        "unitPrice": 23.1
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5761 Main Street",
+      "city": "Fairview",
+      "postalCode": 49210,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-05-07T12:54:00Z"
+  },
+  {
+    "id": 54,
+    "customerId": 368,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 303,
+        "quantity": 3,
+        "unitPrice": 10.38
+      },
+      {
+        "productId": 850,
+        "quantity": 4,
+        "unitPrice": 72.25
+      },
+      {
+        "productId": 580,
+        "quantity": 1,
+        "unitPrice": 228.1
+      },
+      {
+        "productId": 764,
+        "quantity": 4,
+        "unitPrice": 209.05
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-05-25T07:38:00Z"
+  },
+  {
+    "id": 55,
+    "customerId": 257,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 774,
+        "quantity": 2,
+        "unitPrice": 158.92
+      },
+      {
+        "productId": 926,
+        "quantity": 1,
+        "unitPrice": 80.69
+      },
+      {
+        "productId": 452,
+        "quantity": 1,
+        "unitPrice": 147.0
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2253 Main Street",
+      "city": "Dormansville",
+      "postalCode": 48680,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-12-14T05:12:00Z"
+  },
+  {
+    "id": 56,
+    "customerId": 375,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 514,
+        "quantity": 3,
+        "unitPrice": 208.47
+      },
+      {
+        "productId": 264,
+        "quantity": 4,
+        "unitPrice": 242.01
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4935 Main Street",
+      "city": "Rivertown",
+      "postalCode": 25095,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority"
+    ],
+    "createdAt": "2024-04-28T21:46:00Z"
+  },
+  {
+    "id": 57,
+    "customerId": 375,
+    "status": "active",
+    "items": [
+      {
+        "productId": 810,
+        "quantity": 4,
+        "unitPrice": 8.41
+      },
+      {
+        "productId": 550,
+        "quantity": 1,
+        "unitPrice": 116.42
+      },
+      {
+        "productId": 689,
+        "quantity": 3,
+        "unitPrice": 148.22
+      },
+      {
+        "productId": 843,
+        "quantity": 3,
+        "unitPrice": 31.54
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3930 Main Street",
+      "city": "Lakeview",
+      "postalCode": 13280,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-02-21T14:58:00Z"
+  },
+  {
+    "id": 58,
+    "customerId": 47,
+    "status": "active",
+    "items": [
+      {
+        "productId": 312,
+        "quantity": 4,
+        "unitPrice": 33.45
+      },
+      {
+        "productId": 241,
+        "quantity": 5,
+        "unitPrice": 38.24
+      },
+      {
+        "productId": 465,
+        "quantity": 3,
+        "unitPrice": 169.27
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8950 Main Street",
+      "city": "Lakeview",
+      "postalCode": 86983,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-12-05T13:41:00Z"
+  },
+  {
+    "id": 59,
+    "customerId": 962,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 34,
+        "quantity": 3,
+        "unitPrice": 58.23
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7385 Main Street",
+      "city": "Springfield",
+      "postalCode": 57537,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-07-09T06:07:00Z"
+  },
+  {
+    "id": 60,
+    "customerId": 655,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 995,
+        "quantity": 1,
+        "unitPrice": 17.39
+      },
+      {
+        "productId": 342,
+        "quantity": 2,
+        "unitPrice": 247.26
+      },
+      {
+        "productId": 806,
+        "quantity": 5,
+        "unitPrice": 55.28
+      },
+      {
+        "productId": 850,
+        "quantity": 5,
+        "unitPrice": 55.75
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-04-27T07:21:00Z"
+  },
+  {
+    "id": 61,
+    "customerId": 284,
+    "status": "active",
+    "items": [
+      {
+        "productId": 134,
+        "quantity": 5,
+        "unitPrice": 66.41
+      },
+      {
+        "productId": 179,
+        "quantity": 1,
+        "unitPrice": 166.96
+      }
+    ],
+    "shippingAddress": {
+      "line1": "522 Main Street",
+      "city": "Springfield",
+      "postalCode": 11947,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-06-01T05:16:00Z"
+  },
+  {
+    "id": 62,
+    "customerId": 117,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 66,
+        "quantity": 4,
+        "unitPrice": 114.83
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-08-17T07:39:00Z"
+  },
+  {
+    "id": 63,
+    "customerId": 675,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 309,
+        "quantity": 4,
+        "unitPrice": 162.62
+      }
+    ],
+    "shippingAddress": {
+      "line1": "610 Main Street",
+      "city": "Dormansville",
+      "postalCode": 72781,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-12-15T02:57:00Z"
+  },
+  {
+    "id": 64,
+    "customerId": 130,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 640,
+        "quantity": 5,
+        "unitPrice": 139.35
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5427 Main Street",
+      "city": "Lakeview",
+      "postalCode": 88301,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-05-15T16:38:00Z"
+  },
+  {
+    "id": 65,
+    "customerId": 874,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 667,
+        "quantity": 5,
+        "unitPrice": 181.61
+      },
+      {
+        "productId": 221,
+        "quantity": 4,
+        "unitPrice": 115.63
+      },
+      {
+        "productId": 234,
+        "quantity": 4,
+        "unitPrice": 88.04
+      },
+      {
+        "productId": 465,
+        "quantity": 4,
+        "unitPrice": 106.92
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-07-11T21:16:00Z"
+  },
+  {
+    "id": 66,
+    "customerId": 486,
+    "status": "active",
+    "items": [
+      {
+        "productId": 94,
+        "quantity": 1,
+        "unitPrice": 27.84
+      },
+      {
+        "productId": 99,
+        "quantity": 3,
+        "unitPrice": 203.88
+      },
+      {
+        "productId": 570,
+        "quantity": 1,
+        "unitPrice": 148.68
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9301 Main Street",
+      "city": "Fairview",
+      "postalCode": 53207,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-06-28T21:48:00Z"
+  },
+  {
+    "id": 67,
+    "customerId": 992,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 615,
+        "quantity": 3,
+        "unitPrice": 91.15
+      },
+      {
+        "productId": 592,
+        "quantity": 5,
+        "unitPrice": 57.12
+      },
+      {
+        "productId": 673,
+        "quantity": 4,
+        "unitPrice": 59.94
+      },
+      {
+        "productId": 111,
+        "quantity": 3,
+        "unitPrice": 212.12
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6122 Main Street",
+      "city": "Dormansville",
+      "postalCode": 46512,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-09-25T19:39:00Z"
+  },
+  {
+    "id": 68,
+    "customerId": 711,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 30,
+        "quantity": 2,
+        "unitPrice": 71.95
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5162 Main Street",
+      "city": "Rivertown",
+      "postalCode": 56009,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority"
+    ],
+    "createdAt": "2024-10-22T12:04:00Z"
+  },
+  {
+    "id": 69,
+    "customerId": 94,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 544,
+        "quantity": 2,
+        "unitPrice": 97.17
+      },
+      {
+        "productId": 465,
+        "quantity": 3,
+        "unitPrice": 43.57
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5205 Main Street",
+      "city": "Rivertown",
+      "postalCode": 84395,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-03-06T19:03:00Z"
+  },
+  {
+    "id": 70,
+    "customerId": 498,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 453,
+        "quantity": 4,
+        "unitPrice": 71.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8494 Main Street",
+      "city": "Dormansville",
+      "postalCode": 55242,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-11-22T18:31:00Z"
+  },
+  {
+    "id": 71,
+    "customerId": 614,
+    "status": "active",
+    "items": [
+      {
+        "productId": 8,
+        "quantity": 2,
+        "unitPrice": 78.85
+      },
+      {
+        "productId": 217,
+        "quantity": 2,
+        "unitPrice": 192.22
+      },
+      {
+        "productId": 297,
+        "quantity": 3,
+        "unitPrice": 34.4
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-08-24T13:11:00Z"
+  },
+  {
+    "id": 72,
+    "customerId": 513,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 854,
+        "quantity": 3,
+        "unitPrice": 22.66
+      },
+      {
+        "productId": 883,
+        "quantity": 1,
+        "unitPrice": 111.87
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7632 Main Street",
+      "city": "Dormansville",
+      "postalCode": 51033,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-12-21T13:18:00Z"
+  },
+  {
+    "id": 73,
+    "customerId": 176,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 472,
+        "quantity": 3,
+        "unitPrice": 26.59
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1834 Main Street",
+      "city": "Springfield",
+      "postalCode": 67104,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-07-28T09:47:00Z"
+  },
+  {
+    "id": 74,
+    "customerId": 79,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 649,
+        "quantity": 1,
+        "unitPrice": 135.0
+      },
+      {
+        "productId": 199,
+        "quantity": 3,
+        "unitPrice": 91.02
+      },
+      {
+        "productId": 982,
+        "quantity": 2,
+        "unitPrice": 62.89
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2499 Main Street",
+      "city": "Rivertown",
+      "postalCode": 35856,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority",
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-11-16T14:48:00Z"
+  },
+  {
+    "id": 75,
+    "customerId": 659,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 640,
+        "quantity": 3,
+        "unitPrice": 216.74
+      },
+      {
+        "productId": 643,
+        "quantity": 3,
+        "unitPrice": 41.98
+      },
+      {
+        "productId": 70,
+        "quantity": 4,
+        "unitPrice": 113.34
+      },
+      {
+        "productId": 311,
+        "quantity": 3,
+        "unitPrice": 149.9
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5866 Main Street",
+      "city": "Fairview",
+      "postalCode": 19724,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-01-12T09:04:00Z"
+  },
+  {
+    "id": 76,
+    "customerId": 474,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 568,
+        "quantity": 1,
+        "unitPrice": 115.18
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9466 Main Street",
+      "city": "Springfield",
+      "postalCode": 52143,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "priority"
+    ],
+    "createdAt": "2024-01-15T03:51:00Z"
+  },
+  {
+    "id": 77,
+    "customerId": 662,
+    "status": "active",
+    "items": [
+      {
+        "productId": 41,
+        "quantity": 2,
+        "unitPrice": 178.37
+      },
+      {
+        "productId": 450,
+        "quantity": 5,
+        "unitPrice": 133.07
+      },
+      {
+        "productId": 163,
+        "quantity": 3,
+        "unitPrice": 96.35
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4734 Main Street",
+      "city": "Lakeview",
+      "postalCode": 63578,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-11-20T01:50:00Z"
+  },
+  {
+    "id": 78,
+    "customerId": 695,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 291,
+        "quantity": 3,
+        "unitPrice": 182.31
+      },
+      {
+        "productId": 673,
+        "quantity": 5,
+        "unitPrice": 218.95
+      },
+      {
+        "productId": 342,
+        "quantity": 1,
+        "unitPrice": 147.77
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-03-12T09:41:00Z"
+  },
+  {
+    "id": 79,
+    "customerId": 87,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 573,
+        "quantity": 4,
+        "unitPrice": 162.66
+      },
+      {
+        "productId": 337,
+        "quantity": 2,
+        "unitPrice": 169.18
+      },
+      {
+        "productId": 849,
+        "quantity": 5,
+        "unitPrice": 27.9
+      },
+      {
+        "productId": 687,
+        "quantity": 4,
+        "unitPrice": 129.58
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-05-06T06:21:00Z"
+  },
+  {
+    "id": 80,
+    "customerId": 159,
+    "status": "active",
+    "items": [
+      {
+        "productId": 303,
+        "quantity": 1,
+        "unitPrice": 129.38
+      },
+      {
+        "productId": 553,
+        "quantity": 5,
+        "unitPrice": 14.25
+      },
+      {
+        "productId": 345,
+        "quantity": 5,
+        "unitPrice": 37.11
+      },
+      {
+        "productId": 386,
+        "quantity": 2,
+        "unitPrice": 44.75
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2812 Main Street",
+      "city": "Lakeview",
+      "postalCode": 15726,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "sale"
+    ],
+    "createdAt": "2024-10-10T23:50:00Z"
+  },
+  {
+    "id": 81,
+    "customerId": 989,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 926,
+        "quantity": 2,
+        "unitPrice": 95.12
+      },
+      {
+        "productId": 970,
+        "quantity": 5,
+        "unitPrice": 246.19
+      },
+      {
+        "productId": 473,
+        "quantity": 3,
+        "unitPrice": 195.64
+      },
+      {
+        "productId": 515,
+        "quantity": 5,
+        "unitPrice": 107.57
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2755 Main Street",
+      "city": "Springfield",
+      "postalCode": 89254,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-05-02T20:30:00Z"
+  },
+  {
+    "id": 82,
+    "customerId": 867,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 872,
+        "quantity": 1,
+        "unitPrice": 74.84
+      },
+      {
+        "productId": 782,
+        "quantity": 2,
+        "unitPrice": 71.83
+      },
+      {
+        "productId": 928,
+        "quantity": 5,
+        "unitPrice": 41.1
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7267 Main Street",
+      "city": "Dormansville",
+      "postalCode": 39102,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-06-01T13:03:00Z"
+  },
+  {
+    "id": 83,
+    "customerId": 84,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 230,
+        "quantity": 1,
+        "unitPrice": 83.08
+      },
+      {
+        "productId": 102,
+        "quantity": 3,
+        "unitPrice": 198.89
+      },
+      {
+        "productId": 141,
+        "quantity": 1,
+        "unitPrice": 75.29
+      },
+      {
+        "productId": 850,
+        "quantity": 4,
+        "unitPrice": 175.54
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2373 Main Street",
+      "city": "Lakeview",
+      "postalCode": 68799,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-01-03T00:16:00Z"
+  },
+  {
+    "id": 84,
+    "customerId": 745,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 541,
+        "quantity": 4,
+        "unitPrice": 32.24
+      },
+      {
+        "productId": 296,
+        "quantity": 2,
+        "unitPrice": 78.78
+      }
+    ],
+    "shippingAddress": {
+      "line1": "882 Main Street",
+      "city": "Springfield",
+      "postalCode": 65027,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "gift",
+      "subscription"
+    ],
+    "createdAt": "2024-08-20T17:01:00Z"
+  },
+  {
+    "id": 85,
+    "customerId": 2,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 362,
+        "quantity": 2,
+        "unitPrice": 144.81
+      },
+      {
+        "productId": 192,
+        "quantity": 1,
+        "unitPrice": 133.25
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6008 Main Street",
+      "city": "Dormansville",
+      "postalCode": 78951,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-09-26T16:35:00Z"
+  },
+  {
+    "id": 86,
+    "customerId": 651,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 383,
+        "quantity": 3,
+        "unitPrice": 188.09
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5950 Main Street",
+      "city": "Dormansville",
+      "postalCode": 55193,
+      "country": "United States of America"
+    },
+    "tags": [
+      "gift",
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-01-12T17:21:00Z"
+  },
+  {
+    "id": 87,
+    "customerId": 713,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 647,
+        "quantity": 2,
+        "unitPrice": 203.82
+      },
+      {
+        "productId": 65,
+        "quantity": 4,
+        "unitPrice": 14.06
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3402 Main Street",
+      "city": "Dormansville",
+      "postalCode": 36144,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-09-16T08:02:00Z"
+  },
+  {
+    "id": 88,
+    "customerId": 49,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 340,
+        "quantity": 3,
+        "unitPrice": 35.5
+      },
+      {
+        "productId": 377,
+        "quantity": 4,
+        "unitPrice": 222.92
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7304 Main Street",
+      "city": "Lakeview",
+      "postalCode": 54438,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-09-09T02:46:00Z"
+  },
+  {
+    "id": 89,
+    "customerId": 843,
+    "status": "active",
+    "items": [
+      {
+        "productId": 559,
+        "quantity": 3,
+        "unitPrice": 83.7
+      },
+      {
+        "productId": 82,
+        "quantity": 3,
+        "unitPrice": 166.93
+      },
+      {
+        "productId": 314,
+        "quantity": 4,
+        "unitPrice": 152.64
+      },
+      {
+        "productId": 437,
+        "quantity": 2,
+        "unitPrice": 173.99
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-12-28T11:39:00Z"
+  },
+  {
+    "id": 90,
+    "customerId": 971,
+    "status": "active",
+    "items": [
+      {
+        "productId": 77,
+        "quantity": 4,
+        "unitPrice": 94.01
+      },
+      {
+        "productId": 821,
+        "quantity": 2,
+        "unitPrice": 238.43
+      },
+      {
+        "productId": 147,
+        "quantity": 5,
+        "unitPrice": 171.13
+      },
+      {
+        "productId": 449,
+        "quantity": 1,
+        "unitPrice": 35.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3966 Main Street",
+      "city": "Rivertown",
+      "postalCode": 57467,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift",
+      "priority",
+      "backorder"
+    ],
+    "createdAt": "2024-08-12T11:28:00Z"
+  },
+  {
+    "id": 91,
+    "customerId": 408,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 666,
+        "quantity": 3,
+        "unitPrice": 66.15
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1958 Main Street",
+      "city": "Dormansville",
+      "postalCode": 34385,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-05-23T14:13:00Z"
+  },
+  {
+    "id": 92,
+    "customerId": 205,
+    "status": "active",
+    "items": [
+      {
+        "productId": 139,
+        "quantity": 1,
+        "unitPrice": 115.75
+      },
+      {
+        "productId": 921,
+        "quantity": 4,
+        "unitPrice": 249.33
+      },
+      {
+        "productId": 830,
+        "quantity": 3,
+        "unitPrice": 168.62
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1163 Main Street",
+      "city": "Fairview",
+      "postalCode": 81063,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-06-17T07:07:00Z"
+  },
+  {
+    "id": 93,
+    "customerId": 506,
+    "status": "active",
+    "items": [
+      {
+        "productId": 370,
+        "quantity": 5,
+        "unitPrice": 145.21
+      },
+      {
+        "productId": 479,
+        "quantity": 5,
+        "unitPrice": 36.79
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1512 Main Street",
+      "city": "Dormansville",
+      "postalCode": 50539,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-12-24T15:33:00Z"
+  },
+  {
+    "id": 94,
+    "customerId": 76,
+    "status": "active",
+    "items": [
+      {
+        "productId": 996,
+        "quantity": 3,
+        "unitPrice": 162.37
+      },
+      {
+        "productId": 461,
+        "quantity": 4,
+        "unitPrice": 171.63
+      },
+      {
+        "productId": 353,
+        "quantity": 2,
+        "unitPrice": 220.1
+      },
+      {
+        "productId": 799,
+        "quantity": 5,
+        "unitPrice": 161.75
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3081 Main Street",
+      "city": "Springfield",
+      "postalCode": 66704,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-09-05T09:10:00Z"
+  },
+  {
+    "id": 95,
+    "customerId": 355,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 917,
+        "quantity": 3,
+        "unitPrice": 212.25
+      },
+      {
+        "productId": 257,
+        "quantity": 2,
+        "unitPrice": 160.59
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9124 Main Street",
+      "city": "Rivertown",
+      "postalCode": 26406,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-09-21T05:37:00Z"
+  },
+  {
+    "id": 96,
+    "customerId": 924,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 346,
+        "quantity": 5,
+        "unitPrice": 15.09
+      },
+      {
+        "productId": 885,
+        "quantity": 1,
+        "unitPrice": 24.9
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9549 Main Street",
+      "city": "Rivertown",
+      "postalCode": 95344,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-11-18T09:41:00Z"
+  },
+  {
+    "id": 97,
+    "customerId": 702,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 305,
+        "quantity": 4,
+        "unitPrice": 22.88
+      },
+      {
+        "productId": 62,
+        "quantity": 2,
+        "unitPrice": 112.7
+      },
+      {
+        "productId": 496,
+        "quantity": 4,
+        "unitPrice": 54.99
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2453 Main Street",
+      "city": "Rivertown",
+      "postalCode": 51853,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "priority"
+    ],
+    "createdAt": "2024-06-17T17:06:00Z"
+  },
+  {
+    "id": 98,
+    "customerId": 461,
+    "status": "active",
+    "items": [
+      {
+        "productId": 145,
+        "quantity": 1,
+        "unitPrice": 17.4
+      },
+      {
+        "productId": 969,
+        "quantity": 4,
+        "unitPrice": 216.72
+      },
+      {
+        "productId": 429,
+        "quantity": 2,
+        "unitPrice": 240.86
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2716 Main Street",
+      "city": "Rivertown",
+      "postalCode": 85718,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-06-07T05:31:00Z"
+  },
+  {
+    "id": 99,
+    "customerId": 24,
+    "status": "active",
+    "items": [
+      {
+        "productId": 968,
+        "quantity": 4,
+        "unitPrice": 128.83
+      },
+      {
+        "productId": 990,
+        "quantity": 2,
+        "unitPrice": 57.71
+      },
+      {
+        "productId": 362,
+        "quantity": 1,
+        "unitPrice": 17.38
+      },
+      {
+        "productId": 507,
+        "quantity": 5,
+        "unitPrice": 221.17
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7810 Main Street",
+      "city": "Rivertown",
+      "postalCode": 80345,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-02-14T04:56:00Z"
+  },
+  {
+    "id": 100,
+    "customerId": 375,
+    "status": "active",
+    "items": [
+      {
+        "productId": 411,
+        "quantity": 1,
+        "unitPrice": 144.72
+      },
+      {
+        "productId": 200,
+        "quantity": 3,
+        "unitPrice": 140.54
+      },
+      {
+        "productId": 76,
+        "quantity": 4,
+        "unitPrice": 128.54
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9108 Main Street",
+      "city": "Rivertown",
+      "postalCode": 91689,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-07-12T10:35:00Z"
+  },
+  {
+    "id": 101,
+    "customerId": 522,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 513,
+        "quantity": 1,
+        "unitPrice": 16.1
+      },
+      {
+        "productId": 141,
+        "quantity": 3,
+        "unitPrice": 201.97
+      },
+      {
+        "productId": 532,
+        "quantity": 4,
+        "unitPrice": 41.49
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8546 Main Street",
+      "city": "Springfield",
+      "postalCode": 52987,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-06-06T12:39:00Z"
+  },
+  {
+    "id": 102,
+    "customerId": 522,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 502,
+        "quantity": 5,
+        "unitPrice": 78.45
+      },
+      {
+        "productId": 836,
+        "quantity": 1,
+        "unitPrice": 95.25
+      },
+      {
+        "productId": 690,
+        "quantity": 1,
+        "unitPrice": 245.08
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9663 Main Street",
+      "city": "Rivertown",
+      "postalCode": 92478,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-10-19T07:46:00Z"
+  },
+  {
+    "id": 103,
+    "customerId": 645,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 635,
+        "quantity": 4,
+        "unitPrice": 41.21
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4068 Main Street",
+      "city": "Dormansville",
+      "postalCode": 85047,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-02-07T00:28:00Z"
+  },
+  {
+    "id": 104,
+    "customerId": 209,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 514,
+        "quantity": 5,
+        "unitPrice": 230.53
+      },
+      {
+        "productId": 894,
+        "quantity": 1,
+        "unitPrice": 177.91
+      },
+      {
+        "productId": 532,
+        "quantity": 2,
+        "unitPrice": 142.42
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7937 Main Street",
+      "city": "Fairview",
+      "postalCode": 59391,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-09-11T17:22:00Z"
+  },
+  {
+    "id": 105,
+    "customerId": 253,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 572,
+        "quantity": 3,
+        "unitPrice": 60.09
+      },
+      {
+        "productId": 997,
+        "quantity": 3,
+        "unitPrice": 193.94
+      },
+      {
+        "productId": 722,
+        "quantity": 2,
+        "unitPrice": 174.11
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8111 Main Street",
+      "city": "Rivertown",
+      "postalCode": 72888,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-26T23:17:00Z"
+  },
+  {
+    "id": 106,
+    "customerId": 389,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 839,
+        "quantity": 3,
+        "unitPrice": 238.88
+      },
+      {
+        "productId": 824,
+        "quantity": 2,
+        "unitPrice": 76.16
+      },
+      {
+        "productId": 295,
+        "quantity": 1,
+        "unitPrice": 89.86
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-04-07T17:17:00Z"
+  },
+  {
+    "id": 107,
+    "customerId": 601,
+    "status": "active",
+    "items": [
+      {
+        "productId": 249,
+        "quantity": 1,
+        "unitPrice": 169.11
+      },
+      {
+        "productId": 544,
+        "quantity": 2,
+        "unitPrice": 161.3
+      },
+      {
+        "productId": 54,
+        "quantity": 1,
+        "unitPrice": 106.26
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "sale",
+      "gift",
+      "backorder"
+    ],
+    "createdAt": "2024-03-01T17:59:00Z"
+  },
+  {
+    "id": 108,
+    "customerId": 900,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 489,
+        "quantity": 2,
+        "unitPrice": 190.2
+      },
+      {
+        "productId": 295,
+        "quantity": 3,
+        "unitPrice": 74.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1069 Main Street",
+      "city": "Dormansville",
+      "postalCode": 95498,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-12-24T01:58:00Z"
+  },
+  {
+    "id": 109,
+    "customerId": 957,
+    "status": "active",
+    "items": [
+      {
+        "productId": 857,
+        "quantity": 4,
+        "unitPrice": 198.05
+      },
+      {
+        "productId": 191,
+        "quantity": 3,
+        "unitPrice": 219.8
+      }
+    ],
+    "shippingAddress": {
+      "line1": "251 Main Street",
+      "city": "Rivertown",
+      "postalCode": 84443,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-05-15T20:34:00Z"
+  },
+  {
+    "id": 110,
+    "customerId": 517,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 280,
+        "quantity": 2,
+        "unitPrice": 203.16
+      },
+      {
+        "productId": 339,
+        "quantity": 2,
+        "unitPrice": 184.12
+      },
+      {
+        "productId": 664,
+        "quantity": 3,
+        "unitPrice": 181.06
+      },
+      {
+        "productId": 15,
+        "quantity": 3,
+        "unitPrice": 198.74
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9402 Main Street",
+      "city": "Springfield",
+      "postalCode": 33002,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-11-13T13:32:00Z"
+  },
+  {
+    "id": 111,
+    "customerId": 190,
+    "status": "active",
+    "items": [
+      {
+        "productId": 489,
+        "quantity": 3,
+        "unitPrice": 234.28
+      },
+      {
+        "productId": 7,
+        "quantity": 3,
+        "unitPrice": 98.98
+      },
+      {
+        "productId": 458,
+        "quantity": 3,
+        "unitPrice": 238.74
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-05-21T11:44:00Z"
+  },
+  {
+    "id": 112,
+    "customerId": 315,
+    "status": "active",
+    "items": [
+      {
+        "productId": 416,
+        "quantity": 5,
+        "unitPrice": 231.16
+      },
+      {
+        "productId": 910,
+        "quantity": 3,
+        "unitPrice": 174.12
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-11-10T11:39:00Z"
+  },
+  {
+    "id": 113,
+    "customerId": 157,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 766,
+        "quantity": 5,
+        "unitPrice": 96.54
+      },
+      {
+        "productId": 719,
+        "quantity": 5,
+        "unitPrice": 228.64
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8906 Main Street",
+      "city": "Springfield",
+      "postalCode": 42435,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-10-28T02:33:00Z"
+  },
+  {
+    "id": 114,
+    "customerId": 940,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 115,
+        "quantity": 1,
+        "unitPrice": 208.05
+      },
+      {
+        "productId": 925,
+        "quantity": 5,
+        "unitPrice": 54.53
+      },
+      {
+        "productId": 550,
+        "quantity": 2,
+        "unitPrice": 45.31
+      },
+      {
+        "productId": 875,
+        "quantity": 5,
+        "unitPrice": 113.25
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3465 Main Street",
+      "city": "Fairview",
+      "postalCode": 74071,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-09-15T01:29:00Z"
+  },
+  {
+    "id": 115,
+    "customerId": 60,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 474,
+        "quantity": 3,
+        "unitPrice": 182.2
+      },
+      {
+        "productId": 406,
+        "quantity": 3,
+        "unitPrice": 205.03
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3670 Main Street",
+      "city": "Fairview",
+      "postalCode": 19572,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-09-02T02:59:00Z"
+  },
+  {
+    "id": 116,
+    "customerId": 788,
+    "status": "active",
+    "items": [
+      {
+        "productId": 785,
+        "quantity": 4,
+        "unitPrice": 96.74
+      },
+      {
+        "productId": 913,
+        "quantity": 4,
+        "unitPrice": 114.89
+      },
+      {
+        "productId": 940,
+        "quantity": 4,
+        "unitPrice": 97.03
+      },
+      {
+        "productId": 700,
+        "quantity": 5,
+        "unitPrice": 37.58
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-09-13T16:08:00Z"
+  },
+  {
+    "id": 117,
+    "customerId": 306,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 690,
+        "quantity": 5,
+        "unitPrice": 108.91
+      },
+      {
+        "productId": 389,
+        "quantity": 2,
+        "unitPrice": 65.64
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5771 Main Street",
+      "city": "Springfield",
+      "postalCode": 46129,
+      "country": "United States of America"
+    },
+    "tags": [
+      "gift",
+      "subscription",
+      "backorder"
+    ],
+    "createdAt": "2024-07-20T00:15:00Z"
+  },
+  {
+    "id": 118,
+    "customerId": 458,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 689,
+        "quantity": 1,
+        "unitPrice": 64.96
+      },
+      {
+        "productId": 46,
+        "quantity": 4,
+        "unitPrice": 112.55
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "priority",
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-09-10T07:52:00Z"
+  },
+  {
+    "id": 119,
+    "customerId": 839,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 243,
+        "quantity": 3,
+        "unitPrice": 219.68
+      },
+      {
+        "productId": 677,
+        "quantity": 5,
+        "unitPrice": 59.16
+      },
+      {
+        "productId": 308,
+        "quantity": 3,
+        "unitPrice": 19.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9793 Main Street",
+      "city": "Springfield",
+      "postalCode": 92050,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-01-12T20:42:00Z"
+  },
+  {
+    "id": 120,
+    "customerId": 427,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 153,
+        "quantity": 3,
+        "unitPrice": 97.23
+      },
+      {
+        "productId": 773,
+        "quantity": 5,
+        "unitPrice": 121.01
+      },
+      {
+        "productId": 870,
+        "quantity": 2,
+        "unitPrice": 78.68
+      },
+      {
+        "productId": 725,
+        "quantity": 2,
+        "unitPrice": 202.42
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1044 Main Street",
+      "city": "Fairview",
+      "postalCode": 64090,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-17T04:24:00Z"
+  },
+  {
+    "id": 121,
+    "customerId": 81,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 868,
+        "quantity": 3,
+        "unitPrice": 27.65
+      },
+      {
+        "productId": 742,
+        "quantity": 2,
+        "unitPrice": 17.63
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6279 Main Street",
+      "city": "Fairview",
+      "postalCode": 89026,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-02-07T18:46:00Z"
+  },
+  {
+    "id": 122,
+    "customerId": 341,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 980,
+        "quantity": 1,
+        "unitPrice": 56.89
+      },
+      {
+        "productId": 195,
+        "quantity": 1,
+        "unitPrice": 187.99
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7946 Main Street",
+      "city": "Springfield",
+      "postalCode": 89220,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-04-18T10:49:00Z"
+  },
+  {
+    "id": 123,
+    "customerId": 368,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 268,
+        "quantity": 3,
+        "unitPrice": 130.64
+      },
+      {
+        "productId": 510,
+        "quantity": 4,
+        "unitPrice": 29.16
+      },
+      {
+        "productId": 740,
+        "quantity": 4,
+        "unitPrice": 191.6
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5346 Main Street",
+      "city": "Springfield",
+      "postalCode": 58589,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-12-05T00:16:00Z"
+  },
+  {
+    "id": 124,
+    "customerId": 236,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 584,
+        "quantity": 2,
+        "unitPrice": 127.33
+      },
+      {
+        "productId": 671,
+        "quantity": 3,
+        "unitPrice": 68.05
+      },
+      {
+        "productId": 842,
+        "quantity": 4,
+        "unitPrice": 241.79
+      },
+      {
+        "productId": 658,
+        "quantity": 4,
+        "unitPrice": 117.9
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5870 Main Street",
+      "city": "Springfield",
+      "postalCode": 28344,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-09-16T05:58:00Z"
+  },
+  {
+    "id": 125,
+    "customerId": 77,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 50,
+        "quantity": 1,
+        "unitPrice": 106.04
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3891 Main Street",
+      "city": "Dormansville",
+      "postalCode": 29795,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-08-12T01:39:00Z"
+  },
+  {
+    "id": 126,
+    "customerId": 545,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 422,
+        "quantity": 1,
+        "unitPrice": 9.1
+      },
+      {
+        "productId": 740,
+        "quantity": 3,
+        "unitPrice": 136.26
+      },
+      {
+        "productId": 294,
+        "quantity": 1,
+        "unitPrice": 128.04
+      },
+      {
+        "productId": 715,
+        "quantity": 4,
+        "unitPrice": 202.51
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3037 Main Street",
+      "city": "Dormansville",
+      "postalCode": 22624,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-03-08T06:39:00Z"
+  },
+  {
+    "id": 127,
+    "customerId": 407,
+    "status": "active",
+    "items": [
+      {
+        "productId": 383,
+        "quantity": 4,
+        "unitPrice": 117.45
+      },
+      {
+        "productId": 250,
+        "quantity": 2,
+        "unitPrice": 78.49
+      },
+      {
+        "productId": 848,
+        "quantity": 1,
+        "unitPrice": 165.17
+      }
+    ],
+    "shippingAddress": {
+      "line1": "619 Main Street",
+      "city": "Dormansville",
+      "postalCode": 63120,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-07-18T15:03:00Z"
+  },
+  {
+    "id": 128,
+    "customerId": 866,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 661,
+        "quantity": 3,
+        "unitPrice": 143.63
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1662 Main Street",
+      "city": "Fairview",
+      "postalCode": 15577,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-04-28T22:56:00Z"
+  },
+  {
+    "id": 129,
+    "customerId": 701,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 921,
+        "quantity": 5,
+        "unitPrice": 143.06
+      },
+      {
+        "productId": 34,
+        "quantity": 2,
+        "unitPrice": 232.55
+      },
+      {
+        "productId": 323,
+        "quantity": 1,
+        "unitPrice": 240.56
+      },
+      {
+        "productId": 602,
+        "quantity": 2,
+        "unitPrice": 189.3
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6625 Main Street",
+      "city": "Dormansville",
+      "postalCode": 49226,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority",
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-09-11T12:48:00Z"
+  },
+  {
+    "id": 130,
+    "customerId": 81,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 764,
+        "quantity": 3,
+        "unitPrice": 18.16
+      },
+      {
+        "productId": 448,
+        "quantity": 2,
+        "unitPrice": 210.48
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5680 Main Street",
+      "city": "Fairview",
+      "postalCode": 90460,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-11-09T14:31:00Z"
+  },
+  {
+    "id": 131,
+    "customerId": 443,
+    "status": "active",
+    "items": [
+      {
+        "productId": 697,
+        "quantity": 5,
+        "unitPrice": 166.86
+      },
+      {
+        "productId": 88,
+        "quantity": 5,
+        "unitPrice": 77.37
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4137 Main Street",
+      "city": "Dormansville",
+      "postalCode": 20752,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-12-26T20:09:00Z"
+  },
+  {
+    "id": 132,
+    "customerId": 6,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 456,
+        "quantity": 3,
+        "unitPrice": 191.53
+      },
+      {
+        "productId": 105,
+        "quantity": 2,
+        "unitPrice": 26.39
+      },
+      {
+        "productId": 442,
+        "quantity": 4,
+        "unitPrice": 141.46
+      },
+      {
+        "productId": 525,
+        "quantity": 4,
+        "unitPrice": 30.31
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1568 Main Street",
+      "city": "Rivertown",
+      "postalCode": 82642,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-10-20T10:55:00Z"
+  },
+  {
+    "id": 133,
+    "customerId": 798,
+    "status": "active",
+    "items": [
+      {
+        "productId": 743,
+        "quantity": 5,
+        "unitPrice": 226.78
+      },
+      {
+        "productId": 249,
+        "quantity": 5,
+        "unitPrice": 132.67
+      },
+      {
+        "productId": 702,
+        "quantity": 4,
+        "unitPrice": 46.53
+      },
+      {
+        "productId": 276,
+        "quantity": 3,
+        "unitPrice": 70.76
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-03-14T08:26:00Z"
+  },
+  {
+    "id": 134,
+    "customerId": 258,
+    "status": "active",
+    "items": [
+      {
+        "productId": 739,
+        "quantity": 4,
+        "unitPrice": 150.48
+      },
+      {
+        "productId": 201,
+        "quantity": 4,
+        "unitPrice": 31.21
+      },
+      {
+        "productId": 312,
+        "quantity": 1,
+        "unitPrice": 237.46
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5543 Main Street",
+      "city": "Fairview",
+      "postalCode": 59792,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-08-11T13:52:00Z"
+  },
+  {
+    "id": 135,
+    "customerId": 712,
+    "status": "active",
+    "items": [
+      {
+        "productId": 491,
+        "quantity": 3,
+        "unitPrice": 48.52
+      },
+      {
+        "productId": 408,
+        "quantity": 3,
+        "unitPrice": 76.4
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8144 Main Street",
+      "city": "Fairview",
+      "postalCode": 41775,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-06-04T18:12:00Z"
+  },
+  {
+    "id": 136,
+    "customerId": 976,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 473,
+        "quantity": 2,
+        "unitPrice": 112.42
+      },
+      {
+        "productId": 299,
+        "quantity": 1,
+        "unitPrice": 205.65
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6803 Main Street",
+      "city": "Lakeview",
+      "postalCode": 28242,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "backorder"
+    ],
+    "createdAt": "2024-11-05T22:27:00Z"
+  },
+  {
+    "id": 137,
+    "customerId": 491,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 411,
+        "quantity": 5,
+        "unitPrice": 129.12
+      },
+      {
+        "productId": 943,
+        "quantity": 4,
+        "unitPrice": 138.19
+      },
+      {
+        "productId": 810,
+        "quantity": 3,
+        "unitPrice": 176.9
+      },
+      {
+        "productId": 832,
+        "quantity": 5,
+        "unitPrice": 150.49
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-04-22T21:22:00Z"
+  },
+  {
+    "id": 138,
+    "customerId": 661,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 663,
+        "quantity": 4,
+        "unitPrice": 241.87
+      },
+      {
+        "productId": 340,
+        "quantity": 4,
+        "unitPrice": 30.96
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1715 Main Street",
+      "city": "Rivertown",
+      "postalCode": 39098,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-12-17T17:37:00Z"
+  },
+  {
+    "id": 139,
+    "customerId": 791,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 603,
+        "quantity": 5,
+        "unitPrice": 41.93
+      },
+      {
+        "productId": 26,
+        "quantity": 4,
+        "unitPrice": 30.61
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6915 Main Street",
+      "city": "Dormansville",
+      "postalCode": 25213,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-03-12T09:21:00Z"
+  },
+  {
+    "id": 140,
+    "customerId": 357,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 100,
+        "quantity": 4,
+        "unitPrice": 181.89
+      },
+      {
+        "productId": 464,
+        "quantity": 3,
+        "unitPrice": 21.46
+      },
+      {
+        "productId": 46,
+        "quantity": 1,
+        "unitPrice": 10.53
+      },
+      {
+        "productId": 352,
+        "quantity": 1,
+        "unitPrice": 170.9
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2792 Main Street",
+      "city": "Springfield",
+      "postalCode": 77632,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority",
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-07-15T07:51:00Z"
+  },
+  {
+    "id": 141,
+    "customerId": 674,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 406,
+        "quantity": 1,
+        "unitPrice": 185.66
+      },
+      {
+        "productId": 905,
+        "quantity": 2,
+        "unitPrice": 115.15
+      },
+      {
+        "productId": 440,
+        "quantity": 4,
+        "unitPrice": 6.09
+      },
+      {
+        "productId": 220,
+        "quantity": 2,
+        "unitPrice": 73.19
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1125 Main Street",
+      "city": "Fairview",
+      "postalCode": 23336,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-03-12T10:12:00Z"
+  },
+  {
+    "id": 142,
+    "customerId": 502,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 990,
+        "quantity": 3,
+        "unitPrice": 151.26
+      },
+      {
+        "productId": 626,
+        "quantity": 4,
+        "unitPrice": 148.82
+      },
+      {
+        "productId": 357,
+        "quantity": 3,
+        "unitPrice": 212.15
+      },
+      {
+        "productId": 633,
+        "quantity": 2,
+        "unitPrice": 204.37
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "backorder",
+      "gift",
+      "subscription"
+    ],
+    "createdAt": "2024-03-11T03:15:00Z"
+  },
+  {
+    "id": 143,
+    "customerId": 145,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 398,
+        "quantity": 4,
+        "unitPrice": 151.12
+      },
+      {
+        "productId": 589,
+        "quantity": 4,
+        "unitPrice": 108.64
+      },
+      {
+        "productId": 499,
+        "quantity": 5,
+        "unitPrice": 174.89
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-11-06T17:10:00Z"
+  },
+  {
+    "id": 144,
+    "customerId": 863,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 635,
+        "quantity": 1,
+        "unitPrice": 217.05
+      },
+      {
+        "productId": 975,
+        "quantity": 1,
+        "unitPrice": 123.73
+      },
+      {
+        "productId": 200,
+        "quantity": 4,
+        "unitPrice": 241.14
+      },
+      {
+        "productId": 518,
+        "quantity": 4,
+        "unitPrice": 105.24
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8156 Main Street",
+      "city": "Lakeview",
+      "postalCode": 68176,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-03-03T18:01:00Z"
+  },
+  {
+    "id": 145,
+    "customerId": 551,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 173,
+        "quantity": 4,
+        "unitPrice": 143.58
+      },
+      {
+        "productId": 792,
+        "quantity": 4,
+        "unitPrice": 139.68
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1954 Main Street",
+      "city": "Fairview",
+      "postalCode": 24969,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-27T11:34:00Z"
+  },
+  {
+    "id": 146,
+    "customerId": 224,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 105,
+        "quantity": 2,
+        "unitPrice": 77.94
+      }
+    ],
+    "shippingAddress": {
+      "line1": "628 Main Street",
+      "city": "Lakeview",
+      "postalCode": 44447,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-02-25T07:13:00Z"
+  },
+  {
+    "id": 147,
+    "customerId": 439,
+    "status": "active",
+    "items": [
+      {
+        "productId": 631,
+        "quantity": 2,
+        "unitPrice": 197.29
+      },
+      {
+        "productId": 834,
+        "quantity": 2,
+        "unitPrice": 202.33
+      },
+      {
+        "productId": 584,
+        "quantity": 3,
+        "unitPrice": 135.41
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9878 Main Street",
+      "city": "Fairview",
+      "postalCode": 32069,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-05-28T16:57:00Z"
+  },
+  {
+    "id": 148,
+    "customerId": 422,
+    "status": "active",
+    "items": [
+      {
+        "productId": 284,
+        "quantity": 2,
+        "unitPrice": 176.85
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "priority"
+    ],
+    "createdAt": "2024-03-23T10:53:00Z"
+  },
+  {
+    "id": 149,
+    "customerId": 502,
+    "status": "active",
+    "items": [
+      {
+        "productId": 592,
+        "quantity": 3,
+        "unitPrice": 158.81
+      },
+      {
+        "productId": 385,
+        "quantity": 4,
+        "unitPrice": 23.5
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1625 Main Street",
+      "city": "Lakeview",
+      "postalCode": 77582,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-08-11T18:00:00Z"
+  },
+  {
+    "id": 150,
+    "customerId": 681,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 367,
+        "quantity": 1,
+        "unitPrice": 199.94
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6616 Main Street",
+      "city": "Springfield",
+      "postalCode": 66314,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-05-11T17:36:00Z"
+  },
+  {
+    "id": 151,
+    "customerId": 352,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 781,
+        "quantity": 1,
+        "unitPrice": 16.26
+      },
+      {
+        "productId": 642,
+        "quantity": 4,
+        "unitPrice": 8.99
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2688 Main Street",
+      "city": "Lakeview",
+      "postalCode": 69836,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-11-10T05:55:00Z"
+  },
+  {
+    "id": 152,
+    "customerId": 85,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 681,
+        "quantity": 2,
+        "unitPrice": 17.69
+      },
+      {
+        "productId": 641,
+        "quantity": 3,
+        "unitPrice": 182.87
+      },
+      {
+        "productId": 774,
+        "quantity": 2,
+        "unitPrice": 110.16
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-02-23T03:00:00Z"
+  },
+  {
+    "id": 153,
+    "customerId": 232,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 697,
+        "quantity": 4,
+        "unitPrice": 7.28
+      },
+      {
+        "productId": 713,
+        "quantity": 3,
+        "unitPrice": 205.19
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7019 Main Street",
+      "city": "Springfield",
+      "postalCode": 72613,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-04-13T02:46:00Z"
+  },
+  {
+    "id": 154,
+    "customerId": 307,
+    "status": "active",
+    "items": [
+      {
+        "productId": 392,
+        "quantity": 2,
+        "unitPrice": 162.19
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-11-05T02:33:00Z"
+  },
+  {
+    "id": 155,
+    "customerId": 360,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 219,
+        "quantity": 2,
+        "unitPrice": 230.37
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7348 Main Street",
+      "city": "Springfield",
+      "postalCode": 21362,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-03-25T03:37:00Z"
+  },
+  {
+    "id": 156,
+    "customerId": 811,
+    "status": "active",
+    "items": [
+      {
+        "productId": 254,
+        "quantity": 3,
+        "unitPrice": 162.93
+      },
+      {
+        "productId": 255,
+        "quantity": 5,
+        "unitPrice": 152.24
+      },
+      {
+        "productId": 739,
+        "quantity": 5,
+        "unitPrice": 74.81
+      },
+      {
+        "productId": 964,
+        "quantity": 1,
+        "unitPrice": 212.73
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5042 Main Street",
+      "city": "Springfield",
+      "postalCode": 77862,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "sale",
+      "subscription"
+    ],
+    "createdAt": "2024-11-02T07:31:00Z"
+  },
+  {
+    "id": 157,
+    "customerId": 609,
+    "status": "active",
+    "items": [
+      {
+        "productId": 541,
+        "quantity": 1,
+        "unitPrice": 246.79
+      },
+      {
+        "productId": 957,
+        "quantity": 3,
+        "unitPrice": 37.34
+      },
+      {
+        "productId": 882,
+        "quantity": 5,
+        "unitPrice": 108.11
+      },
+      {
+        "productId": 560,
+        "quantity": 2,
+        "unitPrice": 191.87
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-10-03T00:16:00Z"
+  },
+  {
+    "id": 158,
+    "customerId": 809,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 519,
+        "quantity": 3,
+        "unitPrice": 159.0
+      },
+      {
+        "productId": 514,
+        "quantity": 4,
+        "unitPrice": 108.78
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-07-03T20:34:00Z"
+  },
+  {
+    "id": 159,
+    "customerId": 524,
+    "status": "active",
+    "items": [
+      {
+        "productId": 998,
+        "quantity": 2,
+        "unitPrice": 136.42
+      },
+      {
+        "productId": 401,
+        "quantity": 5,
+        "unitPrice": 160.4
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1183 Main Street",
+      "city": "Rivertown",
+      "postalCode": 67342,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-04-02T07:05:00Z"
+  },
+  {
+    "id": 160,
+    "customerId": 57,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 683,
+        "quantity": 2,
+        "unitPrice": 34.26
+      },
+      {
+        "productId": 725,
+        "quantity": 2,
+        "unitPrice": 176.87
+      },
+      {
+        "productId": 168,
+        "quantity": 4,
+        "unitPrice": 238.49
+      },
+      {
+        "productId": 536,
+        "quantity": 5,
+        "unitPrice": 196.83
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "backorder",
+      "priority",
+      "sale"
+    ],
+    "createdAt": "2024-03-24T08:46:00Z"
+  },
+  {
+    "id": 161,
+    "customerId": 827,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 279,
+        "quantity": 5,
+        "unitPrice": 20.65
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9547 Main Street",
+      "city": "Dormansville",
+      "postalCode": 75031,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-12T01:31:00Z"
+  },
+  {
+    "id": 162,
+    "customerId": 106,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 691,
+        "quantity": 1,
+        "unitPrice": 60.96
+      },
+      {
+        "productId": 522,
+        "quantity": 1,
+        "unitPrice": 15.79
+      }
+    ],
+    "shippingAddress": {
+      "line1": "301 Main Street",
+      "city": "Springfield",
+      "postalCode": 16026,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-06-13T04:11:00Z"
+  },
+  {
+    "id": 163,
+    "customerId": 759,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 430,
+        "quantity": 2,
+        "unitPrice": 83.84
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6919 Main Street",
+      "city": "Rivertown",
+      "postalCode": 45554,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "gift",
+      "subscription"
+    ],
+    "createdAt": "2024-11-02T05:14:00Z"
+  },
+  {
+    "id": 164,
+    "customerId": 477,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 793,
+        "quantity": 3,
+        "unitPrice": 85.19
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9161 Main Street",
+      "city": "Lakeview",
+      "postalCode": 11044,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-04-10T18:50:00Z"
+  },
+  {
+    "id": 165,
+    "customerId": 378,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 996,
+        "quantity": 4,
+        "unitPrice": 249.46
+      },
+      {
+        "productId": 795,
+        "quantity": 2,
+        "unitPrice": 184.45
+      },
+      {
+        "productId": 560,
+        "quantity": 2,
+        "unitPrice": 41.89
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6818 Main Street",
+      "city": "Dormansville",
+      "postalCode": 40539,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-06-21T22:56:00Z"
+  },
+  {
+    "id": 166,
+    "customerId": 674,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 870,
+        "quantity": 3,
+        "unitPrice": 30.47
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8780 Main Street",
+      "city": "Springfield",
+      "postalCode": 65026,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-01-05T22:17:00Z"
+  },
+  {
+    "id": 167,
+    "customerId": 866,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 423,
+        "quantity": 3,
+        "unitPrice": 117.32
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-12-03T18:06:00Z"
+  },
+  {
+    "id": 168,
+    "customerId": 607,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 64,
+        "quantity": 4,
+        "unitPrice": 167.3
+      },
+      {
+        "productId": 134,
+        "quantity": 2,
+        "unitPrice": 76.46
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5261 Main Street",
+      "city": "Lakeview",
+      "postalCode": 52762,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-08-09T07:04:00Z"
+  },
+  {
+    "id": 169,
+    "customerId": 112,
+    "status": "active",
+    "items": [
+      {
+        "productId": 109,
+        "quantity": 2,
+        "unitPrice": 115.14
+      },
+      {
+        "productId": 322,
+        "quantity": 4,
+        "unitPrice": 34.58
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "priority",
+      "sale"
+    ],
+    "createdAt": "2024-05-15T08:54:00Z"
+  },
+  {
+    "id": 170,
+    "customerId": 312,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 714,
+        "quantity": 5,
+        "unitPrice": 14.88
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "priority",
+      "gift"
+    ],
+    "createdAt": "2024-12-08T11:25:00Z"
+  },
+  {
+    "id": 171,
+    "customerId": 179,
+    "status": "active",
+    "items": [
+      {
+        "productId": 975,
+        "quantity": 4,
+        "unitPrice": 214.38
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9208 Main Street",
+      "city": "Fairview",
+      "postalCode": 42748,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-08-04T04:07:00Z"
+  },
+  {
+    "id": 172,
+    "customerId": 228,
+    "status": "active",
+    "items": [
+      {
+        "productId": 203,
+        "quantity": 4,
+        "unitPrice": 96.2
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift",
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-01-03T06:57:00Z"
+  },
+  {
+    "id": 173,
+    "customerId": 868,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 126,
+        "quantity": 1,
+        "unitPrice": 235.86
+      },
+      {
+        "productId": 52,
+        "quantity": 2,
+        "unitPrice": 231.41
+      },
+      {
+        "productId": 444,
+        "quantity": 4,
+        "unitPrice": 126.55
+      },
+      {
+        "productId": 392,
+        "quantity": 4,
+        "unitPrice": 47.34
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3617 Main Street",
+      "city": "Springfield",
+      "postalCode": 46042,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-08-05T01:39:00Z"
+  },
+  {
+    "id": 174,
+    "customerId": 904,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 491,
+        "quantity": 1,
+        "unitPrice": 26.49
+      },
+      {
+        "productId": 393,
+        "quantity": 2,
+        "unitPrice": 107.71
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8714 Main Street",
+      "city": "Springfield",
+      "postalCode": 92674,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-12-12T15:34:00Z"
+  },
+  {
+    "id": 175,
+    "customerId": 330,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 277,
+        "quantity": 2,
+        "unitPrice": 11.39
+      },
+      {
+        "productId": 612,
+        "quantity": 2,
+        "unitPrice": 12.18
+      },
+      {
+        "productId": 831,
+        "quantity": 3,
+        "unitPrice": 19.35
+      },
+      {
+        "productId": 484,
+        "quantity": 5,
+        "unitPrice": 92.57
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9668 Main Street",
+      "city": "Springfield",
+      "postalCode": 30922,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority"
+    ],
+    "createdAt": "2024-05-18T23:03:00Z"
+  },
+  {
+    "id": 176,
+    "customerId": 398,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 958,
+        "quantity": 2,
+        "unitPrice": 48.14
+      },
+      {
+        "productId": 607,
+        "quantity": 3,
+        "unitPrice": 202.52
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5978 Main Street",
+      "city": "Fairview",
+      "postalCode": 13697,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-04-27T15:34:00Z"
+  },
+  {
+    "id": 177,
+    "customerId": 58,
+    "status": "active",
+    "items": [
+      {
+        "productId": 617,
+        "quantity": 2,
+        "unitPrice": 9.88
+      },
+      {
+        "productId": 490,
+        "quantity": 1,
+        "unitPrice": 86.27
+      },
+      {
+        "productId": 629,
+        "quantity": 2,
+        "unitPrice": 202.58
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5682 Main Street",
+      "city": "Springfield",
+      "postalCode": 52413,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-01-05T18:45:00Z"
+  },
+  {
+    "id": 178,
+    "customerId": 882,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 984,
+        "quantity": 1,
+        "unitPrice": 96.53
+      },
+      {
+        "productId": 965,
+        "quantity": 4,
+        "unitPrice": 148.57
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5614 Main Street",
+      "city": "Rivertown",
+      "postalCode": 52284,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-11-16T20:20:00Z"
+  },
+  {
+    "id": 179,
+    "customerId": 911,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 806,
+        "quantity": 3,
+        "unitPrice": 59.69
+      },
+      {
+        "productId": 604,
+        "quantity": 2,
+        "unitPrice": 97.7
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4925 Main Street",
+      "city": "Springfield",
+      "postalCode": 33292,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-07-28T18:02:00Z"
+  },
+  {
+    "id": 180,
+    "customerId": 991,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 227,
+        "quantity": 5,
+        "unitPrice": 30.51
+      },
+      {
+        "productId": 509,
+        "quantity": 2,
+        "unitPrice": 86.14
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1374 Main Street",
+      "city": "Springfield",
+      "postalCode": 55457,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-12-22T20:46:00Z"
+  },
+  {
+    "id": 181,
+    "customerId": 256,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 70,
+        "quantity": 3,
+        "unitPrice": 67.88
+      },
+      {
+        "productId": 111,
+        "quantity": 1,
+        "unitPrice": 16.8
+      },
+      {
+        "productId": 449,
+        "quantity": 4,
+        "unitPrice": 242.43
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6883 Main Street",
+      "city": "Lakeview",
+      "postalCode": 59638,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-13T03:53:00Z"
+  },
+  {
+    "id": 182,
+    "customerId": 777,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 231,
+        "quantity": 2,
+        "unitPrice": 115.57
+      },
+      {
+        "productId": 819,
+        "quantity": 1,
+        "unitPrice": 77.25
+      },
+      {
+        "productId": 327,
+        "quantity": 3,
+        "unitPrice": 238.16
+      },
+      {
+        "productId": 76,
+        "quantity": 3,
+        "unitPrice": 46.68
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6251 Main Street",
+      "city": "Springfield",
+      "postalCode": 19830,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-10-20T15:45:00Z"
+  },
+  {
+    "id": 183,
+    "customerId": 622,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 161,
+        "quantity": 1,
+        "unitPrice": 29.81
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3467 Main Street",
+      "city": "Springfield",
+      "postalCode": 63645,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-05-10T07:06:00Z"
+  },
+  {
+    "id": 184,
+    "customerId": 503,
+    "status": "active",
+    "items": [
+      {
+        "productId": 56,
+        "quantity": 3,
+        "unitPrice": 5.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1535 Main Street",
+      "city": "Rivertown",
+      "postalCode": 96772,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "priority",
+      "gift"
+    ],
+    "createdAt": "2024-01-07T05:40:00Z"
+  },
+  {
+    "id": 185,
+    "customerId": 119,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 804,
+        "quantity": 4,
+        "unitPrice": 120.38
+      },
+      {
+        "productId": 917,
+        "quantity": 3,
+        "unitPrice": 27.33
+      },
+      {
+        "productId": 558,
+        "quantity": 4,
+        "unitPrice": 50.3
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6349 Main Street",
+      "city": "Rivertown",
+      "postalCode": 34455,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-08-15T08:14:00Z"
+  },
+  {
+    "id": 186,
+    "customerId": 714,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 100,
+        "quantity": 1,
+        "unitPrice": 168.69
+      },
+      {
+        "productId": 828,
+        "quantity": 5,
+        "unitPrice": 106.43
+      },
+      {
+        "productId": 775,
+        "quantity": 5,
+        "unitPrice": 60.74
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1099 Main Street",
+      "city": "Lakeview",
+      "postalCode": 78495,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-22T15:36:00Z"
+  },
+  {
+    "id": 187,
+    "customerId": 925,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 36,
+        "quantity": 5,
+        "unitPrice": 144.95
+      },
+      {
+        "productId": 530,
+        "quantity": 5,
+        "unitPrice": 171.0
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2515 Main Street",
+      "city": "Dormansville",
+      "postalCode": 68856,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-03-07T06:08:00Z"
+  },
+  {
+    "id": 188,
+    "customerId": 446,
+    "status": "active",
+    "items": [
+      {
+        "productId": 843,
+        "quantity": 2,
+        "unitPrice": 209.36
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4325 Main Street",
+      "city": "Rivertown",
+      "postalCode": 18783,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-09-11T08:33:00Z"
+  },
+  {
+    "id": 189,
+    "customerId": 718,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 602,
+        "quantity": 5,
+        "unitPrice": 196.51
+      },
+      {
+        "productId": 116,
+        "quantity": 4,
+        "unitPrice": 41.66
+      },
+      {
+        "productId": 581,
+        "quantity": 5,
+        "unitPrice": 147.76
+      },
+      {
+        "productId": 988,
+        "quantity": 1,
+        "unitPrice": 231.61
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9319 Main Street",
+      "city": "Dormansville",
+      "postalCode": 47498,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-06-14T08:24:00Z"
+  },
+  {
+    "id": 190,
+    "customerId": 177,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 413,
+        "quantity": 2,
+        "unitPrice": 156.47
+      },
+      {
+        "productId": 698,
+        "quantity": 4,
+        "unitPrice": 14.5
+      },
+      {
+        "productId": 911,
+        "quantity": 3,
+        "unitPrice": 174.18
+      },
+      {
+        "productId": 51,
+        "quantity": 4,
+        "unitPrice": 230.6
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6202 Main Street",
+      "city": "Dormansville",
+      "postalCode": 54284,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-12-22T03:55:00Z"
+  },
+  {
+    "id": 191,
+    "customerId": 454,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 276,
+        "quantity": 4,
+        "unitPrice": 153.22
+      },
+      {
+        "productId": 92,
+        "quantity": 2,
+        "unitPrice": 113.22
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-01-17T05:04:00Z"
+  },
+  {
+    "id": 192,
+    "customerId": 800,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 901,
+        "quantity": 5,
+        "unitPrice": 12.09
+      },
+      {
+        "productId": 198,
+        "quantity": 2,
+        "unitPrice": 210.06
+      },
+      {
+        "productId": 256,
+        "quantity": 1,
+        "unitPrice": 116.83
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6004 Main Street",
+      "city": "Springfield",
+      "postalCode": 45910,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-11-04T21:01:00Z"
+  },
+  {
+    "id": 193,
+    "customerId": 182,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 601,
+        "quantity": 5,
+        "unitPrice": 90.69
+      },
+      {
+        "productId": 168,
+        "quantity": 3,
+        "unitPrice": 188.5
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1580 Main Street",
+      "city": "Rivertown",
+      "postalCode": 13597,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority"
+    ],
+    "createdAt": "2024-10-25T06:54:00Z"
+  },
+  {
+    "id": 194,
+    "customerId": 276,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 420,
+        "quantity": 5,
+        "unitPrice": 9.91
+      },
+      {
+        "productId": 800,
+        "quantity": 1,
+        "unitPrice": 121.15
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2267 Main Street",
+      "city": "Springfield",
+      "postalCode": 88792,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-10-26T09:45:00Z"
+  },
+  {
+    "id": 195,
+    "customerId": 358,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 259,
+        "quantity": 2,
+        "unitPrice": 119.34
+      },
+      {
+        "productId": 694,
+        "quantity": 5,
+        "unitPrice": 206.96
+      },
+      {
+        "productId": 407,
+        "quantity": 5,
+        "unitPrice": 30.07
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8480 Main Street",
+      "city": "Rivertown",
+      "postalCode": 83591,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-10-20T09:19:00Z"
+  },
+  {
+    "id": 196,
+    "customerId": 284,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 333,
+        "quantity": 3,
+        "unitPrice": 68.98
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4995 Main Street",
+      "city": "Springfield",
+      "postalCode": 29651,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-04-02T19:25:00Z"
+  },
+  {
+    "id": 197,
+    "customerId": 672,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 303,
+        "quantity": 3,
+        "unitPrice": 227.19
+      },
+      {
+        "productId": 415,
+        "quantity": 4,
+        "unitPrice": 185.5
+      },
+      {
+        "productId": 598,
+        "quantity": 5,
+        "unitPrice": 204.92
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5722 Main Street",
+      "city": "Springfield",
+      "postalCode": 99957,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-05-28T05:53:00Z"
+  },
+  {
+    "id": 198,
+    "customerId": 759,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 743,
+        "quantity": 5,
+        "unitPrice": 191.91
+      },
+      {
+        "productId": 188,
+        "quantity": 3,
+        "unitPrice": 165.34
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3741 Main Street",
+      "city": "Rivertown",
+      "postalCode": 39272,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-06-09T18:18:00Z"
+  },
+  {
+    "id": 199,
+    "customerId": 888,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 598,
+        "quantity": 5,
+        "unitPrice": 236.35
+      },
+      {
+        "productId": 73,
+        "quantity": 4,
+        "unitPrice": 222.91
+      },
+      {
+        "productId": 513,
+        "quantity": 1,
+        "unitPrice": 217.54
+      },
+      {
+        "productId": 391,
+        "quantity": 5,
+        "unitPrice": 78.1
+      }
+    ],
+    "shippingAddress": {
+      "line1": "985 Main Street",
+      "city": "Springfield",
+      "postalCode": 28004,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "subscription"
+    ],
+    "createdAt": "2024-03-11T22:11:00Z"
+  },
+  {
+    "id": 200,
+    "customerId": 182,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 650,
+        "quantity": 1,
+        "unitPrice": 6.15
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4581 Main Street",
+      "city": "Springfield",
+      "postalCode": 32099,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-02-05T19:27:00Z"
+  },
+  {
+    "id": 201,
+    "customerId": 393,
+    "status": "active",
+    "items": [
+      {
+        "productId": 39,
+        "quantity": 5,
+        "unitPrice": 53.86
+      },
+      {
+        "productId": 383,
+        "quantity": 1,
+        "unitPrice": 223.54
+      },
+      {
+        "productId": 776,
+        "quantity": 5,
+        "unitPrice": 51.69
+      },
+      {
+        "productId": 693,
+        "quantity": 1,
+        "unitPrice": 158.54
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4176 Main Street",
+      "city": "Springfield",
+      "postalCode": 55134,
+      "country": "Canada"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-07-17T18:19:00Z"
+  },
+  {
+    "id": 202,
+    "customerId": 972,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 467,
+        "quantity": 5,
+        "unitPrice": 151.11
+      },
+      {
+        "productId": 346,
+        "quantity": 4,
+        "unitPrice": 222.55
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-03-11T15:22:00Z"
+  },
+  {
+    "id": 203,
+    "customerId": 832,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 20,
+        "quantity": 2,
+        "unitPrice": 59.96
+      },
+      {
+        "productId": 135,
+        "quantity": 2,
+        "unitPrice": 184.85
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9761 Main Street",
+      "city": "Fairview",
+      "postalCode": 32149,
+      "country": "United States of America"
+    },
+    "tags": [
+      "gift",
+      "sale"
+    ],
+    "createdAt": "2024-11-09T17:39:00Z"
+  },
+  {
+    "id": 204,
+    "customerId": 111,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 857,
+        "quantity": 1,
+        "unitPrice": 16.82
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1997 Main Street",
+      "city": "Lakeview",
+      "postalCode": 68237,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-02-18T08:30:00Z"
+  },
+  {
+    "id": 205,
+    "customerId": 10,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 431,
+        "quantity": 1,
+        "unitPrice": 167.31
+      },
+      {
+        "productId": 277,
+        "quantity": 5,
+        "unitPrice": 153.38
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2347 Main Street",
+      "city": "Lakeview",
+      "postalCode": 23751,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-02-26T03:31:00Z"
+  },
+  {
+    "id": 206,
+    "customerId": 852,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 997,
+        "quantity": 2,
+        "unitPrice": 92.69
+      },
+      {
+        "productId": 420,
+        "quantity": 3,
+        "unitPrice": 44.29
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9080 Main Street",
+      "city": "Lakeview",
+      "postalCode": 37222,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "priority"
+    ],
+    "createdAt": "2024-01-01T21:05:00Z"
+  },
+  {
+    "id": 207,
+    "customerId": 153,
+    "status": "active",
+    "items": [
+      {
+        "productId": 799,
+        "quantity": 5,
+        "unitPrice": 23.39
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1759 Main Street",
+      "city": "Rivertown",
+      "postalCode": 94454,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "subscription"
+    ],
+    "createdAt": "2024-08-02T03:52:00Z"
+  },
+  {
+    "id": 208,
+    "customerId": 369,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 321,
+        "quantity": 4,
+        "unitPrice": 185.94
+      },
+      {
+        "productId": 98,
+        "quantity": 1,
+        "unitPrice": 7.37
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2367 Main Street",
+      "city": "Springfield",
+      "postalCode": 53078,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "backorder"
+    ],
+    "createdAt": "2024-12-03T11:52:00Z"
+  },
+  {
+    "id": 209,
+    "customerId": 986,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 279,
+        "quantity": 4,
+        "unitPrice": 174.03
+      },
+      {
+        "productId": 490,
+        "quantity": 4,
+        "unitPrice": 163.97
+      },
+      {
+        "productId": 817,
+        "quantity": 2,
+        "unitPrice": 32.7
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1060 Main Street",
+      "city": "Springfield",
+      "postalCode": 23593,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-10-13T11:39:00Z"
+  },
+  {
+    "id": 210,
+    "customerId": 745,
+    "status": "active",
+    "items": [
+      {
+        "productId": 495,
+        "quantity": 4,
+        "unitPrice": 32.67
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6838 Main Street",
+      "city": "Lakeview",
+      "postalCode": 16025,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-12-28T21:33:00Z"
+  },
+  {
+    "id": 211,
+    "customerId": 347,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 536,
+        "quantity": 5,
+        "unitPrice": 28.33
+      },
+      {
+        "productId": 678,
+        "quantity": 2,
+        "unitPrice": 123.07
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6405 Main Street",
+      "city": "Springfield",
+      "postalCode": 83183,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-11-06T16:54:00Z"
+  },
+  {
+    "id": 212,
+    "customerId": 77,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 329,
+        "quantity": 2,
+        "unitPrice": 86.07
+      },
+      {
+        "productId": 285,
+        "quantity": 1,
+        "unitPrice": 129.2
+      },
+      {
+        "productId": 564,
+        "quantity": 4,
+        "unitPrice": 103.8
+      },
+      {
+        "productId": 241,
+        "quantity": 1,
+        "unitPrice": 117.48
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9488 Main Street",
+      "city": "Lakeview",
+      "postalCode": 21536,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-08-24T20:01:00Z"
+  },
+  {
+    "id": 213,
+    "customerId": 563,
+    "status": "active",
+    "items": [
+      {
+        "productId": 846,
+        "quantity": 1,
+        "unitPrice": 198.99
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5090 Main Street",
+      "city": "Fairview",
+      "postalCode": 83706,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-11-22T14:21:00Z"
+  },
+  {
+    "id": 214,
+    "customerId": 865,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 340,
+        "quantity": 5,
+        "unitPrice": 193.02
+      },
+      {
+        "productId": 615,
+        "quantity": 4,
+        "unitPrice": 180.58
+      },
+      {
+        "productId": 373,
+        "quantity": 4,
+        "unitPrice": 32.94
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3733 Main Street",
+      "city": "Dormansville",
+      "postalCode": 54742,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-02-02T05:31:00Z"
+  },
+  {
+    "id": 215,
+    "customerId": 420,
+    "status": "active",
+    "items": [
+      {
+        "productId": 261,
+        "quantity": 5,
+        "unitPrice": 53.0
+      },
+      {
+        "productId": 124,
+        "quantity": 4,
+        "unitPrice": 57.82
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3222 Main Street",
+      "city": "Rivertown",
+      "postalCode": 24125,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-02-25T14:29:00Z"
+  },
+  {
+    "id": 216,
+    "customerId": 754,
+    "status": "active",
+    "items": [
+      {
+        "productId": 567,
+        "quantity": 4,
+        "unitPrice": 210.51
+      },
+      {
+        "productId": 495,
+        "quantity": 5,
+        "unitPrice": 196.36
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3003 Main Street",
+      "city": "Fairview",
+      "postalCode": 32760,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-03-04T12:42:00Z"
+  },
+  {
+    "id": 217,
+    "customerId": 624,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 781,
+        "quantity": 2,
+        "unitPrice": 72.03
+      },
+      {
+        "productId": 987,
+        "quantity": 3,
+        "unitPrice": 242.77
+      },
+      {
+        "productId": 464,
+        "quantity": 2,
+        "unitPrice": 38.85
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9971 Main Street",
+      "city": "Fairview",
+      "postalCode": 49179,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-09-28T10:45:00Z"
+  },
+  {
+    "id": 218,
+    "customerId": 298,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 354,
+        "quantity": 2,
+        "unitPrice": 245.43
+      },
+      {
+        "productId": 666,
+        "quantity": 2,
+        "unitPrice": 128.45
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5381 Main Street",
+      "city": "Dormansville",
+      "postalCode": 56168,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-11-24T17:18:00Z"
+  },
+  {
+    "id": 219,
+    "customerId": 26,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 149,
+        "quantity": 1,
+        "unitPrice": 169.21
+      },
+      {
+        "productId": 205,
+        "quantity": 3,
+        "unitPrice": 188.8
+      },
+      {
+        "productId": 165,
+        "quantity": 3,
+        "unitPrice": 172.43
+      },
+      {
+        "productId": 150,
+        "quantity": 1,
+        "unitPrice": 174.2
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4935 Main Street",
+      "city": "Springfield",
+      "postalCode": 80932,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-10-28T21:47:00Z"
+  },
+  {
+    "id": 220,
+    "customerId": 244,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 804,
+        "quantity": 3,
+        "unitPrice": 174.77
+      },
+      {
+        "productId": 49,
+        "quantity": 4,
+        "unitPrice": 99.95
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5222 Main Street",
+      "city": "Fairview",
+      "postalCode": 17051,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-08-27T07:58:00Z"
+  },
+  {
+    "id": 221,
+    "customerId": 618,
+    "status": "active",
+    "items": [
+      {
+        "productId": 795,
+        "quantity": 2,
+        "unitPrice": 77.07
+      },
+      {
+        "productId": 182,
+        "quantity": 1,
+        "unitPrice": 50.81
+      },
+      {
+        "productId": 178,
+        "quantity": 5,
+        "unitPrice": 34.24
+      }
+    ],
+    "shippingAddress": {
+      "line1": "765 Main Street",
+      "city": "Lakeview",
+      "postalCode": 46583,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-10-28T08:00:00Z"
+  },
+  {
+    "id": 222,
+    "customerId": 41,
+    "status": "active",
+    "items": [
+      {
+        "productId": 951,
+        "quantity": 3,
+        "unitPrice": 151.24
+      },
+      {
+        "productId": 793,
+        "quantity": 5,
+        "unitPrice": 211.57
+      },
+      {
+        "productId": 309,
+        "quantity": 4,
+        "unitPrice": 198.53
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9113 Main Street",
+      "city": "Rivertown",
+      "postalCode": 19552,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "priority"
+    ],
+    "createdAt": "2024-03-17T02:50:00Z"
+  },
+  {
+    "id": 223,
+    "customerId": 95,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 227,
+        "quantity": 2,
+        "unitPrice": 167.52
+      },
+      {
+        "productId": 340,
+        "quantity": 3,
+        "unitPrice": 76.93
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8791 Main Street",
+      "city": "Lakeview",
+      "postalCode": 83575,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-11-12T14:15:00Z"
+  },
+  {
+    "id": 224,
+    "customerId": 329,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 938,
+        "quantity": 1,
+        "unitPrice": 99.54
+      },
+      {
+        "productId": 554,
+        "quantity": 3,
+        "unitPrice": 11.05
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8568 Main Street",
+      "city": "Rivertown",
+      "postalCode": 77411,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-05-21T06:20:00Z"
+  },
+  {
+    "id": 225,
+    "customerId": 980,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 547,
+        "quantity": 1,
+        "unitPrice": 158.6
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3553 Main Street",
+      "city": "Springfield",
+      "postalCode": 99837,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-02-07T17:53:00Z"
+  },
+  {
+    "id": 226,
+    "customerId": 765,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 158,
+        "quantity": 1,
+        "unitPrice": 117.51
+      },
+      {
+        "productId": 340,
+        "quantity": 1,
+        "unitPrice": 26.44
+      },
+      {
+        "productId": 56,
+        "quantity": 2,
+        "unitPrice": 199.58
+      },
+      {
+        "productId": 572,
+        "quantity": 1,
+        "unitPrice": 145.87
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3829 Main Street",
+      "city": "Rivertown",
+      "postalCode": 63429,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "subscription"
+    ],
+    "createdAt": "2024-06-01T12:43:00Z"
+  },
+  {
+    "id": 227,
+    "customerId": 634,
+    "status": "active",
+    "items": [
+      {
+        "productId": 775,
+        "quantity": 5,
+        "unitPrice": 16.15
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1289 Main Street",
+      "city": "Rivertown",
+      "postalCode": 75907,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-05-25T14:24:00Z"
+  },
+  {
+    "id": 228,
+    "customerId": 161,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 226,
+        "quantity": 2,
+        "unitPrice": 187.95
+      },
+      {
+        "productId": 816,
+        "quantity": 5,
+        "unitPrice": 77.27
+      },
+      {
+        "productId": 650,
+        "quantity": 2,
+        "unitPrice": 78.02
+      },
+      {
+        "productId": 909,
+        "quantity": 3,
+        "unitPrice": 239.56
+      }
+    ],
+    "shippingAddress": {
+      "line1": "282 Main Street",
+      "city": "Fairview",
+      "postalCode": 82754,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-02-02T00:36:00Z"
+  },
+  {
+    "id": 229,
+    "customerId": 313,
+    "status": "active",
+    "items": [
+      {
+        "productId": 767,
+        "quantity": 3,
+        "unitPrice": 56.88
+      },
+      {
+        "productId": 928,
+        "quantity": 5,
+        "unitPrice": 39.9
+      },
+      {
+        "productId": 189,
+        "quantity": 2,
+        "unitPrice": 156.14
+      },
+      {
+        "productId": 259,
+        "quantity": 2,
+        "unitPrice": 33.08
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9394 Main Street",
+      "city": "Dormansville",
+      "postalCode": 81939,
+      "country": "Canada"
+    },
+    "tags": [
+      "subscription",
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-11-03T08:06:00Z"
+  },
+  {
+    "id": 230,
+    "customerId": 339,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 132,
+        "quantity": 2,
+        "unitPrice": 29.51
+      },
+      {
+        "productId": 635,
+        "quantity": 1,
+        "unitPrice": 225.53
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5306 Main Street",
+      "city": "Lakeview",
+      "postalCode": 69067,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-10-12T10:27:00Z"
+  },
+  {
+    "id": 231,
+    "customerId": 227,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 758,
+        "quantity": 4,
+        "unitPrice": 72.79
+      },
+      {
+        "productId": 369,
+        "quantity": 2,
+        "unitPrice": 171.5
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-06-16T14:28:00Z"
+  },
+  {
+    "id": 232,
+    "customerId": 112,
+    "status": "active",
+    "items": [
+      {
+        "productId": 662,
+        "quantity": 5,
+        "unitPrice": 25.08
+      },
+      {
+        "productId": 288,
+        "quantity": 2,
+        "unitPrice": 223.37
+      },
+      {
+        "productId": 202,
+        "quantity": 3,
+        "unitPrice": 184.72
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1352 Main Street",
+      "city": "Dormansville",
+      "postalCode": 12441,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift",
+      "sale",
+      "backorder"
+    ],
+    "createdAt": "2024-04-02T17:16:00Z"
+  },
+  {
+    "id": 233,
+    "customerId": 402,
+    "status": "active",
+    "items": [
+      {
+        "productId": 913,
+        "quantity": 5,
+        "unitPrice": 184.64
+      },
+      {
+        "productId": 298,
+        "quantity": 2,
+        "unitPrice": 118.85
+      },
+      {
+        "productId": 523,
+        "quantity": 1,
+        "unitPrice": 102.21
+      },
+      {
+        "productId": 515,
+        "quantity": 1,
+        "unitPrice": 167.36
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2817 Main Street",
+      "city": "Fairview",
+      "postalCode": 28398,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-03-06T18:36:00Z"
+  },
+  {
+    "id": 234,
+    "customerId": 368,
+    "status": "active",
+    "items": [
+      {
+        "productId": 225,
+        "quantity": 4,
+        "unitPrice": 61.78
+      },
+      {
+        "productId": 271,
+        "quantity": 3,
+        "unitPrice": 62.33
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3487 Main Street",
+      "city": "Fairview",
+      "postalCode": 57349,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-01-21T10:06:00Z"
+  },
+  {
+    "id": 235,
+    "customerId": 558,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 179,
+        "quantity": 4,
+        "unitPrice": 165.15
+      },
+      {
+        "productId": 375,
+        "quantity": 5,
+        "unitPrice": 165.07
+      },
+      {
+        "productId": 856,
+        "quantity": 1,
+        "unitPrice": 131.58
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6265 Main Street",
+      "city": "Springfield",
+      "postalCode": 77681,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-06-27T11:31:00Z"
+  },
+  {
+    "id": 236,
+    "customerId": 904,
+    "status": "active",
+    "items": [
+      {
+        "productId": 451,
+        "quantity": 2,
+        "unitPrice": 61.35
+      },
+      {
+        "productId": 527,
+        "quantity": 3,
+        "unitPrice": 56.82
+      },
+      {
+        "productId": 192,
+        "quantity": 2,
+        "unitPrice": 93.74
+      },
+      {
+        "productId": 735,
+        "quantity": 1,
+        "unitPrice": 166.97
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6893 Main Street",
+      "city": "Rivertown",
+      "postalCode": 24855,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-11-16T15:13:00Z"
+  },
+  {
+    "id": 237,
+    "customerId": 250,
+    "status": "active",
+    "items": [
+      {
+        "productId": 131,
+        "quantity": 5,
+        "unitPrice": 150.13
+      },
+      {
+        "productId": 138,
+        "quantity": 5,
+        "unitPrice": 14.6
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9476 Main Street",
+      "city": "Springfield",
+      "postalCode": 17328,
+      "country": "United States of America"
+    },
+    "tags": [
+      "priority",
+      "sale"
+    ],
+    "createdAt": "2024-10-19T20:01:00Z"
+  },
+  {
+    "id": 238,
+    "customerId": 622,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 889,
+        "quantity": 4,
+        "unitPrice": 46.79
+      },
+      {
+        "productId": 851,
+        "quantity": 4,
+        "unitPrice": 152.21
+      },
+      {
+        "productId": 814,
+        "quantity": 5,
+        "unitPrice": 206.01
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3079 Main Street",
+      "city": "Fairview",
+      "postalCode": 96461,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-05-06T23:43:00Z"
+  },
+  {
+    "id": 239,
+    "customerId": 71,
+    "status": "active",
+    "items": [
+      {
+        "productId": 388,
+        "quantity": 4,
+        "unitPrice": 37.39
+      },
+      {
+        "productId": 17,
+        "quantity": 2,
+        "unitPrice": 133.06
+      },
+      {
+        "productId": 932,
+        "quantity": 5,
+        "unitPrice": 172.67
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2550 Main Street",
+      "city": "Fairview",
+      "postalCode": 22622,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-09-17T03:05:00Z"
+  },
+  {
+    "id": 240,
+    "customerId": 553,
+    "status": "active",
+    "items": [
+      {
+        "productId": 919,
+        "quantity": 4,
+        "unitPrice": 132.9
+      },
+      {
+        "productId": 380,
+        "quantity": 1,
+        "unitPrice": 175.92
+      },
+      {
+        "productId": 440,
+        "quantity": 2,
+        "unitPrice": 234.91
+      },
+      {
+        "productId": 494,
+        "quantity": 4,
+        "unitPrice": 90.88
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9539 Main Street",
+      "city": "Dormansville",
+      "postalCode": 65769,
+      "country": "United States of America"
+    },
+    "tags": [
+      "sale",
+      "priority"
+    ],
+    "createdAt": "2024-02-10T19:56:00Z"
+  },
+  {
+    "id": 241,
+    "customerId": 762,
+    "status": "active",
+    "items": [
+      {
+        "productId": 592,
+        "quantity": 5,
+        "unitPrice": 33.87
+      },
+      {
+        "productId": 8,
+        "quantity": 4,
+        "unitPrice": 165.36
+      },
+      {
+        "productId": 705,
+        "quantity": 3,
+        "unitPrice": 105.17
+      },
+      {
+        "productId": 110,
+        "quantity": 2,
+        "unitPrice": 109.39
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9690 Main Street",
+      "city": "Rivertown",
+      "postalCode": 44249,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-07-19T11:39:00Z"
+  },
+  {
+    "id": 242,
+    "customerId": 209,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 566,
+        "quantity": 5,
+        "unitPrice": 123.2
+      },
+      {
+        "productId": 380,
+        "quantity": 5,
+        "unitPrice": 140.95
+      },
+      {
+        "productId": 260,
+        "quantity": 3,
+        "unitPrice": 146.52
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6622 Main Street",
+      "city": "Springfield",
+      "postalCode": 96413,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-12-08T14:50:00Z"
+  },
+  {
+    "id": 243,
+    "customerId": 805,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 821,
+        "quantity": 5,
+        "unitPrice": 155.44
+      },
+      {
+        "productId": 701,
+        "quantity": 1,
+        "unitPrice": 44.38
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift",
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-08-20T13:05:00Z"
+  },
+  {
+    "id": 244,
+    "customerId": 624,
+    "status": "active",
+    "items": [
+      {
+        "productId": 742,
+        "quantity": 4,
+        "unitPrice": 233.02
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6664 Main Street",
+      "city": "Fairview",
+      "postalCode": 96006,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-05-23T19:03:00Z"
+  },
+  {
+    "id": 245,
+    "customerId": 207,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 954,
+        "quantity": 5,
+        "unitPrice": 75.07
+      },
+      {
+        "productId": 35,
+        "quantity": 5,
+        "unitPrice": 130.08
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3895 Main Street",
+      "city": "Fairview",
+      "postalCode": 32214,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-04-21T00:10:00Z"
+  },
+  {
+    "id": 246,
+    "customerId": 362,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 405,
+        "quantity": 4,
+        "unitPrice": 148.59
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8582 Main Street",
+      "city": "Dormansville",
+      "postalCode": 18993,
+      "country": "United States of America"
+    },
+    "tags": [
+      "backorder",
+      "subscription",
+      "priority"
+    ],
+    "createdAt": "2024-05-08T19:12:00Z"
+  },
+  {
+    "id": 247,
+    "customerId": 268,
+    "status": "active",
+    "items": [
+      {
+        "productId": 417,
+        "quantity": 5,
+        "unitPrice": 31.08
+      },
+      {
+        "productId": 75,
+        "quantity": 5,
+        "unitPrice": 77.09
+      },
+      {
+        "productId": 970,
+        "quantity": 1,
+        "unitPrice": 201.72
+      },
+      {
+        "productId": 980,
+        "quantity": 3,
+        "unitPrice": 219.65
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9519 Main Street",
+      "city": "Rivertown",
+      "postalCode": 68034,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-08-22T14:57:00Z"
+  },
+  {
+    "id": 248,
+    "customerId": 392,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 808,
+        "quantity": 2,
+        "unitPrice": 170.84
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3867 Main Street",
+      "city": "Rivertown",
+      "postalCode": 64057,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-18T00:44:00Z"
+  },
+  {
+    "id": 249,
+    "customerId": 690,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 841,
+        "quantity": 3,
+        "unitPrice": 23.63
+      },
+      {
+        "productId": 954,
+        "quantity": 2,
+        "unitPrice": 121.76
+      },
+      {
+        "productId": 363,
+        "quantity": 2,
+        "unitPrice": 224.11
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4508 Main Street",
+      "city": "Springfield",
+      "postalCode": 99536,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-08-24T06:15:00Z"
+  },
+  {
+    "id": 250,
+    "customerId": 208,
+    "status": "active",
+    "items": [
+      {
+        "productId": 857,
+        "quantity": 5,
+        "unitPrice": 92.23
+      },
+      {
+        "productId": 798,
+        "quantity": 1,
+        "unitPrice": 34.37
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1385 Main Street",
+      "city": "Lakeview",
+      "postalCode": 90455,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-09-02T15:23:00Z"
+  },
+  {
+    "id": 251,
+    "customerId": 919,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 890,
+        "quantity": 3,
+        "unitPrice": 125.25
+      },
+      {
+        "productId": 783,
+        "quantity": 5,
+        "unitPrice": 73.67
+      },
+      {
+        "productId": 228,
+        "quantity": 5,
+        "unitPrice": 36.42
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8713 Main Street",
+      "city": "Lakeview",
+      "postalCode": 72694,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-06-13T21:49:00Z"
+  },
+  {
+    "id": 252,
+    "customerId": 531,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 324,
+        "quantity": 1,
+        "unitPrice": 7.9
+      },
+      {
+        "productId": 216,
+        "quantity": 4,
+        "unitPrice": 147.35
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5431 Main Street",
+      "city": "Rivertown",
+      "postalCode": 90318,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-03-18T08:15:00Z"
+  },
+  {
+    "id": 253,
+    "customerId": 375,
+    "status": "active",
+    "items": [
+      {
+        "productId": 511,
+        "quantity": 4,
+        "unitPrice": 56.58
+      },
+      {
+        "productId": 718,
+        "quantity": 3,
+        "unitPrice": 94.44
+      },
+      {
+        "productId": 411,
+        "quantity": 3,
+        "unitPrice": 115.43
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9461 Main Street",
+      "city": "Springfield",
+      "postalCode": 85483,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-12-09T07:35:00Z"
+  },
+  {
+    "id": 254,
+    "customerId": 820,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 154,
+        "quantity": 4,
+        "unitPrice": 202.39
+      },
+      {
+        "productId": 181,
+        "quantity": 4,
+        "unitPrice": 127.4
+      },
+      {
+        "productId": 915,
+        "quantity": 5,
+        "unitPrice": 135.83
+      },
+      {
+        "productId": 324,
+        "quantity": 4,
+        "unitPrice": 78.51
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9310 Main Street",
+      "city": "Fairview",
+      "postalCode": 16253,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-02-23T05:03:00Z"
+  },
+  {
+    "id": 255,
+    "customerId": 645,
+    "status": "active",
+    "items": [
+      {
+        "productId": 461,
+        "quantity": 3,
+        "unitPrice": 68.64
+      },
+      {
+        "productId": 369,
+        "quantity": 5,
+        "unitPrice": 141.59
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4322 Main Street",
+      "city": "Rivertown",
+      "postalCode": 12599,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-11-20T06:36:00Z"
+  },
+  {
+    "id": 256,
+    "customerId": 333,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 523,
+        "quantity": 4,
+        "unitPrice": 194.81
+      },
+      {
+        "productId": 458,
+        "quantity": 1,
+        "unitPrice": 98.36
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4794 Main Street",
+      "city": "Lakeview",
+      "postalCode": 92799,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-03-21T10:26:00Z"
+  },
+  {
+    "id": 257,
+    "customerId": 166,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 234,
+        "quantity": 3,
+        "unitPrice": 82.64
+      },
+      {
+        "productId": 299,
+        "quantity": 3,
+        "unitPrice": 153.32
+      },
+      {
+        "productId": 405,
+        "quantity": 3,
+        "unitPrice": 222.48
+      },
+      {
+        "productId": 800,
+        "quantity": 3,
+        "unitPrice": 188.23
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8635 Main Street",
+      "city": "Lakeview",
+      "postalCode": 64262,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-03-28T00:08:00Z"
+  },
+  {
+    "id": 258,
+    "customerId": 718,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 82,
+        "quantity": 2,
+        "unitPrice": 45.89
+      },
+      {
+        "productId": 106,
+        "quantity": 1,
+        "unitPrice": 20.63
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7852 Main Street",
+      "city": "Fairview",
+      "postalCode": 17055,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-02-09T19:09:00Z"
+  },
+  {
+    "id": 259,
+    "customerId": 317,
+    "status": "active",
+    "items": [
+      {
+        "productId": 254,
+        "quantity": 3,
+        "unitPrice": 113.57
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2171 Main Street",
+      "city": "Springfield",
+      "postalCode": 79041,
+      "country": "United States of America"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-11-12T10:55:00Z"
+  },
+  {
+    "id": 260,
+    "customerId": 958,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 562,
+        "quantity": 4,
+        "unitPrice": 38.1
+      },
+      {
+        "productId": 972,
+        "quantity": 5,
+        "unitPrice": 48.37
+      },
+      {
+        "productId": 612,
+        "quantity": 4,
+        "unitPrice": 159.61
+      },
+      {
+        "productId": 652,
+        "quantity": 5,
+        "unitPrice": 111.57
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8845 Main Street",
+      "city": "Rivertown",
+      "postalCode": 55504,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "gift",
+      "subscription"
+    ],
+    "createdAt": "2024-05-12T13:16:00Z"
+  },
+  {
+    "id": 261,
+    "customerId": 835,
+    "status": "active",
+    "items": [
+      {
+        "productId": 353,
+        "quantity": 3,
+        "unitPrice": 119.95
+      },
+      {
+        "productId": 9,
+        "quantity": 4,
+        "unitPrice": 237.0
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7916 Main Street",
+      "city": "Rivertown",
+      "postalCode": 11197,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-05-20T07:50:00Z"
+  },
+  {
+    "id": 262,
+    "customerId": 904,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 448,
+        "quantity": 4,
+        "unitPrice": 66.22
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6485 Main Street",
+      "city": "Lakeview",
+      "postalCode": 38913,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-02-14T20:15:00Z"
+  },
+  {
+    "id": 263,
+    "customerId": 829,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 423,
+        "quantity": 2,
+        "unitPrice": 214.1
+      },
+      {
+        "productId": 187,
+        "quantity": 2,
+        "unitPrice": 75.95
+      },
+      {
+        "productId": 653,
+        "quantity": 4,
+        "unitPrice": 156.34
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4558 Main Street",
+      "city": "Fairview",
+      "postalCode": 74486,
+      "country": "United States of America"
+    },
+    "tags": [
+      "gift",
+      "priority"
+    ],
+    "createdAt": "2024-01-18T00:11:00Z"
+  },
+  {
+    "id": 264,
+    "customerId": 449,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 9,
+        "quantity": 2,
+        "unitPrice": 27.1
+      }
+    ],
+    "shippingAddress": {
+      "line1": "341 Main Street",
+      "city": "Lakeview",
+      "postalCode": 38467,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-07-10T15:23:00Z"
+  },
+  {
+    "id": 265,
+    "customerId": 83,
+    "status": "active",
+    "items": [
+      {
+        "productId": 58,
+        "quantity": 3,
+        "unitPrice": 195.03
+      },
+      {
+        "productId": 74,
+        "quantity": 5,
+        "unitPrice": 120.19
+      },
+      {
+        "productId": 197,
+        "quantity": 3,
+        "unitPrice": 205.23
+      },
+      {
+        "productId": 849,
+        "quantity": 1,
+        "unitPrice": 34.88
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4178 Main Street",
+      "city": "Lakeview",
+      "postalCode": 68059,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-12-02T06:29:00Z"
+  },
+  {
+    "id": 266,
+    "customerId": 485,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 698,
+        "quantity": 3,
+        "unitPrice": 234.37
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2698 Main Street",
+      "city": "Dormansville",
+      "postalCode": 82034,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder"
+    ],
+    "createdAt": "2024-08-21T09:12:00Z"
+  },
+  {
+    "id": 267,
+    "customerId": 224,
+    "status": "active",
+    "items": [
+      {
+        "productId": 242,
+        "quantity": 4,
+        "unitPrice": 84.51
+      },
+      {
+        "productId": 172,
+        "quantity": 3,
+        "unitPrice": 148.25
+      },
+      {
+        "productId": 406,
+        "quantity": 2,
+        "unitPrice": 7.19
+      }
+    ],
+    "shippingAddress": {
+      "line1": "788 Main Street",
+      "city": "Fairview",
+      "postalCode": 72294,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-04-06T15:05:00Z"
+  },
+  {
+    "id": 268,
+    "customerId": 641,
+    "status": "active",
+    "items": [
+      {
+        "productId": 62,
+        "quantity": 3,
+        "unitPrice": 162.92
+      },
+      {
+        "productId": 719,
+        "quantity": 5,
+        "unitPrice": 198.91
+      },
+      {
+        "productId": 129,
+        "quantity": 4,
+        "unitPrice": 62.01
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9248 Main Street",
+      "city": "Rivertown",
+      "postalCode": 67503,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-12-13T11:46:00Z"
+  },
+  {
+    "id": 269,
+    "customerId": 724,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 573,
+        "quantity": 3,
+        "unitPrice": 137.97
+      },
+      {
+        "productId": 502,
+        "quantity": 2,
+        "unitPrice": 143.84
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9006 Main Street",
+      "city": "Rivertown",
+      "postalCode": 52425,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-08-09T19:58:00Z"
+  },
+  {
+    "id": 270,
+    "customerId": 303,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 555,
+        "quantity": 3,
+        "unitPrice": 116.25
+      },
+      {
+        "productId": 795,
+        "quantity": 5,
+        "unitPrice": 97.87
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-03-01T19:54:00Z"
+  },
+  {
+    "id": 271,
+    "customerId": 739,
+    "status": "active",
+    "items": [
+      {
+        "productId": 675,
+        "quantity": 5,
+        "unitPrice": 205.67
+      },
+      {
+        "productId": 195,
+        "quantity": 5,
+        "unitPrice": 172.39
+      },
+      {
+        "productId": 785,
+        "quantity": 5,
+        "unitPrice": 42.76
+      }
+    ],
+    "shippingAddress": {
+      "line1": "4738 Main Street",
+      "city": "Rivertown",
+      "postalCode": 63713,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-06-04T03:33:00Z"
+  },
+  {
+    "id": 272,
+    "customerId": 183,
+    "status": "active",
+    "items": [
+      {
+        "productId": 207,
+        "quantity": 1,
+        "unitPrice": 123.92
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [
+      "gift"
+    ],
+    "createdAt": "2024-10-21T12:42:00Z"
+  },
+  {
+    "id": 273,
+    "customerId": 263,
+    "status": "active",
+    "items": [
+      {
+        "productId": 376,
+        "quantity": 2,
+        "unitPrice": 153.46
+      },
+      {
+        "productId": 73,
+        "quantity": 1,
+        "unitPrice": 232.9
+      },
+      {
+        "productId": 214,
+        "quantity": 4,
+        "unitPrice": 232.46
+      },
+      {
+        "productId": 853,
+        "quantity": 1,
+        "unitPrice": 119.67
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1094 Main Street",
+      "city": "Rivertown",
+      "postalCode": 83140,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "gift"
+    ],
+    "createdAt": "2024-10-09T16:02:00Z"
+  },
+  {
+    "id": 274,
+    "customerId": 222,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 100,
+        "quantity": 1,
+        "unitPrice": 182.67
+      }
+    ],
+    "shippingAddress": {
+      "line1": "8810 Main Street",
+      "city": "Lakeview",
+      "postalCode": 34832,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-09-22T07:36:00Z"
+  },
+  {
+    "id": 275,
+    "customerId": 765,
+    "status": "active",
+    "items": [
+      {
+        "productId": 785,
+        "quantity": 5,
+        "unitPrice": 92.7
+      },
+      {
+        "productId": 470,
+        "quantity": 4,
+        "unitPrice": 221.29
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2833 Main Street",
+      "city": "Springfield",
+      "postalCode": 82085,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-10-15T11:57:00Z"
+  },
+  {
+    "id": 276,
+    "customerId": 866,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 423,
+        "quantity": 4,
+        "unitPrice": 207.41
+      },
+      {
+        "productId": 332,
+        "quantity": 5,
+        "unitPrice": 63.98
+      },
+      {
+        "productId": 559,
+        "quantity": 2,
+        "unitPrice": 96.89
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9115 Main Street",
+      "city": "Rivertown",
+      "postalCode": 57187,
+      "country": "Canada"
+    },
+    "tags": [
+      "sale",
+      "gift"
+    ],
+    "createdAt": "2024-12-02T09:38:00Z"
+  },
+  {
+    "id": 277,
+    "customerId": 310,
+    "status": "active",
+    "items": [
+      {
+        "productId": 308,
+        "quantity": 2,
+        "unitPrice": 57.63
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5259 Main Street",
+      "city": "Dormansville",
+      "postalCode": 46170,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "subscription",
+      "priority",
+      "gift"
+    ],
+    "createdAt": "2024-01-15T11:09:00Z"
+  },
+  {
+    "id": 278,
+    "customerId": 256,
+    "status": "active",
+    "items": [
+      {
+        "productId": 263,
+        "quantity": 3,
+        "unitPrice": 27.52
+      },
+      {
+        "productId": 410,
+        "quantity": 5,
+        "unitPrice": 229.88
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1364 Main Street",
+      "city": "Rivertown",
+      "postalCode": 73246,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription",
+      "gift"
+    ],
+    "createdAt": "2024-10-21T09:02:00Z"
+  },
+  {
+    "id": 279,
+    "customerId": 790,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 357,
+        "quantity": 4,
+        "unitPrice": 107.05
+      },
+      {
+        "productId": 889,
+        "quantity": 1,
+        "unitPrice": 218.1
+      },
+      {
+        "productId": 233,
+        "quantity": 5,
+        "unitPrice": 232.52
+      },
+      {
+        "productId": 650,
+        "quantity": 4,
+        "unitPrice": 18.26
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-09-02T10:34:00Z"
+  },
+  {
+    "id": 280,
+    "customerId": 157,
+    "status": "active",
+    "items": [
+      {
+        "productId": 690,
+        "quantity": 4,
+        "unitPrice": 242.9
+      },
+      {
+        "productId": 771,
+        "quantity": 5,
+        "unitPrice": 145.94
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1575 Main Street",
+      "city": "Springfield",
+      "postalCode": 66614,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-06-03T15:36:00Z"
+  },
+  {
+    "id": 281,
+    "customerId": 409,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 445,
+        "quantity": 2,
+        "unitPrice": 191.7
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7979 Main Street",
+      "city": "Fairview",
+      "postalCode": 35966,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-07-21T18:12:00Z"
+  },
+  {
+    "id": 282,
+    "customerId": 441,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 702,
+        "quantity": 5,
+        "unitPrice": 26.95
+      },
+      {
+        "productId": 688,
+        "quantity": 4,
+        "unitPrice": 108.77
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5806 Main Street",
+      "city": "Springfield",
+      "postalCode": 52039,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-10-21T00:49:00Z"
+  },
+  {
+    "id": 283,
+    "customerId": 842,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 639,
+        "quantity": 2,
+        "unitPrice": 112.91
+      },
+      {
+        "productId": 947,
+        "quantity": 2,
+        "unitPrice": 53.92
+      },
+      {
+        "productId": 383,
+        "quantity": 2,
+        "unitPrice": 190.64
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1505 Main Street",
+      "city": "Dormansville",
+      "postalCode": 17148,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-10-05T09:00:00Z"
+  },
+  {
+    "id": 284,
+    "customerId": 461,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 24,
+        "quantity": 3,
+        "unitPrice": 56.21
+      },
+      {
+        "productId": 551,
+        "quantity": 2,
+        "unitPrice": 54.93
+      },
+      {
+        "productId": 536,
+        "quantity": 3,
+        "unitPrice": 139.46
+      }
+    ],
+    "shippingAddress": {
+      "line1": "2415 Main Street",
+      "city": "Dormansville",
+      "postalCode": 59362,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-11-17T01:16:00Z"
+  },
+  {
+    "id": 285,
+    "customerId": 714,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 278,
+        "quantity": 1,
+        "unitPrice": 118.92
+      },
+      {
+        "productId": 968,
+        "quantity": 1,
+        "unitPrice": 21.32
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-11-09T21:54:00Z"
+  },
+  {
+    "id": 286,
+    "customerId": 889,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 396,
+        "quantity": 2,
+        "unitPrice": 245.05
+      },
+      {
+        "productId": 521,
+        "quantity": 1,
+        "unitPrice": 226.45
+      },
+      {
+        "productId": 497,
+        "quantity": 5,
+        "unitPrice": 135.23
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3154 Main Street",
+      "city": "Springfield",
+      "postalCode": 75621,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-09-23T00:02:00Z"
+  },
+  {
+    "id": 287,
+    "customerId": 502,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 763,
+        "quantity": 2,
+        "unitPrice": 9.5
+      },
+      {
+        "productId": 701,
+        "quantity": 3,
+        "unitPrice": 92.07
+      }
+    ],
+    "shippingAddress": {
+      "line1": "5053 Main Street",
+      "city": "Springfield",
+      "postalCode": 75700,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-01-21T08:56:00Z"
+  },
+  {
+    "id": 288,
+    "customerId": 31,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 972,
+        "quantity": 3,
+        "unitPrice": 60.27
+      },
+      {
+        "productId": 350,
+        "quantity": 4,
+        "unitPrice": 165.95
+      },
+      {
+        "productId": 90,
+        "quantity": 4,
+        "unitPrice": 132.58
+      },
+      {
+        "productId": 695,
+        "quantity": 5,
+        "unitPrice": 218.81
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3826 Main Street",
+      "city": "Lakeview",
+      "postalCode": 41504,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "sale"
+    ],
+    "createdAt": "2024-05-20T10:28:00Z"
+  },
+  {
+    "id": 289,
+    "customerId": 555,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 820,
+        "quantity": 2,
+        "unitPrice": 216.33
+      },
+      {
+        "productId": 317,
+        "quantity": 5,
+        "unitPrice": 227.84
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7146 Main Street",
+      "city": "Springfield",
+      "postalCode": 96013,
+      "country": "United Kingdom"
+    },
+    "tags": [],
+    "createdAt": "2024-03-11T02:35:00Z"
+  },
+  {
+    "id": 290,
+    "customerId": 150,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 31,
+        "quantity": 3,
+        "unitPrice": 220.63
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6883 Main Street",
+      "city": "Lakeview",
+      "postalCode": 49760,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "priority",
+      "gift"
+    ],
+    "createdAt": "2024-02-05T05:01:00Z"
+  },
+  {
+    "id": 291,
+    "customerId": 611,
+    "status": "active",
+    "items": [
+      {
+        "productId": 237,
+        "quantity": 1,
+        "unitPrice": 93.02
+      },
+      {
+        "productId": 705,
+        "quantity": 4,
+        "unitPrice": 37.85
+      },
+      {
+        "productId": 867,
+        "quantity": 5,
+        "unitPrice": 119.85
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6226 Main Street",
+      "city": "Springfield",
+      "postalCode": 60785,
+      "country": "Canada"
+    },
+    "tags": [
+      "priority",
+      "subscription"
+    ],
+    "createdAt": "2024-04-08T01:26:00Z"
+  },
+  {
+    "id": 292,
+    "customerId": 228,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 688,
+        "quantity": 2,
+        "unitPrice": 190.66
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1183 Main Street",
+      "city": "Springfield",
+      "postalCode": 67577,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-04-14T12:49:00Z"
+  },
+  {
+    "id": 293,
+    "customerId": 738,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 404,
+        "quantity": 5,
+        "unitPrice": 235.09
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9470 Main Street",
+      "city": "Fairview",
+      "postalCode": 80275,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "gift",
+      "subscription",
+      "priority"
+    ],
+    "createdAt": "2024-08-27T01:56:00Z"
+  },
+  {
+    "id": 294,
+    "customerId": 753,
+    "status": "active",
+    "items": [
+      {
+        "productId": 572,
+        "quantity": 4,
+        "unitPrice": 131.45
+      },
+      {
+        "productId": 646,
+        "quantity": 1,
+        "unitPrice": 51.51
+      }
+    ],
+    "shippingAddress": {
+      "line1": "7301 Main Street",
+      "city": "Lakeview",
+      "postalCode": 49918,
+      "country": "Canada"
+    },
+    "tags": [],
+    "createdAt": "2024-08-06T13:18:00Z"
+  },
+  {
+    "id": 295,
+    "customerId": 475,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 463,
+        "quantity": 1,
+        "unitPrice": 182.05
+      }
+    ],
+    "shippingAddress": {
+      "line1": "1954 Main Street",
+      "city": "Springfield",
+      "postalCode": 86735,
+      "country": "United Kingdom"
+    },
+    "tags": [
+      "priority",
+      "sale",
+      "subscription"
+    ],
+    "createdAt": "2024-06-15T00:11:00Z"
+  },
+  {
+    "id": 296,
+    "customerId": 207,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 93,
+        "quantity": 3,
+        "unitPrice": 84.4
+      },
+      {
+        "productId": 665,
+        "quantity": 2,
+        "unitPrice": 181.0
+      },
+      {
+        "productId": 127,
+        "quantity": 1,
+        "unitPrice": 32.97
+      },
+      {
+        "productId": 461,
+        "quantity": 3,
+        "unitPrice": 25.9
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6392 Main Street",
+      "city": "Fairview",
+      "postalCode": 90225,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription",
+      "sale"
+    ],
+    "createdAt": "2024-01-25T05:58:00Z"
+  },
+  {
+    "id": 297,
+    "customerId": 154,
+    "status": "active",
+    "items": [
+      {
+        "productId": 890,
+        "quantity": 2,
+        "unitPrice": 48.82
+      },
+      {
+        "productId": 730,
+        "quantity": 1,
+        "unitPrice": 107.8
+      },
+      {
+        "productId": 317,
+        "quantity": 4,
+        "unitPrice": 75.75
+      }
+    ],
+    "shippingAddress": {
+      "line1": "3060 Main Street",
+      "city": "Dormansville",
+      "postalCode": 27245,
+      "country": "United States of America"
+    },
+    "tags": [
+      "subscription"
+    ],
+    "createdAt": "2024-05-01T14:31:00Z"
+  },
+  {
+    "id": 298,
+    "customerId": 904,
+    "status": "checked_out",
+    "items": [
+      {
+        "productId": 244,
+        "quantity": 2,
+        "unitPrice": 149.27
+      },
+      {
+        "productId": 488,
+        "quantity": 4,
+        "unitPrice": 105.49
+      },
+      {
+        "productId": 82,
+        "quantity": 5,
+        "unitPrice": 152.03
+      },
+      {
+        "productId": 251,
+        "quantity": 5,
+        "unitPrice": 73.14
+      }
+    ],
+    "shippingAddress": {
+      "line1": "9234 Main Street",
+      "city": "Springfield",
+      "postalCode": 16411,
+      "country": "United States of America"
+    },
+    "tags": [],
+    "createdAt": "2024-03-02T20:22:00Z"
+  },
+  {
+    "id": 299,
+    "customerId": 592,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 306,
+        "quantity": 3,
+        "unitPrice": 230.49
+      }
+    ],
+    "shippingAddress": null,
+    "tags": [],
+    "createdAt": "2024-01-04T13:11:00Z"
+  },
+  {
+    "id": 300,
+    "customerId": 709,
+    "status": "abandoned",
+    "items": [
+      {
+        "productId": 610,
+        "quantity": 5,
+        "unitPrice": 197.89
+      },
+      {
+        "productId": 182,
+        "quantity": 4,
+        "unitPrice": 188.59
+      }
+    ],
+    "shippingAddress": {
+      "line1": "6001 Main Street",
+      "city": "Dormansville",
+      "postalCode": 22206,
+      "country": "Canada"
+    },
+    "tags": [
+      "backorder",
+      "sale"
+    ],
+    "createdAt": "2024-02-25T13:53:00Z"
+  }
+]
