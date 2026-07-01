@@ -8,6 +8,7 @@ const isAdmin = computed(() => storage.value?.profile?.isAdmin ?? false)
 const baseItems: NavigationMenuItem[][] = [
   [
     { label: 'Home', icon: 'i-lucide-home', to: '/secured' },
+    { label: 'Account', icon: 'i-lucide-user', to: '/secured/account' },
   ],
 ]
 

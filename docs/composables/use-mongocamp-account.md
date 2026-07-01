@@ -1,6 +1,6 @@
 # useMongocampAccount
 
-Wraps the `authApi` methods **not** already surfaced by `@sfxcode/nuxt-mongocamp-server`'s own `useMongocampAuth()` (`login`, `logout`, `isAuthenticated`, `isLoggedIn`, `userRoles`, `userGrants`). Powers the account self-service component.
+Wraps the `authApi` methods **not** already surfaced by `@sfxcode/nuxt-mongocamp-server`'s own `useMongocampAuth()` (`login`, `logout`, `isAuthenticated`, `isLoggedIn`, `userRoles`, `userGrants`). Powers [`MongocampAccount`](/components/mongocamp-account).
 
 ```ts
 const {
@@ -29,7 +29,7 @@ Follows the same convention as `useMongocampBucket`'s `uploadFile`: owns its own
 const newKey = await regenerateApiKey()
 ```
 
-Calls `authApi.generateNewApiKey()` and returns the raw key string. **This is the only time the new key is retrievable** — the server doesn't expose it again afterward, so the UI must display it prominently once rather than just toasting a generic "success" message.
+Calls `authApi.generateNewApiKey()` and returns the raw key string. **This is the only time the new key is retrievable** — the server doesn't expose it again afterward, so the UI must display it prominently once (see [`MongocampAccount`](/components/mongocamp-account)) rather than just toasting a generic "success" message.
 
 ## No manual "refresh session" method
 
