@@ -9,6 +9,7 @@ All composables are auto-imported.
 | [`useMongocampDocument`](/composables/use-mongocamp-document) | Document-level helpers (metadata stamping, partial updates) |
 | [`useMongocampSchema`](/composables/use-mongocamp-schema) | Infers a schema from sampled documents; generates a matching TS interface |
 | [`useMongocampBucket`](/composables/use-mongocamp-bucket) | GridFS bucket detection, file-id resolution, upload/download |
+| [`useMongocampIndex`](/composables/use-mongocamp-index) | Create/list/delete MongoDB indexes (standard, unique, text, expiring) |
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
 
