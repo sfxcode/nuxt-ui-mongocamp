@@ -154,6 +154,16 @@ const columns: TableColumn<Grant>[] = [
     header: 'Collection',
   },
   {
+    accessorKey: 'grantType',
+    header: 'Type',
+    cell: ({ row }) =>
+      h(UBadge, {
+        label: row.original.grantType,
+        color: 'neutral',
+        variant: 'subtle',
+      }),
+  },
+  {
     accessorKey: 'read',
     header: 'Read',
     cell: ({ row }) =>
