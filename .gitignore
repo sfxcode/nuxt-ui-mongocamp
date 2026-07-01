@@ -11,6 +11,9 @@ node_modules
 
 .obsidian
 
+# Brain vault (local knowledge base, not version-controlled)
+brain
+
 # Yarn
 **/.yarn/cache
 **/.yarn/*state*
