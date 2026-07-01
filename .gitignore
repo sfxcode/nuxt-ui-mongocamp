@@ -9,6 +9,8 @@ node_modules
 .tmp
 .cache
 
+.obsidian
+
 # Yarn
 **/.yarn/cache
 **/.yarn/*state*

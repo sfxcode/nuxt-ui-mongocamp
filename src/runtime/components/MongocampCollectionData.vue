@@ -17,6 +17,113 @@ const UButton = resolveComponent('UButton')
 type Row = Record<string, unknown>
 type SortEntry = { id: string, desc: boolean }
 
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const editMode = ref<'insert' | 'update'>('insert')
+const editDocId = ref<string | undefined>(undefined)
+const editJson = ref('{}')
+const editError = ref('')
+const docToDelete = ref<string | undefined>(undefined)
+const deleteError = ref('')
+
+function getDocId(row: Row): string | undefined {
+  const id = row._id
+  if (typeof id === 'string') return id
+  if (typeof id === 'object' && id !== null && '$oid' in (id as Record<string, unknown>))
+    return String((id as Record<string, unknown>).$oid)
+  return undefined
+}
+
+function openInsert() {
+  editMode.value = 'insert'
+  editDocId.value = undefined
+  editJson.value = '{}'
+  editError.value = ''
+  isEditModalOpen.value = true
+}
+
+function openEdit(row: Row) {
+  editMode.value = 'update'
+  editDocId.value = getDocId(row)
+  editJson.value = JSON.stringify(row, null, 2)
+  editError.value = ''
+  isEditModalOpen.value = true
+}
+
+function confirmDelete(row: Row) {
+  docToDelete.value = getDocId(row)
+  deleteError.value = ''
+  isDeleteModalOpen.value = true
+}
+
+async function handleSave() {
+  editError.value = ''
+  let parsed: Record<string, unknown>
+  try {
+    parsed = JSON.parse(editJson.value)
+  }
+  catch {
+    editError.value = 'Invalid JSON'
+    return
+  }
+  try {
+    if (editMode.value === 'insert') {
+      await documentApi.insert({ collectionName: props.collectionName, requestBody: parsed as { [key: string]: string } })
+    }
+    else {
+      if (!editDocId.value) return
+      const body: Record<string, unknown> = { ...parsed }
+      delete body._id
+      // UpdateRequest name collides with a models type in the generated client — cast through unknown
+      await documentApi.update({ collectionName: props.collectionName, documentId: editDocId.value, requestBody: body as { [key: string]: string } } as unknown as Parameters<typeof documentApi.update>[0])
+    }
+    isEditModalOpen.value = false
+    await fetchDocuments()
+  }
+  catch (e) {
+    editError.value = e instanceof Error ? e.message : 'Error saving document'
+  }
+}
+
+async function handleDelete() {
+  deleteError.value = ''
+  if (!docToDelete.value) return
+  try {
+    await documentApi._delete({ collectionName: props.collectionName, documentId: docToDelete.value })
+    isDeleteModalOpen.value = false
+    await fetchDocuments()
+  }
+  catch (e) {
+    deleteError.value = e instanceof Error ? e.message : 'Error deleting document'
+  }
+}
+
+function makeActionsColumn(): TableColumn<Row> {
+  return {
+    id: 'actions',
+    header: '',
+    cell: ({ row }: { row: { original: Row } }) =>
+      h('div', { class: 'flex gap-1 justify-end' }, [
+        h(UButton, {
+          'icon': 'i-lucide-pencil',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': 'Edit document',
+          'onClick': () => openEdit(row.original),
+        }),
+        h(UButton, {
+          'icon': 'i-lucide-trash-2',
+          'color': 'error',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': 'Delete document',
+          'onClick': () => confirmDelete(row.original),
+        }),
+      ]),
+  }
+}
+
 function sortHeader(column: Column<Row>, label: string) {
   const isSorted = column.getIsSorted()
   return h(UButton, {
@@ -191,6 +298,7 @@ async function fetchDocuments() {
         cell: makeCell(key, 'string'),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
+      columns.value.push(makeActionsColumn())
     }
   }
   finally {
@@ -230,6 +338,14 @@ watch(() => props.collectionName, init, { immediate: true })
           {{ total }} documents
         </span>
         <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          variant="ghost"
+          size="sm"
+          aria-label="Insert document"
+          @click="openInsert"
+        />
+        <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
           variant="ghost"
@@ -259,6 +375,69 @@ watch(() => props.collectionName, init, { immediate: true })
     >
       <template #body>
         <pre class="text-xs overflow-auto max-h-[60vh] whitespace-pre-wrap break-all">{{ detailContent }}</pre>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isEditModalOpen"
+      :title="editMode === 'insert' ? 'Insert Document' : 'Edit Document'"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <textarea
+          v-model="editJson"
+          class="w-full h-80 font-mono text-xs p-2 border rounded bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:outline-none resize-y"
+          spellcheck="false"
+        />
+        <p
+          v-if="editError"
+          class="mt-2 text-sm text-error-500"
+        >
+          {{ editError }}
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="isEditModalOpen = false"
+        />
+        <UButton
+          :label="editMode === 'insert' ? 'Insert' : 'Save'"
+          :icon="editMode === 'insert' ? 'i-lucide-plus' : 'i-lucide-save'"
+          @click="handleSave"
+        />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isDeleteModalOpen"
+      title="Delete Document"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <p>Are you sure you want to delete this document? This action cannot be undone.</p>
+        <p
+          v-if="deleteError"
+          class="mt-2 text-sm text-error-500"
+        >
+          {{ deleteError }}
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="isDeleteModalOpen = false"
+        />
+        <UButton
+          label="Delete"
+          color="error"
+          icon="i-lucide-trash-2"
+          @click="handleDelete"
+        />
       </template>
     </UModal>
   </div>
