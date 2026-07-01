@@ -1,9 +1,20 @@
 {
   "name": "@sfxcode/nuxt-ui-mongocamp",
   "version": "1.0.0",
-  "description": "My new Nuxt module",
-  "repository": "your-org/my-module",
+  "description": "A Nuxt module that wraps @sfxcode/nuxt-mongocamp-server with ready-made UI components, composables, and a runtime plugin",
+  "repository": "sfxcode/nuxt-ui-mongocamp",
+  "homepage": "https://sfxcode.github.io/nuxt-ui-mongocamp/",
+  "bugs": "https://github.com/sfxcode/nuxt-ui-mongocamp/issues",
+  "author": "sfxcode",
   "license": "MIT",
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "mongocamp",
+    "mongodb",
+    "vue",
+    "nuxt-ui"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +36,9 @@
   "workspaces": [
     "playground"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "prepack": "nuxt-module-build build",
     "dev": "npm run dev:prepare && nuxt dev playground",
