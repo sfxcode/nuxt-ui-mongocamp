@@ -2,7 +2,7 @@
 import { h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useMongocampApi } from '#imports'
+import { useMongocampApi, useMongocampBucket } from '#imports'
 
 const props = defineProps<{
   infoPath?: string
@@ -17,6 +17,7 @@ interface CollectionRow {
 }
 
 const { collectionApi } = useMongocampApi()
+const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, deleteBucket } = useMongocampBucket()
 
 const collections = ref<CollectionRow[]>([])
 const loading = ref(false)
@@ -46,9 +47,40 @@ async function fetchCollections() {
 }
 
 const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
 
 const globalFilter = ref('')
 const sorting = ref<{ id: string, desc: boolean }[]>([])
+
+const isClearBucketModalOpen = ref(false)
+const bucketToClear = ref<string | undefined>(undefined)
+
+function confirmClearBucket(bucketName: string) {
+  bucketToClear.value = bucketName
+  isClearBucketModalOpen.value = true
+}
+
+async function handleClearBucket() {
+  if (!bucketToClear.value) return
+  const success = await clearBucket(bucketToClear.value)
+  isClearBucketModalOpen.value = false
+  if (success) await fetchCollections()
+}
+
+const isDeleteBucketModalOpen = ref(false)
+const bucketToDelete = ref<string | undefined>(undefined)
+
+function confirmDeleteBucket(bucketName: string) {
+  bucketToDelete.value = bucketName
+  isDeleteBucketModalOpen.value = true
+}
+
+async function handleDeleteBucket() {
+  if (!bucketToDelete.value) return
+  const success = await deleteBucket(bucketToDelete.value)
+  isDeleteBucketModalOpen.value = false
+  if (success) await fetchCollections()
+}
 
 function sortHeader<T>(column: Column<T>, label: string) {
   const isSorted = column.getIsSorted()
@@ -70,6 +102,13 @@ const columns: TableColumn<CollectionRow>[] = [
   {
     accessorKey: 'name',
     header: ({ column }) => sortHeader(column, 'Collection'),
+    cell: ({ row }) =>
+      h('div', { class: 'flex items-center gap-2' }, [
+        h('span', row.original.name),
+        isBucketCollection(row.original.name)
+          ? h(UBadge, { label: 'bucket', color: 'neutral', variant: 'subtle', size: 'sm' })
+          : null,
+      ]),
   },
   {
     accessorKey: 'count',
@@ -86,8 +125,8 @@ const columns: TableColumn<CollectionRow>[] = [
   {
     id: 'actions',
     header: '',
-    cell: ({ row }) =>
-      h('div', { class: 'flex gap-1 justify-end' }, [
+    cell: ({ row }) => {
+      const buttons = [
         h(UButton, {
           'icon': 'i-lucide-info',
           'color': 'neutral',
@@ -104,7 +143,32 @@ const columns: TableColumn<CollectionRow>[] = [
           'aria-label': 'Collection data',
           'to': `${props.dataPath ?? '/secured/admin/collections'}/${row.original.name}/data`,
         }),
-      ]),
+      ]
+      if (isBucketCollection(row.original.name)) {
+        const bucketName = bucketNameFor(row.original.name)
+        buttons.push(
+          h(UButton, {
+            'icon': 'i-lucide-eraser',
+            'color': 'warning',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': 'Clear bucket',
+            'loading': bucketActionInFlight.value.has(bucketName),
+            'onClick': () => confirmClearBucket(bucketName),
+          }),
+          h(UButton, {
+            'icon': 'i-lucide-trash-2',
+            'color': 'error',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': 'Delete bucket',
+            'loading': bucketActionInFlight.value.has(bucketName),
+            'onClick': () => confirmDeleteBucket(bucketName),
+          }),
+        )
+      }
+      return h('div', { class: 'flex gap-1 justify-end' }, buttons)
+    },
   },
 ]
 
@@ -143,5 +207,53 @@ fetchCollections()
       :columns="columns"
       :loading="loading"
     />
+
+    <UModal
+      v-model:open="isClearBucketModalOpen"
+      title="Clear Bucket"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <p>Are you sure you want to delete every file in the "{{ bucketToClear }}" bucket? The bucket itself is kept, but all files in it are permanently removed. This action cannot be undone.</p>
+      </template>
+      <template #footer>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="isClearBucketModalOpen = false"
+        />
+        <UButton
+          label="Clear Bucket"
+          color="warning"
+          icon="i-lucide-eraser"
+          @click="handleClearBucket"
+        />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isDeleteBucketModalOpen"
+      title="Delete Bucket"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <p>Are you sure you want to delete the "{{ bucketToDelete }}" bucket? This permanently removes both the "{{ bucketToDelete }}.files" and "{{ bucketToDelete }}.chunks" collections. This action cannot be undone.</p>
+      </template>
+      <template #footer>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="isDeleteBucketModalOpen = false"
+        />
+        <UButton
+          label="Delete Bucket"
+          color="error"
+          icon="i-lucide-trash-2"
+          @click="handleDeleteBucket"
+        />
+      </template>
+    </UModal>
   </div>
 </template>

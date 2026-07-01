@@ -24,14 +24,23 @@ Table of all collections in the default database, with document count, storage s
 
 | Column | Description |
 |---|---|
-| Collection | Name, sortable |
+| Collection | Name, sortable — GridFS bucket collections (`.files`/`.chunks`) show a "bucket" badge |
 | Documents | Document count |
 | Size (KB) | Storage size |
 | Indexes | Index count |
-| — | Info / data action buttons |
+| — | Info / data action buttons, plus bucket actions on bucket-backed rows |
 
 ## Behavior
 
 - Fetched via `collectionApi.listCollections()` + `collectionApi.getCollectionInformation()` per collection.
 - Collections whose name starts with `mc` (MongoCamp's internal collections) are filtered out.
 - The filter input matches client-side against the already-loaded rows.
+
+## Bucket actions
+
+Rows for a `.files` or `.chunks` collection (detected via [`useMongocampBucket`](/composables/use-mongocamp-bucket)'s `isBucketCollection`) get two extra actions, both behind a confirmation modal and both refetching the collection list on success:
+
+- **Clear bucket** — deletes every file in the bucket, keeps the bucket itself
+- **Delete bucket** — drops both the `.files` and `.chunks` collections permanently
+
+The `.files`/`.chunks` pair is **not** collapsed into a single row — each stays independently browsable via [`MongocampCollectionData`](/components/mongocamp-collection-data); the badge and bucket actions are just added to both rows.
