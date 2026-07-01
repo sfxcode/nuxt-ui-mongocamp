@@ -3,6 +3,8 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'nuxt-ui-mongocamp',
   description: 'A Nuxt module wrapping MongoCamp with ready-made UI components and composables',
+  // Served from https://sfxcode.github.io/nuxt-ui-mongocamp/ as a GitHub Pages project site
+  base: '/nuxt-ui-mongocamp/',
 
   themeConfig: {
     nav: [
