@@ -4,6 +4,7 @@
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
+[![Docs][docs-src]][docs-href]
 
 A Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.com/package/@sfxcode/nuxt-mongocamp-server) with ready-made UI components, composables, and a runtime plugin. Add the module to your Nuxt app and get MongoCamp authentication, user/role management, and collection access out of the box — built on [Nuxt UI](https://ui.nuxt.com) and [FormKit](https://formkit.com).
 
@@ -302,3 +303,6 @@ pnpm run docs:preview
 
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt
 [nuxt-href]: https://nuxt.com
+
+[docs-src]: https://img.shields.io/badge/docs-vitepress-020420.svg?style=flat&colorA=020420&colorB=00DC82
+[docs-href]: https://sfxcode.github.io/nuxt-ui-mongocamp/
