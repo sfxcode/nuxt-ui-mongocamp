@@ -28,6 +28,13 @@
         variant="outline"
         size="lg"
       />
+      <UButton
+        label="Jobs"
+        icon="i-lucide-clock"
+        to="/secured/admin/jobs"
+        variant="outline"
+        size="lg"
+      />
     </div>
   </div>
 </template>
