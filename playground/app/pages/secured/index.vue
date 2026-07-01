@@ -77,7 +77,7 @@ async function resetTestData() {
     toast.add({ title: 'Test data reset', description: 'All 7 collections/buckets have been recreated.', color: 'success' })
     await refresh()
   }
-  catch (e) {
+  catch {
     toast.add({ title: 'Reset failed', description: `Failed while resetting ${resetProgress.value}.`, color: 'error' })
   }
   finally {
