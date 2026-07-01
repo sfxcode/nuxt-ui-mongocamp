@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, h, ref, resolveComponent, watch } from 'vue'
-import { useMongocampApi, useMongocampSchema, useToast } from '#imports'
+import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
+import { useMongocampApi, useMongocampIndex, useMongocampSchema, useToast } from '#imports'
 import type { TableColumn } from '@nuxt/ui'
-import type { CollectionStatus } from '@sfxcode/nuxt-mongocamp-server'
+import type { CollectionStatus, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 import type { ColumnDefinition } from '../composables/useMongocampSchema'
 
 const props = withDefaults(defineProps<{
@@ -14,13 +14,21 @@ const props = withDefaults(defineProps<{
 
 const { collectionApi, documentApi } = useMongocampApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
+const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
 
 const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
+const UButton = resolveComponent('UButton')
 
 const info = ref<CollectionStatus | null>(null)
 const columnDefinitions = ref<ColumnDefinition[]>([])
+const indexes = ref<MongoIndex[]>([])
 const loading = ref(false)
+
+async function fetchIndexes() {
+  if (!props.collectionName) return
+  indexes.value = await listIndexes(props.collectionName)
+}
 
 async function fetchInfo() {
   if (!props.collectionName) return
@@ -33,6 +41,7 @@ async function fetchInfo() {
       page: 1,
     })
     columnDefinitions.value = schemaFromSamples(samples as Array<Record<string, unknown>>)
+    await fetchIndexes()
   }
   finally {
     loading.value = false
@@ -100,6 +109,168 @@ const schemaTableColumns: TableColumn<SchemaRow>[] = [
         : h('span', { class: 'text-dimmed' }, '—'),
   },
 ]
+
+interface IndexRow {
+  name: string
+  keys: string
+  unique: boolean
+  text: boolean
+  expire: boolean
+  sizeKb: number
+}
+
+const indexRows = computed<IndexRow[]>(() =>
+  indexes.value.map(idx => ({
+    name: idx.name,
+    keys: Object.entries(idx.keys ?? {}).map(([field, direction]) => `${field}: ${direction}`).join(', '),
+    unique: idx.unique,
+    text: idx.text,
+    expire: idx.expire,
+    sizeKb: Math.round((info.value?.indexSizes?.[idx.name] ?? 0) / 1024),
+  })),
+)
+
+const isCreateIndexModalOpen = ref(false)
+const createIndexError = ref('')
+const newIndex = ref({ fieldName: '', sortAscending: true, indexType: 'standard', duration: '3600s' })
+
+const createIndexSchema = reactive([
+  {
+    $formkit: 'nuxtUIInput',
+    name: 'fieldName',
+    label: 'Field Name',
+    validation: 'required',
+  },
+  {
+    $formkit: 'nuxtUISwitch',
+    name: 'sortAscending',
+    label: 'Ascending',
+  },
+  {
+    $formkit: 'nuxtUISelectMenu',
+    id: 'indexType',
+    name: 'indexType',
+    label: 'Index Type',
+    options: ['standard', 'unique', 'text', 'expiring'],
+    validation: 'required',
+  },
+  {
+    $formkit: 'nuxtUIInput',
+    name: 'duration',
+    label: 'Expire After (e.g. 3600s)',
+    help: 'Only used for the expiring index type.',
+    if: '$get(indexType).value === \'expiring\'',
+  },
+])
+
+function extractSelectValue(raw: unknown): string {
+  if (typeof raw === 'object' && raw !== null) {
+    const obj = raw as { value?: string, label?: string }
+    return obj.value ?? obj.label ?? ''
+  }
+  return String(raw ?? '')
+}
+
+function openCreateIndex() {
+  createIndexError.value = ''
+  newIndex.value = { fieldName: '', sortAscending: true, indexType: 'standard', duration: '3600s' }
+  isCreateIndexModalOpen.value = true
+}
+
+async function handleCreateIndex() {
+  createIndexError.value = ''
+  const { fieldName, sortAscending } = newIndex.value
+  const indexType = extractSelectValue(newIndex.value.indexType)
+  try {
+    if (indexType === 'unique') {
+      await createUniqueIndex(props.collectionName, fieldName, sortAscending)
+    }
+    else if (indexType === 'text') {
+      await createTextIndex(props.collectionName, fieldName)
+    }
+    else if (indexType === 'expiring') {
+      await createExpiringIndex(props.collectionName, fieldName, newIndex.value.duration)
+    }
+    else {
+      await createIndex(props.collectionName, { [fieldName]: sortAscending ? 1 : -1 })
+    }
+    isCreateIndexModalOpen.value = false
+    await fetchIndexes()
+  }
+  catch (e) {
+    createIndexError.value = e instanceof Error ? e.message : 'Error creating index'
+  }
+}
+
+const isDeleteIndexModalOpen = ref(false)
+const deleteIndexError = ref('')
+const indexToDelete = ref<string | undefined>(undefined)
+
+function confirmDeleteIndex(indexName: string) {
+  indexToDelete.value = indexName
+  deleteIndexError.value = ''
+  isDeleteIndexModalOpen.value = true
+}
+
+async function handleDeleteIndex() {
+  deleteIndexError.value = ''
+  if (!indexToDelete.value) return
+  try {
+    await deleteIndex(props.collectionName, indexToDelete.value)
+    isDeleteIndexModalOpen.value = false
+    await fetchIndexes()
+  }
+  catch (e) {
+    deleteIndexError.value = e instanceof Error ? e.message : 'Error deleting index'
+  }
+}
+
+const INDEX_FLAG_BADGES: Array<{ key: 'unique' | 'text' | 'expire', label: string, color: string }> = [
+  { key: 'unique', label: 'unique', color: 'warning' },
+  { key: 'text', label: 'text', color: 'info' },
+  { key: 'expire', label: 'expire', color: 'secondary' },
+]
+
+const indexTableColumns: TableColumn<IndexRow>[] = [
+  {
+    accessorKey: 'name',
+    header: 'Index',
+  },
+  {
+    accessorKey: 'keys',
+    header: 'Keys',
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.keys),
+  },
+  {
+    id: 'flags',
+    header: 'Type',
+    cell: ({ row }) =>
+      h('div', { class: 'flex gap-1' }, INDEX_FLAG_BADGES
+        .filter(flag => row.original[flag.key])
+        .map(flag => h(UBadge, { label: flag.label, color: flag.color, variant: 'subtle', size: 'sm' }))),
+  },
+  {
+    accessorKey: 'sizeKb',
+    header: 'Size (KB)',
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) =>
+      row.original.name === '_id_'
+        ? null
+        : h('div', { class: 'flex justify-end' }, [
+            h(UButton, {
+              'icon': 'i-lucide-trash-2',
+              'color': 'error',
+              'variant': 'ghost',
+              'size': 'sm',
+              'aria-label': 'Delete index',
+              'onClick': () => confirmDeleteIndex(row.original.name),
+            }),
+          ]),
+  },
+]
 </script>
 
 <template>
@@ -161,19 +332,35 @@ const schemaTableColumns: TableColumn<SchemaRow>[] = [
         </div>
       </UCard>
     </div>
-    <UCard v-if="info && info.indexSizes && Object.keys(info.indexSizes).length">
+    <UCard v-if="indexRows.length">
       <template #header>
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-lucide-list-tree"
-            class="size-4 text-(--ui-primary)"
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-lucide-list-tree"
+              class="size-4 text-(--ui-primary)"
+            />
+            <span class="font-semibold">Indexes</span>
+            <UBadge
+              :label="`${indexRows.length} indexes`"
+              variant="subtle"
+              color="neutral"
+              size="sm"
+            />
+          </div>
+          <UButton
+            icon="i-lucide-plus"
+            label="Create Index"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="openCreateIndex"
           />
-          <span class="font-semibold">Index Sizes</span>
         </div>
       </template>
       <UTable
-        :data="Object.entries(info.indexSizes).map(([name, size]) => ({ name, sizeKb: Math.round(size / 1024) }))"
-        :columns="[{ accessorKey: 'name', header: 'Index' }, { accessorKey: 'sizeKb', header: 'Size (KB)' }]"
+        :data="indexRows"
+        :columns="indexTableColumns"
       />
     </UCard>
 
@@ -208,6 +395,57 @@ const schemaTableColumns: TableColumn<SchemaRow>[] = [
         :columns="schemaTableColumns"
       />
     </UCard>
+
+    <UModal
+      v-model:open="isCreateIndexModalOpen"
+      title="Create Index"
+    >
+      <template #body>
+        <FUDataEdit
+          :data="newIndex"
+          :schema="createIndexSchema"
+          submit-label="Create Index"
+          submit-icon="i-lucide-plus"
+          @data-saved="handleCreateIndex"
+        />
+        <p
+          v-if="createIndexError"
+          class="mt-2 text-sm text-error-500"
+        >
+          {{ createIndexError }}
+        </p>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isDeleteIndexModalOpen"
+      title="Delete Index"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <p>Are you sure you want to delete the index "{{ indexToDelete }}"? This action cannot be undone.</p>
+        <p
+          v-if="deleteIndexError"
+          class="mt-2 text-sm text-error-500"
+        >
+          {{ deleteIndexError }}
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="isDeleteIndexModalOpen = false"
+        />
+        <UButton
+          label="Delete"
+          color="error"
+          icon="i-lucide-trash-2"
+          @click="handleDeleteIndex"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 

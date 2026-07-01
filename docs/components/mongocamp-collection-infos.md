@@ -1,6 +1,6 @@
 # MongocampCollectionInfos
 
-Stat-card grid for a single collection — document count, data size, storage size, avg doc size, index count, and total index size — plus a per-index size table and an inferred schema table with a "Copy as TS Interface" action.
+Stat-card grid for a single collection — document count, data size, storage size, avg doc size, index count, and total index size — plus an index management table, and an inferred schema table with a "Copy as TS Interface" action.
 
 ## Usage
 
@@ -21,9 +21,13 @@ Stat-card grid for a single collection — document count, data size, storage si
 
 Documents, Data Size, Storage Size, Avg Doc Size, Indexes, Index Size — from `collectionApi.getCollectionInformation()`.
 
-## Index Sizes card
+## Indexes card
 
-Shown only when the collection has indexes. Lists each index name and its size in KB.
+Backed by [`useMongocampIndex`](/composables/use-mongocamp-index), not just `getCollectionInformation()`'s `indexSizes` map — each row is a real `MongoIndex` (name, keys, `unique`/`text`/`expire` flags), with size in KB merged in by name.
+
+- **Create Index** opens a form (field name, sort direction, index type — standard / unique / text / expiring, with an "expire after" duration field used only for the expiring type) and calls the matching `useMongocampIndex` creator.
+- Every row except the default `_id_` index (which MongoDB won't let you drop) gets a delete button, behind a confirmation modal.
+- Type flags render as badges using the app's semantic color tokens: `unique` → `warning`, `text` → `info`, `expire` → `secondary`.
 
 ## Schema card
 
@@ -64,3 +68,4 @@ interface CartsShippingAddress {
 ## Related composables
 
 - [`useMongocampSchema`](/composables/use-mongocamp-schema)
+- [`useMongocampIndex`](/composables/use-mongocamp-index)
