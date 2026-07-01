@@ -147,7 +147,10 @@ async function resetTestData() {
         <div class="flex items-start justify-between gap-4">
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-database" class="size-5 text-(--ui-primary)" />
+              <UIcon
+                name="i-lucide-database"
+                class="size-5 text-(--ui-primary)"
+              />
               <h2 class="font-semibold text-lg">
                 Test Data
               </h2>
@@ -179,7 +182,10 @@ async function resetTestData() {
         <div class="flex items-start justify-between gap-4">
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-trash-2" class="size-5 text-(--ui-error)" />
+              <UIcon
+                name="i-lucide-trash-2"
+                class="size-5 text-(--ui-error)"
+              />
               <h2 class="font-semibold text-lg">
                 Drop Test Collections
               </h2>
