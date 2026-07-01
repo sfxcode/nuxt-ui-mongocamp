@@ -11,6 +11,7 @@ All composables are auto-imported.
 | [`useMongocampBucket`](/composables/use-mongocamp-bucket) | GridFS bucket detection, file-id resolution, upload/download |
 | [`useMongocampIndex`](/composables/use-mongocamp-index) | Create/list/delete MongoDB indexes (standard, unique, text, expiring) |
 | [`useMongocampJobs`](/composables/use-mongocamp-jobs) | List/register/update/execute/delete scheduled background jobs |
+| [`useMongocampAccount`](/composables/use-mongocamp-account) | Account self-service: profile, password change, API key regeneration |
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
 
