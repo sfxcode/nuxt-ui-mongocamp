@@ -4,6 +4,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import { useMongocampApi } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
+import { useMongocampBucket } from '../composables/useMongocampBucket'
 
 const props = defineProps<{
   collectionName: string
@@ -11,6 +12,22 @@ const props = defineProps<{
 
 const { documentApi } = useMongocampApi()
 const { pagination, total } = useMongocampCollection()
+const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+function openFilePicker() {
+  fileInputRef.value?.click()
+}
+
+async function handleFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  const success = await uploadFile(props.collectionName, file)
+  if (success) await fetchDocuments()
+}
 
 const UButton = resolveComponent('UButton')
 
@@ -102,8 +119,23 @@ function makeActionsColumn(): TableColumn<Row> {
   return {
     id: 'actions',
     header: '',
-    cell: ({ row }: { row: { original: Row } }) =>
-      h('div', { class: 'flex gap-1 justify-end' }, [
+    cell: ({ row }: { row: { original: Row } }) => {
+      const buttons: ReturnType<typeof h>[] = []
+      if (isBucketCollection(props.collectionName)) {
+        const fileId = fileIdForRow(props.collectionName, row.original)
+        if (fileId) {
+          buttons.push(h(UButton, {
+            'icon': 'i-lucide-download',
+            'color': 'neutral',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': 'Download file',
+            'loading': downloadingFileIds.value.has(fileId),
+            'onClick': () => downloadFile(props.collectionName, fileId),
+          }))
+        }
+      }
+      buttons.push(
         h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
@@ -120,7 +152,9 @@ function makeActionsColumn(): TableColumn<Row> {
           'aria-label': 'Delete document',
           'onClick': () => confirmDelete(row.original),
         }),
-      ]),
+      )
+      return h('div', { class: 'flex gap-1 justify-end' }, buttons)
+    },
   }
 }
 
@@ -338,6 +372,17 @@ watch(() => props.collectionName, init, { immediate: true })
           {{ total }} documents
         </span>
         <UButton
+          v-if="isBucketCollection(collectionName)"
+          icon="i-lucide-upload"
+          color="primary"
+          variant="ghost"
+          size="sm"
+          :loading="uploading"
+          aria-label="Upload file"
+          @click="openFilePicker"
+        />
+        <UButton
+          v-else
           icon="i-lucide-plus"
           color="primary"
           variant="ghost"
@@ -345,6 +390,12 @@ watch(() => props.collectionName, init, { immediate: true })
           aria-label="Insert document"
           @click="openInsert"
         />
+        <input
+          ref="fileInputRef"
+          type="file"
+          class="hidden"
+          @change="handleFileSelected"
+        >
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
