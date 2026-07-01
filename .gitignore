@@ -26,6 +26,10 @@ dist
 .build-*
 .netlify
 
+# VitePress
+docs/.vitepress/cache
+docs/.vitepress/dist
+
 # Env
 .env
 

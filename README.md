@@ -271,6 +271,21 @@ pnpm run prepack
 
 The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`.
 
+## Documentation
+
+Full documentation (guides, components, composables) lives in `docs/` and is built with [VitePress](https://vitepress.dev):
+
+```bash
+# Start the docs dev server
+pnpm run docs:dev
+
+# Build the static site
+pnpm run docs:build
+
+# Preview the built site
+pnpm run docs:preview
+```
+
 ## License
 
 [MIT](./LICENSE)
