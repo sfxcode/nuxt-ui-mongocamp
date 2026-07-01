@@ -52,6 +52,7 @@ export default defineConfig({
             { text: 'useMongocampSchema', link: '/composables/use-mongocamp-schema' },
             { text: 'useMongocampBucket', link: '/composables/use-mongocamp-bucket' },
             { text: 'useMongocampIndex', link: '/composables/use-mongocamp-index' },
+            { text: 'useMongocampJobs', link: '/composables/use-mongocamp-jobs' },
             { text: 'useMongocampQuery', link: '/composables/use-mongocamp-query' },
             { text: 'useMongocampQueryBuilder', link: '/composables/use-mongocamp-query-builder' },
           ],
