@@ -2,9 +2,15 @@
 import { h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
+import type { FormKitSchemaDefinition } from '@formkit/core'
 import { useMongocampApi } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
+import { useMongocampSchema } from '../composables/useMongocampSchema'
+import type { ColumnDefinition } from '../composables/useMongocampSchema'
+import { columnsToFormKitSchema, documentToFormData, formDataToDocument } from '../composables/useMongocampDynamicForm'
+import useMongocampDocument from '../composables/useMongocampDocument'
+import { useMongocampQuery } from '../composables/useMongocampQuery'
 
 const props = defineProps<{
   collectionName: string
@@ -13,6 +19,9 @@ const props = defineProps<{
 const { documentApi } = useMongocampApi()
 const { pagination, total } = useMongocampCollection()
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
+const { schemaFromSamples } = useMongocampSchema()
+const { ensureMetaData } = useMongocampDocument()
+const { like, or } = useMongocampQuery()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
@@ -48,6 +57,17 @@ const editError = ref('')
 const docToDelete = ref<string | undefined>(undefined)
 const deleteError = ref('')
 
+// Populated per modal-open from the currently-loaded page (schemaFromSamples) — empty when the
+// collection has no loaded rows to infer a schema from, which is the signal to fall back to the
+// raw-JSON-textarea modal below (editColumns.length === 0).
+const editColumns = ref<ColumnDefinition[]>([])
+// columnsToFormKitSchema's own return type is a loose internal shape (kept simple for unit
+// testing); FormKit's real schema union requires a cast at the boundary where it's actually
+// bound to a component prop, same as the DocumentApi.update cast below.
+const editSchema = ref<FormKitSchemaDefinition>([])
+const editFormData = ref<Record<string, unknown>>({})
+const originalRow = ref<Row | undefined>(undefined)
+
 function getDocId(row: Row): string | undefined {
   const id = row._id
   if (typeof id === 'string') return id
@@ -59,16 +79,32 @@ function getDocId(row: Row): string | undefined {
 function openInsert() {
   editMode.value = 'insert'
   editDocId.value = undefined
-  editJson.value = '{}'
   editError.value = ''
+  originalRow.value = undefined
+  editColumns.value = schemaFromSamples(documents.value)
+  if (editColumns.value.length > 0) {
+    editSchema.value = columnsToFormKitSchema(editColumns.value) as unknown as FormKitSchemaDefinition
+    editFormData.value = {}
+  }
+  else {
+    editJson.value = '{}'
+  }
   isEditModalOpen.value = true
 }
 
 function openEdit(row: Row) {
   editMode.value = 'update'
   editDocId.value = getDocId(row)
-  editJson.value = JSON.stringify(row, null, 2)
   editError.value = ''
+  originalRow.value = row
+  editColumns.value = schemaFromSamples(documents.value)
+  if (editColumns.value.length > 0) {
+    editSchema.value = columnsToFormKitSchema(editColumns.value) as unknown as FormKitSchemaDefinition
+    editFormData.value = documentToFormData(row, editColumns.value)
+  }
+  else {
+    editJson.value = JSON.stringify(row, null, 2)
+  }
   isEditModalOpen.value = true
 }
 
@@ -80,21 +116,27 @@ function confirmDelete(row: Row) {
 
 async function handleSave() {
   editError.value = ''
-  let parsed: Record<string, unknown>
-  try {
-    parsed = JSON.parse(editJson.value)
+  let payload: Record<string, unknown> & { metaData?: Partial<{ createdBy: string, updatedBy: string, created: string | Date, updated: string | Date }> }
+  if (editColumns.value.length > 0) {
+    payload = formDataToDocument(editFormData.value, editColumns.value, editMode.value === 'update' ? originalRow.value : undefined)
   }
-  catch {
-    editError.value = 'Invalid JSON'
-    return
+  else {
+    try {
+      payload = JSON.parse(editJson.value)
+    }
+    catch {
+      editError.value = 'Invalid JSON'
+      return
+    }
   }
+  ensureMetaData(payload)
   try {
     if (editMode.value === 'insert') {
-      await documentApi.insert({ collectionName: props.collectionName, requestBody: parsed as { [key: string]: string } })
+      await documentApi.insert({ collectionName: props.collectionName, requestBody: payload as { [key: string]: string } })
     }
     else {
       if (!editDocId.value) return
-      const body: Record<string, unknown> = { ...parsed }
+      const body: Record<string, unknown> = { ...payload }
       delete body._id
       // UpdateRequest name collides with a models type in the generated client — cast through unknown
       await documentApi.update({ collectionName: props.collectionName, documentId: editDocId.value, requestBody: body as { [key: string]: string } } as unknown as Parameters<typeof documentApi.update>[0])
@@ -198,7 +240,7 @@ function openDetail(value: unknown) {
 function buildLuceneFilter(term: string): string | undefined {
   const t = term.trim()
   if (!t || filterableColumns.value.length === 0) return undefined
-  return filterableColumns.value.map(col => `${col}: *${t}*`).join(' OR ')
+  return or(...filterableColumns.value.map(col => like(col, t))) || undefined
 }
 
 function onFilterInput() {
@@ -259,6 +301,12 @@ function isMetaData(value: unknown): value is Record<string, unknown> {
   return 'created' in obj || 'updated' in obj
 }
 
+const CELL_TEXT_MAX_LENGTH = 60
+
+function truncateText(value: string, maxLength = CELL_TEXT_MAX_LENGTH): string {
+  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
+}
+
 function makeCell(key: string, type: string) {
   return ({ row }: { row: { original: Row } }) => {
     const raw = row.original[key]
@@ -306,7 +354,9 @@ function makeCell(key: string, type: string) {
         'onClick': () => openDetail(raw),
       }))
     }
-    return h('span', String(raw))
+    const text = String(raw)
+    const truncated = truncateText(text)
+    return h('span', { title: truncated !== text ? text : undefined }, truncated)
   }
 }
 
@@ -451,7 +501,16 @@ watch(() => props.collectionName, init, { immediate: true })
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
+        <FUDataEdit
+          v-if="editColumns.length > 0"
+          :data="editFormData"
+          :schema="editSchema"
+          :submit-label="editMode === 'insert' ? 'Insert' : 'Save'"
+          :submit-icon="editMode === 'insert' ? 'i-lucide-plus' : 'i-lucide-save'"
+          @data-saved="handleSave"
+        />
         <textarea
+          v-else
           v-model="editJson"
           class="w-full h-80 font-mono text-xs p-2 border rounded bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:outline-none resize-y"
           spellcheck="false"
@@ -463,7 +522,10 @@ watch(() => props.collectionName, init, { immediate: true })
           {{ editError }}
         </p>
       </template>
-      <template #footer>
+      <template
+        v-if="editColumns.length === 0"
+        #footer
+      >
         <UButton
           label="Cancel"
           color="neutral"
