@@ -27,5 +27,6 @@ export default defineNuxtConfig({
   mongocamp: {
     url: process.env.MONGOCAMP_URL,
     paginationSize: 1000,
+    tokenRefreshIntervall: 60 * 1000,
   },
 })
