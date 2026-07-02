@@ -60,6 +60,7 @@ export default defineConfig({
             { text: 'useMongocampSystem', link: '/composables/use-mongocamp-system' },
             { text: 'useMongocampQuery', link: '/composables/use-mongocamp-query' },
             { text: 'useMongocampQueryBuilder', link: '/composables/use-mongocamp-query-builder' },
+            { text: 'useMongocampDynamicForm', link: '/composables/use-mongocamp-dynamic-form' },
           ],
         },
       ],
