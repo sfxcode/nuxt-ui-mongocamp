@@ -18,6 +18,7 @@ const adminItems: NavigationMenuItem[] = [
   { label: 'Roles', icon: 'i-lucide-shield', to: '/secured/admin/roles' },
   { label: 'Collections', icon: 'i-lucide-database', to: '/secured/admin/collections' },
   { label: 'Jobs', icon: 'i-lucide-clock', to: '/secured/admin/jobs' },
+  { label: 'Databases', icon: 'i-lucide-server', to: '/secured/admin/databases' },
 ]
 
 const items = computed<NavigationMenuItem[][]>(() =>

@@ -35,6 +35,13 @@
         variant="outline"
         size="lg"
       />
+      <UButton
+        label="Databases"
+        icon="i-lucide-server"
+        to="/secured/admin/databases"
+        variant="outline"
+        size="lg"
+      />
     </div>
   </div>
 </template>
