@@ -292,14 +292,14 @@ pnpm run docs:preview
 [MIT](./LICENSE)
 
 <!-- Badges -->
-[npm-version-src]: https://img.shields.io/npm/v/nuxt-ui-mongocamp/latest.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-version-href]: https://npmjs.com/package/nuxt-ui-mongocamp
+[npm-version-src]: https://img.shields.io/npm/v/@sfxcode/nuxt-ui-mongocamp/latest.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-version-href]: https://npmjs.com/package/@sfxcode/nuxt-ui-mongocamp
 
-[npm-downloads-src]: https://img.shields.io/npm/dm/nuxt-ui-mongocamp.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-downloads-href]: https://npm.chart.dev/nuxt-ui-mongocamp
+[npm-downloads-src]: https://img.shields.io/npm/dm/@sfxcode/nuxt-ui-mongocamp.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-downloads-href]: https://npm.chart.dev/@sfxcode/nuxt-ui-mongocamp
 
-[license-src]: https://img.shields.io/npm/l/nuxt-ui-mongocamp.svg?style=flat&colorA=020420&colorB=00DC82
-[license-href]: https://npmjs.com/package/nuxt-ui-mongocamp
+[license-src]: https://img.shields.io/npm/l/@sfxcode/nuxt-ui-mongocamp.svg?style=flat&colorA=020420&colorB=00DC82
+[license-href]: https://npmjs.com/package/@sfxcode/nuxt-ui-mongocamp
 
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt
 [nuxt-href]: https://nuxt.com
