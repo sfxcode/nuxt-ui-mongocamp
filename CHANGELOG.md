@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.1.1
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.0...v1.1.1)
+
+### 🏡 Chore
+
+- **release:** Update changelogen command to use patch versioning ([bbd18f7](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/bbd18f7))
+- **dependencies:** Update pnpm-lock.yaml with updated package versions and enhancements ([819638d](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/819638d))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.1.0
 
 
