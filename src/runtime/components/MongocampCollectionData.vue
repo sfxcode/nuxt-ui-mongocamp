@@ -16,6 +16,7 @@ const props = defineProps<{
 const { documentApi } = useMongocampApi()
 const { pagination, total } = useMongocampCollection()
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
+const { ensureMetaData } = useMongocampDocument()
 const { like, or } = useMongocampQuery()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -59,6 +60,12 @@ const editSamples = ref<Record<string, unknown>[]>([])
 const editFormData = ref<Record<string, unknown>>({})
 const originalRow = ref<Row | undefined>(undefined)
 
+function omitId(row: Record<string, unknown>): Record<string, unknown> {
+  const rest = { ...row }
+  delete rest._id
+  return rest
+}
+
 function getDocId(row: Row): string | undefined {
   const id = row._id
   if (typeof id === 'string') return id
@@ -72,7 +79,7 @@ function openInsert() {
   editDocId.value = undefined
   editError.value = ''
   originalRow.value = undefined
-  editSamples.value = documents.value.map(row => unwrapExtendedJson(row) as Record<string, unknown>)
+  editSamples.value = documents.value.map(row => omitId(unwrapExtendedJson(row) as Record<string, unknown>))
   if (editSamples.value.length > 0) {
     editFormData.value = {}
   }
@@ -87,9 +94,9 @@ function openEdit(row: Row) {
   editDocId.value = getDocId(row)
   editError.value = ''
   originalRow.value = row
-  editSamples.value = documents.value.map(r => unwrapExtendedJson(r) as Record<string, unknown>)
+  editSamples.value = documents.value.map(r => omitId(unwrapExtendedJson(r) as Record<string, unknown>))
   if (editSamples.value.length > 0) {
-    editFormData.value = unwrapExtendedJson(row) as Record<string, unknown>
+    editFormData.value = omitId(unwrapExtendedJson(row) as Record<string, unknown>)
   }
   else {
     editJson.value = JSON.stringify(row, null, 2)
@@ -118,6 +125,7 @@ async function handleSave() {
       return
     }
   }
+  ensureMetaData(payload)
   try {
     if (editMode.value === 'insert') {
       await documentApi.insert({ collectionName: props.collectionName, requestBody: payload as { [key: string]: string } })
