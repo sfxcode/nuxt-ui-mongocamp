@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v1.1.2
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.1...v1.1.2)
+
+### 🩹 Fixes
+
+- **collection-data:** Drop _id from generated Add/Edit form, restore metaData stamping ([343d289](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/343d289))
+
+### 💅 Refactors
+
+- **collection-data:** Replace hand-rolled dynamic form with FUAutoForm ([6f689a0](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6f689a0))
+
+### 📖 Documentation
+
+- **readme:** Update badge URLs to use `@sfxcode/nuxt-ui-mongocamp` namespace ([6797c4c](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6797c4c))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.1.1
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.0...v1.1.1)
