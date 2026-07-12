@@ -2,13 +2,10 @@
 import { h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import type { FormKitSchemaDefinition } from '@formkit/core'
 import { useMongocampApi } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
-import { useMongocampSchema } from '../composables/useMongocampSchema'
-import type { ColumnDefinition } from '../composables/useMongocampSchema'
-import { columnsToFormKitSchema, documentToFormData, formDataToDocument } from '../composables/useMongocampDynamicForm'
+import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 
@@ -19,8 +16,6 @@ const props = defineProps<{
 const { documentApi } = useMongocampApi()
 const { pagination, total } = useMongocampCollection()
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
-const { schemaFromSamples } = useMongocampSchema()
-const { ensureMetaData } = useMongocampDocument()
 const { like, or } = useMongocampQuery()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -57,14 +52,10 @@ const editError = ref('')
 const docToDelete = ref<string | undefined>(undefined)
 const deleteError = ref('')
 
-// Populated per modal-open from the currently-loaded page (schemaFromSamples) — empty when the
-// collection has no loaded rows to infer a schema from, which is the signal to fall back to the
-// raw-JSON-textarea modal below (editColumns.length === 0).
-const editColumns = ref<ColumnDefinition[]>([])
-// columnsToFormKitSchema's own return type is a loose internal shape (kept simple for unit
-// testing); FormKit's real schema union requires a cast at the boundary where it's actually
-// bound to a component prop, same as the DocumentApi.update cast below.
-const editSchema = ref<FormKitSchemaDefinition>([])
+// Unwrapped current page of rows, passed to FUAutoForm purely as schema-inference input —
+// empty when the collection has no loaded rows to infer a schema from, which is the signal to
+// fall back to the raw-JSON-textarea modal below (editSamples.length === 0).
+const editSamples = ref<Record<string, unknown>[]>([])
 const editFormData = ref<Record<string, unknown>>({})
 const originalRow = ref<Row | undefined>(undefined)
 
@@ -81,9 +72,8 @@ function openInsert() {
   editDocId.value = undefined
   editError.value = ''
   originalRow.value = undefined
-  editColumns.value = schemaFromSamples(documents.value)
-  if (editColumns.value.length > 0) {
-    editSchema.value = columnsToFormKitSchema(editColumns.value) as unknown as FormKitSchemaDefinition
+  editSamples.value = documents.value.map(row => unwrapExtendedJson(row) as Record<string, unknown>)
+  if (editSamples.value.length > 0) {
     editFormData.value = {}
   }
   else {
@@ -97,10 +87,9 @@ function openEdit(row: Row) {
   editDocId.value = getDocId(row)
   editError.value = ''
   originalRow.value = row
-  editColumns.value = schemaFromSamples(documents.value)
-  if (editColumns.value.length > 0) {
-    editSchema.value = columnsToFormKitSchema(editColumns.value) as unknown as FormKitSchemaDefinition
-    editFormData.value = documentToFormData(row, editColumns.value)
+  editSamples.value = documents.value.map(r => unwrapExtendedJson(r) as Record<string, unknown>)
+  if (editSamples.value.length > 0) {
+    editFormData.value = unwrapExtendedJson(row) as Record<string, unknown>
   }
   else {
     editJson.value = JSON.stringify(row, null, 2)
@@ -117,8 +106,8 @@ function confirmDelete(row: Row) {
 async function handleSave() {
   editError.value = ''
   let payload: Record<string, unknown> & { metaData?: Partial<{ createdBy: string, updatedBy: string, created: string | Date, updated: string | Date }> }
-  if (editColumns.value.length > 0) {
-    payload = formDataToDocument(editFormData.value, editColumns.value, editMode.value === 'update' ? originalRow.value : undefined)
+  if (editSamples.value.length > 0) {
+    payload = wrapExtendedJson(editFormData.value, editMode.value === 'update' ? originalRow.value : undefined)
   }
   else {
     try {
@@ -129,7 +118,6 @@ async function handleSave() {
       return
     }
   }
-  ensureMetaData(payload)
   try {
     if (editMode.value === 'insert') {
       await documentApi.insert({ collectionName: props.collectionName, requestBody: payload as { [key: string]: string } })
@@ -501,10 +489,10 @@ watch(() => props.collectionName, init, { immediate: true })
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <FUDataEdit
-          v-if="editColumns.length > 0"
-          :data="editFormData"
-          :schema="editSchema"
+        <FUAutoForm
+          v-if="editSamples.length > 0"
+          v-model="editFormData"
+          :data="editSamples"
           :submit-label="editMode === 'insert' ? 'Insert' : 'Save'"
           :submit-icon="editMode === 'insert' ? 'i-lucide-plus' : 'i-lucide-save'"
           @data-saved="handleSave"
@@ -523,7 +511,7 @@ watch(() => props.collectionName, init, { immediate: true })
         </p>
       </template>
       <template
-        v-if="editColumns.length === 0"
+        v-if="editSamples.length === 0"
         #footer
       >
         <UButton

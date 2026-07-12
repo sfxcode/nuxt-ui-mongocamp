@@ -15,6 +15,6 @@ All composables are auto-imported.
 | [`useMongocampSystem`](/composables/use-mongocamp-system) | Read-only database viewer (list, per-database info, collections) |
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
-| [`useMongocampDynamicForm`](/composables/use-mongocamp-dynamic-form) | Generates a FormKit schema from a `ColumnDefinition` tree; round-trips documents through it |
+| [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) | Converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to |
 
 `@sfxcode/nuxt-mongocamp-server` additionally provides `useMongocampApi()` (raw API clients: `adminApi`, `collectionApi`, `documentApi`, `fileApi`, `bucketApi`, `informationApi`, …) and `useMongocampAuth()` (`login`, `logout`, `isLoggedIn`) — this module's composables are built on top of those.

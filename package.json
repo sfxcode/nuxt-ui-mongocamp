@@ -58,8 +58,8 @@
     "@nuxt/kit": "^4.4.8",
     "@nuxt/ui": "4.9.0",
     "@sfxcode/nuxt-mongocamp-server": "^1.4.4",
-    "@sfxcode/nuxt-ui-formkit": "^1.2.1",
-    "unocss-nuxt-ui": "1.2.1"
+    "@sfxcode/nuxt-ui-formkit": "^1.2.6",
+    "unocss-nuxt-ui": "^1.2.2"
   },
   "devDependencies": {
     "@nuxt/devtools": "4.0.0-alpha.7",
@@ -69,13 +69,13 @@
     "@nuxt/test-utils": "^4.0.3",
     "@types/node": "latest",
     "changelogen": "^0.6.2",
-    "eslint": "^10.6.0",
+    "eslint": "^10.7.0",
     "nuxt": "^4.4.8",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.3",
     "vitepress": "2.0.0-alpha.18",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.6"
+    "vue-tsc": "^3.3.7"
   },
   "packageManager": "pnpm@11.10.0+sha512.0b7f8b98060031904c017e3a41eb187a16d40eeb829b95c4f8cb03681761fc4ab53dd219115b9b447f4dce1a05a214764461e7d3703392a9f32f9511ce8c86c8"
 }
