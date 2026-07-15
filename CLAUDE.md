@@ -85,7 +85,11 @@ SSR is disabled (`ssr: false`). The playground registers the module directly via
 
 ### Tests — `test/`
 
-E2e tests via `@nuxt/test-utils`. The fixture app in `test/fixtures/basic/` is a minimal Nuxt app that loads the module. Run a single test file with `pnpm vitest run test/basic.test.ts`.
+`vitest.config.ts` splits tests into two projects, both run by `pnpm run test`:
+- **`unit`** — `test/*.test.ts`, plain Node environment, composables mocked via `vi.mock` (relative-path imports) or by faking `#imports` entirely — see `brain/patterns/testing-nuxt-auto-import-composables.md`. E2e smoke coverage lives here too (`test/basic.test.ts`, via `@nuxt/test-utils/e2e`'s `setup()`+`$fetch`).
+- **`components`** — `test/components/**/*.test.ts`, a real booted Nuxt environment (`happy-dom`, via `@nuxt/test-utils/runtime`'s `mountSuspended`) against the `test/fixtures/basic/` fixture (which also needs a `pages/` dir and `formkit.config.ts` for this to work — see `brain/patterns/component-testing-nuxt-environment.md` for the full list of gotchas: `UApp` wrapper, teleported `UModal` content, FormKit id/validation timing).
+
+Run a single test file with `pnpm vitest run test/basic.test.ts` or `pnpm vitest run --project components test/components/MongocampRoles.test.ts`.
 
 ## Commit messages
 
