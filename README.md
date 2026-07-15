@@ -33,14 +33,14 @@ These modules are declared as `moduleDependencies` and are automatically set up 
 ## Quick Setup
 
 ```bash
-npm install nuxt-ui-mongocamp
+npm install @sfxcode/nuxt-ui-mongocamp
 ```
 
 Add the module to `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-ui-mongocamp'],
+  modules: ['@sfxcode/nuxt-ui-mongocamp'],
 
   mongocamp: {
     url: process.env.MONGOCAMP_URL,

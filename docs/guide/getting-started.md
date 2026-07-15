@@ -1,21 +1,21 @@
 # Getting Started
 
-`nuxt-ui-mongocamp` is a Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.com/package/@sfxcode/nuxt-mongocamp-server) with ready-made UI components, composables, and a runtime plugin. Add it to your Nuxt app and get MongoCamp authentication, user/role management, and collection browsing out of the box — built on [Nuxt UI](https://ui.nuxt.com) and [FormKit](https://formkit.com).
+`@sfxcode/nuxt-ui-mongocamp` is a Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.com/package/@sfxcode/nuxt-mongocamp-server) with ready-made UI components, composables, and a runtime plugin. Add it to your Nuxt app and get MongoCamp authentication, user/role management, and collection browsing out of the box — built on [Nuxt UI](https://ui.nuxt.com) and [FormKit](https://formkit.com).
 
 ## Installation
 
 ::: code-group
 
 ```bash [pnpm]
-pnpm add nuxt-ui-mongocamp
+pnpm add @sfxcode/nuxt-ui-mongocamp
 ```
 
 ```bash [npm]
-npm install nuxt-ui-mongocamp
+npm install @sfxcode/nuxt-ui-mongocamp
 ```
 
 ```bash [yarn]
-yarn add nuxt-ui-mongocamp
+yarn add @sfxcode/nuxt-ui-mongocamp
 ```
 
 :::
@@ -24,7 +24,7 @@ Add the module to `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-ui-mongocamp'],
+  modules: ['@sfxcode/nuxt-ui-mongocamp'],
 
   mongocamp: {
     url: process.env.MONGOCAMP_URL,

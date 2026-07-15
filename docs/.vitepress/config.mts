@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitepress'
+
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf-8'))
 
 export default defineConfig({
   title: 'nuxt-ui-mongocamp',
@@ -11,6 +15,10 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Components', link: '/components/' },
       { text: 'Composables', link: '/composables/' },
+      {
+        text: `v${pkg.version}`,
+        link: 'https://github.com/sfxcode/nuxt-ui-mongocamp/blob/main/CHANGELOG.md',
+      },
       { text: 'GitHub', link: 'https://github.com/sfxcode/nuxt-ui-mongocamp' },
     ],
 
@@ -69,7 +77,7 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/sfxcode/nuxt-ui-mongocamp' },
-      { icon: 'npm', link: 'https://npmjs.com/package/nuxt-ui-mongocamp' },
+      { icon: 'npm', link: 'https://npmjs.com/package/@sfxcode/nuxt-ui-mongocamp' },
     ],
 
     search: {
