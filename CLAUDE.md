@@ -85,9 +85,10 @@ SSR is disabled (`ssr: false`). The playground registers the module directly via
 
 ### Tests — `test/`
 
-`vitest.config.ts` splits tests into two projects, both run by `pnpm run test`:
+`vitest.config.ts` defines three projects. `pnpm run test` explicitly runs only the first two (`--project unit --project components`) — a bare `vitest run` would otherwise also sweep in `e2e-auth`, which needs Playwright browsers that aren't installed in CI:
 - **`unit`** — `test/*.test.ts`, plain Node environment, composables mocked via `vi.mock` (relative-path imports) or by faking `#imports` entirely — see `brain/patterns/testing-nuxt-auto-import-composables.md`. E2e smoke coverage lives here too (`test/basic.test.ts`, via `@nuxt/test-utils/e2e`'s `setup()`+`$fetch`).
 - **`components`** — `test/components/**/*.test.ts`, a real booted Nuxt environment (`happy-dom`, via `@nuxt/test-utils/runtime`'s `mountSuspended`) against the `test/fixtures/basic/` fixture (which also needs a `pages/` dir and `formkit.config.ts` for this to work — see `brain/patterns/component-testing-nuxt-environment.md` for the full list of gotchas: `UApp` wrapper, teleported `UModal` content, FormKit id/validation timing).
+- **`e2e-auth`** — `test/e2e-auth/**/*.test.ts`, real-browser (Playwright, via `@nuxt/test-utils/e2e`'s `createPage`) coverage for the global auth/role middleware. Run manually with `pnpm run test:e2e:auth` after a one-time `npx playwright install chromium` — deliberately **not** part of `pnpm run test`/CI, since Playwright needs installed browser binaries. See `brain/patterns/e2e-browser-testing.md` for why `$fetch`/SSR alone can't prove role-based redirect behavior (session state lives in `sessionStorage`, which SSR never sees).
 
 Run a single test file with `pnpm vitest run test/basic.test.ts` or `pnpm vitest run --project components test/components/MongocampRoles.test.ts`.
 
