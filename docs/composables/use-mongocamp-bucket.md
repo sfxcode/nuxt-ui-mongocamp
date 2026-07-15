@@ -1,21 +1,25 @@
 # useMongocampBucket
 
-Detection and file operations for GridFS bucket collections. Powers the upload/download support in [`MongocampCollectionData`](/components/mongocamp-collection-data), and the bucket-level actions in [`MongocampCollections`](/components/mongocamp-collections).
+Detection and file operations for GridFS bucket collections. Powers the upload/download support in [`MongocampCollectionData`](/components/mongocamp-collection-data), the bucket-level actions in [`MongocampCollections`](/components/mongocamp-collections), and the file-level browsing/management in [`MongocampBucketFiles`](/components/mongocamp-bucket-files).
 
 ```ts
 const {
-  isBucketCollection,   // (collectionName: string) => boolean
-  bucketNameFor,        // (collectionName: string) => string
-  fileIdForRow,         // (collectionName: string, row: Record<string, unknown>) => string | undefined
-  downloadingFileIds,   // Ref<Set<string>>
-  uploading,            // Ref<boolean>
-  downloadFile,         // (collectionName: string, fileId: string) => Promise<void>
-  uploadFile,           // (collectionName: string, file: File) => Promise<boolean>
-  bucketActionInFlight, // Ref<Set<string>> — bucket names with a clear/delete in progress
-  listBuckets,          // () => Promise<string[]>
-  getBucketInfo,        // (bucketName: string) => Promise<BucketInformation>
-  clearBucket,          // (bucketName: string) => Promise<boolean>
-  deleteBucket,         // (bucketName: string) => Promise<boolean>
+  isBucketCollection,     // (collectionName: string) => boolean
+  bucketNameFor,          // (collectionName: string) => string
+  fileIdForRow,           // (collectionName: string, row: Record<string, unknown>) => string | undefined
+  downloadingFileIds,     // Ref<Set<string>>
+  uploading,              // Ref<boolean>
+  downloadFile,           // (collectionName: string, fileId: string) => Promise<void>
+  uploadFile,             // (collectionName: string, file: File) => Promise<boolean>
+  bucketActionInFlight,   // Ref<Set<string>> — bucket names with a clear/delete in progress
+  fileActionInFlight,     // Ref<Set<string>> — file ids with a delete/rename in progress
+  listFiles,              // (bucketName: string, options?: ListFilesOptions) => Promise<ListFilesResult>
+  deleteFile,             // (bucketName: string, fileId: string) => Promise<boolean>
+  updateFileInformation,  // (bucketName: string, fileId: string, options: UpdateFileInformationOptions) => Promise<boolean>
+  listBuckets,            // () => Promise<string[]>
+  getBucketInfo,          // (bucketName: string) => Promise<BucketInformation>
+  clearBucket,            // (bucketName: string) => Promise<boolean>
+  deleteBucket,           // (bucketName: string) => Promise<boolean>
 } = useMongocampBucket()
 ```
 
@@ -64,6 +68,24 @@ if (success) await fetchDocuments() // refresh the table
 ```
 
 Uploads via `fileApi.insertFile`, targeting the bucket regardless of whether `collectionName` was the `.files` or `.chunks` half. Tracks the in-flight upload in `uploading` and shows a success/error toast; returns `true`/`false` so the caller knows whether to refresh.
+
+## Listing, deleting, and renaming individual files
+
+Unlike `downloadFile`/`uploadFile` (which work per-file but need a resolved id from a raw document row), these operate directly against a bucket name and return/accept the clean, typed `FileInformation` shape (`id`, `filename`, `length`, `chunkSize`, `uploadDate`, `metadata`) — no extended-JSON unwrapping needed:
+
+```ts
+const { files, total } = await listFiles('images', {
+  filter: 'filename:*.png',   // Lucene filter string, same convention as useMongocampQuery
+  sort: '-uploadDate',
+  page: 1,
+  rowsPerPage: 20,
+})
+
+const deleted = await deleteFile('images', fileId)
+const renamed = await updateFileInformation('images', fileId, { filename: 'new-name.png', metadata: { owner: 'alice' } })
+```
+
+`listFiles` reads the total row count from the `x-pagination-count-rows` response header (same convention `MongocampCollectionData` uses for documents), returning `0` if the header is absent. `deleteFile`/`updateFileInformation` follow the same loading-state/toast/boolean-return convention as every other mutation here — both track in-flight file ids via `fileActionInFlight` (bind `:loading="fileActionInFlight.has(fileId)"`), show a success/error toast, and return a boolean so the caller knows whether to refresh.
 
 ## Bucket-level operations
 

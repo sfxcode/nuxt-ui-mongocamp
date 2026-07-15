@@ -1,6 +1,24 @@
 import { ref } from 'vue'
 import { useMongocampApi, useToast } from '#imports'
-import type { BucketInformation } from '@sfxcode/nuxt-mongocamp-server'
+import type { BucketInformation, FileInformation } from '@sfxcode/nuxt-mongocamp-server'
+
+export interface ListFilesOptions {
+  filter?: string
+  sort?: string
+  projection?: string
+  page?: number
+  rowsPerPage?: number
+}
+
+export interface ListFilesResult {
+  files: FileInformation[]
+  total: number
+}
+
+export interface UpdateFileInformationOptions {
+  filename?: string
+  metadata?: Record<string, string>
+}
 
 const BUCKET_COLLECTION_SUFFIX = /\.(?:files|chunks)$/
 
@@ -30,6 +48,7 @@ export function useMongocampBucket() {
   const downloadingFileIds = ref<Set<string>>(new Set())
   const uploading = ref(false)
   const bucketActionInFlight = ref<Set<string>>(new Set())
+  const fileActionInFlight = ref<Set<string>>(new Set())
 
   function isBucketCollection(collectionName: string): boolean {
     return BUCKET_COLLECTION_SUFFIX.test(collectionName)
@@ -73,6 +92,56 @@ export function useMongocampBucket() {
     }
     finally {
       uploading.value = false
+    }
+  }
+
+  async function listFiles(bucketName: string, options: ListFilesOptions = {}): Promise<ListFilesResult> {
+    const res = await fileApi.listFilesRaw({
+      bucketName,
+      filter: options.filter,
+      sort: options.sort,
+      projection: options.projection,
+      page: options.page,
+      rowsPerPage: options.rowsPerPage,
+    })
+    const total = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
+    const files = await res.value()
+    return { files, total }
+  }
+
+  async function deleteFile(bucketName: string, fileId: string): Promise<boolean> {
+    fileActionInFlight.value.add(fileId)
+    try {
+      const result = await fileApi.deleteFile({ bucketName, fileId })
+      toast.add({ title: 'File deleted', description: 'The file was deleted.', color: 'success' })
+      return result.wasAcknowledged
+    }
+    catch {
+      toast.add({ title: 'Delete failed', description: 'Could not delete the file.', color: 'error' })
+      return false
+    }
+    finally {
+      fileActionInFlight.value.delete(fileId)
+    }
+  }
+
+  async function updateFileInformation(bucketName: string, fileId: string, options: UpdateFileInformationOptions): Promise<boolean> {
+    fileActionInFlight.value.add(fileId)
+    try {
+      const result = await fileApi.updateFileInformation({
+        bucketName,
+        fileId,
+        updateFileInformationRequest: { filename: options.filename, metadata: options.metadata },
+      })
+      toast.add({ title: 'File updated', description: 'The file information was updated.', color: 'success' })
+      return result.wasAcknowledged
+    }
+    catch {
+      toast.add({ title: 'Update failed', description: 'Could not update the file information.', color: 'error' })
+      return false
+    }
+    finally {
+      fileActionInFlight.value.delete(fileId)
     }
   }
 
@@ -125,6 +194,10 @@ export function useMongocampBucket() {
     downloadFile,
     uploadFile,
     bucketActionInFlight,
+    fileActionInFlight,
+    listFiles,
+    deleteFile,
+    updateFileInformation,
     listBuckets,
     getBucketInfo,
     clearBucket,

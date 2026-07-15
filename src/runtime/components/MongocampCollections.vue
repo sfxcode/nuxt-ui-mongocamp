@@ -7,6 +7,7 @@ import { useMongocampApi, useMongocampBucket } from '#imports'
 const props = defineProps<{
   infoPath?: string
   dataPath?: string
+  bucketFilesPath?: string
 }>()
 
 interface CollectionRow {
@@ -152,6 +153,14 @@ const columns: TableColumn<CollectionRow>[] = [
       if (isBucketCollection(row.original.name)) {
         const bucketName = bucketNameFor(row.original.name)
         buttons.push(
+          withTooltip('Browse files', h(UButton, {
+            'icon': 'i-lucide-folder-open',
+            'color': 'neutral',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': 'Browse files',
+            'to': `${props.bucketFilesPath ?? '/secured/admin/buckets'}/${bucketName}`,
+          })),
           withTooltip('Clear bucket', h(UButton, {
             'icon': 'i-lucide-eraser',
             'color': 'warning',

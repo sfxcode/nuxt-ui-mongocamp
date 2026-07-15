@@ -60,6 +60,7 @@ See `src/module.ts`'s `ModuleOptions` for the full option list and `docs/guide/r
 | `MongocampUsers` | Full CRUD table for users — add/edit (with role transfer listbox) / delete via UModal |
 | `MongocampRoles` | Full CRUD table for roles — add/edit / delete via UModal; key icon links to grant management page (configurable via `grantsPath` prop) |
 | `MongocampRoleGrants` | Per-role grant CRUD — lists collection grants for a named role, add/edit/delete; filters available collections to exclude already-granted ones |
+| `MongocampBucketFiles` | Paginated/filterable GridFS bucket file browser — list/download/upload/delete/rename via `useMongocampBucket`; reached from `MongocampCollections`' bucket rows via `bucketFilesPath` |
 | `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
 
 UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.

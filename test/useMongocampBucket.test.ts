@@ -4,6 +4,9 @@ const mockFileApi = {
   getFileInformation: vi.fn(),
   getFile: vi.fn(),
   insertFile: vi.fn(),
+  listFilesRaw: vi.fn(),
+  deleteFile: vi.fn(),
+  updateFileInformation: vi.fn(),
 }
 
 const mockBucketApi = {
@@ -178,6 +181,116 @@ describe('uploadFile', () => {
     expect(result).toBe(false)
     expect(uploading.value).toBe(false)
     expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+  })
+})
+
+function mockRawResponse<T>(value: T, totalHeader?: string) {
+  return {
+    raw: { headers: { get: (name: string) => (name === 'x-pagination-count-rows' ? (totalHeader ?? null) : null) } },
+    value: () => Promise.resolve(value),
+  }
+}
+
+describe('listFiles', () => {
+  it('passes bucketName and every option through, and returns files + total from the raw response', async () => {
+    const files = [{ id: 'f1', filename: 'a.png', length: 10, chunkSize: 1, uploadDate: new Date(), metadata: {} }]
+    mockFileApi.listFilesRaw.mockResolvedValueOnce(mockRawResponse(files, '7'))
+
+    const { listFiles } = useMongocampBucket()
+    const result = await listFiles('test_images', { filter: 'filename:*.png', sort: '-uploadDate', projection: 'filename', page: 2, rowsPerPage: 10 })
+
+    expect(mockFileApi.listFilesRaw).toHaveBeenCalledWith({
+      bucketName: 'test_images',
+      filter: 'filename:*.png',
+      sort: '-uploadDate',
+      projection: 'filename',
+      page: 2,
+      rowsPerPage: 10,
+    })
+    expect(result).toEqual({ files, total: 7 })
+  })
+
+  it('defaults every option to undefined when omitted', async () => {
+    mockFileApi.listFilesRaw.mockResolvedValueOnce(mockRawResponse([], '0'))
+
+    const { listFiles } = useMongocampBucket()
+    await listFiles('test_images')
+
+    expect(mockFileApi.listFilesRaw).toHaveBeenCalledWith({
+      bucketName: 'test_images',
+      filter: undefined,
+      sort: undefined,
+      projection: undefined,
+      page: undefined,
+      rowsPerPage: undefined,
+    })
+  })
+
+  it('defaults total to 0 when the pagination header is missing', async () => {
+    mockFileApi.listFilesRaw.mockResolvedValueOnce(mockRawResponse([]))
+
+    const { listFiles } = useMongocampBucket()
+    const result = await listFiles('test_images')
+
+    expect(result.total).toBe(0)
+  })
+})
+
+describe('deleteFile', () => {
+  it('tracks in-flight state, shows a success toast, and returns wasAcknowledged', async () => {
+    mockFileApi.deleteFile.mockResolvedValueOnce({ wasAcknowledged: true, deletedCount: 1 })
+
+    const { deleteFile, fileActionInFlight } = useMongocampBucket()
+    const promise = deleteFile('test_images', 'file-1')
+    expect(fileActionInFlight.value.has('file-1')).toBe(true)
+    const result = await promise
+
+    expect(mockFileApi.deleteFile).toHaveBeenCalledWith({ bucketName: 'test_images', fileId: 'file-1' })
+    expect(result).toBe(true)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'success' }))
+    expect(fileActionInFlight.value.has('file-1')).toBe(false)
+  })
+
+  it('shows an error toast, clears in-flight state and returns false when the call fails', async () => {
+    mockFileApi.deleteFile.mockRejectedValueOnce(new Error('boom'))
+
+    const { deleteFile, fileActionInFlight } = useMongocampBucket()
+    const result = await deleteFile('test_images', 'file-1')
+
+    expect(result).toBe(false)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+    expect(fileActionInFlight.value.has('file-1')).toBe(false)
+  })
+})
+
+describe('updateFileInformation', () => {
+  it('nests filename/metadata under updateFileInformationRequest, shows a success toast, and returns wasAcknowledged', async () => {
+    mockFileApi.updateFileInformation.mockResolvedValueOnce({ wasAcknowledged: true, modifiedCount: 1, matchedCount: 1 })
+
+    const { updateFileInformation, fileActionInFlight } = useMongocampBucket()
+    const promise = updateFileInformation('test_images', 'file-1', { filename: 'renamed.png', metadata: { owner: 'alice' } })
+    expect(fileActionInFlight.value.has('file-1')).toBe(true)
+    const result = await promise
+
+    expect(mockFileApi.updateFileInformation).toHaveBeenCalledWith({
+      bucketName: 'test_images',
+      fileId: 'file-1',
+      updateFileInformationRequest: { filename: 'renamed.png', metadata: { owner: 'alice' } },
+    })
+    expect(result).toBe(true)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'success' }))
+    expect(fileActionInFlight.value.has('file-1')).toBe(false)
+  })
+
+  it('shows an error toast, clears in-flight state and returns false when the call fails', async () => {
+    mockFileApi.updateFileInformation.mockRejectedValueOnce(new Error('boom'))
+
+    const { updateFileInformation, fileActionInFlight } = useMongocampBucket()
+    const result = await updateFileInformation('test_images', 'file-1', { filename: 'renamed.png' })
+
+    expect(result).toBe(false)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+    expect(fileActionInFlight.value.has('file-1')).toBe(false)
   })
 })
 

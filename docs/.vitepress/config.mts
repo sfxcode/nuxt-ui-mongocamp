@@ -45,6 +45,7 @@ export default defineConfig({
             { text: 'MongocampCollections', link: '/components/mongocamp-collections' },
             { text: 'MongocampCollectionInfos', link: '/components/mongocamp-collection-infos' },
             { text: 'MongocampCollectionData', link: '/components/mongocamp-collection-data' },
+            { text: 'MongocampBucketFiles', link: '/components/mongocamp-bucket-files' },
             { text: 'MongocampJobs', link: '/components/mongocamp-jobs' },
             { text: 'MongocampAccount', link: '/components/mongocamp-account' },
             { text: 'MongocampDatabases', link: '/components/mongocamp-databases' },
