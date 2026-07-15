@@ -1,6 +1,28 @@
 # Changelog
 
 
+## v1.1.4
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.3...v1.1.4)
+
+### 🚀 Enhancements
+
+- **buckets:** Add GridFS bucket file browser (MongocampBucketFiles) ([908f2a0](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/908f2a0))
+
+### 📖 Documentation
+
+- Document nuxtUiMongocamp module options and route protection ([dcc9491](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/dcc9491))
+- Fix npm package name and add version/changelog link to nav ([c7df668](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c7df668))
+
+### ✅ Tests
+
+- **components:** Add real component-mounting coverage for the three riskiest components ([9f9d9ad](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/9f9d9ad))
+- **e2e:** Add real-browser coverage for the global auth/role middleware ([4bf4e7f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/4bf4e7f))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.1.3
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.2...v1.1.3)
