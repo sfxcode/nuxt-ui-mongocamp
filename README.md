@@ -213,13 +213,16 @@ Fields are sorted with `_id` first, `metaData` last, and all other fields alphab
 
 ## Route Protection
 
-The module registers a global route middleware at startup:
+Route protection is opt-in and config-driven via `useMongocampRoles()`. Set `useGlobalAuthMiddleware: true` and list your protected route globs under `nuxtUiMongocamp` — nothing is protected by default. See [Route Protection](https://sfxcode.github.io/nuxt-ui-mongocamp/guide/route-protection) for the full behavior.
 
 | Path pattern | Requirement |
 |---|---|
-| `/secured/**` | User must be logged in; redirects to `/` otherwise |
-| `/admin/**` or `/secured/admin/**` | User must be logged in **and** have the admin role; redirects to `/secured` otherwise |
-| `/logout` | Calls `logout()` and redirects to `/` |
+| Matches `securedRouteParts` | User must be logged in |
+| Matches `managementRouteParts` | User must be a manager (`managerRoles`, or admin) |
+| Matches `adminRouteParts` | User must be an admin |
+| `/logout` | Calls `logout()` |
+
+On any unmet requirement (or `/logout`), the middleware redirects to `notAllowedPath` (default `'/'`), which is always itself allowed so it can never cause a redirect loop.
 
 ## Runtime Plugin
 
@@ -233,7 +236,22 @@ const { $mongocampVersion } = useNuxtApp()
 
 ## Configuration
 
-The module's own config key is `nuxtUiMongocamp` (currently no options). The MongoCamp server is configured under the `mongocamp` key (provided by `@sfxcode/nuxt-mongocamp-server`):
+The module's own config key is `nuxtUiMongocamp` — it configures the route middleware described above:
+
+```ts
+nuxtUiMongocamp: {
+  useGlobalAuthMiddleware: true,                // default: false
+  notAllowedPath: '/login',                     // default: '/'
+  managerRoles: ['support'],                    // default: []
+  securedRouteParts: ['/secured/**'],           // default: []
+  managementRouteParts: ['/secured/manage/**'], // default: []
+  adminRouteParts: ['/secured/admin/**'],       // default: []
+}
+```
+
+See [Configuration](https://sfxcode.github.io/nuxt-ui-mongocamp/guide/configuration) for details on each option.
+
+The MongoCamp server is configured separately, under the `mongocamp` key (provided by `@sfxcode/nuxt-mongocamp-server`):
 
 ```ts
 mongocamp: {

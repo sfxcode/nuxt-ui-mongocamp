@@ -45,10 +45,12 @@ Declares `moduleDependencies` for `@nuxt/ui`, `unocss-nuxt-ui`, `@formkit/nuxt`,
 
 ### Runtime plugin — `src/runtime/plugin.ts`
 
-Runs on app boot. Fetches the MongoCamp server version via `informationApi.version()` and provides it as `$mongocampVersion`. Registers a global route middleware that:
-- Redirects unauthenticated users away from `/secured/**`
-- Blocks non-admins from `/admin/**` and `/secured/admin/**`
+Runs on app boot. Fetches the MongoCamp server version via `informationApi.version()` and provides it as `$mongocampVersion`. If the module's `useGlobalAuthMiddleware` option is `true` (default `false` — opt-in), registers a global `global-auth` route middleware built on `useMongocampRoles()`:
+- Gates routes by glob pattern against `securedRouteParts` (requires login), `managementRouteParts` (requires manager/admin), and `adminRouteParts` (requires admin) — all configured under the module's own `nuxtUiMongocamp` key, all defaulting to `[]` (nothing protected until configured)
 - Calls `logout()` on `/logout`
+- Redirects to `notAllowedPath` (module option, default `'/'`) on `/logout` or any disallowed route — always itself treated as allowed, so it can never loop
+
+See `src/module.ts`'s `ModuleOptions` for the full option list and `docs/guide/route-protection.md` for behavior details.
 
 ### Components — `src/runtime/components/`
 
@@ -68,6 +70,7 @@ UTable columns with custom cells use `h()` + `resolveComponent()` (not `<templat
 - **`useMongocampCollection`** — reactive state for paginated collection queries: `filter`, `sort`, `projection`, `pagination` (pageIndex + pageSize), `total`
 - **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
 - **`useMongocampSchema`** — exports `useJsonSchema()` with `schemaToColumnDefinition(definition, fields)` for mapping a `JsonSchemaDefinition` to UTable column configs; sorts `_id` first, then id-containing fields, then others; detects `date-time` and `number` types
+- **`useMongocampRoles`** — `isAdmin`/`isManager` (admin always counts as manager) and `isAllowedPathForRoute(route)`, backing the runtime plugin's global auth middleware; reads the module's `nuxtUiMongocamp` options (`managerRoles`, `securedRouteParts`, `managementRouteParts`, `adminRouteParts`, `notAllowedPath`) from `useRuntimeConfig().public.nuxtUiMongocampOptions`
 
 ### FormKit / @sfxcode/nuxt-ui-formkit conventions
 
@@ -77,7 +80,7 @@ Listbox in transfer mode requires `displayMode: 'transfer'` and options as `{ va
 
 ### Playground — `playground/`
 
-SSR is disabled (`ssr: false`). The playground registers the module directly via the local import (`import NuxtUIMongocamp from '..'`). Pages under `/secured/` are protected by the global auth middleware from the plugin. The `mongocamp` config key in `nuxt.config.ts` passes through to `@sfxcode/nuxt-mongocamp-server`.
+SSR is disabled (`ssr: false`). The playground registers the module directly via the local import (`import NuxtUIMongocamp from '..'`). Its `nuxt.config.ts` sets `nuxtUiMongocamp: { useGlobalAuthMiddleware: true, securedRouteParts: ['/secured/**'], managementRouteParts: ['/secured/manager/**'], adminRouteParts: ['/secured/admin/**'], managerRoles: ['manager'] }` so pages under `/secured/`, `/secured/manager/`, and `/secured/admin/` are protected — this is opt-in and not automatic for consumers of the module. The `mongocamp` config key in `nuxt.config.ts` passes through to `@sfxcode/nuxt-mongocamp-server`.
 
 ### Tests — `test/`
 

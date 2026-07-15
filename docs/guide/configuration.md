@@ -2,21 +2,35 @@
 
 ## Module options
 
-The module's own config key is `nuxtUiMongocamp` — it currently exposes no options of its own:
+The module's own config key is `nuxtUiMongocamp` — it configures the global auth/role middleware (see [Route Protection](/guide/route-protection) for the full behavior):
 
 ```ts
-export default defineNuxtModule<ModuleOptions>({
-  meta: {
-    name: 'nuxt-ui-mongocamp',
-    configKey: 'nuxtUiMongocamp',
-    compatibility: { nuxt: '>=3.16.0' },
+export default defineNuxtConfig({
+  modules: ['nuxt-ui-mongocamp'],
+
+  nuxtUiMongocamp: {
+    useGlobalAuthMiddleware: true,                  // default: false
+    notAllowedPath: '/login',                       // default: '/'
+    managerRoles: ['support'],                      // default: []
+    securedRouteParts: ['/secured/**'],              // default: []
+    managementRouteParts: ['/secured/manage/**'],    // default: []
+    adminRouteParts: ['/secured/admin/**'],          // default: []
   },
-  defaults: {},
-  // ...
 })
 ```
 
-All configuration happens under the `mongocamp` key, which is forwarded to `@sfxcode/nuxt-mongocamp-server` (declared as a `moduleDependency`):
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `useGlobalAuthMiddleware` | `boolean` | `false` | Registers the global `global-auth` route middleware. Opt-in — nothing is protected unless this is `true`. |
+| `notAllowedPath` | `string` | `'/'` | Where the middleware redirects on logout and on any disallowed route. Always treated as allowed by the middleware itself, so it can never cause a redirect loop — set it to e.g. `'/login'` for apps that gate everything behind a login page. |
+| `managerRoles` | `string[]` | `[]` | Role names (matched against the logged-in profile's `roles`) that grant manager status. An admin always counts as a manager too, regardless of this list. |
+| `securedRouteParts` | `string[]` | `[]` | Glob patterns (matched with [`minimatch`](https://www.npmjs.com/package/minimatch)) requiring the user to be logged in. |
+| `managementRouteParts` | `string[]` | `[]` | Glob patterns requiring the user to be a manager (see `managerRoles`). |
+| `adminRouteParts` | `string[]` | `[]` | Glob patterns requiring the user to be an admin. |
+
+**Nothing is protected by default.** With every route-part option left as `[]`, `useGlobalAuthMiddleware: false`, and no page under a protected path, an app that adds this module gets no access restrictions at all — you must explicitly opt in by enabling the middleware and listing your protected route patterns. This is a deliberate design: the module makes no assumption about your app's URL structure (earlier versions hardcoded `/admin`/`/secured` prefixes). See [`useMongocampRoles`](/composables/use-mongocamp-roles) for the composable backing all of this, and [Route Protection](/guide/route-protection) for a full walkthrough.
+
+All MongoCamp-server-specific configuration happens under the separate `mongocamp` key, which is forwarded to `@sfxcode/nuxt-mongocamp-server` (declared as a `moduleDependency`):
 
 ```ts
 export default defineNuxtConfig({

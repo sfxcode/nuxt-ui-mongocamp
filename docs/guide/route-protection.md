@@ -1,53 +1,77 @@
 # Route Protection
 
-The module registers a global route middleware (`global-auth`) at startup:
-
-| Path pattern | Requirement | Redirect if unmet |
-|---|---|---|
-| `/secured/**` | User must be logged in | `/` |
-| `/admin/**` or `/secured/admin/**` | User must be logged in **and** hold the admin role | `/secured` |
-| `/logout` | — | Calls `logout()`, then redirects to `/` |
+Route protection is **opt-in** and **config-driven**, backed by the [`useMongocampRoles`](/composables/use-mongocamp-roles) composable. Nothing is protected until you set `useGlobalAuthMiddleware: true` and list your app's protected route patterns under `nuxtUiMongocamp` (see [Configuration](/guide/configuration)).
 
 ```ts
-addRouteMiddleware('global-auth', (to) => {
-  if ((to.path.startsWith('/admin') || to.path.startsWith('/secured/admin'))
-    && (!isLoggedIn.value || !state.value.profile.isAdmin)) {
-    return navigateTo('/secured')
-  }
-  else if (to.path.startsWith('/secured') && !isLoggedIn.value) {
-    return navigateTo('/')
-  }
-  else if (to.path === '/logout') {
-    logout()
-    return navigateTo('/')
-  }
-}, { global: true })
+export default defineNuxtConfig({
+  nuxtUiMongocamp: {
+    useGlobalAuthMiddleware: true,
+    notAllowedPath: '/login',                     // default '/'
+    managerRoles: ['support'],
+    securedRouteParts: ['/secured/**'],
+    managementRouteParts: ['/secured/manage/**'],
+    adminRouteParts: ['/secured/admin/**'],
+  },
+})
 ```
+
+## How the middleware decides
+
+When `useGlobalAuthMiddleware` is `true`, the module registers a global `global-auth` route middleware. On every navigation:
+
+| Path pattern | Requirement | If not met |
+|---|---|---|
+| `/logout` | — | Calls `logout()`, then redirects to `notAllowedPath` |
+| Matches `securedRouteParts` | Logged in | Redirects to `notAllowedPath` |
+| Matches `managementRouteParts` | Manager (see below) | Redirects to `notAllowedPath` |
+| Matches `adminRouteParts` | Admin | Redirects to `notAllowedPath` |
+| Anything else | — | Allowed |
+
+A route can match more than one pattern set — e.g. `/secured/admin/**` is also covered by `/secured/**`. Checks run in the order above and the **first** one that fails wins, so a logged-out user hitting an admin route is redirected for being logged out, not for lacking the admin role.
+
+`notAllowedPath` is always allowed by the middleware, regardless of whether it also matches one of the patterns above — otherwise a `notAllowedPath` that happened to fall under a protected pattern (or a broad `securedRouteParts: ['/**']`) would redirect to itself forever.
+
+Route parts are glob patterns matched with [`minimatch`](https://www.npmjs.com/package/minimatch), not plain string prefixes. `/secured/admin/**` matches nested pages like `/secured/admin/users`, and also matches `/secured/admin` itself (the directory's own `index.vue`) — the composable tries the route with a trailing slash appended so a directory's index page is covered by its own `/**` pattern.
+
+## Manager vs. admin
+
+- **Admin** — `useMongocampStorage().value.profile.isAdmin`, set by the MongoCamp server on login.
+- **Manager** — the logged-in profile's `roles` includes at least one entry from `managerRoles`, **or** the user is an admin. An admin always satisfies a management-gated route, even with no matching role.
 
 ## Structuring your pages
 
-Because the middleware matches on path prefix, put anything that requires a logged-in user under `pages/secured/`, and anything admin-only under `pages/secured/admin/` (or top-level `pages/admin/`):
+Match your `nuxt.config.ts` route-part globs to your actual page structure. For example, to mirror the playground's layout:
 
 ```
 pages/
 ├── index.vue                     # public — login page
 ├── secured/
-│   ├── index.vue                 # dashboard — logged-in users
+│   ├── index.vue                 # dashboard — any logged-in user
+│   ├── account.vue                # any logged-in user
+│   ├── manager/
+│   │   └── index.vue             # manager (or admin) only
 │   └── admin/
-│       ├── users.vue             # admin only
-│       ├── roles.vue             # admin only
-│       └── collections/
-│           ├── index.vue
-│           └── [collection_name]/
-│               ├── index.vue
-│               └── data.vue
+│       ├── users/
+│       ├── roles/
+│       ├── collections/
+│       ├── jobs/
+│       └── databases/
 └── logout.vue                    # triggers logout, no UI needed
 ```
 
-## Checking auth state manually
+```ts
+nuxtUiMongocamp: {
+  useGlobalAuthMiddleware: true,
+  securedRouteParts: ['/secured/**'],
+  managementRouteParts: ['/secured/manager/**'],
+  adminRouteParts: ['/secured/admin/**'],
+},
+```
 
-`@sfxcode/nuxt-mongocamp-server` exposes `useMongocampAuth()` for imperative checks (e.g. conditionally rendering a nav link):
+## Checking auth/role state in components
+
+`@sfxcode/nuxt-mongocamp-server`'s `useMongocampAuth()` exposes raw login state (`isLoggedIn`, `login`, `logout`); this module's [`useMongocampRoles`](/composables/use-mongocamp-roles) adds `isAdmin`/`isManager`/`isAllowedPathForRoute` on top — the same composable the middleware itself uses. Use it to conditionally render navigation, exactly like the playground's `default.vue` layout does:
 
 ```ts
-const { isLoggedIn, login, logout } = useMongocampAuth()
+const { isAdmin, isManager } = useMongocampRoles()
 ```

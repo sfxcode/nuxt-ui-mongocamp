@@ -62,7 +62,7 @@ These modules are declared as `moduleDependencies` and are set up automatically 
 </template>
 ```
 
-On success this redirects to `/secured` and persists the last user ID in a cookie. See [Route Protection](/guide/route-protection) for how `/secured/**` and `/admin/**` are guarded.
+On success this redirects to `/secured` and persists the last user ID in a cookie. Route protection itself is opt-in and config-driven — see [Route Protection](/guide/route-protection) for how to guard `/secured/**` and similar paths.
 
 ## Building an admin dashboard
 
