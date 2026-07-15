@@ -1,8 +1,43 @@
 import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImportsDir } from '@nuxt/kit'
+import { defu } from 'defu'
 
 // Module options TypeScript interface definition
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- public extension point; options are forwarded to dependencies
-export interface ModuleOptions {}
+
+export interface ModuleOptions {
+
+  useGlobalAuthMiddleware?: boolean
+
+  /**
+   * Path the global auth middleware navigates to when a route is not allowed
+   * (not logged in, or logged in without the required role) — e.g. '/login'.
+   * Always treated as allowed by the middleware itself, so it can never cause a redirect loop.
+   */
+  notAllowedPath?: string
+
+  /**
+   * Roles with management access
+   */
+  managerRoles: string[]
+
+  /**
+   * Routes that can only be accessed if the user is logged in
+   */
+  securedRouteParts: string[]
+
+  /**
+   * Routes that can only be accessed by manager users
+   */
+  managementRouteParts: string[]
+
+  /**
+   * Routes that can only be accessed by admin users
+   */
+  adminRouteParts: string[]
+}
+
+export interface ModulePublicRuntimeConfig {
+  nuxtUiMongocampOptions: ModuleOptions
+}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -13,7 +48,14 @@ export default defineNuxtModule<ModuleOptions>({
     },
   },
   // Default configuration options of the Nuxt module
-  defaults: {},
+  defaults: {
+    useGlobalAuthMiddleware: false,
+    notAllowedPath: '/',
+    managerRoles: [],
+    securedRouteParts: [],
+    managementRouteParts: [],
+    adminRouteParts: [],
+  },
 
   moduleDependencies: {
     '@nuxt/ui': {},
@@ -28,7 +70,13 @@ export default defineNuxtModule<ModuleOptions>({
       },
     },
   },
-  setup(_options, _nuxt) {
+  setup(options, nuxt) {
+    // Expose the module options in the public runtime config.
+    nuxt.options.runtimeConfig.public.nuxtUiMongocampOptions = defu(
+      nuxt.options.runtimeConfig.public.nuxtUiMongocampOptions,
+      options,
+    )
+
     const { resolve } = createResolver(import.meta.url)
     const runtimeDir = resolve('./runtime')
 

@@ -2,6 +2,7 @@
 const { $mongocampVersion } = useNuxtApp()
 const { listUsers, listRoles, listCollections } = useMongocampAdmin()
 const toast = useToast()
+const { isAdmin } = useMongocampRoles()
 
 const { data: stats, refresh, status } = useAsyncData('dashboard-stats', async () => {
   const [users, roles, collections] = await Promise.all([
@@ -88,7 +89,10 @@ async function resetTestData() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-8 py-8">
+  <div
+    v-if="isAdmin"
+    class="flex flex-col gap-8 py-8"
+  >
     <div class="flex items-start justify-between">
       <div class="flex flex-col gap-1">
         <h1 class="text-3xl font-bold">

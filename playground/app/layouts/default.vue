@@ -2,14 +2,18 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const { isLoggedIn } = useMongocampAuth()
-const storage = useMongocampStorage()
-const isAdmin = computed(() => storage.value?.profile?.isAdmin ?? false)
+const { isAdmin, isManager } = useMongocampRoles()
 
 const baseItems: NavigationMenuItem[][] = [
   [
     { label: 'Home', icon: 'i-lucide-home', to: '/secured' },
     { label: 'Account', icon: 'i-lucide-user', to: '/secured/account' },
   ],
+]
+
+const managerItems: NavigationMenuItem[] = [
+  { type: 'label', label: 'Manager' },
+  { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/secured/manager' },
 ]
 
 const adminItems: NavigationMenuItem[] = [
@@ -21,9 +25,12 @@ const adminItems: NavigationMenuItem[] = [
   { label: 'Databases', icon: 'i-lucide-server', to: '/secured/admin/databases' },
 ]
 
-const items = computed<NavigationMenuItem[][]>(() =>
-  isAdmin.value ? [...baseItems, adminItems] : baseItems,
-)
+const items = computed<NavigationMenuItem[][]>(() => {
+  const groups = [...baseItems]
+  if (isManager.value) groups.push(managerItems)
+  if (isAdmin.value) groups.push(adminItems)
+  return groups
+})
 </script>
 
 <template>

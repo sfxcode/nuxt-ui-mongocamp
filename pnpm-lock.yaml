@@ -23,6 +23,9 @@ importers:
       '@sfxcode/nuxt-ui-formkit':
         specifier: ^1.2.6
         version: 1.2.6(89fb9409dbad6be691b7b4be77194b98)
+      minimatch:
+        specifier: ^10.2.5
+        version: 10.2.5
       unocss-nuxt-ui:
         specifier: ^1.2.2
         version: 1.2.2(d5153897738e5bc8595dcd344411a021)

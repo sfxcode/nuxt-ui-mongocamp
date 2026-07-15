@@ -16,5 +16,6 @@ All composables are auto-imported.
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
 | [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) | Converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to |
+| [`useMongocampRoles`](/composables/use-mongocamp-roles) | Role/route-pattern access checks (`isAdmin`, `isManager`, `isAllowedPathForRoute`); powers the global nav guard |
 
 `@sfxcode/nuxt-mongocamp-server` additionally provides `useMongocampApi()` (raw API clients: `adminApi`, `collectionApi`, `documentApi`, `fileApi`, `bucketApi`, `informationApi`, …) and `useMongocampAuth()` (`login`, `logout`, `isLoggedIn`) — this module's composables are built on top of those.

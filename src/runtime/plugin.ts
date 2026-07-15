@@ -1,25 +1,28 @@
-import { defineNuxtPlugin, addRouteMiddleware, navigateTo, useAsyncData } from '#app'
-import { useMongocampStorage, useMongocampApi, useMongocampAuth } from '#imports'
+import { defineNuxtPlugin, addRouteMiddleware, navigateTo, useAsyncData, useRuntimeConfig } from '#app'
+import { useMongocampApi, useMongocampAuth } from '#imports'
+import { useMongocampRoles } from './composables/useMongocampRoles'
 
 export default defineNuxtPlugin(async (_nuxtApp) => {
-  const { logout, isLoggedIn } = useMongocampAuth()
+  const { logout } = useMongocampAuth()
   const { informationApi } = useMongocampApi()
-  const state = useMongocampStorage()
+  const { notAllowedPath, isAllowedPathForRoute } = useMongocampRoles()
+
+  const config = useRuntimeConfig()
+  const useGlobalAuthMiddleware: boolean = config.public.nuxtUiMongocampOptions.useGlobalAuthMiddleware ?? false
 
   const { data: version } = await useAsyncData('version', () => informationApi.version())
 
-  addRouteMiddleware('global-auth', (to) => {
-    if ((to.path.startsWith('/admin') || to.path.startsWith('/secured/admin')) && (!isLoggedIn.value || !state.value.profile.isAdmin)) {
-      return navigateTo('/secured')
-    }
-    else if (to.path.startsWith('/secured') && !isLoggedIn.value) {
-      return navigateTo('/')
-    }
-    else if (to.path === '/logout') {
-      logout()
-      return navigateTo('/')
-    }
-  }, { global: true })
+  if (useGlobalAuthMiddleware) {
+    addRouteMiddleware('global-auth', (to) => {
+      if (to.path === '/logout') {
+        logout()
+        return navigateTo(notAllowedPath)
+      }
+      if (!isAllowedPathForRoute(to.path)) {
+        return navigateTo(notAllowedPath)
+      }
+    }, { global: true })
+  }
 
   return {
     provide: {

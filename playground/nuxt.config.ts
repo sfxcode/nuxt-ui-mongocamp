@@ -29,4 +29,12 @@ export default defineNuxtConfig({
     paginationSize: 1000,
     tokenRefreshIntervall: 60 * 1000,
   },
+  nuxtUiMongocamp: {
+    useGlobalAuthMiddleware: true,
+    notAllowedPath: '/',
+    managerRoles: ['manager'],
+    securedRouteParts: ['/secured/**'],
+    managementRouteParts: ['/secured/manager/**'],
+    adminRouteParts: ['/secured/admin/**'],
+  },
 })

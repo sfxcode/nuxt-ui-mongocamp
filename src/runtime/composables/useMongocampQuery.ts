@@ -179,7 +179,7 @@ export function useMongocampQuery(): MongocampQueryHelper {
   function inClause(fieldName: string, parameter: QueryValue[]): string {
     if (parameter.length === 0) return ''
     const fields = parameter.map(toTerms)
-    const inner = fields.length === 1 ? fields[0] : `(${fields.join(' OR ')})`
+    const inner = fields.length === 1 ? fields[0]! : `(${fields.join(' OR ')})`
     return q.field(fieldName, inner)
   }
 
@@ -196,7 +196,7 @@ export function useMongocampQuery(): MongocampQueryHelper {
   function logicalOperators(operator: string, queryParts: (string | null | undefined)[]): string {
     const parts = queryParts.filter((x): x is string => x != null && x.length > 0 && x !== '()')
     if (parts.length === 0) return ''
-    if (parts.length === 1) return parts[0]
+    if (parts.length === 1) return parts[0]!
     // Negated terms (-fieldName:value) must be wrapped in parens when combined
     return '(' + parts.map(x => x.startsWith('-') ? `(${x})` : x).join(` ${operator} `) + ')'
   }

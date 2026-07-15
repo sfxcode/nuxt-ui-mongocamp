@@ -59,6 +59,7 @@
     "@nuxt/ui": "4.9.0",
     "@sfxcode/nuxt-mongocamp-server": "^1.4.4",
     "@sfxcode/nuxt-ui-formkit": "^1.2.6",
+    "minimatch": "^10.2.5",
     "unocss-nuxt-ui": "^1.2.2"
   },
   "devDependencies": {
