@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.1.3
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.2...v1.1.3)
+
+### 🚀 Enhancements
+
+- **roles:** Add useMongocampRoles for role/route-based nav guard ([795413e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/795413e))
+
+### 🩹 Fixes
+
+- **deps:** Declare defu as an explicit dependency ([4c6ad4e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/4c6ad4e))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.1.2
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.1...v1.1.2)
