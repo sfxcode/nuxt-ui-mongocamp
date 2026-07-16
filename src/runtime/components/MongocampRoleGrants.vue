@@ -2,12 +2,14 @@
 import { h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Grant } from '@sfxcode/nuxt-mongocamp-server'
+import { useI18n } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 
 const props = defineProps<{
   roleName: string
 }>()
 
+const { t } = useI18n()
 const { listRoles, updateRole, listCollections } = useMongocampAdmin()
 
 const grants = ref<Grant[]>([])
@@ -27,7 +29,7 @@ const addGrantSchema = reactive([
   {
     $formkit: 'nuxtUISelectMenu',
     name: 'collectionName',
-    label: 'Collection',
+    label: t('nuxtUiMongocamp.roleGrants.collection'),
     class: 'w-full',
     options: [] as string[],
     validation: 'required',
@@ -35,17 +37,17 @@ const addGrantSchema = reactive([
   {
     $formkit: 'nuxtUISwitch',
     name: 'read',
-    label: 'Read',
+    label: t('nuxtUiMongocamp.roleGrants.read'),
   },
   {
     $formkit: 'nuxtUISwitch',
     name: 'write',
-    label: 'Write',
+    label: t('nuxtUiMongocamp.roleGrants.write'),
   },
   {
     $formkit: 'nuxtUISwitch',
     name: 'administrate',
-    label: 'Administrate',
+    label: t('nuxtUiMongocamp.roleGrants.administrate'),
   },
 ])
 
@@ -53,17 +55,17 @@ const editGrantSchema = reactive([
   {
     $formkit: 'nuxtUISwitch',
     name: 'read',
-    label: 'Read',
+    label: t('nuxtUiMongocamp.roleGrants.read'),
   },
   {
     $formkit: 'nuxtUISwitch',
     name: 'write',
-    label: 'Write',
+    label: t('nuxtUiMongocamp.roleGrants.write'),
   },
   {
     $formkit: 'nuxtUISwitch',
     name: 'administrate',
-    label: 'Administrate',
+    label: t('nuxtUiMongocamp.roleGrants.administrate'),
   },
 ])
 
@@ -93,7 +95,7 @@ async function saveGrants() {
     await fetchRole()
   }
   catch (e: unknown) {
-    errorMessage.value = e instanceof Error ? e.message : 'Failed to save grants'
+    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.roleGrants.errorSave')
   }
 }
 
@@ -156,11 +158,11 @@ function withTooltip(text: string, node: ReturnType<typeof h>) {
 const columns: TableColumn<Grant>[] = [
   {
     accessorKey: 'name',
-    header: 'Collection',
+    header: t('nuxtUiMongocamp.roleGrants.columnCollection'),
   },
   {
     accessorKey: 'grantType',
-    header: 'Type',
+    header: t('nuxtUiMongocamp.roleGrants.columnType'),
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.grantType,
@@ -170,30 +172,30 @@ const columns: TableColumn<Grant>[] = [
   },
   {
     accessorKey: 'read',
-    header: 'Read',
+    header: t('nuxtUiMongocamp.roleGrants.columnRead'),
     cell: ({ row }) =>
       h(UBadge, {
-        label: row.original.read ? 'Yes' : 'No',
+        label: row.original.read ? t('nuxtUiMongocamp.common.yes') : t('nuxtUiMongocamp.common.no'),
         color: row.original.read ? 'success' : 'neutral',
         variant: 'subtle',
       }),
   },
   {
     accessorKey: 'write',
-    header: 'Write',
+    header: t('nuxtUiMongocamp.roleGrants.columnWrite'),
     cell: ({ row }) =>
       h(UBadge, {
-        label: row.original.write ? 'Yes' : 'No',
+        label: row.original.write ? t('nuxtUiMongocamp.common.yes') : t('nuxtUiMongocamp.common.no'),
         color: row.original.write ? 'success' : 'neutral',
         variant: 'subtle',
       }),
   },
   {
     accessorKey: 'administrate',
-    header: 'Admin',
+    header: t('nuxtUiMongocamp.roleGrants.columnAdmin'),
     cell: ({ row }) =>
       h(UBadge, {
-        label: row.original.administrate ? 'Yes' : 'No',
+        label: row.original.administrate ? t('nuxtUiMongocamp.common.yes') : t('nuxtUiMongocamp.common.no'),
         color: row.original.administrate ? 'error' : 'neutral',
         variant: 'subtle',
       }),
@@ -203,20 +205,20 @@ const columns: TableColumn<Grant>[] = [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
-        withTooltip('Edit grant', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.roleGrants.editGrantTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Edit grant',
+          'aria-label': t('nuxtUiMongocamp.roleGrants.editGrantTooltip'),
           'onClick': () => openEdit(row.index),
         })),
-        withTooltip('Remove grant', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.roleGrants.removeGrantTooltip'), h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Remove grant',
+          'aria-label': t('nuxtUiMongocamp.roleGrants.removeGrantTooltip'),
           'onClick': () => removeGrant(row.index),
         })),
       ]),
@@ -231,22 +233,22 @@ fetchCollections()
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <h2 class="text-xl font-semibold">
-        Grants: {{ roleName }}
+        {{ t('nuxtUiMongocamp.roleGrants.heading', { roleName }) }}
       </h2>
       <div class="flex gap-2">
-        <UTooltip text="Refresh">
+        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
             variant="ghost"
             :loading="loading"
-            aria-label="Refresh"
+            :aria-label="t('nuxtUiMongocamp.common.refresh')"
             @click="fetchRole"
           />
         </UTooltip>
         <UButton
           icon="i-lucide-plus"
-          label="Add Grant"
+          :label="t('nuxtUiMongocamp.roleGrants.addGrant')"
           @click="openAdd"
         />
       </div>
@@ -261,13 +263,13 @@ fetchCollections()
     <!-- Add Grant Modal -->
     <UModal
       v-model:open="isAddModalOpen"
-      title="Add Grant"
+      :title="t('nuxtUiMongocamp.roleGrants.addGrant')"
     >
       <template #body>
         <FUDataEdit
           :data="newGrant"
           :schema="addGrantSchema"
-          submit-label="Add Grant"
+          :submit-label="t('nuxtUiMongocamp.roleGrants.addGrant')"
           submit-icon="i-lucide-plus"
           @data-saved="handleAddGrant"
         />
@@ -283,13 +285,13 @@ fetchCollections()
     <!-- Edit Grant Modal -->
     <UModal
       v-model:open="isEditModalOpen"
-      :title="`Edit Grant: ${editGrantName}`"
+      :title="t('nuxtUiMongocamp.roleGrants.editGrantTitle', { name: editGrantName })"
     >
       <template #body>
         <FUDataEdit
           :data="editGrant"
           :schema="editGrantSchema"
-          submit-label="Save Changes"
+          :submit-label="t('nuxtUiMongocamp.common.saveChanges')"
           submit-icon="i-lucide-save"
           @data-saved="handleEditGrant"
         />
