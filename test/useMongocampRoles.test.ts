@@ -58,6 +58,21 @@ describe('logoutRedirectPath', () => {
   })
 })
 
+describe('logoutPath', () => {
+  it('defaults to \'/logout\'', () => {
+    const { logoutPath } = useMongocampRoles()
+    expect(logoutPath).toBe('/logout')
+  })
+
+  it('reflects the configured value, independently of logoutRedirectPath', () => {
+    mockOptions.logoutPath = '/signout'
+    mockOptions.logoutRedirectPath = '/goodbye'
+    const { logoutPath, logoutRedirectPath } = useMongocampRoles()
+    expect(logoutPath).toBe('/signout')
+    expect(logoutRedirectPath).toBe('/goodbye')
+  })
+})
+
 describe('isLoggedIn', () => {
   it('passes through useMongocampAuth\'s isLoggedIn ref', () => {
     mockIsLoggedIn.value = true

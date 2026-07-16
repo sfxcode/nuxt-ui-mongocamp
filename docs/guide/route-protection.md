@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     useGlobalAuthMiddleware: true,
     notAllowedPath: '/login',                     // default '/'
     logoutRedirectPath: '/',                       // default '/'
+    logoutPath: '/logout',                         // default '/logout'
     managerRoles: ['support'],
     securedRouteParts: ['/secured/**'],
     managementRouteParts: ['/secured/manage/**'],
@@ -22,7 +23,7 @@ When `useGlobalAuthMiddleware` is `true`, the module registers a global `global-
 
 | Path pattern | Requirement | If not met |
 |---|---|---|
-| `/logout` | — | Calls `logout()`, then redirects to `logoutRedirectPath` |
+| `logoutPath` (default `/logout`) | — | Calls `logout()`, then redirects to `logoutRedirectPath` |
 | Matches `securedRouteParts` | Logged in | Redirects to `notAllowedPath` |
 | Matches `managementRouteParts` | Manager (see below) | Redirects to `notAllowedPath` |
 | Matches `adminRouteParts` | Admin | Redirects to `notAllowedPath` |
@@ -33,6 +34,12 @@ A route can match more than one pattern set — e.g. `/secured/admin/**` is also
 `notAllowedPath` and `logoutRedirectPath` are always allowed by the middleware, regardless of whether either also matches one of the patterns above — otherwise a redirect target that happened to fall under a protected pattern (or a broad `securedRouteParts: ['/**']`) would redirect to itself forever. They're separate options (both defaulting to `'/'`) so a deliberate logout can land somewhere different from an auth-failure redirect — e.g. back to the home page instead of the login page.
 
 Route parts are glob patterns matched with [`minimatch`](https://www.npmjs.com/package/minimatch), not plain string prefixes. `/secured/admin/**` matches nested pages like `/secured/admin/users`, and also matches `/secured/admin` itself (the directory's own `index.vue`) — the composable tries the route with a trailing slash appended so a directory's index page is covered by its own `/**` pattern.
+
+## Not a security boundary, and no SSR support
+
+This middleware is **UI-level gating**, not access control — it only decides which pages render, not which data is reachable. Actual data access is still protected server-side by MongoCamp's own tokens/api key, independently of this middleware.
+
+Login state lives in `sessionStorage`, which server-side rendering never sees. If your app runs with SSR enabled, the middleware evaluates `isLoggedIn` as `false` on every server-rendered request — including a hard refresh of a secured page by an already-logged-in user, who gets redirected to `notAllowedPath` even though they're still logged in. The playground and this module's own test fixtures all run with `ssr: false` for this reason; `useGlobalAuthMiddleware` is not currently verified against an SSR app.
 
 ## Manager vs. admin
 

@@ -10,6 +10,7 @@ export function useMongocampRoles() {
 
   const notAllowedPath: string = config.public.nuxtUiMongocampOptions.notAllowedPath ?? '/'
   const logoutRedirectPath: string = config.public.nuxtUiMongocampOptions.logoutRedirectPath ?? '/'
+  const logoutPath: string = config.public.nuxtUiMongocampOptions.logoutPath ?? '/logout'
   const managerRoles: string[] = config.public.nuxtUiMongocampOptions.managerRoles ?? []
   const securedRouteParts: string[] = config.public.nuxtUiMongocampOptions.securedRouteParts ?? []
   const managementRouteParts: string[] = config.public.nuxtUiMongocampOptions.managementRouteParts ?? []
@@ -47,5 +48,5 @@ export function useMongocampRoles() {
     return true
   }
 
-  return { isLoggedIn, isAdmin, isManager, notAllowedPath, logoutRedirectPath, isAllowedPathForRoute }
+  return { isLoggedIn, isAdmin, isManager, notAllowedPath, logoutRedirectPath, logoutPath, isAllowedPathForRoute }
 }

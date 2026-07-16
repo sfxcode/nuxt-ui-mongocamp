@@ -22,6 +22,12 @@ export interface ModuleOptions {
   logoutRedirectPath?: string
 
   /**
+   * Path that triggers logout when navigated to — e.g. '/signout'. Always treated as allowed
+   * by the middleware itself, so it can never cause a redirect loop.
+   */
+  logoutPath?: string
+
+  /**
    * Roles with management access
    */
   managerRoles: string[]
@@ -73,6 +79,7 @@ export default defineNuxtModule<ModuleOptions>({
     useGlobalAuthMiddleware: false,
     notAllowedPath: '/',
     logoutRedirectPath: '/',
+    logoutPath: '/logout',
     managerRoles: [],
     securedRouteParts: [],
     managementRouteParts: [],
