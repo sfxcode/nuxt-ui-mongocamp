@@ -3,6 +3,7 @@ import { h, reactive, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { FileInformation } from '@sfxcode/nuxt-mongocamp-server'
+import { useI18n } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
@@ -11,6 +12,7 @@ const props = defineProps<{
   bucketName: string
 }>()
 
+const { t } = useI18n()
 const { pagination, total } = useMongocampCollection()
 const {
   listFiles,
@@ -99,13 +101,13 @@ function makeMetadataCell() {
     const metadata = row.original.metadata ?? {}
     const keys = Object.keys(metadata)
     if (keys.length === 0) return h('span', { class: 'text-dimmed' }, '—')
-    return withTooltip('View metadata', h(UButton, {
+    return withTooltip(t('nuxtUiMongocamp.bucketFiles.viewMetadataTooltip'), h(UButton, {
       'icon': 'i-lucide-braces',
       'color': 'neutral',
       'variant': 'ghost',
       'size': 'xs',
-      'label': `${keys.length} ${keys.length === 1 ? 'key' : 'keys'}`,
-      'aria-label': 'View metadata',
+      'label': keys.length === 1 ? t('nuxtUiMongocamp.bucketFiles.keyCount') : t('nuxtUiMongocamp.bucketFiles.keysCount', { count: keys.length }),
+      'aria-label': t('nuxtUiMongocamp.bucketFiles.viewMetadataTooltip'),
       'onClick': () => openMetadataDetail(metadata),
     }))
   }
@@ -120,16 +122,16 @@ const renameSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'filename',
-    label: 'Filename',
+    label: t('nuxtUiMongocamp.bucketFiles.filename'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIRepeater',
     name: 'metadata',
-    label: 'Metadata',
+    label: t('nuxtUiMongocamp.bucketFiles.columnMetadata'),
     children: [
-      { $formkit: 'nuxtUIInput', name: 'key', label: 'Key' },
-      { $formkit: 'nuxtUIInput', name: 'value', label: 'Value' },
+      { $formkit: 'nuxtUIInput', name: 'key', label: t('nuxtUiMongocamp.bucketFiles.metadataKey') },
+      { $formkit: 'nuxtUIInput', name: 'value', label: t('nuxtUiMongocamp.bucketFiles.metadataValue') },
     ],
   },
 ])
@@ -183,30 +185,30 @@ function makeActionsColumn(): TableColumn<FileInformation> {
     cell: ({ row }: { row: { original: FileInformation } }) => {
       const file = row.original
       return h('div', { class: 'flex gap-1 justify-end' }, [
-        withTooltip('Download file', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.bucketFiles.downloadFileTooltip'), h(UButton, {
           'icon': 'i-lucide-download',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Download file',
+          'aria-label': t('nuxtUiMongocamp.bucketFiles.downloadFileTooltip'),
           'loading': downloadingFileIds.value.has(file.id),
           'onClick': () => downloadFile(props.bucketName, file.id),
         })),
-        withTooltip('Rename / edit metadata', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.bucketFiles.renameTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Rename / edit metadata',
+          'aria-label': t('nuxtUiMongocamp.bucketFiles.renameTooltip'),
           'loading': fileActionInFlight.value.has(file.id),
           'onClick': () => openRename(file),
         })),
-        withTooltip('Delete file', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.bucketFiles.deleteFileTooltip'), h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Delete file',
+          'aria-label': t('nuxtUiMongocamp.bucketFiles.deleteFileTooltip'),
           'loading': fileActionInFlight.value.has(file.id),
           'onClick': () => confirmDeleteFile(file),
         })),
@@ -218,22 +220,22 @@ function makeActionsColumn(): TableColumn<FileInformation> {
 const columns = ref<TableColumn<FileInformation>[]>([
   {
     accessorKey: 'filename',
-    header: ({ column }) => sortHeader(column, 'Filename'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.bucketFiles.columnFilename')),
     cell: ({ row }) => h('span', row.original.filename),
   },
   {
     accessorKey: 'length',
-    header: ({ column }) => sortHeader(column, 'Size'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.bucketFiles.columnSize')),
     cell: ({ row }) => h('span', formatBytes(row.original.length)),
   },
   {
     accessorKey: 'uploadDate',
-    header: ({ column }) => sortHeader(column, 'Uploaded'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.bucketFiles.columnUploaded')),
     cell: ({ row }) => h('span', formatDate(row.original.uploadDate)),
   },
   {
     id: 'metadata',
-    header: 'Metadata',
+    header: t('nuxtUiMongocamp.bucketFiles.columnMetadata'),
     cell: makeMetadataCell(),
   },
   makeActionsColumn(),
@@ -247,8 +249,8 @@ const isInitializing = ref(false)
 let filterTimer: ReturnType<typeof setTimeout> | undefined
 
 function buildLuceneFilter(term: string): string | undefined {
-  const t = term.trim()
-  return t ? like('filename', t) : undefined
+  const trimmed = term.trim()
+  return trimmed ? like('filename', trimmed) : undefined
 }
 
 function onFilterInput() {
@@ -301,23 +303,23 @@ watch(() => props.bucketName, init, { immediate: true })
       <UInput
         v-model="filterText"
         icon="i-lucide-search"
-        placeholder="Filter by filename..."
+        :placeholder="t('nuxtUiMongocamp.bucketFiles.filterPlaceholder')"
         size="sm"
         class="flex-1 max-w-xs"
         @input="onFilterInput"
       />
       <div class="flex items-center gap-2">
         <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
-          {{ total }} files
+          {{ t('nuxtUiMongocamp.bucketFiles.filesCount', { count: total }) }}
         </span>
-        <UTooltip text="Upload file">
+        <UTooltip :text="t('nuxtUiMongocamp.bucketFiles.uploadFileTooltip')">
           <UButton
             icon="i-lucide-upload"
             color="primary"
             variant="ghost"
             size="sm"
             :loading="uploading"
-            aria-label="Upload file"
+            :aria-label="t('nuxtUiMongocamp.bucketFiles.uploadFileTooltip')"
             @click="openFilePicker"
           />
         </UTooltip>
@@ -327,13 +329,13 @@ watch(() => props.bucketName, init, { immediate: true })
           class="hidden"
           @change="handleFileSelected"
         >
-        <UTooltip text="Reload">
+        <UTooltip :text="t('nuxtUiMongocamp.bucketFiles.reloadTooltip')">
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
             variant="ghost"
             :loading="loading"
-            aria-label="Reload"
+            :aria-label="t('nuxtUiMongocamp.bucketFiles.reloadTooltip')"
             @click="init"
           />
         </UTooltip>
@@ -355,7 +357,7 @@ watch(() => props.bucketName, init, { immediate: true })
 
     <UModal
       v-model:open="detailOpen"
-      title="Metadata"
+      :title="t('nuxtUiMongocamp.bucketFiles.metadataTitle')"
     >
       <template #body>
         <pre class="text-xs overflow-auto max-h-[60vh] whitespace-pre-wrap break-all">{{ detailContent }}</pre>
@@ -364,14 +366,14 @@ watch(() => props.bucketName, init, { immediate: true })
 
     <UModal
       v-model:open="isRenameModalOpen"
-      title="Rename / edit metadata"
+      :title="t('nuxtUiMongocamp.bucketFiles.renameTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
         <FUDataEdit
           :data="renameData"
           :schema="renameSchema"
-          submit-label="Save"
+          :submit-label="t('nuxtUiMongocamp.common.save')"
           submit-icon="i-lucide-save"
           @data-saved="handleRenameSave"
         />
@@ -380,21 +382,21 @@ watch(() => props.bucketName, init, { immediate: true })
 
     <UModal
       v-model:open="isDeleteModalOpen"
-      title="Delete File"
+      :title="t('nuxtUiMongocamp.bucketFiles.deleteFileTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>Are you sure you want to delete this file? This action cannot be undone.</p>
+        <p>{{ t('nuxtUiMongocamp.bucketFiles.confirmDeleteFile') }}</p>
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isDeleteModalOpen = false"
         />
         <UButton
-          label="Delete"
+          :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
           icon="i-lucide-trash-2"
           @click="handleDeleteFile"

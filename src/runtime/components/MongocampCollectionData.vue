@@ -2,7 +2,7 @@
 import { h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useMongocampClientApi } from '#imports'
+import { useI18n, useMongocampClientApi } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
@@ -13,6 +13,7 @@ const props = defineProps<{
   collectionName: string
 }>()
 
+const { t } = useI18n()
 const { documentApi } = useMongocampClientApi()
 const { pagination, total } = useMongocampCollection()
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
@@ -121,7 +122,7 @@ async function handleSave() {
       payload = JSON.parse(editJson.value)
     }
     catch {
-      editError.value = 'Invalid JSON'
+      editError.value = t('nuxtUiMongocamp.collectionData.invalidJson')
       return
     }
   }
@@ -141,7 +142,7 @@ async function handleSave() {
     await fetchDocuments()
   }
   catch (e) {
-    editError.value = e instanceof Error ? e.message : 'Error saving document'
+    editError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionData.errorSave')
   }
 }
 
@@ -154,7 +155,7 @@ async function handleDelete() {
     await fetchDocuments()
   }
   catch (e) {
-    deleteError.value = e instanceof Error ? e.message : 'Error deleting document'
+    deleteError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionData.errorDelete')
   }
 }
 
@@ -167,32 +168,32 @@ function makeActionsColumn(): TableColumn<Row> {
       if (isBucketCollection(props.collectionName)) {
         const fileId = fileIdForRow(props.collectionName, row.original)
         if (fileId) {
-          buttons.push(withTooltip('Download file', h(UButton, {
+          buttons.push(withTooltip(t('nuxtUiMongocamp.collectionData.downloadFileTooltip'), h(UButton, {
             'icon': 'i-lucide-download',
             'color': 'neutral',
             'variant': 'ghost',
             'size': 'sm',
-            'aria-label': 'Download file',
+            'aria-label': t('nuxtUiMongocamp.collectionData.downloadFileTooltip'),
             'loading': downloadingFileIds.value.has(fileId),
             'onClick': () => downloadFile(props.collectionName, fileId),
           })))
         }
       }
       buttons.push(
-        withTooltip('Edit document', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.collectionData.editDocumentTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Edit document',
+          'aria-label': t('nuxtUiMongocamp.collectionData.editDocumentTooltip'),
           'onClick': () => openEdit(row.original),
         })),
-        withTooltip('Delete document', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.collectionData.deleteDocumentTooltip'), h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Delete document',
+          'aria-label': t('nuxtUiMongocamp.collectionData.deleteDocumentTooltip'),
           'onClick': () => confirmDelete(row.original),
         })),
       )
@@ -234,9 +235,9 @@ function openDetail(value: unknown) {
 }
 
 function buildLuceneFilter(term: string): string | undefined {
-  const t = term.trim()
-  if (!t || filterableColumns.value.length === 0) return undefined
-  return or(...filterableColumns.value.map(col => like(col, t))) || undefined
+  const trimmed = term.trim()
+  if (!trimmed || filterableColumns.value.length === 0) return undefined
+  return or(...filterableColumns.value.map(col => like(col, trimmed))) || undefined
 }
 
 function onFilterInput() {
@@ -321,26 +322,26 @@ function makeCell(key: string, type: string) {
           const rows: ReturnType<typeof h>[] = []
           if (obj.created) {
             rows.push(h('div', [
-              h('span', { class: 'text-dimmed' }, 'created: '),
+              h('span', { class: 'text-dimmed' }, t('nuxtUiMongocamp.collectionData.createdByPrefix')),
               h('span', toDateDisplay(obj.created)),
             ]))
           }
           if (obj.updated && obj.updated !== obj.created) {
             rows.push(h('div', [
-              h('span', { class: 'text-dimmed' }, 'updated: '),
+              h('span', { class: 'text-dimmed' }, t('nuxtUiMongocamp.collectionData.updatedByPrefix')),
               h('span', toDateDisplay(obj.updated)),
             ]))
           }
           if (obj.createdBy) {
             rows.push(h('div', [
-              h('span', { class: 'text-dimmed' }, 'by: '),
+              h('span', { class: 'text-dimmed' }, t('nuxtUiMongocamp.collectionData.byPrefix')),
               h('span', String(obj.createdBy)),
             ]))
           }
           return h('div', { class: 'flex flex-col gap-0.5 text-xs py-1' }, rows)
         }
       }
-      const viewLabel = Array.isArray(raw) ? 'View array' : 'View object'
+      const viewLabel = Array.isArray(raw) ? t('nuxtUiMongocamp.collectionData.viewArray') : t('nuxtUiMongocamp.collectionData.viewObject')
       return withTooltip(viewLabel, h(UButton, {
         'icon': Array.isArray(raw) ? 'i-lucide-list' : 'i-lucide-braces',
         'color': 'neutral',
@@ -413,7 +414,7 @@ watch(() => props.collectionName, init, { immediate: true })
       <UInput
         v-model="filterText"
         icon="i-lucide-search"
-        placeholder="Filter rows..."
+        :placeholder="t('nuxtUiMongocamp.collectionData.filterPlaceholder')"
         size="sm"
         class="flex-1 max-w-xs"
         :disabled="filterableColumns.length === 0"
@@ -421,11 +422,11 @@ watch(() => props.collectionName, init, { immediate: true })
       />
       <div class="flex items-center gap-2">
         <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
-          {{ total }} documents
+          {{ t('nuxtUiMongocamp.collectionData.documentsCount', { count: total }) }}
         </span>
         <UTooltip
           v-if="isBucketCollection(collectionName)"
-          text="Upload file"
+          :text="t('nuxtUiMongocamp.collectionData.uploadFileTooltip')"
         >
           <UButton
             icon="i-lucide-upload"
@@ -433,20 +434,20 @@ watch(() => props.collectionName, init, { immediate: true })
             variant="ghost"
             size="sm"
             :loading="uploading"
-            aria-label="Upload file"
+            :aria-label="t('nuxtUiMongocamp.collectionData.uploadFileTooltip')"
             @click="openFilePicker"
           />
         </UTooltip>
         <UTooltip
           v-else
-          text="Insert document"
+          :text="t('nuxtUiMongocamp.collectionData.insertDocumentTooltip')"
         >
           <UButton
             icon="i-lucide-plus"
             color="primary"
             variant="ghost"
             size="sm"
-            aria-label="Insert document"
+            :aria-label="t('nuxtUiMongocamp.collectionData.insertDocumentTooltip')"
             @click="openInsert"
           />
         </UTooltip>
@@ -456,13 +457,13 @@ watch(() => props.collectionName, init, { immediate: true })
           class="hidden"
           @change="handleFileSelected"
         >
-        <UTooltip text="Reload">
+        <UTooltip :text="t('nuxtUiMongocamp.collectionData.reloadTooltip')">
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
             variant="ghost"
             :loading="loading"
-            aria-label="Reload"
+            :aria-label="t('nuxtUiMongocamp.collectionData.reloadTooltip')"
             @click="init"
           />
         </UTooltip>
@@ -484,7 +485,7 @@ watch(() => props.collectionName, init, { immediate: true })
 
     <UModal
       v-model:open="detailOpen"
-      title="Details"
+      :title="t('nuxtUiMongocamp.collectionData.detailsTitle')"
     >
       <template #body>
         <pre class="text-xs overflow-auto max-h-[60vh] whitespace-pre-wrap break-all">{{ detailContent }}</pre>
@@ -493,7 +494,7 @@ watch(() => props.collectionName, init, { immediate: true })
 
     <UModal
       v-model:open="isEditModalOpen"
-      :title="editMode === 'insert' ? 'Insert Document' : 'Edit Document'"
+      :title="editMode === 'insert' ? t('nuxtUiMongocamp.collectionData.insertDocumentTitle') : t('nuxtUiMongocamp.collectionData.editDocumentTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
@@ -501,7 +502,7 @@ watch(() => props.collectionName, init, { immediate: true })
           v-if="editSamples.length > 0"
           v-model="editFormData"
           :data="editSamples"
-          :submit-label="editMode === 'insert' ? 'Insert' : 'Save'"
+          :submit-label="editMode === 'insert' ? t('nuxtUiMongocamp.collectionData.insert') : t('nuxtUiMongocamp.common.save')"
           :submit-icon="editMode === 'insert' ? 'i-lucide-plus' : 'i-lucide-save'"
           @data-saved="handleSave"
         />
@@ -523,13 +524,13 @@ watch(() => props.collectionName, init, { immediate: true })
         #footer
       >
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isEditModalOpen = false"
         />
         <UButton
-          :label="editMode === 'insert' ? 'Insert' : 'Save'"
+          :label="editMode === 'insert' ? t('nuxtUiMongocamp.collectionData.insert') : t('nuxtUiMongocamp.common.save')"
           :icon="editMode === 'insert' ? 'i-lucide-plus' : 'i-lucide-save'"
           @click="handleSave"
         />
@@ -538,11 +539,11 @@ watch(() => props.collectionName, init, { immediate: true })
 
     <UModal
       v-model:open="isDeleteModalOpen"
-      title="Delete Document"
+      :title="t('nuxtUiMongocamp.collectionData.deleteDocumentTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>Are you sure you want to delete this document? This action cannot be undone.</p>
+        <p>{{ t('nuxtUiMongocamp.collectionData.confirmDeleteDocument') }}</p>
         <p
           v-if="deleteError"
           class="mt-2 text-sm text-error-500"
@@ -552,13 +553,13 @@ watch(() => props.collectionName, init, { immediate: true })
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isDeleteModalOpen = false"
         />
         <UButton
-          label="Delete"
+          :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
           icon="i-lucide-trash-2"
           @click="handleDelete"
