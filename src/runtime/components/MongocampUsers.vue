@@ -3,6 +3,7 @@ import { h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
+import { useI18n } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 
 interface RoleItem {
@@ -10,6 +11,7 @@ interface RoleItem {
   label: string
 }
 
+const { t } = useI18n()
 const { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles } = useMongocampAdmin()
 
 const users = ref<UserProfile[]>([])
@@ -39,28 +41,28 @@ const addUserSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'userId',
-    label: 'Email',
+    label: t('nuxtUiMongocamp.users.email'),
     validation: 'required|email',
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'password',
-    label: 'Password',
+    label: t('nuxtUiMongocamp.users.password'),
     inputType: 'password',
     validation: 'required|length:3',
   },
   {
     $formkit: 'nuxtUIListbox',
     name: 'roles',
-    label: 'Roles',
+    label: t('nuxtUiMongocamp.users.roles'),
     displayMode: 'transfer',
     options: [] as RoleItem[],
     filter: true,
     class: 'h-60',
     transferHeaderClass: 'text-sm text-gray-500 font-medium',
     transferAll: true,
-    transferLeftHeaderText: 'Available',
-    transferRightHeaderText: 'Assigned',
+    transferLeftHeaderText: t('nuxtUiMongocamp.users.available'),
+    transferRightHeaderText: t('nuxtUiMongocamp.users.assigned'),
   },
 ])
 
@@ -68,23 +70,23 @@ const editUserSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'password',
-    label: 'New Password',
+    label: t('nuxtUiMongocamp.users.newPassword'),
     inputType: 'password',
     validation: 'length:3,100',
-    help: 'Leave empty to keep current password',
+    help: t('nuxtUiMongocamp.users.newPasswordHelp'),
   },
   {
     $formkit: 'nuxtUIListbox',
     name: 'roles',
-    label: 'Roles',
+    label: t('nuxtUiMongocamp.users.roles'),
     displayMode: 'transfer',
     filter: true,
     class: 'h-60',
     transferHeaderClass: 'text-sm text-gray-500 font-medium',
     options: [] as RoleItem[],
     transferAll: true,
-    transferLeftHeaderText: 'Available',
-    transferRightHeaderText: 'Assigned',
+    transferLeftHeaderText: t('nuxtUiMongocamp.users.available'),
+    transferRightHeaderText: t('nuxtUiMongocamp.users.assigned'),
   },
 ])
 
@@ -120,7 +122,7 @@ async function handleAddUser() {
     await fetchUsers()
   }
   catch (e: unknown) {
-    errorMessage.value = e instanceof Error ? e.message : 'Failed to add user'
+    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.users.errorAddUser')
   }
 }
 
@@ -145,7 +147,7 @@ async function handleEditUser() {
     await fetchUsers()
   }
   catch (e: unknown) {
-    errorMessage.value = e instanceof Error ? e.message : 'Failed to update user'
+    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.users.errorEditUser')
   }
 }
 
@@ -187,21 +189,21 @@ function sortHeader(column: Column<UserProfile>, label: string) {
 const columns: TableColumn<UserProfile>[] = [
   {
     accessorKey: 'user',
-    header: ({ column }) => sortHeader(column, 'User'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.users.columnUser')),
   },
   {
     accessorKey: 'isAdmin',
-    header: ({ column }) => sortHeader(column, 'Admin'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.users.columnAdmin')),
     cell: ({ row }) =>
       h(UBadge, {
-        label: row.original.isAdmin ? 'Admin' : 'User',
+        label: row.original.isAdmin ? t('nuxtUiMongocamp.users.roleAdmin') : t('nuxtUiMongocamp.users.roleUser'),
         color: row.original.isAdmin ? 'error' : 'neutral',
         variant: 'subtle',
       }),
   },
   {
     accessorKey: 'roles',
-    header: 'Roles',
+    header: t('nuxtUiMongocamp.users.columnRoles'),
     cell: ({ row }) => {
       const roles = row.original.roles ?? []
       if (!roles.length)
@@ -218,20 +220,20 @@ const columns: TableColumn<UserProfile>[] = [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
-        withTooltip('Edit user', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.users.editUserTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Edit user',
+          'aria-label': t('nuxtUiMongocamp.users.editUserTooltip'),
           'onClick': () => openEdit(row.original),
         })),
-        withTooltip('Delete user', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.users.deleteUserTooltip'), h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Delete user',
+          'aria-label': t('nuxtUiMongocamp.users.deleteUserTooltip'),
           'onClick': () => confirmDelete(row.original.user),
         })),
       ]),
@@ -246,30 +248,30 @@ fetchRoles()
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
-        Users
+        {{ t('nuxtUiMongocamp.users.heading') }}
       </h2>
       <div class="flex flex-1 items-center gap-2">
         <UInput
           v-model="filterText"
           icon="i-lucide-search"
-          placeholder="Search users..."
+          :placeholder="t('nuxtUiMongocamp.users.searchPlaceholder')"
           size="sm"
           class="flex-1 max-w-xs"
           @input="onFilterInput"
         />
-        <UTooltip text="Refresh">
+        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
             variant="ghost"
             :loading="loading"
-            aria-label="Refresh"
+            :aria-label="t('nuxtUiMongocamp.common.refresh')"
             @click="fetchUsers"
           />
         </UTooltip>
         <UButton
           icon="i-lucide-plus"
-          label="Add User"
+          :label="t('nuxtUiMongocamp.users.addUser')"
           @click="isAddModalOpen = true"
         />
       </div>
@@ -285,13 +287,13 @@ fetchRoles()
     <!-- Add User Modal -->
     <UModal
       v-model:open="isAddModalOpen"
-      title="Add User"
+      :title="t('nuxtUiMongocamp.users.addUser')"
     >
       <template #body>
         <FUDataEdit
           :data="newUser"
           :schema="addUserSchema"
-          submit-label="Add User"
+          :submit-label="t('nuxtUiMongocamp.users.addUser')"
           submit-icon="i-lucide-plus"
           @data-saved="handleAddUser"
         />
@@ -307,13 +309,13 @@ fetchRoles()
     <!-- Edit User Modal -->
     <UModal
       v-model:open="isEditModalOpen"
-      :title="`Edit User: ${editUser.userId}`"
+      :title="t('nuxtUiMongocamp.users.editUserTitle', { userId: editUser.userId })"
     >
       <template #body>
         <FUDataEdit
           :data="editUser"
           :schema="editUserSchema"
-          submit-label="Save Changes"
+          :submit-label="t('nuxtUiMongocamp.common.saveChanges')"
           submit-icon="i-lucide-save"
           @data-saved="handleEditUser"
         />
@@ -329,24 +331,21 @@ fetchRoles()
     <!-- Delete Confirmation Modal -->
     <UModal
       v-model:open="isDeleteModalOpen"
-      title="Delete User"
+      :title="t('nuxtUiMongocamp.users.deleteUserTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>
-          Are you sure you want to delete user <strong>{{ userToDelete }}</strong>?
-          This action cannot be undone.
-        </p>
+        <p>{{ t('nuxtUiMongocamp.users.confirmDelete', { userId: userToDelete }) }}</p>
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isDeleteModalOpen = false"
         />
         <UButton
-          label="Delete"
+          :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
           @click="handleDeleteUser"
         />
