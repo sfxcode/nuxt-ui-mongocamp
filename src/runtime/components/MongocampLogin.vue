@@ -1,13 +1,14 @@
 <script setup lang='ts'>
 import { consola } from 'consola'
 import { ref, reactive } from 'vue'
-import { useMongocampAuth } from '#imports'
+import { useI18n, useMongocampAuth } from '#imports'
 import { navigateTo, useCookie, useNuxtApp } from '#app'
 
 const props = defineProps<{
   redirectPath?: string
 }>()
 
+const { t } = useI18n()
 const { login } = useMongocampAuth()
 const errorMessage = ref('')
 const nuxtApp = useNuxtApp()
@@ -19,18 +20,18 @@ const schema = reactive(
   [
     {
       $el: 'h3',
-      children: 'Mongocamp Login',
+      children: t('nuxtUiMongocamp.login.heading'),
     },
     {
       $formkit: 'nuxtUIInput',
       name: 'userId',
-      label: 'Email',
+      label: t('nuxtUiMongocamp.login.email'),
       validation: 'required|email',
     },
     {
       $formkit: 'nuxtUIInput',
       name: 'password',
-      label: 'Password',
+      label: t('nuxtUiMongocamp.login.password'),
       inputType: 'password',
       validation: 'required|length:3',
     },
@@ -51,7 +52,7 @@ async function actionLogin() {
   }
   catch (e) {
     consola.log(e)
-    errorMessage.value = 'Wrong Login or Password !'
+    errorMessage.value = t('nuxtUiMongocamp.login.error')
   }
 }
 </script>
@@ -62,7 +63,7 @@ async function actionLogin() {
       <FUDataEdit
         :data="data"
         :schema="schema"
-        submit-label="Login"
+        :submit-label="t('nuxtUiMongocamp.login.submit')"
         @data-saved="actionLogin"
       />
       <div
