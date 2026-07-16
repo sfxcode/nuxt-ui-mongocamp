@@ -10,5 +10,8 @@
   "dependencies": {
     "my-module": "latest",
     "nuxt": "^4.4.8"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.117"
   }
 }

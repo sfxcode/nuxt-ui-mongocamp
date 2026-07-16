@@ -67,6 +67,7 @@
     "unocss-nuxt-ui": "^1.2.2"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.117",
     "@nuxt/devtools": "4.0.0-alpha.7",
     "@nuxt/eslint-config": "^1.16.0",
     "@nuxt/module-builder": "^1.0.2",
