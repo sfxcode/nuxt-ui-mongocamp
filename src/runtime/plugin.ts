@@ -1,10 +1,10 @@
 import { defineNuxtPlugin, addRouteMiddleware, navigateTo, useAsyncData, useRuntimeConfig } from '#app'
-import { useMongocampApi, useMongocampAuth } from '#imports'
+import { useMongocampAuth, useMongocampClientApi } from '#imports'
 import { useMongocampRoles } from './composables/useMongocampRoles'
 
 export default defineNuxtPlugin(async (_nuxtApp) => {
   const { logout } = useMongocampAuth()
-  const { informationApi } = useMongocampApi()
+  const { informationApi } = useMongocampClientApi()
   const { notAllowedPath, logoutRedirectPath, isAllowedPathForRoute } = useMongocampRoles()
 
   const config = useRuntimeConfig()

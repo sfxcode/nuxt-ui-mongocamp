@@ -54,7 +54,6 @@ async function actionLogin() {
         :data="data"
         :schema="schema"
         submit-label="Login"
-        debug-data
         @data-saved="actionLogin"
       />
       <div
