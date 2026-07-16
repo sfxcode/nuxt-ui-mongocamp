@@ -151,7 +151,7 @@ describe('global auth middleware', async () => {
   })
 
   describe('/logout', () => {
-    it('redirects to notAllowedPath and actually clears state — a subsequent secured navigation is blocked again', async () => {
+    it('redirects to logoutRedirectPath and actually clears state — a subsequent secured navigation is blocked again', async () => {
       const page = await createPage()
       await seedSession(page, { token: 'fake-token', profile: { user: 'ivan', isAdmin: false, roles: [] } })
       await page.goto(url('/'))

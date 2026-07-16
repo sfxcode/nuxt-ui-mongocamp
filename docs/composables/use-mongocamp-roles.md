@@ -8,18 +8,20 @@ const {
   isAdmin,              // ComputedRef<boolean>
   isManager,            // ComputedRef<boolean>
   notAllowedPath,       // string — where the plugin's middleware redirects on disallow
+  logoutRedirectPath,   // string — where the plugin's middleware redirects after /logout
   isAllowedPathForRoute, // (route: string) => boolean
 } = useMongocampRoles()
 ```
 
 ## Configuration
 
-Reads five options from `nuxtUiMongocamp` (this module's own config key, distinct from the `mongocamp` key that passes through to `@sfxcode/nuxt-mongocamp-server`) via `useRuntimeConfig().public.nuxtUiMongocampOptions`:
+Reads six options from `nuxtUiMongocamp` (this module's own config key, distinct from the `mongocamp` key that passes through to `@sfxcode/nuxt-mongocamp-server`) via `useRuntimeConfig().public.nuxtUiMongocampOptions`:
 
 ```ts
 export default defineNuxtConfig({
   nuxtUiMongocamp: {
     notAllowedPath: '/login',                               // redirect target on disallow (default '/')
+    logoutRedirectPath: '/',                                 // redirect target after /logout (default '/')
     managerRoles: ['support'],                              // profile.roles granting manager status (default [])
     securedRouteParts: ['/secured/**'],                      // requires isLoggedIn (default [])
     managementRouteParts: ['/secured/manage/**'],            // requires isManager (default [])
@@ -43,7 +45,7 @@ Route parts are glob patterns matched with [`minimatch`](https://www.npmjs.com/p
 isAllowedPathForRoute('/secured/admin/users') // false, true, ... depending on isLoggedIn/isManager/isAdmin
 ```
 
-`notAllowedPath` is always allowed, checked before anything else — this is what stops the plugin's own redirect target from ever being disallowed and looping back on itself, even if it happens to also match one of the route-part patterns below.
+`notAllowedPath` and `logoutRedirectPath` are always allowed, checked before anything else — this is what stops either of the plugin's own redirect targets from ever being disallowed and looping back on itself, even if one happens to also match one of the route-part patterns below.
 
 Otherwise, checks route parts in order, each gate independent of the others:
 
@@ -57,12 +59,12 @@ Because a route can match more than one pattern set (e.g. `/secured/admin/**` is
 ## Consumed by the runtime plugin
 
 ```ts
-const { notAllowedPath, isAllowedPathForRoute } = useMongocampRoles()
+const { notAllowedPath, logoutRedirectPath, isAllowedPathForRoute } = useMongocampRoles()
 
 addRouteMiddleware('global-auth', (to) => {
   if (to.path === '/logout') {
     logout()
-    return navigateTo(notAllowedPath)
+    return navigateTo(logoutRedirectPath)
   }
   if (!isAllowedPathForRoute(to.path)) {
     return navigateTo(notAllowedPath)
@@ -70,7 +72,7 @@ addRouteMiddleware('global-auth', (to) => {
 }, { global: true })
 ```
 
-Redirect target on both logout and disallow is always `notAllowedPath` (default `'/'`; set it to e.g. `'/login'` for apps that gate everything behind a login page). This middleware only registers when `useGlobalAuthMiddleware` (also under `nuxtUiMongocamp`, defaults to `false`) is explicitly enabled.
+Disallowed routes redirect to `notAllowedPath` (default `'/'`; set it to e.g. `'/login'` for apps that gate everything behind a login page). `/logout` redirects to `logoutRedirectPath` instead — a separate option (also default `'/'`), so an app can send auth failures to a login page while sending a deliberate logout somewhere else, like the home page. This middleware only registers when `useGlobalAuthMiddleware` (also under `nuxtUiMongocamp`, defaults to `false`) is explicitly enabled.
 
 ## Related
 

@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   nuxtUiMongocamp: {
     useGlobalAuthMiddleware: true,
     notAllowedPath: '/login',                     // default '/'
+    logoutRedirectPath: '/',                       // default '/'
     managerRoles: ['support'],
     securedRouteParts: ['/secured/**'],
     managementRouteParts: ['/secured/manage/**'],
@@ -21,7 +22,7 @@ When `useGlobalAuthMiddleware` is `true`, the module registers a global `global-
 
 | Path pattern | Requirement | If not met |
 |---|---|---|
-| `/logout` | — | Calls `logout()`, then redirects to `notAllowedPath` |
+| `/logout` | — | Calls `logout()`, then redirects to `logoutRedirectPath` |
 | Matches `securedRouteParts` | Logged in | Redirects to `notAllowedPath` |
 | Matches `managementRouteParts` | Manager (see below) | Redirects to `notAllowedPath` |
 | Matches `adminRouteParts` | Admin | Redirects to `notAllowedPath` |
@@ -29,7 +30,7 @@ When `useGlobalAuthMiddleware` is `true`, the module registers a global `global-
 
 A route can match more than one pattern set — e.g. `/secured/admin/**` is also covered by `/secured/**`. Checks run in the order above and the **first** one that fails wins, so a logged-out user hitting an admin route is redirected for being logged out, not for lacking the admin role.
 
-`notAllowedPath` is always allowed by the middleware, regardless of whether it also matches one of the patterns above — otherwise a `notAllowedPath` that happened to fall under a protected pattern (or a broad `securedRouteParts: ['/**']`) would redirect to itself forever.
+`notAllowedPath` and `logoutRedirectPath` are always allowed by the middleware, regardless of whether either also matches one of the patterns above — otherwise a redirect target that happened to fall under a protected pattern (or a broad `securedRouteParts: ['/**']`) would redirect to itself forever. They're separate options (both defaulting to `'/'`) so a deliberate logout can land somewhere different from an auth-failure redirect — e.g. back to the home page instead of the login page.
 
 Route parts are glob patterns matched with [`minimatch`](https://www.npmjs.com/package/minimatch), not plain string prefixes. `/secured/admin/**` matches nested pages like `/secured/admin/users`, and also matches `/secured/admin` itself (the directory's own `index.vue`) — the composable tries the route with a trailing slash appended so a directory's index page is covered by its own `/**` pattern.
 

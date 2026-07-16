@@ -22,6 +22,7 @@ beforeEach(() => {
   mockState.value = { profile: { isAdmin: false, roles: [] } }
   mockOptions = {
     notAllowedPath: '/',
+    logoutRedirectPath: '/',
     managerRoles: [],
     securedRouteParts: [],
     managementRouteParts: [],
@@ -38,6 +39,21 @@ describe('notAllowedPath', () => {
   it('reflects the configured value', () => {
     mockOptions.notAllowedPath = '/login'
     const { notAllowedPath } = useMongocampRoles()
+    expect(notAllowedPath).toBe('/login')
+  })
+})
+
+describe('logoutRedirectPath', () => {
+  it('defaults to \'/\'', () => {
+    const { logoutRedirectPath } = useMongocampRoles()
+    expect(logoutRedirectPath).toBe('/')
+  })
+
+  it('reflects the configured value, independently of notAllowedPath', () => {
+    mockOptions.notAllowedPath = '/login'
+    mockOptions.logoutRedirectPath = '/goodbye'
+    const { notAllowedPath, logoutRedirectPath } = useMongocampRoles()
+    expect(logoutRedirectPath).toBe('/goodbye')
     expect(notAllowedPath).toBe('/login')
   })
 })
@@ -180,5 +196,15 @@ describe('isAllowedPathForRoute', () => {
     mockOptions.securedRouteParts = ['/**']
     const { isAllowedPathForRoute } = useMongocampRoles()
     expect(isAllowedPathForRoute('/')).toBe(true)
+  })
+
+  it('always allows logoutRedirectPath, even when it also matches a secured/admin pattern', () => {
+    // proves the middleware's own post-logout redirect target can never itself trigger
+    // another redirect, mirroring the notAllowedPath guarantee above
+    mockOptions.logoutRedirectPath = '/secured/admin/goodbye'
+    mockOptions.securedRouteParts = ['/secured/**']
+    mockOptions.adminRouteParts = ['/secured/admin/**']
+    const { isAllowedPathForRoute } = useMongocampRoles()
+    expect(isAllowedPathForRoute('/secured/admin/goodbye')).toBe(true)
   })
 })

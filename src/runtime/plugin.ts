@@ -5,7 +5,7 @@ import { useMongocampRoles } from './composables/useMongocampRoles'
 export default defineNuxtPlugin(async (_nuxtApp) => {
   const { logout } = useMongocampAuth()
   const { informationApi } = useMongocampApi()
-  const { notAllowedPath, isAllowedPathForRoute } = useMongocampRoles()
+  const { notAllowedPath, logoutRedirectPath, isAllowedPathForRoute } = useMongocampRoles()
 
   const config = useRuntimeConfig()
   const useGlobalAuthMiddleware: boolean = config.public.nuxtUiMongocampOptions.useGlobalAuthMiddleware ?? false
@@ -16,7 +16,7 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
     addRouteMiddleware('global-auth', (to) => {
       if (to.path === '/logout') {
         logout()
-        return navigateTo(notAllowedPath)
+        return navigateTo(logoutRedirectPath)
       }
       if (!isAllowedPathForRoute(to.path)) {
         return navigateTo(notAllowedPath)

@@ -14,6 +14,9 @@ export default defineNuxtConfig({
     // Distinctive and NOT '/' — using the default would make it impossible to tell whether
     // this option is actually being read versus just falling back to its default.
     notAllowedPath: '/login',
+    // Mirrors notAllowedPath here since this fixture models an app gated entirely behind
+    // login — logout should land back on the login page, not the (unrelated) default '/'.
+    logoutRedirectPath: '/login',
     managerRoles: ['support'],
     // '/login' is deliberately also listed here — notAllowedPath must stay reachable even when
     // it overlaps a configured pattern (phase 7's guarantee test); without this, that test

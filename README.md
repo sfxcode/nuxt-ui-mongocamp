@@ -222,7 +222,7 @@ Route protection is opt-in and config-driven via `useMongocampRoles()`. Set `use
 | Matches `adminRouteParts` | User must be an admin |
 | `/logout` | Calls `logout()` |
 
-On any unmet requirement (or `/logout`), the middleware redirects to `notAllowedPath` (default `'/'`), which is always itself allowed so it can never cause a redirect loop.
+On any unmet requirement, the middleware redirects to `notAllowedPath` (default `'/'`); `/logout` redirects to the separate `logoutRedirectPath` instead (also default `'/'`). Both are always themselves allowed, so neither can ever cause a redirect loop.
 
 ## Runtime Plugin
 
@@ -242,6 +242,7 @@ The module's own config key is `nuxtUiMongocamp` — it configures the route mid
 nuxtUiMongocamp: {
   useGlobalAuthMiddleware: true,                // default: false
   notAllowedPath: '/login',                     // default: '/'
+  logoutRedirectPath: '/',                       // default: '/'
   managerRoles: ['support'],                    // default: []
   securedRouteParts: ['/secured/**'],           // default: []
   managementRouteParts: ['/secured/manage/**'], // default: []

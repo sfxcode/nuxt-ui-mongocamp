@@ -16,6 +16,12 @@ export interface ModuleOptions {
   notAllowedPath?: string
 
   /**
+   * Path the global auth middleware navigates to after `/logout` — e.g. '/goodbye'.
+   * Always treated as allowed by the middleware itself, so it can never cause a redirect loop.
+   */
+  logoutRedirectPath?: string
+
+  /**
    * Roles with management access
    */
   managerRoles: string[]
@@ -66,6 +72,7 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     useGlobalAuthMiddleware: false,
     notAllowedPath: '/',
+    logoutRedirectPath: '/',
     managerRoles: [],
     securedRouteParts: [],
     managementRouteParts: [],

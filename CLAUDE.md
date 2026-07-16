@@ -50,8 +50,9 @@ Also warns at build time (via `consola`) if `useServerProxy` and `useGlobalAuthM
 
 Runs on app boot. Fetches the MongoCamp server version via `informationApi.version()` and provides it as `$mongocampVersion`. If the module's `useGlobalAuthMiddleware` option is `true` (default `false` — opt-in), registers a global `global-auth` route middleware built on `useMongocampRoles()`:
 - Gates routes by glob pattern against `securedRouteParts` (requires login), `managementRouteParts` (requires manager/admin), and `adminRouteParts` (requires admin) — all configured under the module's own `nuxtUiMongocamp` key, all defaulting to `[]` (nothing protected until configured)
-- Calls `logout()` on `/logout`
-- Redirects to `notAllowedPath` (module option, default `'/'`) on `/logout` or any disallowed route — always itself treated as allowed, so it can never loop
+- Calls `logout()` on `/logout`, then redirects to `logoutRedirectPath` (module option, default `'/'`)
+- Redirects to `notAllowedPath` (module option, default `'/'`) on any other disallowed route
+- Both redirect targets are always themselves treated as allowed, so neither can ever loop
 
 See `src/module.ts`'s `ModuleOptions` for the full option list and `docs/guide/route-protection.md` for behavior details.
 
@@ -83,7 +84,7 @@ UTable columns with custom cells use `h()` + `resolveComponent()` (not `<templat
 - **`useMongocampCollection`** — reactive state for paginated collection queries: `filter`, `sort`, `projection`, `pagination` (pageIndex + pageSize), `total`
 - **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
 - **`useMongocampSchema`** — exports `useJsonSchema()` with `schemaToColumnDefinition(definition, fields)` for mapping a `JsonSchemaDefinition` to UTable column configs; sorts `_id` first, then id-containing fields, then others; detects `date-time` and `number` types
-- **`useMongocampRoles`** — `isAdmin`/`isManager` (admin always counts as manager) and `isAllowedPathForRoute(route)`, backing the runtime plugin's global auth middleware; reads the module's `nuxtUiMongocamp` options (`managerRoles`, `securedRouteParts`, `managementRouteParts`, `adminRouteParts`, `notAllowedPath`) from `useRuntimeConfig().public.nuxtUiMongocampOptions`
+- **`useMongocampRoles`** — `isAdmin`/`isManager` (admin always counts as manager) and `isAllowedPathForRoute(route)`, backing the runtime plugin's global auth middleware; reads the module's `nuxtUiMongocamp` options (`managerRoles`, `securedRouteParts`, `managementRouteParts`, `adminRouteParts`, `notAllowedPath`, `logoutRedirectPath`) from `useRuntimeConfig().public.nuxtUiMongocampOptions`
 - **`useMongocampClientApi`** — the drop-in every other composable/component calls instead of the dependency's `useMongocampApi()`; switches between session mode and `useMongocampProxyApi()` based on `useServerProxy`
 - **`useMongocampProxyApi`** — session-mode-shaped API client (`adminApi`, `documentApi`, ...) pointed at the local server proxy route instead of the real MongoCamp URL; builds the 11 API classes itself via `src/runtime/utils/createProxyMongocampApis.ts`, since the dependency's own `createMongocampApis` factory isn't part of its public export surface
 
