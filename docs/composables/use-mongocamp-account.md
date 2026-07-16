@@ -33,4 +33,4 @@ Calls `authApi.generateNewApiKey()` and returns the raw key string. **This is th
 
 ## No manual "refresh session" method
 
-`@sfxcode/nuxt-mongocamp-server`'s `useMongocampAuth()` already runs a background `setInterval` that calls `authApi.refreshToken()` automatically (gated by the module's `refreshToken`/`tokenRefreshIntervall` options, both defaulted to `true`/`5000` in this module's `moduleDependencies`) for as long as the user is logged in. A manual refresh method here would just duplicate that — there's intentionally no `refreshSession()` export.
+`@sfxcode/nuxt-mongocamp-server`'s `useMongocampAuth()` already runs a background `setInterval` that calls `authApi.refreshToken()` automatically (gated by the module's `refreshToken`/`tokenRefreshInterval` options, both defaulted to `true`/`5000` in this module's `moduleDependencies`) for as long as the user is logged in. A manual refresh method here would just duplicate that — there's intentionally no `refreshSession()` export.

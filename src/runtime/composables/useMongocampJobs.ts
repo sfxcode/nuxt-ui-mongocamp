@@ -1,8 +1,8 @@
-import { useMongocampApi } from '#imports'
+import { useMongocampClientApi } from '#imports'
 import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
 
 export function useMongocampJobs() {
-  const { jobApi } = useMongocampApi()
+  const { jobApi } = useMongocampClientApi()
 
   async function listJobs(): Promise<JobInformation[]> {
     return jobApi.jobsList()

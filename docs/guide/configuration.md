@@ -15,6 +15,8 @@ export default defineNuxtConfig({
     securedRouteParts: ['/secured/**'],              // default: []
     managementRouteParts: ['/secured/manage/**'],    // default: []
     adminRouteParts: ['/secured/admin/**'],          // default: []
+    useServerProxy: false,                          // default: false
+    serverProxyPath: '/api/_mongocamp',             // default shown
   },
 })
 ```
@@ -27,6 +29,8 @@ export default defineNuxtConfig({
 | `securedRouteParts` | `string[]` | `[]` | Glob patterns (matched with [`minimatch`](https://www.npmjs.com/package/minimatch)) requiring the user to be logged in. |
 | `managementRouteParts` | `string[]` | `[]` | Glob patterns requiring the user to be a manager (see `managerRoles`). |
 | `adminRouteParts` | `string[]` | `[]` | Glob patterns requiring the user to be an admin. |
+| `useServerProxy` | `boolean` | `false` | Opt-in [server proxy auth mode](/guide/server-proxy-auth) — api-key-only, no browser login. Not meant to be combined with `useGlobalAuthMiddleware`'s route protection (a build-time warning fires if both are enabled). |
+| `serverProxyPath` | `string` | `'/api/_mongocamp'` | Local route prefix the proxy listens on when `useServerProxy` is `true`. |
 
 **Nothing is protected by default.** With every route-part option left as `[]`, `useGlobalAuthMiddleware: false`, and no page under a protected path, an app that adds this module gets no access restrictions at all — you must explicitly opt in by enabling the middleware and listing your protected route patterns. This is a deliberate design: the module makes no assumption about your app's URL structure (earlier versions hardcoded `/admin`/`/secured` prefixes). See [`useMongocampRoles`](/composables/use-mongocamp-roles) for the composable backing all of this, and [Route Protection](/guide/route-protection) for a full walkthrough.
 
@@ -38,9 +42,10 @@ export default defineNuxtConfig({
 
   mongocamp: {
     url: 'https://your-mongocamp-server',
+    apiKey: process.env.MONGOCAMP_API_KEY, // optional — stored server-side only
     paginationSize: 500,          // default: 500
     refreshToken: true,           // default: true
-    tokenRefreshIntervall: 5000,  // ms, default: 5000
+    tokenRefreshInterval: 5000,   // ms, default: 5000
   },
 })
 ```
@@ -48,9 +53,10 @@ export default defineNuxtConfig({
 | Option | Default | Description |
 |---|---|---|
 | `url` | — | Base URL of your MongoCamp server. Required. |
+| `apiKey` | — | Optional. Stored server-side only (`runtimeConfig.mongocampApiKey`), never sent to the browser. Required for [server proxy auth mode](/guide/server-proxy-auth); unused otherwise. |
 | `paginationSize` | `500` | Default page size for paginated API calls. |
 | `refreshToken` | `true` | Whether the auth token is refreshed automatically. |
-| `tokenRefreshIntervall` | `5000` | Refresh interval in milliseconds. |
+| `tokenRefreshInterval` | `5000` | Refresh interval in milliseconds. |
 
 ## Environment variables (playground / local dev)
 
@@ -60,7 +66,14 @@ The playground app reads these from `.env`:
 MONGOCAMP_URL=https://your-mongocamp-server
 MONGOCAMP_ADMIN_USER=admin
 MONGOCAMP_ADMIN_PASSWORD=changeme
+
+# Optional — demo server proxy auth mode (see Server Proxy Auth)
+MONGOCAMP_API_KEY=
+MONGOCAMP_USE_SERVER_PROXY=true
+MONGOCAMP_PROXY_SHARED_SECRET=
 ```
+
+`MONGOCAMP_PROXY_SHARED_SECRET`, when set, activates the example `mongocamp-proxy:authorize` guard hook in `playground/server/plugins/mongocamp-proxy-guard.ts` — requests to the proxy route must then include an `X-Mongocamp-Proxy-Secret` header matching it. See [Server Proxy Auth](/guide/server-proxy-auth).
 
 ## Runtime plugin
 

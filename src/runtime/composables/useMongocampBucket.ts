@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useMongocampApi, useToast } from '#imports'
+import { useMongocampClientApi, useToast } from '#imports'
 import type { BucketInformation, FileInformation } from '@sfxcode/nuxt-mongocamp-server'
 
 export interface ListFilesOptions {
@@ -42,7 +42,7 @@ function triggerBrowserDownload(blob: Blob, filename: string) {
 }
 
 export function useMongocampBucket() {
-  const { fileApi, bucketApi } = useMongocampApi()
+  const { fileApi, bucketApi } = useMongocampClientApi()
   const toast = useToast()
 
   const downloadingFileIds = ref<Set<string>>(new Set())

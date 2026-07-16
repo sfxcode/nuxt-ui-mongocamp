@@ -2,7 +2,7 @@
 import { h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useMongocampApi } from '#imports'
+import { useMongocampClientApi } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
@@ -13,7 +13,7 @@ const props = defineProps<{
   collectionName: string
 }>()
 
-const { documentApi } = useMongocampApi()
+const { documentApi } = useMongocampClientApi()
 const { pagination, total } = useMongocampCollection()
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
 const { ensureMetaData } = useMongocampDocument()

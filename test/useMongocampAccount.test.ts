@@ -9,7 +9,7 @@ const mockAuthApi = {
 const mockToastAdd = vi.fn()
 
 vi.mock('#imports', () => ({
-  useMongocampApi: () => ({ authApi: mockAuthApi }),
+  useMongocampClientApi: () => ({ authApi: mockAuthApi }),
   useToast: () => ({ add: mockToastAdd }),
 }))
 

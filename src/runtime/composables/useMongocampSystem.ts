@@ -1,4 +1,4 @@
-import { useMongocampApi } from '#imports'
+import { useMongocampClientApi } from '#imports'
 import type { DatabaseInfo } from '@sfxcode/nuxt-mongocamp-server'
 
 const REQUEST_TIMEOUT_MS = 15000
@@ -17,7 +17,7 @@ function withTimeout(): RequestInit {
  * applicationApi (settings/configuration) is not wrapped here at all for now.
  */
 export function useMongocampSystem() {
-  const { databaseApi } = useMongocampApi()
+  const { databaseApi } = useMongocampClientApi()
 
   async function listDatabases(): Promise<string[]> {
     return databaseApi.listDatabases(withTimeout())

@@ -1,8 +1,8 @@
-import { useMongocampApi } from '#imports'
+import { useMongocampClientApi } from '#imports'
 import type { Grant, Role, UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 
 export default () => {
-  const { adminApi, collectionApi } = useMongocampApi()
+  const { adminApi, collectionApi } = useMongocampClientApi()
 
   async function listUsers(filter: string = ''): Promise<UserProfile[]> {
     return adminApi.listUsers({ filter })

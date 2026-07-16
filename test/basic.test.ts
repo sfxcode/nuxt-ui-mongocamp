@@ -12,4 +12,14 @@ describe('ssr', async () => {
     const html = await $fetch('/')
     expect(html).toContain('<div>basic</div>')
   })
+
+  it('exposes the server-proxy defaults in public runtime config', async () => {
+    const options = await $fetch<{ useServerProxy: boolean, serverProxyPath: string }>('/api/mongocamp-options')
+    expect(options.useServerProxy).toBe(false)
+    expect(options.serverProxyPath).toBe('/api/_mongocamp')
+  })
+
+  it('404s on the proxy route when useServerProxy is disabled (the default)', async () => {
+    await expect($fetch('/api/_mongocamp/document/find')).rejects.toMatchObject({ statusCode: 404 })
+  })
 })

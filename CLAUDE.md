@@ -32,7 +32,7 @@ pnpm run test:types
 pnpm run prepack
 ```
 
-The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`.
+The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`. Optional vars demo server proxy auth mode: `MONGOCAMP_API_KEY`, `MONGOCAMP_USE_SERVER_PROXY=true`, and `MONGOCAMP_PROXY_SHARED_SECRET` (activates the example guard hook in `playground/server/plugins/mongocamp-proxy-guard.ts`) — see `docs/guide/server-proxy-auth.md`.
 
 ## Architecture
 
@@ -42,6 +42,9 @@ Declares `moduleDependencies` for `@nuxt/ui`, `unocss-nuxt-ui`, `@formkit/nuxt`,
 - The runtime plugin (`src/runtime/plugin.ts`)
 - All components in `src/runtime/components/` (auto-imported)
 - All composables in `src/runtime/composables/` (auto-imported)
+- The server proxy catch-all route (`src/runtime/server/handlers/mongocampProxy.ts`), unconditionally — like the auth middleware below, it's always registered but internally gated by a runtime option (`useServerProxy`, default `false`)
+
+Also warns at build time (via `consola`) if `useServerProxy` and `useGlobalAuthMiddleware` are both enabled — server proxy mode has no login, so `securedRouteParts`/`managementRouteParts`/`adminRouteParts` could never unlock.
 
 ### Runtime plugin — `src/runtime/plugin.ts`
 
@@ -51,6 +54,15 @@ Runs on app boot. Fetches the MongoCamp server version via `informationApi.versi
 - Redirects to `notAllowedPath` (module option, default `'/'`) on `/logout` or any disallowed route — always itself treated as allowed, so it can never loop
 
 See `src/module.ts`'s `ModuleOptions` for the full option list and `docs/guide/route-protection.md` for behavior details.
+
+### Server proxy mode — `src/runtime/server/handlers/mongocampProxy.ts`
+
+A second, optional auth mode for consumers who only have a MongoCamp api key and never want it reaching the browser (`mongocamp.apiKey`, the dependency's own config key — stored server-side only). When `useServerProxy` is `true`:
+- A catch-all route at `serverProxyPath` (default `/api/_mongocamp`) reverse-proxies any request to the real MongoCamp server via `h3`'s `proxyRequest`, injecting the api key as an `X-AUTH-APIKEY` header and neutralizing any caller-supplied `Authorization` header
+- Before forwarding, it calls a Nitro hook (`mongocamp-proxy:authorize`, via `useNitroApp().hooks.callHook(...)`) that a consumer can tap from their own `server/plugins/*.ts` to reject unauthorized callers — unregistered, it's a no-op (the route is otherwise unguarded, since reaching it grants the api key's full power)
+- `useMongocampClientApi()` (composable, see below) picks this mode or the default session mode per-call, so every built-in composable/component works unmodified in either mode
+
+See `docs/guide/server-proxy-auth.md` for the full guide, including the guard-hook contract and example.
 
 ### Components — `src/runtime/components/`
 
@@ -72,6 +84,8 @@ UTable columns with custom cells use `h()` + `resolveComponent()` (not `<templat
 - **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
 - **`useMongocampSchema`** — exports `useJsonSchema()` with `schemaToColumnDefinition(definition, fields)` for mapping a `JsonSchemaDefinition` to UTable column configs; sorts `_id` first, then id-containing fields, then others; detects `date-time` and `number` types
 - **`useMongocampRoles`** — `isAdmin`/`isManager` (admin always counts as manager) and `isAllowedPathForRoute(route)`, backing the runtime plugin's global auth middleware; reads the module's `nuxtUiMongocamp` options (`managerRoles`, `securedRouteParts`, `managementRouteParts`, `adminRouteParts`, `notAllowedPath`) from `useRuntimeConfig().public.nuxtUiMongocampOptions`
+- **`useMongocampClientApi`** — the drop-in every other composable/component calls instead of the dependency's `useMongocampApi()`; switches between session mode and `useMongocampProxyApi()` based on `useServerProxy`
+- **`useMongocampProxyApi`** — session-mode-shaped API client (`adminApi`, `documentApi`, ...) pointed at the local server proxy route instead of the real MongoCamp URL; builds the 11 API classes itself via `src/runtime/utils/createProxyMongocampApis.ts`, since the dependency's own `createMongocampApis` factory isn't part of its public export surface
 
 ### FormKit / @sfxcode/nuxt-ui-formkit conventions
 

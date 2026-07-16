@@ -2,7 +2,7 @@
 import { h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useMongocampApi, useMongocampBucket } from '#imports'
+import { useMongocampClientApi, useMongocampBucket } from '#imports'
 
 const props = defineProps<{
   infoPath?: string
@@ -17,7 +17,7 @@ interface CollectionRow {
   indexCount: number
 }
 
-const { collectionApi } = useMongocampApi()
+const { collectionApi } = useMongocampClientApi()
 const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, deleteBucket } = useMongocampBucket()
 
 const collections = ref<CollectionRow[]>([])

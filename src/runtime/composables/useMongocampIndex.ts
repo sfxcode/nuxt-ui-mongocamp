@@ -1,8 +1,8 @@
-import { useMongocampApi } from '#imports'
+import { useMongocampClientApi } from '#imports'
 import type { IndexCreateResponse, IndexDropResponse, IndexOptionsRequest, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 
 export function useMongocampIndex() {
-  const { indexApi } = useMongocampApi()
+  const { indexApi } = useMongocampClientApi()
 
   async function listIndexes(collectionName: string): Promise<MongoIndex[]> {
     return indexApi.listIndices({ collectionName })

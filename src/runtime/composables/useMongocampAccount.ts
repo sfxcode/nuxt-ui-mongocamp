@@ -1,9 +1,9 @@
 import { ref } from 'vue'
-import { useMongocampApi, useToast } from '#imports'
+import { useMongocampClientApi, useToast } from '#imports'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 
 export function useMongocampAccount() {
-  const { authApi } = useMongocampApi()
+  const { authApi } = useMongocampClientApi()
   const toast = useToast()
 
   const changingPassword = ref(false)

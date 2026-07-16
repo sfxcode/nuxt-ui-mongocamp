@@ -17,7 +17,7 @@ const mockCollectionApi = {
 }
 
 vi.mock('#imports', () => ({
-  useMongocampApi: () => ({ adminApi: mockAdminApi, collectionApi: mockCollectionApi }),
+  useMongocampClientApi: () => ({ adminApi: mockAdminApi, collectionApi: mockCollectionApi }),
 }))
 
 const { default: useMongocampAdmin } = await import('../src/runtime/composables/useMongocampAdmin')

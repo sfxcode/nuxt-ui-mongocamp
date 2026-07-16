@@ -246,19 +246,22 @@ nuxtUiMongocamp: {
   securedRouteParts: ['/secured/**'],           // default: []
   managementRouteParts: ['/secured/manage/**'], // default: []
   adminRouteParts: ['/secured/admin/**'],       // default: []
+  useServerProxy: false,                        // default: false — see Server Proxy Auth below
+  serverProxyPath: '/api/_mongocamp',           // default shown
 }
 ```
 
-See [Configuration](https://sfxcode.github.io/nuxt-ui-mongocamp/guide/configuration) for details on each option.
+See [Configuration](https://sfxcode.github.io/nuxt-ui-mongocamp/guide/configuration) for details on each option, and [Server Proxy Auth](https://sfxcode.github.io/nuxt-ui-mongocamp/guide/server-proxy-auth) for the api-key-only, no-login mode `useServerProxy` enables.
 
 The MongoCamp server is configured separately, under the `mongocamp` key (provided by `@sfxcode/nuxt-mongocamp-server`):
 
 ```ts
 mongocamp: {
   url: 'https://your-mongocamp-server',
+  apiKey: process.env.MONGOCAMP_API_KEY, // optional, server-side only — required for server proxy auth mode
   paginationSize: 500,   // default: 500
   refreshToken: true,    // default: true
-  tokenRefreshIntervall: 5000, // ms, default: 5000
+  tokenRefreshInterval: 5000, // ms, default: 5000
 }
 ```
 
@@ -288,7 +291,7 @@ pnpm run test:types
 pnpm run prepack
 ```
 
-The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`.
+The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USER`, and `MONGOCAMP_ADMIN_PASSWORD`. Optional vars demo [server proxy auth mode](https://sfxcode.github.io/nuxt-ui-mongocamp/guide/server-proxy-auth): `MONGOCAMP_API_KEY`, `MONGOCAMP_USE_SERVER_PROXY=true`, and `MONGOCAMP_PROXY_SHARED_SECRET` (activates the example guard hook in `playground/server/plugins/mongocamp-proxy-guard.ts`).
 
 ## Documentation
 

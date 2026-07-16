@@ -8,7 +8,7 @@ const mockDatabaseApi = {
 }
 
 vi.mock('#imports', () => ({
-  useMongocampApi: () => ({ databaseApi: mockDatabaseApi }),
+  useMongocampClientApi: () => ({ databaseApi: mockDatabaseApi }),
 }))
 
 const { useMongocampSystem } = await import('../src/runtime/composables/useMongocampSystem')

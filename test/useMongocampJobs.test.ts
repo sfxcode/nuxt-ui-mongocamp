@@ -10,7 +10,7 @@ const mockJobApi = {
 }
 
 vi.mock('#imports', () => ({
-  useMongocampApi: () => ({ jobApi: mockJobApi }),
+  useMongocampClientApi: () => ({ jobApi: mockJobApi }),
 }))
 
 const { useMongocampJobs } = await import('../src/runtime/composables/useMongocampJobs')

@@ -1,5 +1,6 @@
-import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImportsDir } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImportsDir, addServerHandler } from '@nuxt/kit'
 import { defu } from 'defu'
+import { consola } from 'consola'
 
 // Module options TypeScript interface definition
 
@@ -33,6 +34,20 @@ export interface ModuleOptions {
    * Routes that can only be accessed by admin users
    */
   adminRouteParts: string[]
+
+  /**
+   * Opt-in "server proxy" auth mode: the browser calls a local Nuxt server
+   * route instead of MongoCamp directly, which forwards the request with
+   * the MongoCamp api key (the dependency's own `mongocamp.apiKey` option)
+   * injected server-side. There is no login/session in this mode, so it is
+   * not meant to be combined with `useGlobalAuthMiddleware`'s route protection.
+   */
+  useServerProxy?: boolean
+
+  /**
+   * Local route prefix the proxy listens on when `useServerProxy` is enabled.
+   */
+  serverProxyPath?: string
 }
 
 export interface ModulePublicRuntimeConfig {
@@ -55,6 +70,8 @@ export default defineNuxtModule<ModuleOptions>({
     securedRouteParts: [],
     managementRouteParts: [],
     adminRouteParts: [],
+    useServerProxy: false,
+    serverProxyPath: '/api/_mongocamp',
   },
 
   moduleDependencies: {
@@ -66,7 +83,7 @@ export default defineNuxtModule<ModuleOptions>({
       defaults: {
         paginationSize: 500,
         refreshToken: true,
-        tokenRefreshIntervall: 5000,
+        tokenRefreshInterval: 5000,
       },
     },
   },
@@ -77,6 +94,15 @@ export default defineNuxtModule<ModuleOptions>({
       options,
     )
 
+    if (options.useServerProxy && options.useGlobalAuthMiddleware) {
+      consola.warn(
+        '[nuxt-ui-mongocamp] `useServerProxy` and `useGlobalAuthMiddleware` are both enabled. '
+        + 'Server proxy mode has no login/session, so `isLoggedIn`/`isAdmin`/`isManager` can never '
+        + 'become true — every route matched by `securedRouteParts`, `managementRouteParts`, or '
+        + '`adminRouteParts` will be permanently unreachable.',
+      )
+    }
+
     const { resolve } = createResolver(import.meta.url)
     const runtimeDir = resolve('./runtime')
 
@@ -86,5 +112,12 @@ export default defineNuxtModule<ModuleOptions>({
     addComponentsDir({ path: resolve(runtimeDir, 'components') })
 
     addImportsDir(resolve(runtimeDir, 'composables'))
+
+    // Registered unconditionally, same as the global-auth middleware: the handler itself
+    // reads `useServerProxy` at request time and 404s when the option is off.
+    addServerHandler({
+      route: `${options.serverProxyPath ?? '/api/_mongocamp'}/**`,
+      handler: resolve(runtimeDir, 'server/handlers/mongocampProxy'),
+    })
   },
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
-import { useMongocampApi, useMongocampIndex, useMongocampSchema, useToast } from '#imports'
+import { useMongocampClientApi, useMongocampIndex, useMongocampSchema, useToast } from '#imports'
 import type { TableColumn } from '@nuxt/ui'
 import type { CollectionStatus, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 import type { ColumnDefinition } from '../composables/useMongocampSchema'
@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
   sampleSize: 500,
 })
 
-const { collectionApi, documentApi } = useMongocampApi()
+const { collectionApi, documentApi } = useMongocampClientApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
 const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
 
