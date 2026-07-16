@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from '#imports'
 import { useNuxtApp } from '#app'
 
+const { t } = useI18n()
 const { $mongocampVersion } = useNuxtApp()
 
 // `$mongocampVersion` is provided by the module's runtime plugin as a Ref
@@ -23,6 +25,6 @@ const version = computed(() => $mongocampVersion.value)
     variant="subtle"
     icon="i-lucide-database-zap"
   >
-    MongoCamp unavailable
+    {{ t('nuxtUiMongocamp.version.unavailable') }}
   </UBadge>
 </template>

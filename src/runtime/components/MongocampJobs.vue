@@ -3,8 +3,9 @@ import { h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
-import { useMongocampJobs, useToast } from '#imports'
+import { useI18n, useMongocampJobs, useToast } from '#imports'
 
+const { t } = useI18n()
 const { listJobs, listPossibleJobs, registerJob, updateJob, executeJob, deleteJob } = useMongocampJobs()
 const toast = useToast()
 
@@ -51,38 +52,38 @@ const addJobSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'name',
-    label: 'Name',
+    label: t('nuxtUiMongocamp.jobs.name'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'group',
-    label: 'Group',
+    label: t('nuxtUiMongocamp.jobs.group'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUISelectMenu',
     name: 'className',
-    label: 'Job Class',
+    label: t('nuxtUiMongocamp.jobs.jobClass'),
     options: [] as string[],
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'description',
-    label: 'Description',
+    label: t('nuxtUiMongocamp.jobs.description'),
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'cronExpression',
-    label: 'Cron Expression',
-    help: 'Quartz cron syntax, e.g. 0 0 * * * ?',
+    label: t('nuxtUiMongocamp.jobs.cronExpression'),
+    help: t('nuxtUiMongocamp.jobs.cronExpressionHelp'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInputNumber',
     name: 'priority',
-    label: 'Priority',
+    label: t('nuxtUiMongocamp.jobs.priority'),
   },
 ])
 
@@ -90,31 +91,31 @@ const editJobSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'name',
-    label: 'Name',
+    label: t('nuxtUiMongocamp.jobs.name'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'group',
-    label: 'Group',
+    label: t('nuxtUiMongocamp.jobs.group'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'description',
-    label: 'Description',
+    label: t('nuxtUiMongocamp.jobs.description'),
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'cronExpression',
-    label: 'Cron Expression',
-    help: 'Quartz cron syntax, e.g. 0 0 * * * ?',
+    label: t('nuxtUiMongocamp.jobs.cronExpression'),
+    help: t('nuxtUiMongocamp.jobs.cronExpressionHelp'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInputNumber',
     name: 'priority',
-    label: 'Priority',
+    label: t('nuxtUiMongocamp.jobs.priority'),
   },
 ])
 
@@ -134,7 +135,7 @@ async function handleAddJob() {
     await fetchJobs()
   }
   catch (e) {
-    errorMessage.value = e instanceof Error ? e.message : 'Failed to register job'
+    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.jobs.errorAdd')
   }
 }
 
@@ -161,7 +162,7 @@ async function handleEditJob() {
     await fetchJobs()
   }
   catch (e) {
-    errorMessage.value = e instanceof Error ? e.message : 'Failed to update job'
+    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.jobs.errorEdit')
   }
 }
 
@@ -183,10 +184,10 @@ async function handleExecuteJob(group: string, name: string) {
   executingJobs.value.add(key)
   try {
     await executeJob(group, name)
-    toast.add({ title: 'Job executed', description: `"${name}" was triggered.`, color: 'success' })
+    toast.add({ title: t('nuxtUiMongocamp.jobs.executedTitle'), description: t('nuxtUiMongocamp.jobs.executedDescription', { name }), color: 'success' })
   }
   catch (e) {
-    toast.add({ title: 'Execution failed', description: e instanceof Error ? e.message : `Could not execute "${name}".`, color: 'error' })
+    toast.add({ title: t('nuxtUiMongocamp.jobs.executionFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.jobs.executionFailedDescription', { name }), color: 'error' })
   }
   finally {
     executingJobs.value.delete(key)
@@ -224,25 +225,25 @@ function sortHeader(column: Column<JobInformation>, label: string) {
 const columns: TableColumn<JobInformation>[] = [
   {
     accessorKey: 'name',
-    header: ({ column }) => sortHeader(column, 'Name'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.jobs.columnName')),
   },
   {
     accessorKey: 'group',
-    header: ({ column }) => sortHeader(column, 'Group'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.jobs.columnGroup')),
   },
   {
     accessorKey: 'cronExpression',
-    header: 'Cron Expression',
+    header: t('nuxtUiMongocamp.jobs.columnCron'),
     cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.cronExpression),
   },
   {
     accessorKey: 'nextScheduledFireTime',
-    header: 'Next Fire Time',
+    header: t('nuxtUiMongocamp.jobs.columnNextFireTime'),
     cell: ({ row }) => h('span', formatFireTime(row.original.nextScheduledFireTime)),
   },
   {
     accessorKey: 'priority',
-    header: ({ column }) => sortHeader(column, 'Priority'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.jobs.columnPriority')),
   },
   {
     id: 'actions',
@@ -250,29 +251,29 @@ const columns: TableColumn<JobInformation>[] = [
     cell: ({ row }) => {
       const key = jobKey(row.original.group, row.original.name)
       return h('div', { class: 'flex gap-1 justify-end' }, [
-        withTooltip('Execute now', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.jobs.executeNowTooltip'), h(UButton, {
           'icon': 'i-lucide-play',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Execute now',
+          'aria-label': t('nuxtUiMongocamp.jobs.executeNowTooltip'),
           'loading': executingJobs.value.has(key),
           'onClick': () => handleExecuteJob(row.original.group, row.original.name),
         })),
-        withTooltip('Edit job', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.jobs.editJobTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Edit job',
+          'aria-label': t('nuxtUiMongocamp.jobs.editJobTooltip'),
           'onClick': () => openEdit(row.original),
         })),
-        withTooltip('Delete job', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.jobs.deleteJobTooltip'), h(UButton, {
           'icon': 'i-lucide-trash-2',
           'color': 'error',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Delete job',
+          'aria-label': t('nuxtUiMongocamp.jobs.deleteJobTooltip'),
           'onClick': () => confirmDelete(row.original.group, row.original.name),
         })),
       ])
@@ -287,22 +288,22 @@ fetchJobs()
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
-        Jobs
+        {{ t('nuxtUiMongocamp.jobs.heading') }}
       </h2>
       <div class="flex items-center gap-2">
-        <UTooltip text="Refresh">
+        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
             variant="ghost"
             :loading="loading"
-            aria-label="Refresh"
+            :aria-label="t('nuxtUiMongocamp.common.refresh')"
             @click="fetchJobs"
           />
         </UTooltip>
         <UButton
           icon="i-lucide-plus"
-          label="Add Job"
+          :label="t('nuxtUiMongocamp.jobs.addJob')"
           @click="openAdd"
         />
       </div>
@@ -318,13 +319,13 @@ fetchJobs()
     <!-- Add Job Modal -->
     <UModal
       v-model:open="isAddModalOpen"
-      title="Add Job"
+      :title="t('nuxtUiMongocamp.jobs.addJob')"
     >
       <template #body>
         <FUDataEdit
           :data="newJob"
           :schema="addJobSchema"
-          submit-label="Add Job"
+          :submit-label="t('nuxtUiMongocamp.jobs.addJob')"
           submit-icon="i-lucide-plus"
           @data-saved="handleAddJob"
         />
@@ -340,13 +341,13 @@ fetchJobs()
     <!-- Edit Job Modal -->
     <UModal
       v-model:open="isEditModalOpen"
-      :title="`Edit Job: ${editJobOriginal.name}`"
+      :title="t('nuxtUiMongocamp.jobs.editJobTitle', { name: editJobOriginal.name })"
     >
       <template #body>
         <FUDataEdit
           :data="editJob"
           :schema="editJobSchema"
-          submit-label="Save Changes"
+          :submit-label="t('nuxtUiMongocamp.common.saveChanges')"
           submit-icon="i-lucide-save"
           @data-saved="handleEditJob"
         />
@@ -362,24 +363,21 @@ fetchJobs()
     <!-- Delete Confirmation Modal -->
     <UModal
       v-model:open="isDeleteModalOpen"
-      title="Delete Job"
+      :title="t('nuxtUiMongocamp.jobs.deleteJobTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>
-          Are you sure you want to delete job <strong>{{ jobToDelete.name }}</strong>?
-          This action cannot be undone.
-        </p>
+        <p>{{ t('nuxtUiMongocamp.jobs.confirmDelete', { name: jobToDelete.name }) }}</p>
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isDeleteModalOpen = false"
         />
         <UButton
-          label="Delete"
+          :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
           icon="i-lucide-trash-2"
           @click="handleDeleteJob"

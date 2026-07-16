@@ -1,8 +1,9 @@
 <script setup lang='ts'>
 import { reactive, ref, resolveComponent } from 'vue'
-import { useMongocampAccount, useToast } from '#imports'
+import { useI18n, useMongocampAccount, useToast } from '#imports'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 
+const { t } = useI18n()
 const { fetchProfile, changePassword, regenerateApiKey } = useMongocampAccount()
 const toast = useToast()
 
@@ -27,7 +28,7 @@ const passwordSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'password',
-    label: 'New Password',
+    label: t('nuxtUiMongocamp.account.newPassword'),
     inputType: 'password',
     validation: 'required|length:3',
   },
@@ -59,7 +60,7 @@ async function handleRegenerateApiKey() {
 async function copyApiKey() {
   if (!newApiKey.value) return
   await navigator.clipboard.writeText(newApiKey.value)
-  toast.add({ title: 'Copied to clipboard', description: 'API key copied.', color: 'success' })
+  toast.add({ title: t('nuxtUiMongocamp.account.copiedTitle'), description: t('nuxtUiMongocamp.account.copiedDescription'), color: 'success' })
 }
 
 function dismissApiKey() {
@@ -78,12 +79,12 @@ loadProfile()
 
     <UCard v-else-if="profile">
       <template #header>
-        <span class="font-semibold">Account</span>
+        <span class="font-semibold">{{ t('nuxtUiMongocamp.account.heading') }}</span>
       </template>
       <div class="flex flex-col gap-3">
         <div>
           <div class="text-sm text-gray-500 dark:text-gray-400">
-            User
+            {{ t('nuxtUiMongocamp.account.user') }}
           </div>
           <div class="text-lg font-medium">
             {{ profile.user }}
@@ -91,17 +92,17 @@ loadProfile()
         </div>
         <div>
           <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            Role
+            {{ t('nuxtUiMongocamp.account.role') }}
           </div>
           <UBadge
-            :label="profile.isAdmin ? 'Admin' : 'Standard'"
+            :label="profile.isAdmin ? t('nuxtUiMongocamp.common.admin') : t('nuxtUiMongocamp.common.standard')"
             :color="profile.isAdmin ? 'error' : 'neutral'"
             variant="subtle"
           />
         </div>
         <div>
           <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            Roles
+            {{ t('nuxtUiMongocamp.account.roles') }}
           </div>
           <div
             v-if="profile.roles?.length"
@@ -125,12 +126,12 @@ loadProfile()
 
     <UCard>
       <template #header>
-        <span class="font-semibold">Change Password</span>
+        <span class="font-semibold">{{ t('nuxtUiMongocamp.account.changePasswordHeading') }}</span>
       </template>
       <FUDataEdit
         :data="passwordData"
         :schema="passwordSchema"
-        submit-label="Change Password"
+        :submit-label="t('nuxtUiMongocamp.account.changePassword')"
         submit-icon="i-lucide-save"
         @data-saved="handleChangePassword"
       />
@@ -138,14 +139,14 @@ loadProfile()
 
     <UCard>
       <template #header>
-        <span class="font-semibold">API Key</span>
+        <span class="font-semibold">{{ t('nuxtUiMongocamp.account.apiKeyHeading') }}</span>
       </template>
       <div
         v-if="newApiKey"
         class="flex flex-col gap-2"
       >
         <p class="text-sm text-warning-500">
-          This key is shown only once. Copy it now — it cannot be retrieved again.
+          {{ t('nuxtUiMongocamp.account.apiKeyOnceWarning') }}
         </p>
         <div class="flex items-center gap-2">
           <UInput
@@ -155,14 +156,14 @@ loadProfile()
           />
           <UButton
             icon="i-lucide-copy"
-            label="Copy"
+            :label="t('nuxtUiMongocamp.common.copy')"
             color="neutral"
             variant="subtle"
             @click="copyApiKey"
           />
         </div>
         <UButton
-          label="Dismiss"
+          :label="t('nuxtUiMongocamp.common.dismiss')"
           color="neutral"
           variant="ghost"
           class="self-start"
@@ -174,10 +175,10 @@ loadProfile()
         class="flex items-center justify-between gap-4"
       >
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          Regenerating your API key immediately invalidates the current one.
+          {{ t('nuxtUiMongocamp.account.regenerateWarning') }}
         </p>
         <UButton
-          label="Regenerate API Key"
+          :label="t('nuxtUiMongocamp.account.regenerateApiKey')"
           color="error"
           variant="subtle"
           icon="i-lucide-key-round"
@@ -188,21 +189,21 @@ loadProfile()
 
     <UModal
       v-model:open="isRegenerateModalOpen"
-      title="Regenerate API Key"
+      :title="t('nuxtUiMongocamp.account.regenerateApiKey')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>Are you sure you want to regenerate your API key? Your current key will stop working immediately.</p>
+        <p>{{ t('nuxtUiMongocamp.account.confirmRegenerate') }}</p>
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="closeRegenerateModal"
         />
         <UButton
-          label="Regenerate"
+          :label="t('nuxtUiMongocamp.account.regenerate')"
           color="error"
           icon="i-lucide-key-round"
           @click="handleRegenerateApiKey"

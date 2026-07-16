@@ -2,7 +2,7 @@
 import { h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useMongocampSystem } from '#imports'
+import { useI18n, useMongocampSystem } from '#imports'
 
 interface DatabaseRow {
   name: string
@@ -11,6 +11,7 @@ interface DatabaseRow {
   collectionCount: number
 }
 
+const { t } = useI18n()
 const { getDatabaseInfos, listCollectionsByDatabase } = useMongocampSystem()
 
 const databases = ref<DatabaseRow[]>([])
@@ -37,7 +38,7 @@ async function fetchDatabases() {
     databases.value = rows
   }
   catch (e) {
-    errorMessage.value = e instanceof Error ? e.message : 'Failed to load databases'
+    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.databases.errorLoad')
   }
   finally {
     loading.value = false
@@ -66,23 +67,23 @@ function sortHeader(column: Column<DatabaseRow>, label: string) {
 const columns: TableColumn<DatabaseRow>[] = [
   {
     accessorKey: 'name',
-    header: ({ column }) => sortHeader(column, 'Database'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.databases.columnDatabase')),
   },
   {
     accessorKey: 'sizeKb',
-    header: ({ column }) => sortHeader(column, 'Size (KB)'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.databases.columnSize')),
   },
   {
     accessorKey: 'collectionCount',
-    header: 'Collections',
+    header: t('nuxtUiMongocamp.databases.columnCollections'),
     cell: ({ row }) => h(UBadge, { label: String(row.original.collectionCount), color: 'primary', variant: 'subtle' }),
   },
   {
     accessorKey: 'empty',
-    header: 'Empty',
+    header: t('nuxtUiMongocamp.databases.columnEmpty'),
     cell: ({ row }) =>
       row.original.empty
-        ? h(UBadge, { label: 'Empty', color: 'neutral', variant: 'subtle' })
+        ? h(UBadge, { label: t('nuxtUiMongocamp.databases.emptyBadge'), color: 'neutral', variant: 'subtle' })
         : h('span', { class: 'text-dimmed' }, '—'),
   },
 ]
@@ -94,15 +95,15 @@ fetchDatabases()
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
-        Databases
+        {{ t('nuxtUiMongocamp.databases.heading') }}
       </h2>
-      <UTooltip text="Refresh">
+      <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
           variant="ghost"
           :loading="loading"
-          aria-label="Refresh"
+          :aria-label="t('nuxtUiMongocamp.common.refresh')"
           @click="fetchDatabases"
         />
       </UTooltip>
@@ -113,12 +114,12 @@ fetchDatabases()
       color="error"
       variant="subtle"
       icon="i-lucide-circle-alert"
-      title="Failed to load databases"
+      :title="t('nuxtUiMongocamp.databases.loadFailedTitle')"
       :description="errorMessage"
     >
       <template #actions>
         <UButton
-          label="Retry"
+          :label="t('nuxtUiMongocamp.common.retry')"
           color="error"
           variant="subtle"
           icon="i-lucide-refresh-cw"
