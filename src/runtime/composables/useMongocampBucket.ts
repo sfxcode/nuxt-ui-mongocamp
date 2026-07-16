@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useMongocampClientApi, useToast } from '#imports'
+import { useI18n, useMongocampClientApi, useToast } from '#imports'
 import type { BucketInformation, FileInformation } from '@sfxcode/nuxt-mongocamp-server'
 
 export interface ListFilesOptions {
@@ -42,6 +42,7 @@ function triggerBrowserDownload(blob: Blob, filename: string) {
 }
 
 export function useMongocampBucket() {
+  const { t } = useI18n()
   const { fileApi, bucketApi } = useMongocampClientApi()
   const toast = useToast()
 
@@ -71,7 +72,7 @@ export function useMongocampBucket() {
       triggerBrowserDownload(blob, info.filename || fileId)
     }
     catch (e) {
-      toast.add({ title: 'Download failed', description: e instanceof Error ? e.message : 'Could not download the file.', color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.downloadFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.downloadFailedFallback'), color: 'error' })
     }
     finally {
       downloadingFileIds.value.delete(fileId)
@@ -83,11 +84,11 @@ export function useMongocampBucket() {
     uploading.value = true
     try {
       await fileApi.insertFile({ bucketName, file, fileName: file.name, metaData: '{}' })
-      toast.add({ title: 'File uploaded', description: `"${file.name}" was uploaded.`, color: 'success' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.uploadedTitle'), description: t('nuxtUiMongocamp.bucket.uploadedDescription', { fileName: file.name }), color: 'success' })
       return true
     }
     catch (e) {
-      toast.add({ title: 'Upload failed', description: e instanceof Error ? e.message : 'Could not upload the file.', color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.uploadFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.uploadFailedFallback'), color: 'error' })
       return false
     }
     finally {
@@ -113,11 +114,11 @@ export function useMongocampBucket() {
     fileActionInFlight.value.add(fileId)
     try {
       const result = await fileApi.deleteFile({ bucketName, fileId })
-      toast.add({ title: 'File deleted', description: 'The file was deleted.', color: 'success' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.deletedTitle'), description: t('nuxtUiMongocamp.bucket.deletedDescription'), color: 'success' })
       return result.wasAcknowledged
     }
     catch (e) {
-      toast.add({ title: 'Delete failed', description: e instanceof Error ? e.message : 'Could not delete the file.', color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.deleteFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.deleteFailedFallback'), color: 'error' })
       return false
     }
     finally {
@@ -133,11 +134,11 @@ export function useMongocampBucket() {
         fileId,
         updateFileInformationRequest: { filename: options.filename, metadata: options.metadata },
       })
-      toast.add({ title: 'File updated', description: 'The file information was updated.', color: 'success' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.updatedTitle'), description: t('nuxtUiMongocamp.bucket.updatedDescription'), color: 'success' })
       return result.wasAcknowledged
     }
     catch (e) {
-      toast.add({ title: 'Update failed', description: e instanceof Error ? e.message : 'Could not update the file information.', color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.updateFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.updateFailedFallback'), color: 'error' })
       return false
     }
     finally {
@@ -157,11 +158,11 @@ export function useMongocampBucket() {
     bucketActionInFlight.value.add(bucketName)
     try {
       const result = await bucketApi.clearBucket({ bucketName })
-      toast.add({ title: 'Bucket cleared', description: `All files in "${bucketName}" were deleted.`, color: 'success' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.bucketClearedTitle'), description: t('nuxtUiMongocamp.bucket.bucketClearedDescription', { bucketName }), color: 'success' })
       return result.value
     }
     catch (e) {
-      toast.add({ title: 'Clear failed', description: e instanceof Error ? e.message : `Could not clear bucket "${bucketName}".`, color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.clearFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.clearFailedFallback', { bucketName }), color: 'error' })
       return false
     }
     finally {
@@ -173,11 +174,11 @@ export function useMongocampBucket() {
     bucketActionInFlight.value.add(bucketName)
     try {
       const result = await bucketApi.deleteBucket({ bucketName })
-      toast.add({ title: 'Bucket deleted', description: `Bucket "${bucketName}" was deleted.`, color: 'success' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.bucketDeletedTitle'), description: t('nuxtUiMongocamp.bucket.bucketDeletedDescription', { bucketName }), color: 'success' })
       return result.value
     }
     catch (e) {
-      toast.add({ title: 'Delete failed', description: e instanceof Error ? e.message : `Could not delete bucket "${bucketName}".`, color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.bucket.deleteFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.deleteFailedBucketFallback', { bucketName }), color: 'error' })
       return false
     }
     finally {

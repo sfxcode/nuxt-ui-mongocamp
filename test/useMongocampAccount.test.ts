@@ -9,6 +9,7 @@ const mockAuthApi = {
 const mockToastAdd = vi.fn()
 
 vi.mock('#imports', () => ({
+  useI18n: () => ({ t: (key: string) => key }),
   useMongocampClientApi: () => ({ authApi: mockAuthApi }),
   useToast: () => ({ add: mockToastAdd }),
 }))

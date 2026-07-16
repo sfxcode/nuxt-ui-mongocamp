@@ -1,8 +1,9 @@
 import { ref } from 'vue'
-import { useMongocampClientApi, useToast } from '#imports'
+import { useI18n, useMongocampClientApi, useToast } from '#imports'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 
 export function useMongocampAccount() {
+  const { t } = useI18n()
   const { authApi } = useMongocampClientApi()
   const toast = useToast()
 
@@ -16,11 +17,11 @@ export function useMongocampAccount() {
     changingPassword.value = true
     try {
       const result = await authApi.updatePassword({ passwordUpdateRequest: { password } })
-      toast.add({ title: 'Password changed', description: 'Your password was updated.', color: 'success' })
+      toast.add({ title: t('nuxtUiMongocamp.account.passwordChangedTitle'), description: t('nuxtUiMongocamp.account.passwordChangedDescription'), color: 'success' })
       return result.value
     }
     catch (e) {
-      toast.add({ title: 'Change failed', description: e instanceof Error ? e.message : 'Could not change your password.', color: 'error' })
+      toast.add({ title: t('nuxtUiMongocamp.account.changeFailedTitle'), description: e instanceof Error ? e.message : t('nuxtUiMongocamp.account.changeFailedFallback'), color: 'error' })
       return false
     }
     finally {
