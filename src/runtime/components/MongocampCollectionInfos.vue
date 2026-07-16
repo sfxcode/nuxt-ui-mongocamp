@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
-import { useMongocampClientApi, useMongocampIndex, useMongocampSchema, useToast } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampIndex, useMongocampSchema, useToast } from '#imports'
 import type { TableColumn } from '@nuxt/ui'
 import type { CollectionStatus, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 import type { ColumnDefinition } from '../composables/useMongocampSchema'
@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
   sampleSize: 500,
 })
 
+const { t } = useI18n()
 const { collectionApi, documentApi } = useMongocampClientApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
 const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
@@ -87,17 +88,17 @@ const toast = useToast()
 
 async function copySchemaAsTs() {
   await navigator.clipboard.writeText(tsInterface.value)
-  toast.add({ title: 'Copied to clipboard', description: 'TypeScript interface copied.', color: 'success' })
+  toast.add({ title: t('nuxtUiMongocamp.collectionInfos.copiedTitle'), description: t('nuxtUiMongocamp.collectionInfos.copiedDescription'), color: 'success' })
 }
 
 const schemaTableColumns: TableColumn<SchemaRow>[] = [
   {
     accessorKey: 'field',
-    header: 'Field',
+    header: t('nuxtUiMongocamp.collectionInfos.columnField'),
   },
   {
     accessorKey: 'type',
-    header: 'Type',
+    header: t('nuxtUiMongocamp.collectionInfos.columnType'),
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.type,
@@ -107,7 +108,7 @@ const schemaTableColumns: TableColumn<SchemaRow>[] = [
   },
   {
     accessorKey: 'required',
-    header: 'In all samples',
+    header: t('nuxtUiMongocamp.collectionInfos.columnInAllSamples'),
     cell: ({ row }) =>
       row.original.required
         ? h(UIcon, { name: 'i-lucide-check', class: 'size-4 text-success' })
@@ -143,27 +144,27 @@ const createIndexSchema = reactive([
   {
     $formkit: 'nuxtUIInput',
     name: 'fieldName',
-    label: 'Field Name',
+    label: t('nuxtUiMongocamp.collectionInfos.fieldName'),
     validation: 'required',
   },
   {
     $formkit: 'nuxtUISwitch',
     name: 'sortAscending',
-    label: 'Ascending',
+    label: t('nuxtUiMongocamp.collectionInfos.ascending'),
   },
   {
     $formkit: 'nuxtUISelectMenu',
     id: 'indexType',
     name: 'indexType',
-    label: 'Index Type',
+    label: t('nuxtUiMongocamp.collectionInfos.indexType'),
     options: ['standard', 'unique', 'text', 'expiring'],
     validation: 'required',
   },
   {
     $formkit: 'nuxtUIInput',
     name: 'duration',
-    label: 'Expire After (e.g. 3600s)',
-    help: 'Only used for the expiring index type.',
+    label: t('nuxtUiMongocamp.collectionInfos.expireAfter'),
+    help: t('nuxtUiMongocamp.collectionInfos.expireAfterHelp'),
     if: '$get(indexType).value === \'expiring\'',
   },
 ])
@@ -203,7 +204,7 @@ async function handleCreateIndex() {
     await fetchIndexes()
   }
   catch (e) {
-    createIndexError.value = e instanceof Error ? e.message : 'Error creating index'
+    createIndexError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionInfos.errorCreateIndex')
   }
 }
 
@@ -226,7 +227,7 @@ async function handleDeleteIndex() {
     await fetchIndexes()
   }
   catch (e) {
-    deleteIndexError.value = e instanceof Error ? e.message : 'Error deleting index'
+    deleteIndexError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionInfos.errorDeleteIndex')
   }
 }
 
@@ -239,16 +240,16 @@ const INDEX_FLAG_BADGES: Array<{ key: 'unique' | 'text' | 'expire', label: strin
 const indexTableColumns: TableColumn<IndexRow>[] = [
   {
     accessorKey: 'name',
-    header: 'Index',
+    header: t('nuxtUiMongocamp.collectionInfos.columnIndex'),
   },
   {
     accessorKey: 'keys',
-    header: 'Keys',
+    header: t('nuxtUiMongocamp.collectionInfos.columnKeys'),
     cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.keys),
   },
   {
     id: 'flags',
-    header: 'Type',
+    header: t('nuxtUiMongocamp.collectionInfos.columnType'),
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1' }, INDEX_FLAG_BADGES
         .filter(flag => row.original[flag.key])
@@ -256,7 +257,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
   },
   {
     accessorKey: 'sizeKb',
-    header: 'Size (KB)',
+    header: t('nuxtUiMongocamp.collectionInfos.columnSizeKb'),
   },
   {
     id: 'actions',
@@ -265,12 +266,12 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       row.original.name === '_id_'
         ? null
         : h('div', { class: 'flex justify-end' }, [
-            withTooltip('Delete index', h(UButton, {
+            withTooltip(t('nuxtUiMongocamp.collectionInfos.deleteIndexTooltip'), h(UButton, {
               'icon': 'i-lucide-trash-2',
               'color': 'error',
               'variant': 'ghost',
               'size': 'sm',
-              'aria-label': 'Delete index',
+              'aria-label': t('nuxtUiMongocamp.collectionInfos.deleteIndexTooltip'),
               'onClick': () => confirmDeleteIndex(row.original.name),
             })),
           ]),
@@ -290,7 +291,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
     >
       <UCard>
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Documents
+          {{ t('nuxtUiMongocamp.collectionInfos.documents') }}
         </div>
         <div class="text-2xl font-semibold">
           {{ info.count }}
@@ -298,7 +299,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       </UCard>
       <UCard>
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Data Size
+          {{ t('nuxtUiMongocamp.collectionInfos.dataSize') }}
         </div>
         <div class="text-2xl font-semibold">
           {{ Math.round(info.size / 1024) }} KB
@@ -306,7 +307,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       </UCard>
       <UCard>
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Storage Size
+          {{ t('nuxtUiMongocamp.collectionInfos.storageSize') }}
         </div>
         <div class="text-2xl font-semibold">
           {{ Math.round(info.storageSize / 1024) }} KB
@@ -314,7 +315,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       </UCard>
       <UCard>
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Avg Doc Size
+          {{ t('nuxtUiMongocamp.collectionInfos.avgDocSize') }}
         </div>
         <div class="text-2xl font-semibold">
           {{ Math.round(info.avgObjSize) }} B
@@ -322,7 +323,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       </UCard>
       <UCard>
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Indexes
+          {{ t('nuxtUiMongocamp.collectionInfos.indexes') }}
         </div>
         <div class="text-2xl font-semibold">
           {{ info.nindexes }}
@@ -330,7 +331,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       </UCard>
       <UCard>
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Index Size
+          {{ t('nuxtUiMongocamp.collectionInfos.indexSize') }}
         </div>
         <div class="text-2xl font-semibold">
           {{ Math.round(info.totalIndexSize / 1024) }} KB
@@ -345,9 +346,9 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
               name="i-lucide-list-tree"
               class="size-4 text-(--ui-primary)"
             />
-            <span class="font-semibold">Indexes</span>
+            <span class="font-semibold">{{ t('nuxtUiMongocamp.collectionInfos.indexes') }}</span>
             <UBadge
-              :label="`${indexRows.length} indexes`"
+              :label="t('nuxtUiMongocamp.collectionInfos.indexesCount', { count: indexRows.length })"
               variant="subtle"
               color="neutral"
               size="sm"
@@ -355,7 +356,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
           </div>
           <UButton
             icon="i-lucide-plus"
-            label="Create Index"
+            :label="t('nuxtUiMongocamp.collectionInfos.createIndex')"
             color="neutral"
             variant="ghost"
             size="sm"
@@ -379,7 +380,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
             />
             <span class="font-semibold">{{ schemaTitle }}</span>
             <UBadge
-              :label="`${schemaRows.length} fields`"
+              :label="t('nuxtUiMongocamp.collectionInfos.fieldsCount', { count: schemaRows.length })"
               variant="subtle"
               color="neutral"
               size="sm"
@@ -387,7 +388,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
           </div>
           <UButton
             icon="i-lucide-copy"
-            label="Copy as TS Interface"
+            :label="t('nuxtUiMongocamp.collectionInfos.copyAsTs')"
             color="neutral"
             variant="ghost"
             size="sm"
@@ -403,13 +404,13 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
 
     <UModal
       v-model:open="isCreateIndexModalOpen"
-      title="Create Index"
+      :title="t('nuxtUiMongocamp.collectionInfos.createIndexTitle')"
     >
       <template #body>
         <FUDataEdit
           :data="newIndex"
           :schema="createIndexSchema"
-          submit-label="Create Index"
+          :submit-label="t('nuxtUiMongocamp.collectionInfos.createIndex')"
           submit-icon="i-lucide-plus"
           @data-saved="handleCreateIndex"
         />
@@ -424,11 +425,11 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
 
     <UModal
       v-model:open="isDeleteIndexModalOpen"
-      title="Delete Index"
+      :title="t('nuxtUiMongocamp.collectionInfos.deleteIndexTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>Are you sure you want to delete the index "{{ indexToDelete }}"? This action cannot be undone.</p>
+        <p>{{ t('nuxtUiMongocamp.collectionInfos.confirmDeleteIndex', { indexName: indexToDelete }) }}</p>
         <p
           v-if="deleteIndexError"
           class="mt-2 text-sm text-error-500"
@@ -438,13 +439,13 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isDeleteIndexModalOpen = false"
         />
         <UButton
-          label="Delete"
+          :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
           icon="i-lucide-trash-2"
           @click="handleDeleteIndex"

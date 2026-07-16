@@ -2,7 +2,7 @@
 import { h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useMongocampClientApi, useMongocampBucket } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampBucket } from '#imports'
 
 const props = defineProps<{
   infoPath?: string
@@ -17,6 +17,7 @@ interface CollectionRow {
   indexCount: number
 }
 
+const { t } = useI18n()
 const { collectionApi } = useMongocampClientApi()
 const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, deleteBucket } = useMongocampBucket()
 
@@ -107,75 +108,75 @@ function sortHeader<T>(column: Column<T>, label: string) {
 const columns: TableColumn<CollectionRow>[] = [
   {
     accessorKey: 'name',
-    header: ({ column }) => sortHeader(column, 'Collection'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.collections.columnCollection')),
     cell: ({ row }) =>
       h('div', { class: 'flex items-center gap-2' }, [
         h('span', row.original.name),
         isBucketCollection(row.original.name)
-          ? h(UBadge, { label: 'bucket', color: 'neutral', variant: 'subtle', size: 'sm' })
+          ? h(UBadge, { label: t('nuxtUiMongocamp.collections.bucketBadge'), color: 'neutral', variant: 'subtle', size: 'sm' })
           : null,
       ]),
   },
   {
     accessorKey: 'count',
-    header: ({ column }) => sortHeader(column, 'Documents'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.collections.columnDocuments')),
   },
   {
     accessorKey: 'sizekb',
-    header: ({ column }) => sortHeader(column, 'Size (KB)'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.collections.columnSize')),
   },
   {
     accessorKey: 'indexCount',
-    header: ({ column }) => sortHeader(column, 'Indexes'),
+    header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.collections.columnIndexes')),
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => {
       const buttons = [
-        withTooltip('Collection info', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.collections.infoTooltip'), h(UButton, {
           'icon': 'i-lucide-info',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Collection info',
+          'aria-label': t('nuxtUiMongocamp.collections.infoTooltip'),
           'to': `${props.infoPath ?? '/secured/admin/collections'}/${row.original.name}`,
         })),
-        withTooltip('Collection data', h(UButton, {
+        withTooltip(t('nuxtUiMongocamp.collections.dataTooltip'), h(UButton, {
           'icon': 'i-lucide-table',
           'color': 'neutral',
           'variant': 'ghost',
           'size': 'sm',
-          'aria-label': 'Collection data',
+          'aria-label': t('nuxtUiMongocamp.collections.dataTooltip'),
           'to': `${props.dataPath ?? '/secured/admin/collections'}/${row.original.name}/data`,
         })),
       ]
       if (isBucketCollection(row.original.name)) {
         const bucketName = bucketNameFor(row.original.name)
         buttons.push(
-          withTooltip('Browse files', h(UButton, {
+          withTooltip(t('nuxtUiMongocamp.collections.browseFilesTooltip'), h(UButton, {
             'icon': 'i-lucide-folder-open',
             'color': 'neutral',
             'variant': 'ghost',
             'size': 'sm',
-            'aria-label': 'Browse files',
+            'aria-label': t('nuxtUiMongocamp.collections.browseFilesTooltip'),
             'to': `${props.bucketFilesPath ?? '/secured/admin/buckets'}/${bucketName}`,
           })),
-          withTooltip('Clear bucket', h(UButton, {
+          withTooltip(t('nuxtUiMongocamp.collections.clearBucketTooltip'), h(UButton, {
             'icon': 'i-lucide-eraser',
             'color': 'warning',
             'variant': 'ghost',
             'size': 'sm',
-            'aria-label': 'Clear bucket',
+            'aria-label': t('nuxtUiMongocamp.collections.clearBucketTooltip'),
             'loading': bucketActionInFlight.value.has(bucketName),
             'onClick': () => confirmClearBucket(bucketName),
           })),
-          withTooltip('Delete bucket', h(UButton, {
+          withTooltip(t('nuxtUiMongocamp.collections.deleteBucketTooltip'), h(UButton, {
             'icon': 'i-lucide-trash-2',
             'color': 'error',
             'variant': 'ghost',
             'size': 'sm',
-            'aria-label': 'Delete bucket',
+            'aria-label': t('nuxtUiMongocamp.collections.deleteBucketTooltip'),
             'loading': bucketActionInFlight.value.has(bucketName),
             'onClick': () => confirmDeleteBucket(bucketName),
           })),
@@ -193,23 +194,23 @@ fetchCollections()
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
-        Collections
+        {{ t('nuxtUiMongocamp.collections.heading') }}
       </h2>
       <div class="flex flex-1 items-center gap-2">
         <UInput
           v-model="globalFilter"
           icon="i-lucide-search"
-          placeholder="Filter collections..."
+          :placeholder="t('nuxtUiMongocamp.collections.filterPlaceholder')"
           size="sm"
           class="flex-1 max-w-xs"
         />
-        <UTooltip text="Refresh">
+        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
             variant="ghost"
             :loading="loading"
-            aria-label="Refresh"
+            :aria-label="t('nuxtUiMongocamp.common.refresh')"
             @click="fetchCollections"
           />
         </UTooltip>
@@ -226,21 +227,21 @@ fetchCollections()
 
     <UModal
       v-model:open="isClearBucketModalOpen"
-      title="Clear Bucket"
+      :title="t('nuxtUiMongocamp.collections.clearBucketTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>Are you sure you want to delete every file in the "{{ bucketToClear }}" bucket? The bucket itself is kept, but all files in it are permanently removed. This action cannot be undone.</p>
+        <p>{{ t('nuxtUiMongocamp.collections.confirmClearBucket', { bucketName: bucketToClear }) }}</p>
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isClearBucketModalOpen = false"
         />
         <UButton
-          label="Clear Bucket"
+          :label="t('nuxtUiMongocamp.collections.clearBucketTitle')"
           color="warning"
           icon="i-lucide-eraser"
           @click="handleClearBucket"
@@ -250,21 +251,21 @@ fetchCollections()
 
     <UModal
       v-model:open="isDeleteBucketModalOpen"
-      title="Delete Bucket"
+      :title="t('nuxtUiMongocamp.collections.deleteBucketTitle')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <p>Are you sure you want to delete the "{{ bucketToDelete }}" bucket? This permanently removes both the "{{ bucketToDelete }}.files" and "{{ bucketToDelete }}.chunks" collections. This action cannot be undone.</p>
+        <p>{{ t('nuxtUiMongocamp.collections.confirmDeleteBucket', { bucketName: bucketToDelete }) }}</p>
       </template>
       <template #footer>
         <UButton
-          label="Cancel"
+          :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
           @click="isDeleteBucketModalOpen = false"
         />
         <UButton
-          label="Delete Bucket"
+          :label="t('nuxtUiMongocamp.collections.deleteBucketTitle')"
           color="error"
           icon="i-lucide-trash-2"
           @click="handleDeleteBucket"
