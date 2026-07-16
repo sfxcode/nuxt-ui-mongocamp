@@ -1,6 +1,6 @@
 {
   "name": "@sfxcode/nuxt-ui-mongocamp",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "A Nuxt module that wraps @sfxcode/nuxt-mongocamp-server with ready-made UI components, composables, and a runtime plugin",
   "repository": "sfxcode/nuxt-ui-mongocamp",
   "homepage": "https://sfxcode.github.io/nuxt-ui-mongocamp/",
@@ -44,7 +44,7 @@
     "dev": "npm run dev:prepare && nuxt dev playground",
     "dev:build": "nuxt build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
-    "release": "npm run lint && npm run test && npm run prepack && changelogen --patch --release && npm publish && git push --follow-tags",
+    "release": "npm run lint && npm run test && npm run prepack && changelogen --minor --release && npm publish && git push --follow-tags",
     "lint": "eslint .",
     "test": "vitest run --project unit --project components",
     "test:watch": "vitest watch",

@@ -1,6 +1,50 @@
 # Changelog
 
 
+## v1.2.0
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.4...v1.2.0)
+
+### 🚀 Enhancements
+
+- **auth:** Add optional server proxy auth mode ([1f665d1](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1f665d1))
+- **plugin:** Add logoutRedirectPath module option ([292f639](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/292f639))
+- **login:** Add redirectPath prop for the post-login navigation target ([33b72b0](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/33b72b0))
+- **i18n:** Add @nuxtjs/i18n with English/German locale files ([409e0eb](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/409e0eb))
+- **i18n:** Localize MongocampLogin ([d1817d0](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/d1817d0))
+- **i18n:** Localize MongocampUsers ([a01331c](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a01331c))
+- **i18n:** Localize MongocampRoles and MongocampRoleGrants ([a185c99](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a185c99))
+- **i18n:** Localize MongocampCollections and MongocampCollectionInfos ([3b1738a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/3b1738a))
+- **i18n:** Localize MongocampCollectionData and MongocampBucketFiles ([60ea497](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/60ea497))
+- **i18n:** Localize MongocampJobs, MongocampAccount, MongocampDatabases, MongocampVersion ([007a89c](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/007a89c))
+- **i18n:** Localize useMongocampBucket and useMongocampAccount toasts ([c140d76](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c140d76))
+
+### 🩹 Fixes
+
+- **login:** Remove debug-data panel leaking plaintext password ([e9dc005](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e9dc005))
+- **module:** Harden server proxy mode and packaging ([dd9a34d](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/dd9a34d))
+- Surface real error messages in swallowed toast catches ([1a46ecc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1a46ecc))
+- **auth:** Await logout, make the logout trigger path configurable ([9d80727](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/9d80727))
+- **proxy:** Import API classes from the /api subpath, not the package root ([c83af92](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c83af92))
+- **playground:** Add missing /logout page ([47cadd1](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/47cadd1))
+- **auth:** Ensure correct Nuxt app context for `navigateTo` after login ([ace20a9](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/ace20a9))
+
+### 📖 Documentation
+
+- Document the i18n architecture in CLAUDE.md ([b377086](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b377086))
+
+### 🏡 Chore
+
+- Add @iconify-json/lucide so lucide icons bundle at build time ([87989dc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/87989dc))
+
+### ✅ Tests
+
+- **components:** Add MongocampLogin and MongocampRoleGrants coverage ([8ba8a87](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8ba8a87))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.1.4
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.3...v1.1.4)
