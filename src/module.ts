@@ -95,6 +95,10 @@ export default defineNuxtModule<ModuleOptions>({
     },
   },
   setup(options, nuxt) {
+    // Normalized once here so the build-time route registered below and the runtime-config
+    // value the handler reads at request time can never desync over a trailing slash.
+    options.serverProxyPath = (options.serverProxyPath ?? '/api/_mongocamp').replace(/\/+$/, '') || '/api/_mongocamp'
+
     // Expose the module options in the public runtime config.
     nuxt.options.runtimeConfig.public.nuxtUiMongocampOptions = defu(
       nuxt.options.runtimeConfig.public.nuxtUiMongocampOptions,
@@ -123,7 +127,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Registered unconditionally, same as the global-auth middleware: the handler itself
     // reads `useServerProxy` at request time and 404s when the option is off.
     addServerHandler({
-      route: `${options.serverProxyPath ?? '/api/_mongocamp'}/**`,
+      route: `${options.serverProxyPath}/**`,
       handler: resolve(runtimeDir, 'server/handlers/mongocampProxy'),
     })
   },

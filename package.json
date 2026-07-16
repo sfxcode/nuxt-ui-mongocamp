@@ -55,11 +55,13 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
+    "@formkit/nuxt": "^2.1.0",
     "@internationalized/date": "^3.12.2",
     "@nuxt/kit": "^4.4.8",
     "@nuxt/ui": "^4.10.0",
     "@sfxcode/nuxt-mongocamp-server": "^1.5.0",
     "@sfxcode/nuxt-ui-formkit": "^1.2.6",
+    "consola": "^3.4.2",
     "defu": "^6.1.7",
     "minimatch": "^10.2.5",
     "unocss-nuxt-ui": "^1.2.2"

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@formkit/nuxt':
+        specifier: ^2.1.0
+        version: 2.1.0(@nuxt/kit@4.4.8(magicast@0.5.3))(esbuild@0.28.1)(rollup@4.62.2)(vite@8.1.5)(vue@3.5.40(typescript@6.0.3))(webpack@5.107.2(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))
       '@internationalized/date':
         specifier: ^3.12.2
         version: 3.12.2
@@ -23,6 +26,9 @@ importers:
       '@sfxcode/nuxt-ui-formkit':
         specifier: ^1.2.6
         version: 1.2.6(e3bdcff31c1abdf4b12e528f45c247b5)
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       defu:
         specifier: ^6.1.7
         version: 6.1.7
