@@ -2,7 +2,7 @@
 import { consola } from 'consola'
 import { ref, reactive } from 'vue'
 import { useMongocampAuth } from '#imports'
-import { navigateTo, useCookie } from '#app'
+import { navigateTo, useCookie, useNuxtApp } from '#app'
 
 const props = defineProps<{
   redirectPath?: string
@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const { login } = useMongocampAuth()
 const errorMessage = ref('')
+const nuxtApp = useNuxtApp()
 
 const loginMail = useCookie('mongocamp_login', { maxAge: 30 * 24 * 60 * 60 })
 
@@ -42,7 +43,11 @@ async function actionLogin() {
   try {
     await login(loginId, data.value?.password)
     loginMail.value = loginId
-    navigateTo(props.redirectPath ?? '/secured')
+    // `login` is a plain function reference (not a statically-recognized composable call), so
+    // Nuxt's unctx build transform doesn't wrap this await — the Nuxt app context is lost by
+    // the time it resolves, and a bare navigateTo() here silently no-ops. runWithContext
+    // restores it explicitly around the composable call that actually needs it.
+    await nuxtApp.runWithContext(() => navigateTo(props.redirectPath ?? '/'))
   }
   catch (e) {
     consola.log(e)
