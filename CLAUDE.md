@@ -38,7 +38,7 @@ The playground reads `playground/.env` for `MONGOCAMP_URL`, `MONGOCAMP_ADMIN_USE
 
 ### Module entry — `src/module.ts`
 
-Declares `moduleDependencies` for `@nuxt/ui`, `unocss-nuxt-ui`, `@formkit/nuxt`, `@sfxcode/nuxt-ui-formkit`, and `@sfxcode/nuxt-mongocamp-server`. On setup it registers:
+Declares `moduleDependencies` for `@nuxt/ui`, `unocss-nuxt-ui`, `@formkit/nuxt`, `@sfxcode/nuxt-ui-formkit`, `@sfxcode/nuxt-mongocamp-server`, and `@nuxtjs/i18n` (see [Internationalization](#internationalization--srcruntimelocales) below). On setup it registers:
 - The runtime plugin (`src/runtime/plugin.ts`)
 - All components in `src/runtime/components/` (auto-imported)
 - All composables in `src/runtime/composables/` (auto-imported)
@@ -105,6 +105,16 @@ Kept in sync with `docs/composables/index.md` (the canonical, per-composable-doc
 - **`useMongocampRoles`** — `isAdmin`/`isManager` (admin always counts as manager) and `isAllowedPathForRoute(route)`, backing the runtime plugin's global auth middleware; reads the module's `nuxtUiMongocamp` options (`managerRoles`, `securedRouteParts`, `managementRouteParts`, `adminRouteParts`, `notAllowedPath`, `logoutRedirectPath`, `logoutPath`) from `useRuntimeConfig().public.nuxtUiMongocampOptions`
 - **`useMongocampClientApi`** — the drop-in every other composable/component calls instead of the dependency's `useMongocampApi()`; switches between session mode and `useMongocampProxyApi()` based on `useServerProxy`
 - **`useMongocampProxyApi`** — session-mode-shaped API client (`adminApi`, `documentApi`, ...) pointed at the local server proxy route instead of the real MongoCamp URL; builds the 11 API classes itself via `src/runtime/utils/createProxyMongocampApis.ts`, since the dependency's own `createMongocampApis` factory isn't part of its public export surface
+
+### Internationalization — `src/runtime/locales/`
+
+`@nuxtjs/i18n` is a `moduleDependency` (registered unconditionally, like `@nuxt/ui`) so every consumer app gets it whether or not they use i18n themselves. Every user-facing string in this module's own components/composables goes through `useI18n()`'s `t()`, keyed under a single top-level `nuxtUiMongocamp` namespace (e.g. `t('nuxtUiMongocamp.login.heading')`) — this avoids colliding with a consumer app's own translation keys, which live in their own namespaces.
+
+- `en.json` (default) and `de.json` live in `src/runtime/locales/` and ship inside the published package.
+- Registered via `nuxt.hook('i18n:registerModule', ...)` in `src/module.ts`'s `setup()`, **not** via `moduleDependencies['@nuxtjs/i18n'].defaults` — `@nuxtjs/i18n` reads `nuxt.options.i18n` during its own module setup, which runs *before* this module's `setup()` (moduleDependencies install first), so mutating `nuxt.options.i18n` directly is too late for `locales`/`langDir`. `i18n:registerModule` is the hook `@nuxtjs/i18n` exposes specifically for other modules to contribute locale files into its merged registry, independent of setup order. Flat, top-level options like `defaultLocale` merge fine through `moduleDependencies[...].defaults`, though.
+- Adding a new component string: add the key to *both* `en.json` and `de.json` under `nuxtUiMongocamp.<component>.<key>`, then reference it via `t('nuxtUiMongocamp.<component>.<key>')`. Keep the English value identical to what it replaces — component/unit tests assert against rendered English text under the default locale, so a mismatched value breaks them even though the app still runs fine.
+- Composables that show toasts (`useMongocampBucket`, `useMongocampAccount`) call `useI18n()` themselves; components layer their own `t()` on top for template/schema strings. Table `header`/`cell` closures call `t()` directly rather than through a `computed()`, so column headers reflect whatever locale was active when the component last set up its `columns` — not a live update if the locale changes without a remount.
+- Unit tests that mock `#imports` entirely (see `useMongocampAccount.test.ts`, `useMongocampBucket.test.ts`) need `useI18n: () => ({ t: (key: string) => key })` in the mock, or the composable throws immediately on the first `t()` call.
 
 ### FormKit / @sfxcode/nuxt-ui-formkit conventions
 
