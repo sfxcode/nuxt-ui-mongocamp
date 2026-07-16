@@ -19,8 +19,8 @@ export function useMongocampAccount() {
       toast.add({ title: 'Password changed', description: 'Your password was updated.', color: 'success' })
       return result.value
     }
-    catch {
-      toast.add({ title: 'Change failed', description: 'Could not change your password.', color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Change failed', description: e instanceof Error ? e.message : 'Could not change your password.', color: 'error' })
       return false
     }
     finally {

@@ -70,8 +70,8 @@ export function useMongocampBucket() {
       const blob = await fileApi.getFile({ bucketName, fileId })
       triggerBrowserDownload(blob, info.filename || fileId)
     }
-    catch {
-      toast.add({ title: 'Download failed', description: 'Could not download the file.', color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Download failed', description: e instanceof Error ? e.message : 'Could not download the file.', color: 'error' })
     }
     finally {
       downloadingFileIds.value.delete(fileId)
@@ -86,8 +86,8 @@ export function useMongocampBucket() {
       toast.add({ title: 'File uploaded', description: `"${file.name}" was uploaded.`, color: 'success' })
       return true
     }
-    catch {
-      toast.add({ title: 'Upload failed', description: 'Could not upload the file.', color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Upload failed', description: e instanceof Error ? e.message : 'Could not upload the file.', color: 'error' })
       return false
     }
     finally {
@@ -116,8 +116,8 @@ export function useMongocampBucket() {
       toast.add({ title: 'File deleted', description: 'The file was deleted.', color: 'success' })
       return result.wasAcknowledged
     }
-    catch {
-      toast.add({ title: 'Delete failed', description: 'Could not delete the file.', color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Delete failed', description: e instanceof Error ? e.message : 'Could not delete the file.', color: 'error' })
       return false
     }
     finally {
@@ -136,8 +136,8 @@ export function useMongocampBucket() {
       toast.add({ title: 'File updated', description: 'The file information was updated.', color: 'success' })
       return result.wasAcknowledged
     }
-    catch {
-      toast.add({ title: 'Update failed', description: 'Could not update the file information.', color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Update failed', description: e instanceof Error ? e.message : 'Could not update the file information.', color: 'error' })
       return false
     }
     finally {
@@ -160,8 +160,8 @@ export function useMongocampBucket() {
       toast.add({ title: 'Bucket cleared', description: `All files in "${bucketName}" were deleted.`, color: 'success' })
       return result.value
     }
-    catch {
-      toast.add({ title: 'Clear failed', description: `Could not clear bucket "${bucketName}".`, color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Clear failed', description: e instanceof Error ? e.message : `Could not clear bucket "${bucketName}".`, color: 'error' })
       return false
     }
     finally {
@@ -176,8 +176,8 @@ export function useMongocampBucket() {
       toast.add({ title: 'Bucket deleted', description: `Bucket "${bucketName}" was deleted.`, color: 'success' })
       return result.value
     }
-    catch {
-      toast.add({ title: 'Delete failed', description: `Could not delete bucket "${bucketName}".`, color: 'error' })
+    catch (e) {
+      toast.add({ title: 'Delete failed', description: e instanceof Error ? e.message : `Could not delete bucket "${bucketName}".`, color: 'error' })
       return false
     }
     finally {

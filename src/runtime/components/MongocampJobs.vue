@@ -185,8 +185,8 @@ async function handleExecuteJob(group: string, name: string) {
     await executeJob(group, name)
     toast.add({ title: 'Job executed', description: `"${name}" was triggered.`, color: 'success' })
   }
-  catch {
-    toast.add({ title: 'Execution failed', description: `Could not execute "${name}".`, color: 'error' })
+  catch (e) {
+    toast.add({ title: 'Execution failed', description: e instanceof Error ? e.message : `Could not execute "${name}".`, color: 'error' })
   }
   finally {
     executingJobs.value.delete(key)
