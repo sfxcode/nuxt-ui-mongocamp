@@ -1,5 +1,5 @@
 import { useRuntimeConfig } from '#app'
-import { Configuration } from '@sfxcode/nuxt-mongocamp-server'
+import { Configuration } from '@sfxcode/nuxt-mongocamp-server/api'
 import { createProxyMongocampApis } from '../utils/createProxyMongocampApis'
 
 // Client-side drop-in for the dependency's session-authenticated `useMongocampApi()`: same
