@@ -4,6 +4,10 @@ import { ref, reactive } from 'vue'
 import { useMongocampAuth } from '#imports'
 import { navigateTo, useCookie } from '#app'
 
+const props = defineProps<{
+  redirectPath?: string
+}>()
+
 const { login } = useMongocampAuth()
 const errorMessage = ref('')
 
@@ -38,7 +42,7 @@ async function actionLogin() {
   try {
     await login(loginId, data.value?.password)
     loginMail.value = loginId
-    navigateTo('/secured')
+    navigateTo(props.redirectPath ?? '/secured')
   }
   catch (e) {
     consola.log(e)
