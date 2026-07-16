@@ -2,6 +2,12 @@ import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImpor
 import { defu } from 'defu'
 import { consola } from 'consola'
 
+// Computed at the top level (needs only `import.meta.url`, not a Nuxt/setup context) so the
+// same absolute paths can be used both in the static `moduleDependencies` config below (for
+// `@nuxtjs/i18n`'s `langDir`) and inside `setup()`.
+const { resolve } = createResolver(import.meta.url)
+const runtimeDir = resolve('./runtime')
+
 // Module options TypeScript interface definition
 
 export interface ModuleOptions {
@@ -100,6 +106,18 @@ export default defineNuxtModule<ModuleOptions>({
         tokenRefreshInterval: 5000,
       },
     },
+    // English (default) and German translations for every string this module's own
+    // components render. Registered as a moduleDependency (like @nuxt/ui) rather than left
+    // optional, since the components ship no non-translated fallback markup. Only flat,
+    // top-level options (like `defaultLocale`) actually merge through this `defaults` field —
+    // `locales`/`langDir` need the `i18n:registerModule` hook in setup() below instead, since
+    // they're resolved through @nuxtjs/i18n's own multi-layer locale-merging logic, not a
+    // plain defu merge.
+    '@nuxtjs/i18n': {
+      defaults: {
+        defaultLocale: 'en',
+      },
+    },
   },
   setup(options, nuxt) {
     // Normalized once here so the build-time route registered below and the runtime-config
@@ -112,6 +130,20 @@ export default defineNuxtModule<ModuleOptions>({
       options,
     )
 
+    // @nuxtjs/i18n's own module setup reads `nuxt.options.i18n` before this module's setup()
+    // runs (moduleDependencies install first), so mutating it directly here is too late to
+    // register locale files — `i18n:registerModule` is the hook it exposes specifically for
+    // other modules to contribute their own translations into the merged locale registry.
+    nuxt.hook('i18n:registerModule', (register) => {
+      register({
+        langDir: resolve(runtimeDir, 'locales'),
+        locales: [
+          { code: 'en', file: 'en.json' },
+          { code: 'de', file: 'de.json' },
+        ],
+      })
+    })
+
     if (options.useServerProxy && options.useGlobalAuthMiddleware) {
       consola.warn(
         '[nuxt-ui-mongocamp] `useServerProxy` and `useGlobalAuthMiddleware` are both enabled. '
@@ -120,9 +152,6 @@ export default defineNuxtModule<ModuleOptions>({
         + '`adminRouteParts` will be permanently unreachable.',
       )
     }
-
-    const { resolve } = createResolver(import.meta.url)
-    const runtimeDir = resolve('./runtime')
 
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolve(runtimeDir, 'plugin'))

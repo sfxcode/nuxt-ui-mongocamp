@@ -59,6 +59,7 @@
     "@internationalized/date": "^3.12.2",
     "@nuxt/kit": "^4.4.8",
     "@nuxt/ui": "^4.10.0",
+    "@nuxtjs/i18n": "^10.4.1",
     "@sfxcode/nuxt-mongocamp-server": "^1.5.0",
     "@sfxcode/nuxt-ui-formkit": "^1.2.6",
     "consola": "^3.4.2",

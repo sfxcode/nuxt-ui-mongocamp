@@ -12,6 +12,7 @@
     "nuxt": "^4.4.8"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.117"
+    "@iconify-json/lucide": "^1.2.117",
+    "@nuxtjs/i18n": "^10.4.1"
   }
 }
