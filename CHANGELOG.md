@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.2.1
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.0...v1.2.1)
+
+### 🏡 Chore
+
+- **release:** Update changelogen to generate patch releases ([87e1b04](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/87e1b04))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.2.0
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.1.4...v1.2.0)
