@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.2.2
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.1...v1.2.2)
+
+### 🏡 Chore
+
+- **dependencies:** Nixt-ui-formkit 1.2.7 ([2261319](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2261319))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.2.1
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.0...v1.2.1)
