@@ -31,6 +31,7 @@ export default defineNuxtConfig({
     apiKey: process.env.MONGOCAMP_API_KEY,
     paginationSize: 1000,
     tokenRefreshInterval: 60 * 1000,
+    refreshToken: true,
   },
   nuxtUiMongocamp: {
     useGlobalAuthMiddleware: true,
