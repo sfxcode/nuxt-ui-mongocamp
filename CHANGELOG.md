@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.2.5
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.4...v1.2.5)
+
+### 🏡 Chore
+
+- **dependencies:** Update @sfxcode/nuxt-mongocamp-server to ^1.5.2 and refresh pnpm-lock.yaml ([8c3b96b](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8c3b96b))
+- **config:** Enable token auto-refresh in nuxt.config.ts ([96f07e6](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/96f07e6))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.2.4
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.3...v1.2.4)
