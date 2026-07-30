@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.2.4
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.3...v1.2.4)
+
+### 🏡 Chore
+
+- **dependencies:** Update dependencies to latest minor and patch versions, including Nuxt ecosystem to ^4.5.1 ([728d33c](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/728d33c))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.2.3
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.2...v1.2.3)
