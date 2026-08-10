@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.2.6
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.5...v1.2.6)
+
+### 🏡 Chore
+
+- **dependencies:** Update dependencies to latest versions, including @internationalized/date, @sfxcode/nuxt-ui-formkit, and nuxt ([47c8e97](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/47c8e97))
+- **dependencies:** Update packageManager version to pnpm@11.21.0 ([6bd3f09](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6bd3f09))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.2.5
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.4...v1.2.5)
