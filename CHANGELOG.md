@@ -1,6 +1,25 @@
 # Changelog
 
 
+## v1.2.7
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.6...v1.2.7)
+
+### 🩹 Fixes
+
+- **playground:** Adapt devtools optimizeDeps entries to @nuxt/devtools 4 ([40da1f5](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/40da1f5))
+
+### 🏡 Chore
+
+- **dependencies:** Update nuxt and related packages to version 4.6.1 ([8574139](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8574139))
+- **dependencies:** Update dependencies to latest versions, including @internationalized/date, @nuxt/ui, @sfxcode/nuxt-ui-formkit, and devDependencies ([3e9c4f8](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/3e9c4f8))
+- **dependencies:** Update vitest to version 5.0.3 and adjust related dependencies ([754604a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/754604a))
+- **dependencies:** Update @nuxt/devtools to version ^4.0.0-beta.4 ([a9bc3a5](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a9bc3a5))
+
+### ❤️ Contributors
+
+- Sfxcode <tom@sfxcode.com>
+
 ## v1.2.6
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.5...v1.2.6)
