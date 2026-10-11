@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.142",
-    "@nuxt/devtools": "4.0.0-alpha.7",
+    "@nuxt/devtools": "^4.0.0-beta.4",
     "@nuxt/eslint-config": "^1.17.0",
     "@nuxt/kit": "^4.6.1",
     "@nuxt/module-builder": "^1.0.3",
