@@ -151,7 +151,12 @@
       "viewObject": "View object",
       "createdByPrefix": "created: ",
       "updatedByPrefix": "updated: ",
-      "byPrefix": "by: "
+      "byPrefix": "by: ",
+      "columnsTooltip": "Show/hide columns",
+      "exportTooltip": "Export this page",
+      "exportJson": "Export page as JSON",
+      "exportCsv": "Export page as CSV",
+      "pageSizeLabel": "Rows per page"
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",

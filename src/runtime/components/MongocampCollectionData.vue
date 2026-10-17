@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { h, ref, resolveComponent, watch } from 'vue'
+import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import { useI18n, useMongocampClientApi } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
-import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
+import { isIsoDateTimeString, unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
+import { downloadTextFile, rowsToCsv } from '../composables/useMongocampExport'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 
@@ -224,6 +225,8 @@ const loading = ref(false)
 const filterText = ref('')
 const filterableColumns = ref<string[]>([])
 const sorting = ref<SortEntry[]>([])
+const columnVisibility = ref<Record<string, boolean>>({})
+const PAGE_SIZES = [10, 20, 50, 100]
 const isInitializing = ref(false)
 const detailOpen = ref(false)
 const detailContent = ref('')
@@ -299,6 +302,7 @@ function isMetaData(value: unknown): value is Record<string, unknown> {
 }
 
 const CELL_TEXT_MAX_LENGTH = 60
+const TIMESTAMP_PREFIX = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/
 
 function truncateText(value: string, maxLength = CELL_TEXT_MAX_LENGTH): string {
   return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
@@ -351,6 +355,11 @@ function makeCell(key: string, type: string) {
         'onClick': () => openDetail(raw),
       }))
     }
+    // a column can mix real dates and ISO strings (e.g. generated data), so decide per cell; date-only
+    // strings are left alone because formatting them would shift the day by the UTC offset
+    if (typeof raw === 'string' && TIMESTAMP_PREFIX.test(raw) && isIsoDateTimeString(raw)) {
+      return h('span', toDateDisplay(raw))
+    }
     const text = String(raw)
     const truncated = truncateText(text)
     return h('span', { title: truncated !== text ? text : undefined }, truncated)
@@ -382,10 +391,12 @@ async function fetchDocuments() {
         ...keys.filter(k => k !== '_id' && k !== 'metaData').sort(),
         ...keys.filter(k => k === 'metaData'),
       ]
-      columns.value = orderedKeys.map(key => ({
+      columns.value = orderedKeys.map((key, index) => ({
         accessorKey: key,
         header: ({ column }: { column: Column<Row> }) => sortHeader(column, key),
         cell: makeCell(key, 'string'),
+        // keep the first column (usually _id) pinned so rows stay identifiable when the table scrolls sideways
+        ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
       columns.value.push(makeActionsColumn())
@@ -401,12 +412,51 @@ async function fetchDocuments() {
   }
 }
 
+function onPageSizeChange() {
+  pagination.value.pageIndex = 1
+  fetchDocuments()
+}
+
+const dataColumnKeys = computed(() =>
+  columns.value.flatMap(column => ('accessorKey' in column && typeof column.accessorKey === 'string' ? [column.accessorKey] : [])),
+)
+
+const columnMenuItems = computed(() =>
+  dataColumnKeys.value.map(key => ({
+    label: key,
+    type: 'checkbox' as const,
+    checked: columnVisibility.value[key] !== false,
+    onUpdateChecked: (checked: boolean) => {
+      columnVisibility.value = { ...columnVisibility.value, [key]: checked }
+    },
+    onSelect: (e: Event) => e.preventDefault(),
+  })),
+)
+
+// Exports the rows on the current page (not the whole collection) so no extra requests are made;
+// CSV honours the column-visibility toggles, JSON always carries the full documents.
+function exportPage(format: 'json' | 'csv') {
+  const rows = documents.value.map(row => unwrapExtendedJson(row) as Row)
+  if (format === 'json') {
+    downloadTextFile(`${props.collectionName}.json`, JSON.stringify(rows, null, 2), 'application/json')
+    return
+  }
+  const keys = dataColumnKeys.value.filter(key => columnVisibility.value[key] !== false)
+  downloadTextFile(`${props.collectionName}.csv`, rowsToCsv(rows, keys), 'text/csv')
+}
+
+const exportMenuItems = computed(() => [
+  { label: t('nuxtUiMongocamp.collectionData.exportJson'), icon: 'i-lucide-file-json', onSelect: () => exportPage('json') },
+  { label: t('nuxtUiMongocamp.collectionData.exportCsv'), icon: 'i-lucide-file-spreadsheet', onSelect: () => exportPage('csv') },
+])
+
 async function init() {
   isInitializing.value = true
   sorting.value = []
   pagination.value.pageIndex = 1
   filterText.value = ''
   filterableColumns.value = []
+  columnVisibility.value = {}
   columns.value = []
   documents.value = []
   await fetchDocuments()
@@ -418,7 +468,7 @@ watch(() => props.collectionName, init, { immediate: true })
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-4">
       <UInput
         v-model="filterText"
         icon="i-lucide-search"
@@ -428,7 +478,7 @@ watch(() => props.collectionName, init, { immediate: true })
         :disabled="filterableColumns.length === 0"
         @input="onFilterInput"
       />
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
           {{ t('nuxtUiMongocamp.collectionData.documentsCount', { count: total }) }}
         </span>
@@ -475,6 +525,34 @@ watch(() => props.collectionName, init, { immediate: true })
             @click="init"
           />
         </UTooltip>
+        <UDropdownMenu :items="columnMenuItems">
+          <UButton
+            icon="i-lucide-columns-3"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :disabled="dataColumnKeys.length === 0"
+            :aria-label="t('nuxtUiMongocamp.collectionData.columnsTooltip')"
+          />
+        </UDropdownMenu>
+        <UDropdownMenu :items="exportMenuItems">
+          <UButton
+            icon="i-lucide-download"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :disabled="documents.length === 0"
+            :aria-label="t('nuxtUiMongocamp.collectionData.exportTooltip')"
+          />
+        </UDropdownMenu>
+        <USelect
+          v-model="pagination.pageSize"
+          :items="PAGE_SIZES"
+          size="sm"
+          class="w-20"
+          :aria-label="t('nuxtUiMongocamp.collectionData.pageSizeLabel')"
+          @update:model-value="onPageSizeChange"
+        />
         <UPagination
           v-model:page="pagination.pageIndex"
           :total="total"
@@ -490,6 +568,7 @@ watch(() => props.collectionName, init, { immediate: true })
 
     <UTable
       v-model:sorting="sorting"
+      v-model:column-visibility="columnVisibility"
       :sorting-options="{ manualSorting: true }"
       :data="documents"
       :columns="columns"

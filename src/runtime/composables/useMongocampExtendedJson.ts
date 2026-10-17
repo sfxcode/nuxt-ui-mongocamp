@@ -9,7 +9,7 @@ const NUMBER_WRAPPER_KEYS = ['$numberInt', '$numberLong', '$numberDouble', '$num
 // first place — nuxtUIInputDate with valueType: 'iso' always emits a full ISO string back.
 const ISO_DATE_TIME_REGEX = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/
 
-function isIsoDateTimeString(value: string): boolean {
+export function isIsoDateTimeString(value: string): boolean {
   return ISO_DATE_TIME_REGEX.test(value) && !Number.isNaN(Date.parse(value))
 }
 

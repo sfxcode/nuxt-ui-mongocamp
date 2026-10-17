@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { DOMWrapper, enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
-import { UApp } from '#components'
+import { UApp, USelect } from '#components'
 import MongocampCollectionData from '../../src/runtime/components/MongocampCollectionData.vue'
 
 // UModal's close transition is timer-based, so a stale modal from a previous test can still
@@ -106,6 +106,41 @@ describe('MongocampCollectionData', () => {
     expect(headers.indexOf('_id')).toBeLessThan(headers.indexOf('age'))
     expect(headers.indexOf('age')).toBeLessThan(headers.indexOf('name'))
     expect(headers.indexOf('name')).toBeLessThan(headers.indexOf('metaData'))
+  })
+
+  it('formats ISO date strings in the first row as localized dates, not raw ISO text', async () => {
+    mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([
+      { _id: 'doc-1', name: 'Alice', dateCreated: '2016-11-28T15:19:07.021Z' },
+    ], '1'))
+
+    const component = await mountSuspended(withUApp(MongocampCollectionData), {
+      route: '/',
+      props: { collectionName: 'customers' },
+    })
+    await wait()
+
+    expect(component.text()).not.toContain('2016-11-28T15:19:07.021Z')
+    expect(component.text()).toContain(new Date('2016-11-28T15:19:07.021Z').toLocaleString())
+  })
+
+  it('re-fetches page 1 with the chosen rowsPerPage when the page size changes', async () => {
+    mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: 'doc-1', name: 'Alice' }], '1'))
+    const component = await mountSuspended(withUApp(MongocampCollectionData), {
+      route: '/',
+      props: { collectionName: 'customers' },
+    })
+    await wait()
+
+    // Reka UI's select commits via pointer events that happy-dom doesn't reproduce faithfully, so
+    // drive the component's own v-model contract instead; the real interaction is checked in a browser.
+    const select = component.findComponent(USelect)
+    expect(select.exists()).toBe(true)
+    select.vm.$emit('update:modelValue', 50)
+    await wait()
+
+    const lastCallArgs = mockListDocumentsRaw.mock.calls.at(-1)![0]
+    expect(lastCallArgs.rowsPerPage).toBe(50)
+    expect(lastCallArgs.page).toBe(1)
   })
 
   it('debounces the filter input and re-fetches page 1 with a Lucene filter over string columns', async () => {
