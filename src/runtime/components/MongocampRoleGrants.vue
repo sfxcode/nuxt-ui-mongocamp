@@ -2,7 +2,7 @@
 import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Grant } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n } from '#imports'
+import { useI18n, useMongocampError } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 
 const props = defineProps<{
@@ -10,6 +10,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const { describeError } = useMongocampError()
 const { listRoles, updateRole, listCollections } = useMongocampAdmin()
 
 const grants = ref<Grant[]>([])
@@ -18,7 +19,9 @@ const isAdmin = ref(false)
 const loading = ref(false)
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
-const errorMessage = ref('')
+// why the last save failed; cleared by the next save, reload or dialog open
+const saveError = ref('')
+const saving = ref(false)
 const editIndex = ref(-1)
 const editGrantName = ref('')
 
@@ -74,6 +77,7 @@ const loadError = ref<unknown>(null)
 async function fetchRole() {
   loading.value = true
   loadError.value = null
+  saveError.value = ''
   try {
     const roles = await listRoles()
     const role = roles.find(r => r.name === props.roleName)
@@ -95,15 +99,25 @@ async function fetchCollections() {
   allCollections.value = await listCollections()
 }
 
-async function saveGrants() {
-  errorMessage.value = ''
+// Saves `next` as the role's complete grant list (updateRole replaces it). Callers pass a modified *copy*:
+// the table (`grants`) is only touched by the reload after a confirmed save, so a refusal leaves it showing
+// what the server really has instead of a change that never happened. Returns whether the save worked.
+async function saveGrants(next: Grant[]): Promise<boolean> {
+  if (saving.value) return false
+  saving.value = true
+  saveError.value = ''
   try {
-    await updateRole(props.roleName, isAdmin.value, grants.value)
-    await fetchRole()
+    await updateRole(props.roleName, isAdmin.value, next)
   }
   catch (e: unknown) {
-    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.roleGrants.errorSave')
+    saveError.value = describeError(e, 'nuxtUiMongocamp.roleGrants.errorSave').message
+    return false
   }
+  finally {
+    saving.value = false
+  }
+  await fetchRole()
+  return true
 }
 
 async function handleAddGrant() {
@@ -111,46 +125,42 @@ async function handleAddGrant() {
   const collectionName = typeof newGrant.value.collectionName === 'object'
     ? raw.value ?? raw.label ?? ''
     : newGrant.value.collectionName
-  grants.value.push({
+  const next: Grant[] = [...grants.value, {
     name: collectionName,
     read: newGrant.value.read,
     write: newGrant.value.write,
     administrate: newGrant.value.administrate,
     grantType: 'COLLECTION',
-  })
-  await saveGrants()
-  isAddModalOpen.value = false
+  }]
+  // on a refusal the dialog stays open, with the reason, so the input isn't lost
+  if (await saveGrants(next)) isAddModalOpen.value = false
 }
 
 function openEdit(index: number) {
   const grant = grants.value[index]!
   editIndex.value = index
+  saveError.value = ''
   editGrantName.value = grant.name
   editGrant.value = { read: grant.read, write: grant.write, administrate: grant.administrate }
   isEditModalOpen.value = true
 }
 
 async function handleEditGrant() {
-  const grant = grants.value[editIndex.value]!
-  grants.value[editIndex.value] = {
-    ...grant,
-    read: editGrant.value.read,
-    write: editGrant.value.write,
-    administrate: editGrant.value.administrate,
-  }
-  await saveGrants()
-  isEditModalOpen.value = false
+  const next = grants.value.map((grant, index) => index === editIndex.value
+    ? { ...grant, read: editGrant.value.read, write: editGrant.value.write, administrate: editGrant.value.administrate }
+    : grant)
+  if (await saveGrants(next)) isEditModalOpen.value = false
 }
 
 async function removeGrant(index: number) {
-  grants.value.splice(index, 1)
-  await saveGrants()
+  await saveGrants(grants.value.filter((_, i) => i !== index))
 }
 
 function openAdd() {
   const grantedNames = new Set(grants.value.map(g => g.name))
   addGrantSchema[0]!.options = allCollections.value.filter(c => !grantedNames.has(c))
   newGrant.value = { collectionName: '', read: false, write: false, administrate: false }
+  saveError.value = ''
   isAddModalOpen.value = true
 }
 
@@ -218,6 +228,7 @@ const columns = computed<TableColumn<Grant>[]>(() => [
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': t('nuxtUiMongocamp.roleGrants.editGrantTooltip'),
+          'disabled': saving.value,
           'onClick': () => openEdit(row.index),
         })),
         withTooltip(t('nuxtUiMongocamp.roleGrants.removeGrantTooltip'), h(UButton, {
@@ -226,6 +237,7 @@ const columns = computed<TableColumn<Grant>[]>(() => [
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': t('nuxtUiMongocamp.roleGrants.removeGrantTooltip'),
+          'disabled': saving.value,
           'onClick': () => removeGrant(row.index),
         })),
       ]),
@@ -266,6 +278,16 @@ fetchCollections()
       @retry="fetchRole"
     />
 
+    <!-- a refused remove has no dialog to show its reason in; add/edit show it inside their own dialog -->
+    <UAlert
+      v-if="saveError && !isAddModalOpen && !isEditModalOpen"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-circle-alert"
+      :title="t('nuxtUiMongocamp.roleGrants.errorSave')"
+      :description="saveError"
+    />
+
     <UTable
       :data="grants"
       :columns="columns"
@@ -289,12 +311,14 @@ fetchCollections()
           submit-icon="i-lucide-plus"
           @data-saved="handleAddGrant"
         />
-        <p
-          v-if="errorMessage"
-          class="mt-2 text-sm text-error-500"
-        >
-          {{ errorMessage }}
-        </p>
+        <UAlert
+          v-if="saveError"
+          class="mt-3"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :description="saveError"
+        />
       </template>
     </UModal>
 
@@ -311,12 +335,14 @@ fetchCollections()
           submit-icon="i-lucide-save"
           @data-saved="handleEditGrant"
         />
-        <p
-          v-if="errorMessage"
-          class="mt-2 text-sm text-error-500"
-        >
-          {{ errorMessage }}
-        </p>
+        <UAlert
+          v-if="saveError"
+          class="mt-3"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :description="saveError"
+        />
       </template>
     </UModal>
   </div>
