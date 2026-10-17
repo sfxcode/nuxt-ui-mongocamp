@@ -285,6 +285,13 @@
       "grants": "Noch keine Berechtigungen",
       "files": "Keine Dateien gefunden",
       "documents": "Keine Dokumente gefunden"
+    },
+    "dashboard": {
+      "heading": "Willkommen bei MongoCamp",
+      "subtitle": "MongoDB-Datenbank über REST —",
+      "collections": "Collections",
+      "users": "Benutzer",
+      "roles": "Rollen"
     }
   }
 }

@@ -83,6 +83,7 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | `MongocampAccount` | Current-user account page: profile, password change, API key |
 | `MongocampDatabases` | Read-only table of all databases (size, collection count) |
 | `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
+| `MongocampDashboard` | Admin landing page: linked collection/user/role counts + server version; default slot for app-specific content; exposes `refresh()` |
 | `MongocampErrorAlert` | Failed-load banner (retry, or log-in-again on 401); used by every list component |
 | `MongocampEmptyState` | Icon + message for `UTable`'s `#empty` slot |
 

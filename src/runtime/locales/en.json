@@ -285,6 +285,13 @@
       "grants": "No grants yet",
       "files": "No files found",
       "documents": "No documents found"
+    },
+    "dashboard": {
+      "heading": "Welcome to MongoCamp",
+      "subtitle": "MongoDB Database via REST —",
+      "collections": "Collections",
+      "users": "Users",
+      "roles": "Roles"
     }
   }
 }
