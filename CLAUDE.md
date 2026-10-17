@@ -83,6 +83,7 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | `MongocampAccount` | Current-user account page: profile, password change, API key |
 | `MongocampDatabases` | Read-only table of all databases (size, collection count) |
 | `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
+| `MongocampFilterBuilder` | Visual filter editor (v-model `FilterGroup` + `fields`), emits `apply(lucene)`; logic lives in `useMongocampFilterBuilder`. Not yet wired into a data table |
 | `MongocampBulkDelete` | Selection bar + confirm modal for bulk delete; Users/Roles/CollectionData use it with `createSelectColumn` (`src/runtime/utils/`) and `runBulkDelete`. Selection is cleared on every reload; the signed-in user and GridFS bucket collections are never selectable |
 | `MongocampDashboard` | Admin landing page: linked collection/user/role counts + server version; default slot for app-specific content; exposes `refresh()` |
 | `MongocampErrorAlert` | Failed-load banner (retry, or log-in-again on 401); used by every list component |

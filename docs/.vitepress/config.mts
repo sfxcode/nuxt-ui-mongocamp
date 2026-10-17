@@ -53,6 +53,7 @@ export default defineConfig({
             { text: 'MongocampVersion', link: '/components/mongocamp-version' },
             { text: 'MongocampDashboard', link: '/components/mongocamp-dashboard' },
             { text: 'MongocampBulkDelete', link: '/components/mongocamp-bulk-delete' },
+            { text: 'MongocampFilterBuilder', link: '/components/mongocamp-filter-builder' },
             { text: 'MongocampErrorAlert', link: '/components/mongocamp-error-alert' },
             { text: 'MongocampEmptyState', link: '/components/mongocamp-empty-state' },
           ],

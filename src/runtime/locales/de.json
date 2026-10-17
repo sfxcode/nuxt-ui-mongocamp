@@ -305,6 +305,43 @@
       "selectRow": "Zeile auswählen",
       "partialFailure": "{failed} von {total} konnten nicht gelöscht werden: {reason}",
       "cannotSelectSelf": "Du kannst dein eigenes Konto nicht löschen"
+    },
+    "filterBuilder": {
+      "matchLabel": "Treffer bei",
+      "matchAll": "allen Bedingungen",
+      "matchAny": "mindestens einer Bedingung",
+      "field": "Feld",
+      "operator": "Operator",
+      "value": "Wert",
+      "valueTo": "Wert bis",
+      "and": "und",
+      "listPlaceholder": "a, b, c",
+      "addCondition": "Bedingung hinzufügen",
+      "clearAll": "Alle entfernen",
+      "apply": "Filter anwenden",
+      "remove": "Bedingung entfernen",
+      "query": "Abfrage",
+      "noFields": "Noch keine Felder zum Filtern",
+      "noConditions": "Noch keine Bedingungen — füge eine hinzu, um zu filtern",
+      "ignoredRows": "{count} unvollständige Bedingung wird ignoriert | {count} unvollständige Bedingungen werden ignoriert",
+      "operators": {
+        "contains": "enthält",
+        "equals": "ist gleich",
+        "notEquals": "ist ungleich",
+        "startsWith": "beginnt mit",
+        "endsWith": "endet mit",
+        "oneOf": "ist eines von",
+        "gte": "ist mindestens",
+        "lte": "ist höchstens",
+        "between": "liegt zwischen",
+        "gteDate": "ist am oder nach",
+        "lteDate": "ist am oder vor",
+        "betweenDate": "liegt zwischen",
+        "isTrue": "ist wahr",
+        "isFalse": "ist falsch",
+        "isEmpty": "existiert nicht",
+        "isNotEmpty": "existiert"
+      }
     }
   }
 }

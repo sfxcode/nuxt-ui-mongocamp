@@ -16,6 +16,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampAccount`](/components/mongocamp-account) | Current-user account page: profile, password change, API key |
 | [`MongocampDatabases`](/components/mongocamp-databases) | Read-only table of all databases (size, collection count) |
 | [`MongocampVersion`](/components/mongocamp-version) | Server name/version badge |
+| [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) | Visual filter builder: type-aware conditions, match all/any, emits a Lucene query |
 | [`MongocampBulkDelete`](/components/mongocamp-bulk-delete) | Selection bar + confirmation modal for bulk delete (used by Users, Roles, CollectionData) |
 | [`MongocampDashboard`](/components/mongocamp-dashboard) | Admin landing page: linked collection/user/role counts, server version, slot for extra content |
 | [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |

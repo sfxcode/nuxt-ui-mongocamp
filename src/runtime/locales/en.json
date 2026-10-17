@@ -305,6 +305,43 @@
       "selectRow": "Select row",
       "partialFailure": "{failed} of {total} could not be deleted: {reason}",
       "cannotSelectSelf": "You cannot delete your own account"
+    },
+    "filterBuilder": {
+      "matchLabel": "Match",
+      "matchAll": "all conditions",
+      "matchAny": "any condition",
+      "field": "Field",
+      "operator": "Operator",
+      "value": "Value",
+      "valueTo": "Value to",
+      "and": "and",
+      "listPlaceholder": "a, b, c",
+      "addCondition": "Add condition",
+      "clearAll": "Clear all",
+      "apply": "Apply filters",
+      "remove": "Remove condition",
+      "query": "Query",
+      "noFields": "No fields to filter on yet",
+      "noConditions": "No conditions yet — add one to start filtering",
+      "ignoredRows": "{count} incomplete condition is ignored | {count} incomplete conditions are ignored",
+      "operators": {
+        "contains": "contains",
+        "equals": "equals",
+        "notEquals": "does not equal",
+        "startsWith": "starts with",
+        "endsWith": "ends with",
+        "oneOf": "is one of",
+        "gte": "is at least",
+        "lte": "is at most",
+        "between": "is between",
+        "gteDate": "is on or after",
+        "lteDate": "is on or before",
+        "betweenDate": "is between",
+        "isTrue": "is true",
+        "isFalse": "is false",
+        "isEmpty": "does not exist",
+        "isNotEmpty": "exists"
+      }
     }
   }
 }
