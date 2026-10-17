@@ -6,9 +6,12 @@ const props = defineProps<{
   error: unknown
   title?: string
   loginPath?: string
+  // set by a parent that has proven the request only fails because of the filter it sent (a retry
+  // without the filter worked) — the browser reports a rejected filter exactly like a dead network
+  filterRejected?: boolean
 }>()
 
-const emit = defineEmits<{ retry: [] }>()
+const emit = defineEmits<{ retry: [], clearFilters: [] }>()
 
 const { t } = useI18n()
 const { describeError } = useMongocampError()
@@ -23,12 +26,20 @@ const sessionGone = computed(() => described.value.kind === 'unauthorized')
     color="error"
     variant="subtle"
     icon="i-lucide-circle-alert"
-    :title="title ?? t('nuxtUiMongocamp.errors.loadFailedTitle')"
-    :description="described.message"
+    :title="filterRejected ? t('nuxtUiMongocamp.errors.filterRejectedTitle') : (title ?? t('nuxtUiMongocamp.errors.loadFailedTitle'))"
+    :description="filterRejected ? t('nuxtUiMongocamp.errors.filterRejected') : described.message"
   >
     <template #actions>
       <UButton
-        v-if="sessionGone"
+        v-if="filterRejected"
+        :label="t('nuxtUiMongocamp.errors.clearFilters')"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-filter-x"
+        @click="emit('clearFilters')"
+      />
+      <UButton
+        v-else-if="sessionGone"
         :label="t('nuxtUiMongocamp.errors.loginAgain')"
         :to="loginPath ?? '/'"
         color="error"

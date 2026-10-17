@@ -403,6 +403,8 @@ function makeCell(key: string, type: string) {
 }
 
 const loadError = ref<unknown>(null)
+// true only when a retry without the search/filters succeeded, i.e. the filter itself was rejected
+const filterRejected = ref(false)
 
 const { describeError } = useMongocampError()
 const rowSelection = ref<Record<string, boolean>>({})
@@ -437,13 +439,15 @@ async function fetchDocuments() {
   loadError.value = null
   // paging, filtering and sorting all fetch — a selection from rows no longer on screen must not survive
   rowSelection.value = {}
+  filterRejected.value = false
+  const filter = buildLuceneFilter(filterText.value)
   try {
     const res = await documentApi.listDocumentsRaw({
       collectionName: props.collectionName,
       rowsPerPage: pagination.value.pageSize,
       page: pagination.value.pageIndex,
       sort: sorting.value.length ? sortingToMongoSort(sorting.value) : undefined,
-      filter: buildLuceneFilter(filterText.value),
+      filter,
     })
     total.value = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
     const rows = (await res.value()) as Row[]
@@ -483,10 +487,30 @@ async function fetchDocuments() {
     loadError.value = e
     documents.value = []
     total.value = 0
+    // A server that rejects a filter looks to the browser exactly like a dead network or session, so ask
+    // the one question that tells them apart: does the collection load without the filter? (An expired
+    // session is already clear from its status, so that case is not probed.)
+    if (filter && describeError(e).kind !== 'unauthorized') filterRejected.value = await loadsWithoutFilter()
   }
   finally {
     loading.value = false
   }
+}
+
+async function loadsWithoutFilter(): Promise<boolean> {
+  try {
+    await documentApi.listDocumentsRaw({ collectionName: props.collectionName, rowsPerPage: 1, page: 1 })
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+function clearAllFilters() {
+  filterText.value = ''
+  filterDraft.value = emptyFilterGroup()
+  onFilterApply('')
 }
 
 function onFilterApply(query: string) {
@@ -719,7 +743,9 @@ watch(() => props.collectionName, init, { immediate: true })
 
     <MongocampErrorAlert
       :error="loadError"
+      :filter-rejected="filterRejected"
       @retry="fetchDocuments"
+      @clear-filters="clearAllFilters"
     />
 
     <MongocampBulkDelete

@@ -26,9 +26,11 @@ async function load() {
 | `error` | `unknown` | — | The caught error; falsy hides the alert |
 | `title` | `string` | `Failed to load data` | Alert title |
 | `loginPath` | `string` | `/` | Target of the **Log in again** button |
+| `filterRejected` | `boolean` | `false` | Set by a parent that has shown the request only fails because of the filter it sent (a retry without it worked). Replaces the message with "The filter could not be applied" and the Retry button with **Clear filters** |
 
 ## Events
 
 | Event | Description |
 |---|---|
-| `retry` | Retry button clicked (not shown for 401) |
+| `retry` | Retry button clicked (not shown for 401 or when `filterRejected`) |
+| `clearFilters` | **Clear filters** clicked (only shown when `filterRejected`) |

@@ -275,7 +275,10 @@
       "unauthorized": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
       "forbidden": "Dir fehlt die Berechtigung dafür.",
       "generic": "Etwas ist schiefgelaufen.",
-      "loginAgain": "Erneut anmelden"
+      "loginAgain": "Erneut anmelden",
+      "filterRejectedTitle": "Der Filter konnte nicht angewendet werden",
+      "filterRejected": "Der Server hat die aktuelle Suche oder die Filter abgelehnt, obwohl die Collection selbst lädt. Setze sie zurück oder entferne die letzte Bedingung und versuche es erneut.",
+      "clearFilters": "Filter zurücksetzen"
     },
     "empty": {
       "title": "Keine Daten",

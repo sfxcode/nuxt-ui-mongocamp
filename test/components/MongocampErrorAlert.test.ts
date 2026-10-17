@@ -27,4 +27,15 @@ describe('MongocampErrorAlert', () => {
     expect(component.findAll('button').some(b => b.text() === 'Retry')).toBe(false)
     expect(component.find('a[href="/login"]').text()).toContain('Log in again')
   })
+
+  it('says the filter was rejected, instead of blaming the network, and offers to clear it', async () => {
+    const component = await mountSuspended(MongocampErrorAlert, { props: { error: fetchError, filterRejected: true }, route: '/' })
+
+    expect(component.text()).toContain('The filter could not be applied')
+    expect(component.text()).not.toContain('could not be reached')
+    expect(component.findAll('button').some(b => b.text() === 'Retry')).toBe(false)
+
+    await component.findAll('button').find(b => b.text() === 'Clear filters')?.trigger('click')
+    expect(component.emitted('clearFilters')).toHaveLength(1)
+  })
 })

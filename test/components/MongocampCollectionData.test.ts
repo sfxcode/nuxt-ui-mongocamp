@@ -460,6 +460,89 @@ describe('MongocampCollectionData', () => {
       expect(component.text()).not.toContain('name contains ali')
     })
 
+    describe('when the server rejects the request', () => {
+      const fetchError = Object.assign(new Error('The request failed'), { name: 'FetchError' })
+
+      // the filtered request fails, the same request without a filter works — what a rejected filter looks like
+      function rejectFilteredRequests() {
+        mockListDocumentsRaw.mockImplementation(async (args: { filter?: string }) => {
+          if (args.filter) throw fetchError
+          return mockRawResponse(rows, '2')
+        })
+      }
+
+      function clearButtons(component: Awaited<ReturnType<typeof mountWithRows>>) {
+        return component.findAll('button').filter(b => b.text() === 'Clear filters')
+      }
+
+      it('tells a rejected filter apart from a dead server by retrying once without it', async () => {
+        const component = await mountWithRows()
+        rejectFilteredRequests()
+        await applyNameContains(component, 'ali')
+
+        expect(component.text()).toContain('The filter could not be applied')
+        expect(component.text()).not.toContain('could not be reached')
+        const probe = mockListDocumentsRaw.mock.calls.at(-1)![0]
+        expect(probe.rowsPerPage).toBe(1) // a one-row probe, not a second full page load
+        expect(probe.filter).toBeUndefined()
+      })
+
+      it('keeps the generic message when the collection does not load without the filter either', async () => {
+        const component = await mountWithRows()
+        mockListDocumentsRaw.mockImplementation(async () => {
+          throw fetchError
+        })
+        await applyNameContains(component, 'ali')
+
+        expect(component.text()).toContain('could not be reached')
+        expect(component.text()).not.toContain('The filter could not be applied')
+      })
+
+      it('does not probe when the session has expired (401) — that is already clear', async () => {
+        const component = await mountWithRows()
+        mockListDocumentsRaw.mockImplementation(async (args: { filter?: string }) => {
+          if (args.filter) throw { name: 'ResponseError', response: { status: 401 } }
+          return mockRawResponse(rows, '2')
+        })
+        await applyNameContains(component, 'ali')
+
+        expect(component.text()).toContain('session has expired')
+        expect(component.text()).not.toContain('The filter could not be applied')
+        expect(mockListDocumentsRaw.mock.calls.some(([args]) => args.rowsPerPage === 1)).toBe(false)
+      })
+
+      it('does not probe, and does not blame a filter, when none was in use', async () => {
+        mockListDocumentsRaw.mockImplementation(async () => {
+          throw fetchError
+        })
+        const component = await mountSuspended(withUApp(MongocampCollectionData), {
+          route: '/',
+          props: { collectionName: 'customers' },
+        })
+        await wait()
+
+        expect(component.text()).toContain('could not be reached')
+        expect(mockListDocumentsRaw).toHaveBeenCalledTimes(1)
+      })
+
+      it('"Clear filters" in the alert drops the search and every condition and reloads from page 1', async () => {
+        const component = await mountWithRows()
+        rejectFilteredRequests()
+        await applyNameContains(component, 'ali')
+        expect(component.text()).toContain('The filter could not be applied')
+
+        await clearButtons(component).at(-1)!.trigger('click')
+        await wait()
+
+        expect(component.text()).not.toContain('The filter could not be applied')
+        expect(component.text()).not.toContain('name contains ali')
+        const reload = mockListDocumentsRaw.mock.calls.at(-1)![0]
+        expect(reload.page).toBe(1)
+        expect(reload.filter).toBeUndefined()
+        expect(reload.rowsPerPage).toBe(20) // a real reload, not the one-row probe
+      })
+    })
+
     it('forgets the filters, and closes the panel, when the collection changes', async () => {
       mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '2'))
       // a host that owns the collectionName prop, so it can be changed after mount like a router param would

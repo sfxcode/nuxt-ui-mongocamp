@@ -275,7 +275,10 @@
       "unauthorized": "Your session has expired. Please log in again.",
       "forbidden": "You do not have permission to view this.",
       "generic": "Something went wrong.",
-      "loginAgain": "Log in again"
+      "loginAgain": "Log in again",
+      "filterRejectedTitle": "The filter could not be applied",
+      "filterRejected": "The server rejected the current search or filters, although the collection itself loads. Clear them, or remove the last condition, and try again.",
+      "clearFilters": "Clear filters"
     },
     "empty": {
       "title": "No data",
