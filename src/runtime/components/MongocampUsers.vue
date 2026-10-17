@@ -100,6 +100,7 @@ async function fetchUsers() {
   }
   catch (e: unknown) {
     loadError.value = e
+    users.value = []
   }
   finally {
     loading.value = false

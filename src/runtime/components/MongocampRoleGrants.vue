@@ -69,8 +69,11 @@ const editGrantSchema = reactive([
   },
 ])
 
+const loadError = ref<unknown>(null)
+
 async function fetchRole() {
   loading.value = true
+  loadError.value = null
   try {
     const roles = await listRoles()
     const role = roles.find(r => r.name === props.roleName)
@@ -78,6 +81,10 @@ async function fetchRole() {
       isAdmin.value = role.isAdmin
       grants.value = (role.collectionGrants ?? []).map(g => ({ ...g }))
     }
+  }
+  catch (e: unknown) {
+    loadError.value = e
+    grants.value = []
   }
   finally {
     loading.value = false
@@ -254,11 +261,20 @@ fetchCollections()
       </div>
     </div>
 
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchRole"
+    />
+
     <UTable
       :data="grants"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.grants')" />
+      </template>
+    </UTable>
 
     <!-- Add Grant Modal -->
     <UModal

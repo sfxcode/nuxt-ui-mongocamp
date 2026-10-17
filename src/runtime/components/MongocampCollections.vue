@@ -48,6 +48,7 @@ async function fetchCollections() {
   }
   catch (e: unknown) {
     loadError.value = e
+    collections.value = []
   }
   finally {
     loading.value = false

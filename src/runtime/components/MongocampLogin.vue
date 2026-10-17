@@ -58,7 +58,7 @@ async function actionLogin() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center gap-4 p-4 w-1/2">
+  <div class="flex flex-col items-center justify-center gap-4 p-4 w-full">
     <UPageCard class="w-full max-w-md">
       <FUDataEdit
         :data="data"
@@ -68,7 +68,8 @@ async function actionLogin() {
       />
       <div
         v-if="errorMessage.length > 0"
-        class="m-4 mt-2 text-2xl text-red-700 font-medium"
+        role="alert"
+        class="mt-2 text-sm text-error font-medium"
       >
         {{ errorMessage }}
       </div>

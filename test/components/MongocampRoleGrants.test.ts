@@ -61,6 +61,23 @@ describe('MongocampRoleGrants', () => {
     expect(component.text()).toContain('users')
   })
 
+  it('shows an error alert when loading the role fails, and the empty state once the retry returns no grants', async () => {
+    mockListRoles.mockRejectedValueOnce(Object.assign(new Error('The request failed'), { name: 'FetchError' }))
+    mockListRoles.mockResolvedValueOnce([{ name: 'support', isAdmin: false, collectionGrants: [] }])
+
+    const component = await mountSuspended(withUApp(MongocampRoleGrants), {
+      route: '/',
+      props: { roleName: 'support' },
+    })
+    await flushPromises()
+    expect(component.text()).toContain('Failed to load data')
+
+    await component.findAll('button').find(b => b.text() === 'Retry')?.trigger('click')
+    await flushPromises()
+    expect(component.text()).not.toContain('Failed to load data')
+    expect(component.text()).toContain('No grants yet')
+  })
+
   it('removes a grant: clicking remove calls updateRole with the remaining grants and does not mutate the fetched API response', async () => {
     const originalGrants = [
       { name: 'users', read: true, write: false, administrate: false, grantType: 'COLLECTION' },

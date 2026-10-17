@@ -18,9 +18,9 @@ const { data: stats, refresh, status, error } = useAsyncData('dashboard-stats', 
 })
 
 const boxes = computed(() => [
-  { label: 'Collections', value: stats.value?.collections ?? '—', icon: 'i-lucide-database', to: '/secured/admin/collections', color: 'primary' },
-  { label: 'Users', value: stats.value?.users ?? '—', icon: 'i-lucide-users', to: '/secured/admin/users', color: 'sky' },
-  { label: 'Roles', value: stats.value?.roles ?? '—', icon: 'i-lucide-shield', to: '/secured/admin/roles', color: 'violet' },
+  { label: 'Collections', value: stats.value?.collections ?? '—', icon: 'i-lucide-database', to: '/secured/admin/collections' },
+  { label: 'Users', value: stats.value?.users ?? '—', icon: 'i-lucide-users', to: '/secured/admin/users' },
+  { label: 'Roles', value: stats.value?.roles ?? '—', icon: 'i-lucide-shield', to: '/secured/admin/roles' },
 ])
 
 const testCollections = [
@@ -38,6 +38,14 @@ const { dropAllTestCollections, resetOrder, resetProduct, resetOrderProduct, res
 const resetting = ref(false)
 const resetProgress = ref()
 const dropping = ref(false)
+const pendingAction = ref(null)
+
+async function runPendingAction() {
+  const action = pendingAction.value
+  pendingAction.value = null
+  if (action === 'reset') await resetTestData()
+  if (action === 'drop') await dropTestCollections()
+}
 
 async function dropTestCollections() {
   dropping.value = true
@@ -182,7 +190,7 @@ async function resetTestData() {
             label="Reset All"
             color="neutral"
             :loading="resetting"
-            @click="resetTestData"
+            @click="pendingAction = 'reset'"
           />
         </div>
       </UCard>
@@ -218,10 +226,33 @@ async function resetTestData() {
             color="error"
             variant="subtle"
             :loading="dropping"
-            @click="dropTestCollections"
+            @click="pendingAction = 'drop'"
           />
         </div>
       </UCard>
     </div>
+
+    <UModal
+      :open="pendingAction !== null"
+      :title="pendingAction === 'drop' ? 'Drop all test collections?' : 'Reset all test data?'"
+      :description="pendingAction === 'drop'
+        ? 'This permanently deletes all 7 test collections and buckets.'
+        : 'This drops and recreates all 7 test collections and buckets. Existing documents are replaced.'"
+      @update:open="open => { if (!open) pendingAction = null }"
+    >
+      <template #footer>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="pendingAction = null"
+        />
+        <UButton
+          :label="pendingAction === 'drop' ? 'Drop all' : 'Reset all'"
+          :color="pendingAction === 'drop' ? 'error' : 'primary'"
+          @click="runPendingAction"
+        />
+      </template>
+    </UModal>
   </div>
 </template>

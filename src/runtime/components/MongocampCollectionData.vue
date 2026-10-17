@@ -357,8 +357,11 @@ function makeCell(key: string, type: string) {
   }
 }
 
+const loadError = ref<unknown>(null)
+
 async function fetchDocuments() {
   loading.value = true
+  loadError.value = null
   try {
     const res = await documentApi.listDocumentsRaw({
       collectionName: props.collectionName,
@@ -387,6 +390,11 @@ async function fetchDocuments() {
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
       columns.value.push(makeActionsColumn())
     }
+  }
+  catch (e: unknown) {
+    loadError.value = e
+    documents.value = []
+    total.value = 0
   }
   finally {
     loading.value = false
@@ -475,13 +483,22 @@ watch(() => props.collectionName, init, { immediate: true })
         />
       </div>
     </div>
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchDocuments"
+    />
+
     <UTable
       v-model:sorting="sorting"
       :sorting-options="{ manualSorting: true }"
       :data="documents"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.documents')" />
+      </template>
+    </UTable>
 
     <UModal
       v-model:open="detailOpen"

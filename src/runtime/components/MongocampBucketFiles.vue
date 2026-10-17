@@ -267,8 +267,11 @@ watch(sorting, () => {
   fetchFiles()
 })
 
+const loadError = ref<unknown>(null)
+
 async function fetchFiles() {
   loading.value = true
+  loadError.value = null
   try {
     const result = await listFiles(props.bucketName, {
       rowsPerPage: pagination.value.pageSize,
@@ -278,6 +281,11 @@ async function fetchFiles() {
     })
     total.value = result.total
     files.value = result.files
+  }
+  catch (e: unknown) {
+    loadError.value = e
+    files.value = []
+    total.value = 0
   }
   finally {
     loading.value = false
@@ -347,13 +355,22 @@ watch(() => props.bucketName, init, { immediate: true })
         />
       </div>
     </div>
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchFiles"
+    />
+
     <UTable
       v-model:sorting="sorting"
       :sorting-options="{ manualSorting: true }"
       :data="files"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.files')" />
+      </template>
+    </UTable>
 
     <UModal
       v-model:open="detailOpen"

@@ -275,7 +275,10 @@
       "roles": "No roles found",
       "collections": "No collections found",
       "jobs": "No jobs found",
-      "databases": "No databases found"
+      "databases": "No databases found",
+      "grants": "No grants yet",
+      "files": "No files found",
+      "documents": "No documents found"
     }
   }
 }

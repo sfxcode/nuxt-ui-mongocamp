@@ -32,6 +32,7 @@ async function fetchJobs() {
   }
   catch (e: unknown) {
     loadError.value = e
+    jobs.value = []
   }
   finally {
     loading.value = false

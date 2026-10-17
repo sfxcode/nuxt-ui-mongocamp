@@ -275,7 +275,10 @@
       "roles": "Keine Rollen gefunden",
       "collections": "Keine Collections gefunden",
       "jobs": "Keine Jobs gefunden",
-      "databases": "Keine Datenbanken gefunden"
+      "databases": "Keine Datenbanken gefunden",
+      "grants": "Noch keine Berechtigungen",
+      "files": "Keine Dateien gefunden",
+      "documents": "Keine Dokumente gefunden"
     }
   }
 }

@@ -60,6 +60,7 @@ async function fetchRoles() {
   }
   catch (e: unknown) {
     loadError.value = e
+    roles.value = []
   }
   finally {
     loading.value = false

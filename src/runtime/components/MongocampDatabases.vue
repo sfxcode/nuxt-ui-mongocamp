@@ -39,6 +39,7 @@ async function fetchDatabases() {
   }
   catch (e) {
     loadError.value = e
+    databases.value = []
   }
   finally {
     loading.value = false
