@@ -90,10 +90,16 @@ const editUserSchema = reactive([
   },
 ])
 
+const loadError = ref<unknown>(null)
+
 async function fetchUsers() {
   loading.value = true
+  loadError.value = null
   try {
     users.value = await listUsers(filterText.value)
+  }
+  catch (e: unknown) {
+    loadError.value = e
   }
   finally {
     loading.value = false
@@ -277,12 +283,21 @@ fetchRoles()
       </div>
     </div>
 
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchUsers"
+    />
+
     <UTable
       v-model:sorting="sorting"
       :data="users"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.users')" />
+      </template>
+    </UTable>
 
     <!-- Add User Modal -->
     <UModal

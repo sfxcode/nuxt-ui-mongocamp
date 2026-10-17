@@ -83,6 +83,8 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | `MongocampAccount` | Current-user account page: profile, password change, API key |
 | `MongocampDatabases` | Read-only table of all databases (size, collection count) |
 | `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
+| `MongocampErrorAlert` | Failed-load banner (retry, or log-in-again on 401); used by every list component |
+| `MongocampEmptyState` | Icon + message for `UTable`'s `#empty` slot |
 
 UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.
 
@@ -99,6 +101,7 @@ Kept in sync with `docs/composables/index.md` (the canonical, per-composable-doc
 - **`useMongocampJobs`** — list/register/update/execute/delete scheduled background jobs
 - **`useMongocampAccount`** — account self-service: profile, password change, API key regeneration
 - **`useMongocampSystem`** — read-only database viewer (list, per-database info, collections)
+- **`useMongocampError`** — `describeError(e)` maps API errors (`FetchError` → network, 401, 403, other) to i18n messages for `MongocampErrorAlert`
 - **`useMongocampQuery`** — high-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …)
 - **`useMongocampQueryBuilder`** — low-level Lucene syntax builder used by `useMongocampQuery`
 - **`useMongocampExtendedJson`** — converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to

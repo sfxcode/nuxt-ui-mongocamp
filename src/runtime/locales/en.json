@@ -260,6 +260,22 @@
       "bucketDeletedTitle": "Bucket deleted",
       "bucketDeletedDescription": "Bucket \"{bucketName}\" was deleted.",
       "deleteFailedBucketFallback": "Could not delete bucket \"{bucketName}\"."
+    },
+    "errors": {
+      "loadFailedTitle": "Failed to load data",
+      "network": "The server could not be reached, or your session has expired. Retry, or log in again.",
+      "unauthorized": "Your session has expired. Please log in again.",
+      "forbidden": "You do not have permission to view this.",
+      "generic": "Something went wrong.",
+      "loginAgain": "Log in again"
+    },
+    "empty": {
+      "title": "No data",
+      "users": "No users found",
+      "roles": "No roles found",
+      "collections": "No collections found",
+      "jobs": "No jobs found",
+      "databases": "No databases found"
     }
   }
 }

@@ -24,8 +24,11 @@ const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, de
 const collections = ref<CollectionRow[]>([])
 const loading = ref(false)
 
+const loadError = ref<unknown>(null)
+
 async function fetchCollections() {
   loading.value = true
+  loadError.value = null
   try {
     const names = await collectionApi.listCollections()
     const rows = await Promise.all(
@@ -42,6 +45,9 @@ async function fetchCollections() {
         }),
     )
     collections.value = rows
+  }
+  catch (e: unknown) {
+    loadError.value = e
   }
   finally {
     loading.value = false
@@ -217,13 +223,22 @@ fetchCollections()
       </div>
     </div>
 
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchCollections"
+    />
+
     <UTable
       v-model:global-filter="globalFilter"
       v-model:sorting="sorting"
       :data="collections"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.collections')" />
+      </template>
+    </UTable>
 
     <UModal
       v-model:open="isClearBucketModalOpen"

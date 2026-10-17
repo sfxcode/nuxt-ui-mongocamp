@@ -79,6 +79,21 @@ describe('MongocampRoles', () => {
     expect(component.text()).toContain('support')
   })
 
+  it('shows an error alert (not a bare empty table) when loading fails, and retry refetches', async () => {
+    mockListRoles.mockRejectedValueOnce(Object.assign(new Error('The request failed'), { name: 'FetchError' }))
+
+    const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+    await flushPromises()
+
+    expect(component.text()).toContain('Failed to load data')
+    expect(component.text()).not.toContain('The request failed')
+
+    await component.findAll('button').find(b => b.text() === 'Retry')?.trigger('click')
+    await flushPromises()
+    expect(mockListRoles).toHaveBeenCalledTimes(2)
+    expect(component.text()).not.toContain('Failed to load data')
+  })
+
   it('adds a role: submitting the add form calls addRole and refetches', async () => {
     const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
 

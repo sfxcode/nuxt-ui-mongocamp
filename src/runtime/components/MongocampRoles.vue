@@ -50,10 +50,16 @@ const editRoleSchema = reactive([
   },
 ])
 
+const loadError = ref<unknown>(null)
+
 async function fetchRoles() {
   loading.value = true
+  loadError.value = null
   try {
     roles.value = await listRoles(filterText.value)
+  }
+  catch (e: unknown) {
+    loadError.value = e
   }
   finally {
     loading.value = false
@@ -225,12 +231,21 @@ fetchRoles()
       </div>
     </div>
 
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchRoles"
+    />
+
     <UTable
       v-model:sorting="sorting"
       :data="roles"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.roles')" />
+      </template>
+    </UTable>
 
     <!-- Add Role Modal -->
     <UModal

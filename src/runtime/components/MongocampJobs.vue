@@ -22,10 +22,16 @@ function jobKey(group: string, name: string): string {
   return `${group}/${name}`
 }
 
+const loadError = ref<unknown>(null)
+
 async function fetchJobs() {
   loading.value = true
+  loadError.value = null
   try {
     jobs.value = await listJobs()
+  }
+  catch (e: unknown) {
+    loadError.value = e
   }
   finally {
     loading.value = false
@@ -309,12 +315,21 @@ fetchJobs()
       </div>
     </div>
 
+    <MongocampErrorAlert
+      :error="loadError"
+      @retry="fetchJobs"
+    />
+
     <UTable
       v-model:sorting="sorting"
       :data="jobs"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.jobs')" />
+      </template>
+    </UTable>
 
     <!-- Add Job Modal -->
     <UModal

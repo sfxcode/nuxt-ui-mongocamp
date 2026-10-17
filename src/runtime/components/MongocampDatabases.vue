@@ -17,11 +17,11 @@ const { getDatabaseInfos, listCollectionsByDatabase } = useMongocampSystem()
 const databases = ref<DatabaseRow[]>([])
 const loading = ref(false)
 const sorting = ref<{ id: string, desc: boolean }[]>([])
-const errorMessage = ref('')
+const loadError = ref<unknown>(null)
 
 async function fetchDatabases() {
   loading.value = true
-  errorMessage.value = ''
+  loadError.value = null
   try {
     const infos = await getDatabaseInfos()
     const rows = await Promise.all(
@@ -38,7 +38,7 @@ async function fetchDatabases() {
     databases.value = rows
   }
   catch (e) {
-    errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.databases.errorLoad')
+    loadError.value = e
   }
   finally {
     loading.value = false
@@ -109,30 +109,21 @@ fetchDatabases()
       </UTooltip>
     </div>
 
-    <UAlert
-      v-if="errorMessage"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-circle-alert"
+    <MongocampErrorAlert
+      :error="loadError"
       :title="t('nuxtUiMongocamp.databases.loadFailedTitle')"
-      :description="errorMessage"
-    >
-      <template #actions>
-        <UButton
-          :label="t('nuxtUiMongocamp.common.retry')"
-          color="error"
-          variant="subtle"
-          icon="i-lucide-refresh-cw"
-          @click="fetchDatabases"
-        />
-      </template>
-    </UAlert>
+      @retry="fetchDatabases"
+    />
 
     <UTable
       v-model:sorting="sorting"
       :data="databases"
       :columns="columns"
       :loading="loading"
-    />
+    >
+      <template #empty>
+        <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.databases')" />
+      </template>
+    </UTable>
   </div>
 </template>

@@ -12,10 +12,16 @@ const UBadge = resolveComponent('UBadge')
 const profile = ref<UserProfile | null>(null)
 const loading = ref(false)
 
+const loadError = ref<unknown>(null)
+
 async function loadProfile() {
   loading.value = true
+  loadError.value = null
   try {
     profile.value = await fetchProfile()
+  }
+  catch (e: unknown) {
+    loadError.value = e
   }
   finally {
     loading.value = false
@@ -75,6 +81,12 @@ loadProfile()
     <USkeleton
       v-if="loading"
       class="h-32 w-full"
+    />
+
+    <MongocampErrorAlert
+      v-else-if="loadError"
+      :error="loadError"
+      @retry="loadProfile"
     />
 
     <UCard v-else-if="profile">

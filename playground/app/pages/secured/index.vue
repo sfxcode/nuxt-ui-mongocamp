@@ -4,7 +4,7 @@ const { listUsers, listRoles, listCollections } = useMongocampAdmin()
 const toast = useToast()
 const { isAdmin } = useMongocampRoles()
 
-const { data: stats, refresh, status } = useAsyncData('dashboard-stats', async () => {
+const { data: stats, refresh, status, error } = useAsyncData('dashboard-stats', async () => {
   const [users, roles, collections] = await Promise.all([
     listUsers(),
     listRoles(),
@@ -117,6 +117,11 @@ async function resetTestData() {
         @click="refresh"
       />
     </div>
+
+    <MongocampErrorAlert
+      :error="error"
+      @retry="refresh"
+    />
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <NuxtLink

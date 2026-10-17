@@ -260,6 +260,22 @@
       "bucketDeletedTitle": "Bucket gelöscht",
       "bucketDeletedDescription": "Bucket \"{bucketName}\" wurde gelöscht.",
       "deleteFailedBucketFallback": "Bucket \"{bucketName}\" konnte nicht gelöscht werden."
+    },
+    "errors": {
+      "loadFailedTitle": "Daten konnten nicht geladen werden",
+      "network": "Der Server ist nicht erreichbar oder deine Sitzung ist abgelaufen. Erneut versuchen oder neu anmelden.",
+      "unauthorized": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+      "forbidden": "Dir fehlt die Berechtigung dafür.",
+      "generic": "Etwas ist schiefgelaufen.",
+      "loginAgain": "Erneut anmelden"
+    },
+    "empty": {
+      "title": "Keine Daten",
+      "users": "Keine Benutzer gefunden",
+      "roles": "Keine Rollen gefunden",
+      "collections": "Keine Collections gefunden",
+      "jobs": "Keine Jobs gefunden",
+      "databases": "Keine Datenbanken gefunden"
     }
   }
 }

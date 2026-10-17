@@ -16,5 +16,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampAccount`](/components/mongocamp-account) | Current-user account page: profile, password change, API key |
 | [`MongocampDatabases`](/components/mongocamp-databases) | Read-only table of all databases (size, collection count) |
 | [`MongocampVersion`](/components/mongocamp-version) | Server name/version badge |
+| [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |
+| [`MongocampEmptyState`](/components/mongocamp-empty-state) | Icon + message for empty tables |
 
 `UTable` columns with custom cells (badges, icon buttons, actions) are built with `h()` + `resolveComponent()` rather than `<template>` slots — see the component source for the pattern if you're building your own tables against the same composables.
