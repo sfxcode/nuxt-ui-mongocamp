@@ -103,6 +103,7 @@ Kept in sync with `docs/composables/index.md` (the canonical, per-composable-doc
 - **`useMongocampJobs`** — list/register/update/execute/delete scheduled background jobs
 - **`useMongocampAccount`** — account self-service: profile, password change, API key regeneration
 - **`useMongocampSystem`** — read-only database viewer (list, per-database info, collections)
+- **`useMongocampFilterBuilder`** — pure `buildFilterQuery(group, fieldTypes)` / `buildCondition`: filter rows (field, operator, value) → one Lucene string; operators depend on field type, incomplete rows are skipped, range bounds only accept numbers/ISO dates (the query helpers don't escape them)
 - **`useMongocampBulkDelete`** — `runBulkDelete(items, remove, concurrency)`: limited-concurrency deletes returning `{ deleted, failed }` per item
 - **`useMongocampError`** — `describeError(e)` maps API errors (`FetchError` → network, 401, 403, other) to i18n messages for `MongocampErrorAlert`
 - **`useMongocampQuery`** — high-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …)
