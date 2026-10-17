@@ -1,6 +1,44 @@
 # Changelog
 
 
+## v1.3.0
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.7...v1.3.0)
+
+### 🚀 Enhancements
+
+- Add MongocampErrorAlert and MongocampEmptyState components for improved error handling and empty state messaging ([f474c8f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f474c8f))
+- **ui:** Wire error/empty states into remaining lists and make playground nav responsive ([e6cb34d](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e6cb34d))
+- **collection-data:** Add page size, column toggle, page export and consistent dates ([44e7c07](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/44e7c07))
+- **i18n:** Re-translate table headers live and show standard index type ([2e1c41e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2e1c41e))
+- **dashboard:** Add MongocampDashboard component and use it in the playground ([c9a9515](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c9a9515))
+- **bulk-delete:** Select and delete multiple users, roles and documents ([45bd247](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/45bd247))
+- **filter-builder:** Add useMongocampFilterBuilder for type-aware Lucene filters ([678f978](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/678f978))
+- **filter-builder:** Add MongocampFilterBuilder component ([f2d6fe2](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f2d6fe2))
+- **collection-data:** Add filter builder panel with chips, verified against a real server ([f15fbc1](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f15fbc1))
+- **collection-data:** Tell a rejected filter apart from a dead server ([2297e24](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2297e24))
+
+### 🩹 Fixes
+
+- **query:** Make exists and open-ended range helpers work on a real MongoCamp server ([b833a0d](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b833a0d))
+- **delete:** Show why a refused single-row delete failed in Users, Roles and Jobs ([b373ab7](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b373ab7))
+- **users:** Disable the row delete button for the signed-in user ([78b701e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/78b701e))
+- **role-grants:** Only change the table after the server confirmed the save ([9506ba6](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/9506ba6))
+- **release:** Update changelogen command to use minor versioning ([0517f77](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/0517f77))
+
+### 📖 Documentation
+
+- Consistency pass for the UI/UX plan; explain the disabled own-user checkbox ([35f7727](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/35f7727))
+- Correct where the login session lives and explain the stale-session state ([e1f0bbc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e1f0bbc))
+
+### 🏡 Chore
+
+- **dependencies:** Update @nuxt/ui, @sfxcode/nuxt-ui-formkit, and other dependencies to latest versions ([e366c9f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e366c9f))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.2.7
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.6...v1.2.7)
