@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { runBulkDelete } from '../src/runtime/composables/useMongocampBulkDelete'
+import { runBulkDelete } from '../src/runtime/utils/bulkDelete'
 
 describe('runBulkDelete', () => {
   it('deletes every item and reports them in input order', async () => {

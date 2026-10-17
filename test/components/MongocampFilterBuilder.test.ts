@@ -3,7 +3,7 @@ import type { VueWrapper } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { USelect } from '#components'
 import MongocampFilterBuilder from '../../src/runtime/components/MongocampFilterBuilder.vue'
-import type { FilterCondition, FilterFieldType, FilterGroup } from '../../src/runtime/composables/useMongocampFilterBuilder'
+import type { FilterCondition, FilterFieldType, FilterGroup } from '../../src/runtime/utils/filterBuilder'
 
 type Wrapper = VueWrapper
 

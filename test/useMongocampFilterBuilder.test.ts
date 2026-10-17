@@ -9,8 +9,8 @@ import {
   operatorsFor,
   toFilterFieldType,
   valueCountFor,
-} from '../src/runtime/composables/useMongocampFilterBuilder'
-import type { FilterCondition, FilterFieldType, FilterGroup, FilterOperator } from '../src/runtime/composables/useMongocampFilterBuilder'
+} from '../src/runtime/utils/filterBuilder'
+import type { FilterCondition, FilterFieldType, FilterGroup, FilterOperator } from '../src/runtime/utils/filterBuilder'
 
 function row(operator: FilterOperator, value?: string, value2?: string, field = 'name'): FilterCondition {
   return { id: `${field}-${operator}`, field, operator, value, value2 }
@@ -21,7 +21,7 @@ describe('operator tables', () => {
     expect(operatorsFor('string')).toContain('contains')
     expect(operatorsFor('number')).toContain('between')
     expect(operatorsFor('number')).not.toContain('contains')
-    expect(operatorsFor('date-time')).toEqual(['gte', 'lte', 'between'])
+    expect(operatorsFor('date-time')).toEqual(['gte', 'lte', 'between', 'isEmpty', 'isNotEmpty'])
     expect(operatorsFor('boolean')).toEqual(['isTrue', 'isFalse'])
     expect(operatorsFor('array')).toEqual([])
     expect(operatorsFor('object')).toEqual([])
@@ -142,8 +142,19 @@ describe('buildCondition: booleans and existence', () => {
     expect(buildCondition(row('isEmpty'), 'string')).toBe('-name:*')
   })
 
-  it('does not offer existence tests for other types, where a real server returned wrong results', () => {
-    for (const type of ['number', 'date-time', 'boolean', 'array', 'object'] as const) {
+  it('writes "has a value" / "has none" for numbers and dates as a closed range over every value', () => {
+    expect(buildCondition(row('isNotEmpty', undefined, undefined, 'age'), 'number'))
+      .toBe('age:[-9223372036854775808 TO 9223372036854775807]')
+    expect(buildCondition(row('isEmpty', undefined, undefined, 'age'), 'number'))
+      .toBe('-age:[-9223372036854775808 TO 9223372036854775807]')
+    expect(buildCondition(row('isNotEmpty', undefined, undefined, 'created'), 'date-time'))
+      .toBe('created:[0001-01-01T00:00:00Z TO 9999-12-31T23:59:59.999Z]')
+    expect(buildCondition(row('isEmpty', undefined, undefined, 'created'), 'date-time'))
+      .toBe('-created:[0001-01-01T00:00:00Z TO 9999-12-31T23:59:59.999Z]')
+  })
+
+  it('offers no existence test for booleans, arrays and objects, where none was verified against a server', () => {
+    for (const type of ['boolean', 'array', 'object'] as const) {
       expect(operatorsFor(type)).not.toContain('isEmpty')
       expect(operatorsFor(type)).not.toContain('isNotEmpty')
       expect(buildCondition(row('isNotEmpty'), type)).toBe('')

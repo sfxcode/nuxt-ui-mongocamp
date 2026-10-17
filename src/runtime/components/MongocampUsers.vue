@@ -5,7 +5,7 @@ import type { Column } from '@tanstack/vue-table'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useMongocampStorage } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
-import { runBulkDelete } from '../composables/useMongocampBulkDelete'
+import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
 
 interface RoleItem {

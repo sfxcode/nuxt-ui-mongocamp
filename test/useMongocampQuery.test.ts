@@ -3,13 +3,41 @@ import { useMongocampQuery } from '../src/runtime/composables/useMongocampQuery'
 
 const h = useMongocampQuery()
 
+// Closed ranges covering every value of a type — what a real MongoCamp 1.5 server accepts for "has a value"
+const NUM = '[-9223372036854775808 TO 9223372036854775807]'
+const DATE = '[0001-01-01T00:00:00Z TO 9999-12-31T23:59:59.999Z]'
+
 describe('exists / notExists / isEmpty / isNotEmpty', () => {
-  it('exists produces _exists_ field query', () => {
-    expect(h.exists('name')).toBe('_exists_:name')
+  it('exists without a type ORs a text wildcard with a full number and a full date range', () => {
+    expect(h.exists('name')).toBe(`(name:* OR name:${NUM} OR name:${DATE})`)
   })
 
-  it('notExists negates exists', () => {
-    expect(h.notExists('name')).toBe('-_exists_:name')
+  it('notExists negates each clause and ANDs them — negating the whole group is ignored by the server', () => {
+    expect(h.notExists('name')).toBe(`((-name:*) AND (-name:${NUM}) AND (-name:${DATE}))`)
+    expect(h.notExists('name')).not.toMatch(/^-\(/)
+  })
+
+  it('a type selects the shortest form that works for it', () => {
+    expect(h.exists('name', 'text')).toBe('name:*')
+    expect(h.exists('age', 'number')).toBe(`age:${NUM}`)
+    expect(h.exists('created', 'date')).toBe(`created:${DATE}`)
+    expect(h.notExists('name', 'text')).toBe('-name:*')
+    expect(h.notExists('age', 'number')).toBe(`-age:${NUM}`)
+    expect(h.notExists('created', 'date')).toBe(`-created:${DATE}`)
+  })
+
+  it('never uses _exists_, which matches nothing on a MongoCamp 1.5 server', () => {
+    expect(h.exists('name')).not.toContain('_exists_')
+    expect(h.notExists('name', 'text')).not.toContain('_exists_')
+  })
+
+  it('escapes the field name', () => {
+    expect(h.exists('first name', 'text')).toBe('first\\ name:*')
+  })
+
+  it('the aliases forward the type too', () => {
+    expect(h.isEmpty('age', 'number')).toBe(h.notExists('age', 'number'))
+    expect(h.isNotEmpty('age', 'number')).toBe(h.exists('age', 'number'))
   })
 
   it('isEmpty is an alias for notExists', () => {
@@ -56,8 +84,29 @@ describe('inRange / notInRange / between', () => {
     expect(h.inRange('age', 20, 30)).toBe('age:[20 TO 30]')
   })
 
-  it('works with string bounds', () => {
-    expect(h.inRange('date', '2024-01-01', '2024-12-31')).toBe('date:[2024-01-01 TO 2024-12-31]')
+  it('works with text bounds', () => {
+    expect(h.inRange('name', 'A', 'M')).toBe('name:[A TO M]')
+  })
+
+  it('widens date-only bounds to the whole UTC day, because the server matches nothing for a bare date', () => {
+    expect(h.inRange('date', '2024-01-01', '2024-12-31')).toBe('date:[2024-01-01T00:00:00Z TO 2024-12-31T23:59:59.999Z]')
+  })
+
+  it('leaves full timestamps exactly as given', () => {
+    expect(h.inRange('date', '2024-01-01T10:00:00Z', '2024-02-01T12:30:00Z')).toBe('date:[2024-01-01T10:00:00Z TO 2024-02-01T12:30:00Z]')
+  })
+
+  it('keeps the digits of numbers given as text, so big ids are not rounded', () => {
+    expect(h.inRange('id', '19185237114620650', '19999999999999999')).toBe('id:[19185237114620650 TO 19999999999999999]')
+  })
+
+  it('escapes anything in a bound that could end the range or start a new clause', () => {
+    expect(h.inRange('x', '5] OR y:[1', 10)).toBe('x:[5\\]\\ OR\\ y:\\[1 TO 10]')
+    expect(h.inRange('x', 'a"b', 'c d')).toBe('x:[a\\"b TO c\\ d]')
+  })
+
+  it('escapes the field name', () => {
+    expect(h.inRange('first name', 1, 2)).toBe('first\\ name:[1 TO 2]')
   })
 
   it('notInRange negates', () => {
@@ -194,20 +243,38 @@ describe('and / or combinators', () => {
 })
 
 describe('open-ended ranges', () => {
-  it('null lower bound uses * (open range)', () => {
-    expect(h.inRange('age', null, 30)).toBe('age:[* TO 30]')
+  // a real MongoCamp 1.5 server rejects `[x TO *]` (the request fails), so open ends are closed with far bounds
+  it('a null number bound is closed with the 64-bit integer limit', () => {
+    expect(h.inRange('age', null, 30)).toBe('age:[-9223372036854775808 TO 30]')
+    expect(h.inRange('age', 20, null)).toBe('age:[20 TO 9223372036854775807]')
   })
 
-  it('null upper bound uses * (open range)', () => {
-    expect(h.inRange('age', 20, null)).toBe('age:[20 TO *]')
+  it('a null date bound is closed with year 0001 / 9999, after widening the given bare date', () => {
+    expect(h.inRange('created', '2024-01-01', null)).toBe('created:[2024-01-01T00:00:00Z TO 9999-12-31T23:59:59.999Z]')
+    expect(h.inRange('created', null, '2024-01-01')).toBe('created:[0001-01-01T00:00:00Z TO 2024-01-01T23:59:59.999Z]')
   })
 
-  it('both bounds null produces full-range wildcard', () => {
-    expect(h.inRange('age', null, null)).toBe('age:[* TO *]')
+  it('never emits * for a number or date, and "*" or "" mean an open end like null', () => {
+    expect(h.inRange('age', '*', 30)).toBe(h.inRange('age', null, 30))
+    expect(h.inRange('age', '', 30)).toBe(h.inRange('age', null, 30))
+    expect(h.inRange('age', 20, null)).not.toContain('*')
   })
 
-  it('notInRange with null lower bound', () => {
-    expect(h.notInRange('price', null, 100)).toBe('-price:[* TO 100]')
+  it('a numeric string bound counts as a number', () => {
+    expect(h.inRange('id', '19185237114620650', null)).toBe('id:[19185237114620650 TO 9223372036854775807]')
+  })
+
+  it('both bounds open means "has a value"', () => {
+    expect(h.inRange('age', null, null)).toBe(h.exists('age'))
+    expect(h.notInRange('age', null, null)).toBe(h.notExists('age'))
+  })
+
+  it('notInRange with an open end', () => {
+    expect(h.notInRange('price', null, 100)).toBe('-price:[-9223372036854775808 TO 100]')
+  })
+
+  it('an open end next to a text bound cannot be expressed and stays *', () => {
+    expect(h.inRange('name', 'A', null)).toBe('name:[A TO *]')
   })
 })
 
@@ -234,7 +301,26 @@ describe('special character escaping', () => {
 
   it('field names with dots pass through unescaped (MongoDB paths)', () => {
     expect(h.equals('user.name', 'Alice')).toBe('user.name:"Alice"')
-    expect(h.exists('meta.created')).toBe('_exists_:meta.created')
+    expect(h.exists('meta.created', 'text')).toBe('meta.created:*')
+  })
+})
+
+describe('field names are escaped by every helper', () => {
+  // a name like "first name" would otherwise split into two tokens and break (or change) the query
+  const name = 'first name'
+  const escaped = 'first\\ name'
+
+  it.each([
+    ['equals', () => h.equals(name, 'x'), `${escaped}:"x"`],
+    ['notEquals', () => h.notEquals(name, 'x'), `-${escaped}:"x"`],
+    ['like', () => h.like(name, 'x'), `${escaped}:*x*`],
+    ['notLike', () => h.notLike(name, 'x'), `-${escaped}:*x*`],
+    ['startsWith', () => h.startsWith(name, 'x'), `${escaped}:x*`],
+    ['endsWith', () => h.endsWith(name, 'x'), `${escaped}:*x`],
+    ['inClause', () => h.inClause(name, ['a', 'b']), `${escaped}:("a" OR "b")`],
+    ['containsAll', () => h.containsAll(name, ['a', 'b']), `(${escaped}:"a" AND ${escaped}:"b")`],
+  ])('%s', (_helper, build, expected) => {
+    expect(build()).toBe(expected)
   })
 })
 
@@ -304,7 +390,7 @@ describe('combined query examples', () => {
 
   it('exists guard combined with equals', () => {
     const result = h.and(h.isNotEmpty('email'), h.equals('role', 'admin'))
-    expect(result).toBe('(_exists_:email AND role:"admin")')
+    expect(result).toBe(`((email:* OR email:${NUM} OR email:${DATE}) AND role:"admin")`)
   })
 
   it('containsAll tags AND inClause status', () => {
@@ -330,6 +416,9 @@ describe('combined query examples', () => {
       h.isNotEmpty('title'),
       h.inRange('createdAt', '2024-01-01', null),
     )
-    expect(result).toBe('((-_exists_:deletedAt) AND _exists_:title AND createdAt:[2024-01-01 TO *])')
+    expect(result).toBe(
+      `(((-deletedAt:*) AND (-deletedAt:${NUM}) AND (-deletedAt:${DATE})) AND (title:* OR title:${NUM} OR title:${DATE})`
+      + ' AND createdAt:[2024-01-01T00:00:00Z TO 9999-12-31T23:59:59.999Z])',
+    )
   })
 })

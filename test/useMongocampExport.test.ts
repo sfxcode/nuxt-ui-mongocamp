@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { rowsToCsv } from '../src/runtime/composables/useMongocampExport'
+import { rowsToCsv } from '../src/runtime/utils/exportRows'
 
 describe('rowsToCsv', () => {
   it('writes a header row and one line per row, in the requested key order', () => {

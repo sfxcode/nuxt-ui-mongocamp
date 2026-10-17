@@ -5,7 +5,7 @@ import type { Column } from '@tanstack/vue-table'
 import type { Grant, Role } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
-import { runBulkDelete } from '../composables/useMongocampBulkDelete'
+import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
 
 const props = defineProps<{

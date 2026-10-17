@@ -7,8 +7,8 @@ import {
   operatorLabelKey,
   operatorsFor,
   valueCountFor,
-} from '../composables/useMongocampFilterBuilder'
-import type { FilterCondition, FilterFieldType, FilterGroup, FilterOperator } from '../composables/useMongocampFilterBuilder'
+} from '../utils/filterBuilder'
+import type { FilterCondition, FilterFieldType, FilterGroup, FilterOperator } from '../utils/filterBuilder'
 
 const props = defineProps<{
   // the fields a condition can target, with the type that decides which operators it offers
