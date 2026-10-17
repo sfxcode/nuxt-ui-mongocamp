@@ -91,7 +91,7 @@ async function copySchemaAsTs() {
   toast.add({ title: t('nuxtUiMongocamp.collectionInfos.copiedTitle'), description: t('nuxtUiMongocamp.collectionInfos.copiedDescription'), color: 'success' })
 }
 
-const schemaTableColumns: TableColumn<SchemaRow>[] = [
+const schemaTableColumns = computed<TableColumn<SchemaRow>[]>(() => [
   {
     accessorKey: 'field',
     header: t('nuxtUiMongocamp.collectionInfos.columnField'),
@@ -114,7 +114,7 @@ const schemaTableColumns: TableColumn<SchemaRow>[] = [
         ? h(UIcon, { name: 'i-lucide-check', class: 'size-4 text-success' })
         : h('span', { class: 'text-dimmed' }, '—'),
   },
-]
+])
 
 interface IndexRow {
   name: string
@@ -237,7 +237,7 @@ const INDEX_FLAG_BADGES: Array<{ key: 'unique' | 'text' | 'expire', label: strin
   { key: 'expire', label: 'expire', color: 'secondary' },
 ]
 
-const indexTableColumns: TableColumn<IndexRow>[] = [
+const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
   {
     accessorKey: 'name',
     header: t('nuxtUiMongocamp.collectionInfos.columnIndex'),
@@ -250,10 +250,16 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
   {
     id: 'flags',
     header: t('nuxtUiMongocamp.collectionInfos.columnType'),
-    cell: ({ row }) =>
-      h('div', { class: 'flex gap-1' }, INDEX_FLAG_BADGES
+    cell: ({ row }) => {
+      const badges = INDEX_FLAG_BADGES
         .filter(flag => row.original[flag.key])
-        .map(flag => h(UBadge, { label: flag.label, color: flag.color, variant: 'subtle', size: 'sm' }))),
+        .map(flag => h(UBadge, { label: flag.label, color: flag.color, variant: 'subtle', size: 'sm' }))
+      // a plain index has none of the special flags — say so instead of leaving the cell blank
+      if (badges.length === 0) {
+        badges.push(h(UBadge, { label: t('nuxtUiMongocamp.collectionInfos.typeStandard'), color: 'neutral', variant: 'subtle', size: 'sm' }))
+      }
+      return h('div', { class: 'flex gap-1' }, badges)
+    },
   },
   {
     accessorKey: 'sizeKb',
@@ -276,7 +282,7 @@ const indexTableColumns: TableColumn<IndexRow>[] = [
             })),
           ]),
   },
-]
+])
 </script>
 
 <template>

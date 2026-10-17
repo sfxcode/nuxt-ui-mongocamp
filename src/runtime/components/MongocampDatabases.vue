@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { h, ref, resolveComponent } from 'vue'
+import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import { useI18n, useMongocampSystem } from '#imports'
@@ -65,7 +65,7 @@ function sortHeader(column: Column<DatabaseRow>, label: string) {
   })
 }
 
-const columns: TableColumn<DatabaseRow>[] = [
+const columns = computed<TableColumn<DatabaseRow>[]>(() => [
   {
     accessorKey: 'name',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.databases.columnDatabase')),
@@ -87,7 +87,7 @@ const columns: TableColumn<DatabaseRow>[] = [
         ? h(UBadge, { label: t('nuxtUiMongocamp.databases.emptyBadge'), color: 'neutral', variant: 'subtle' })
         : h('span', { class: 'text-dimmed' }, '—'),
   },
-]
+])
 
 fetchDatabases()
 </script>

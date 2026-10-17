@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { h, reactive, ref, resolveComponent } from 'vue'
+import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { Grant, Role } from '@sfxcode/nuxt-mongocamp-server'
@@ -138,7 +138,7 @@ function sortHeader(column: Column<Role>, label: string) {
   })
 }
 
-const columns: TableColumn<Role>[] = [
+const columns = computed<TableColumn<Role>[]>(() => [
   {
     accessorKey: 'name',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.roles.columnRole')),
@@ -194,7 +194,7 @@ const columns: TableColumn<Role>[] = [
         })),
       ]),
   },
-]
+])
 
 fetchRoles()
 </script>

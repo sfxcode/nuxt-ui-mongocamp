@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { h, reactive, ref, resolveComponent } from 'vue'
+import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
@@ -229,7 +229,7 @@ function sortHeader(column: Column<JobInformation>, label: string) {
   })
 }
 
-const columns: TableColumn<JobInformation>[] = [
+const columns = computed<TableColumn<JobInformation>[]>(() => [
   {
     accessorKey: 'name',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.jobs.columnName')),
@@ -286,7 +286,7 @@ const columns: TableColumn<JobInformation>[] = [
       ])
     },
   },
-]
+])
 
 fetchJobs()
 </script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, reactive, ref, resolveComponent, watch } from 'vue'
+import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { FileInformation } from '@sfxcode/nuxt-mongocamp-server'
@@ -217,7 +217,7 @@ function makeActionsColumn(): TableColumn<FileInformation> {
   }
 }
 
-const columns = ref<TableColumn<FileInformation>[]>([
+const columns = computed<TableColumn<FileInformation>[]>(() => [
   {
     accessorKey: 'filename',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.bucketFiles.columnFilename')),

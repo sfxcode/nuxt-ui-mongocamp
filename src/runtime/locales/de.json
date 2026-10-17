@@ -127,7 +127,8 @@
       "deleteIndexTitle": "Index löschen",
       "confirmDeleteIndex": "Möchten Sie den Index \"{indexName}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "errorCreateIndex": "Fehler beim Erstellen des Index",
-      "errorDeleteIndex": "Fehler beim Löschen des Index"
+      "errorDeleteIndex": "Fehler beim Löschen des Index",
+      "typeStandard": "Standard"
     },
     "collectionData": {
       "filterPlaceholder": "Zeilen filtern...",

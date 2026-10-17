@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { h, reactive, ref, resolveComponent } from 'vue'
+import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Grant } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n } from '#imports'
@@ -162,7 +162,7 @@ function withTooltip(text: string, node: ReturnType<typeof h>) {
   return h(UTooltip, { text }, { default: () => node })
 }
 
-const columns: TableColumn<Grant>[] = [
+const columns = computed<TableColumn<Grant>[]>(() => [
   {
     accessorKey: 'name',
     header: t('nuxtUiMongocamp.roleGrants.columnCollection'),
@@ -230,7 +230,7 @@ const columns: TableColumn<Grant>[] = [
         })),
       ]),
   },
-]
+])
 
 fetchRole()
 fetchCollections()

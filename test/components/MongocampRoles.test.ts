@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue'
 import { DOMWrapper, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { UApp } from '#components'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { useNuxtApp } from '#app'
 import MongocampRoles from '../../src/runtime/components/MongocampRoles.vue'
 
 // UModal's close transition is timer-based, so a stale modal from a previous test can still
@@ -92,6 +93,23 @@ describe('MongocampRoles', () => {
     await flushPromises()
     expect(mockListRoles).toHaveBeenCalledTimes(2)
     expect(component.text()).not.toContain('Failed to load data')
+  })
+
+  it('re-translates column headers when the locale changes, without remounting', async () => {
+    mockListRoles.mockResolvedValueOnce([{ name: 'admin', isAdmin: true, collectionGrants: [] }])
+    const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+    await flushPromises()
+    expect(component.findAll('th').map(th => th.text())).toContain('Grants')
+
+    const { $i18n } = useNuxtApp()
+    await $i18n.setLocale('de')
+    await flushPromises()
+    try {
+      expect(component.findAll('th').map(th => th.text())).toContain('Berechtigungen')
+    }
+    finally {
+      await $i18n.setLocale('en')
+    }
   })
 
   it('adds a role: submitting the add form calls addRole and refetches', async () => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, resolveComponent } from 'vue'
+import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import { useI18n, useMongocampClientApi, useMongocampBucket } from '#imports'
@@ -112,7 +112,7 @@ function sortHeader<T>(column: Column<T>, label: string) {
   })
 }
 
-const columns: TableColumn<CollectionRow>[] = [
+const columns = computed<TableColumn<CollectionRow>[]>(() => [
   {
     accessorKey: 'name',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.collections.columnCollection')),
@@ -192,7 +192,7 @@ const columns: TableColumn<CollectionRow>[] = [
       return h('div', { class: 'flex gap-1 justify-end' }, buttons)
     },
   },
-]
+])
 
 fetchCollections()
 </script>

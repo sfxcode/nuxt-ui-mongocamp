@@ -22,6 +22,11 @@ export default defineNuxtConfig({
       ],
     },
   },
+  // Locale switching (AppHeader) must not add a /de prefix, or the /secured/** route guards below
+  // would stop matching — the module registers its own en/de messages via i18n:registerModule
+  i18n: {
+    strategy: 'no_prefix',
+  },
   // Configured directly via the mongocamp module's own config key
   mongocamp: {
     url: process.env.MONGOCAMP_URL,

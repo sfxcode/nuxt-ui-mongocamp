@@ -127,7 +127,8 @@
       "deleteIndexTitle": "Delete Index",
       "confirmDeleteIndex": "Are you sure you want to delete the index \"{indexName}\"? This action cannot be undone.",
       "errorCreateIndex": "Error creating index",
-      "errorDeleteIndex": "Error deleting index"
+      "errorDeleteIndex": "Error deleting index",
+      "typeStandard": "standard"
     },
     "collectionData": {
       "filterPlaceholder": "Filter rows...",
