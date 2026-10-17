@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { DOMWrapper, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { UApp } from '#components'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import MongocampUsers from '../../src/runtime/components/MongocampUsers.vue'
 
 // UModal's close transition is timer-based, so a stale modal from a previous test can still
@@ -68,6 +68,9 @@ vi.mock('../../src/runtime/composables/useMongocampAdmin', () => ({
   }),
 }))
 
+// the signed-in user — bulk delete must not let them select their own row
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com' } } }))
+
 beforeEach(() => {
   vi.clearAllMocks()
   mockListUsers.mockResolvedValue([])
@@ -87,6 +90,92 @@ describe('MongocampUsers', () => {
     expect(mockListRoles).toHaveBeenCalledWith()
     expect(component.text()).toContain('alice@example.com')
     expect(component.text()).toContain('bob@example.com')
+  })
+
+  describe('bulk delete', () => {
+    const users = [
+      { user: 'alice@example.com', isAdmin: true, roles: [] },
+      { user: 'bob@example.com', isAdmin: false, roles: [] },
+      { user: 'carol@example.com', isAdmin: false, roles: [] },
+    ]
+
+    async function selectBobAndCarol() {
+      mockListUsers.mockResolvedValue(users)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+      const boxes = component.findAll('[aria-label="Select row"]')
+      await boxes[1]!.trigger('click')
+      await boxes[2]!.trigger('click')
+      return component
+    }
+
+    it('does not let the signed-in user select their own row', async () => {
+      mockListUsers.mockResolvedValue(users)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+
+      const boxes = component.findAll('[aria-label="Select row"]')
+      expect(boxes[0]!.attributes('disabled')).toBeDefined()
+      expect(boxes[1]!.attributes('disabled')).toBeUndefined()
+    })
+
+    it('select-all skips the signed-in user too, so a bulk delete can never include them', async () => {
+      mockListUsers.mockResolvedValue(users)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+
+      await component.find('[aria-label="Select all rows on this page"]').trigger('click')
+      expect(component.text()).toContain('2 selected')
+
+      await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteUser.mock.calls.map(c => c[0]).sort()).toEqual(['bob@example.com', 'carol@example.com'])
+    })
+
+    it('shows how many rows are selected and deletes exactly those after confirming, then reloads', async () => {
+      const component = await selectBobAndCarol()
+      expect(component.text()).toContain('2 selected')
+
+      await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+      await wait()
+      expect(mockDeleteUser).not.toHaveBeenCalled() // nothing is deleted before confirming
+      expect(modal().text()).toContain('bob@example.com')
+
+      await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteUser.mock.calls.map(c => c[0]).sort()).toEqual(['bob@example.com', 'carol@example.com'])
+      expect(mockListUsers).toHaveBeenCalledTimes(2)
+      expect(component.text()).not.toContain('selected')
+    })
+
+    it('on a partial failure keeps the failed user selected and says what went wrong', async () => {
+      mockDeleteUser.mockImplementation(async (id: string) => {
+        if (id === 'carol@example.com') throw new Error('forbidden')
+      })
+      const component = await selectBobAndCarol()
+
+      await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+      await flushPromises()
+
+      expect(modal().text()).toContain('1 of 2 could not be deleted: forbidden')
+      expect(component.text()).toContain('1 selected')
+    })
+
+    it('drops the selection when the list is reloaded, so hidden rows can never be deleted', async () => {
+      const component = await selectBobAndCarol()
+      expect(component.text()).toContain('2 selected')
+
+      await component.find('[aria-label="Refresh"]').trigger('click')
+      await flushPromises()
+
+      expect(component.text()).not.toContain('selected')
+    })
   })
 
   it('adds a user: fills the form, transfers a role across, and submits', async () => {

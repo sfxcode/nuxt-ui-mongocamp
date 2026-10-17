@@ -112,6 +112,53 @@ describe('MongocampRoles', () => {
     }
   })
 
+  describe('bulk delete', () => {
+    async function selectSupportAndSales() {
+      mockListRoles.mockResolvedValue([
+        { name: 'admin', isAdmin: true, collectionGrants: [] },
+        { name: 'support', isAdmin: false, collectionGrants: [] },
+        { name: 'sales', isAdmin: false, collectionGrants: [] },
+      ])
+      const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+      await flushPromises()
+      const boxes = component.findAll('[aria-label="Select row"]')
+      await boxes[1]!.trigger('click')
+      await boxes[2]!.trigger('click')
+      return component
+    }
+
+    it('deletes exactly the selected roles after confirming, then reloads', async () => {
+      const component = await selectSupportAndSales()
+      expect(component.text()).toContain('2 selected')
+
+      await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+      await wait()
+      expect(mockDeleteRole).not.toHaveBeenCalled()
+
+      await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteRole.mock.calls.map(c => c[0]).sort()).toEqual(['sales', 'support'])
+      expect(mockListRoles).toHaveBeenCalledTimes(2)
+      expect(component.text()).not.toContain('selected')
+    })
+
+    it('on a partial failure keeps the failed role selected and says what went wrong', async () => {
+      mockDeleteRole.mockImplementation(async (name: string) => {
+        if (name === 'sales') throw new Error('role is in use')
+      })
+      const component = await selectSupportAndSales()
+
+      await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+      await flushPromises()
+
+      expect(modal().text()).toContain('1 of 2 could not be deleted: role is in use')
+      expect(component.text()).toContain('1 selected')
+    })
+  })
+
   it('adds a role: submitting the add form calls addRole and refetches', async () => {
     const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
 

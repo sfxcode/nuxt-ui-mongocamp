@@ -83,6 +83,7 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | `MongocampAccount` | Current-user account page: profile, password change, API key |
 | `MongocampDatabases` | Read-only table of all databases (size, collection count) |
 | `MongocampVersion` | Badge showing live server name/version from the injected `$mongocampVersion` |
+| `MongocampBulkDelete` | Selection bar + confirm modal for bulk delete; Users/Roles/CollectionData use it with `createSelectColumn` (`src/runtime/utils/`) and `runBulkDelete`. Selection is cleared on every reload; the signed-in user and GridFS bucket collections are never selectable |
 | `MongocampDashboard` | Admin landing page: linked collection/user/role counts + server version; default slot for app-specific content; exposes `refresh()` |
 | `MongocampErrorAlert` | Failed-load banner (retry, or log-in-again on 401); used by every list component |
 | `MongocampEmptyState` | Icon + message for `UTable`'s `#empty` slot |
@@ -102,6 +103,7 @@ Kept in sync with `docs/composables/index.md` (the canonical, per-composable-doc
 - **`useMongocampJobs`** — list/register/update/execute/delete scheduled background jobs
 - **`useMongocampAccount`** — account self-service: profile, password change, API key regeneration
 - **`useMongocampSystem`** — read-only database viewer (list, per-database info, collections)
+- **`useMongocampBulkDelete`** — `runBulkDelete(items, remove, concurrency)`: limited-concurrency deletes returning `{ deleted, failed }` per item
 - **`useMongocampError`** — `describeError(e)` maps API errors (`FetchError` → network, 401, 403, other) to i18n messages for `MongocampErrorAlert`
 - **`useMongocampQuery`** — high-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …)
 - **`useMongocampQueryBuilder`** — low-level Lucene syntax builder used by `useMongocampQuery`

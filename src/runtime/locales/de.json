@@ -292,6 +292,19 @@
       "collections": "Collections",
       "users": "Benutzer",
       "roles": "Rollen"
+    },
+    "bulk": {
+      "selectedCount": "{count} ausgewählt",
+      "deleteSelected": "Auswahl löschen",
+      "clearSelection": "Auswahl aufheben",
+      "deleteTitle": "{count} ausgewählten Eintrag löschen? | {count} ausgewählte Einträge löschen?",
+      "deleteDescription": "Die ausgewählten Einträge werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "moreItems": "…und {count} weitere",
+      "confirmDelete": "{count} löschen",
+      "selectAll": "Alle Zeilen dieser Seite auswählen",
+      "selectRow": "Zeile auswählen",
+      "partialFailure": "{failed} von {total} konnten nicht gelöscht werden: {reason}",
+      "cannotSelectSelf": "Du kannst dein eigenes Konto nicht löschen"
     }
   }
 }

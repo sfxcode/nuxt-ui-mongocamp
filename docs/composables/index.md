@@ -13,6 +13,7 @@ All composables are auto-imported.
 | [`useMongocampJobs`](/composables/use-mongocamp-jobs) | List/register/update/execute/delete scheduled background jobs |
 | [`useMongocampAccount`](/composables/use-mongocamp-account) | Account self-service: profile, password change, API key regeneration |
 | [`useMongocampSystem`](/composables/use-mongocamp-system) | Read-only database viewer (list, per-database info, collections) |
+| [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) | `runBulkDelete`: delete many items with limited concurrency and a per-item failure report |
 | [`useMongocampError`](/composables/use-mongocamp-error) | Maps API errors (network / 401 / 403 / other) to readable messages |
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |

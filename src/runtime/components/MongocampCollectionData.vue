@@ -2,11 +2,13 @@
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampError } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { isIsoDateTimeString, unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
 import { downloadTextFile, rowsToCsv } from '../composables/useMongocampExport'
+import { runBulkDelete } from '../composables/useMongocampBulkDelete'
+import { createSelectColumn } from '../utils/createSelectColumn'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 
@@ -38,6 +40,7 @@ async function handleFileSelected(event: Event) {
 
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
+const UCheckbox = resolveComponent('UCheckbox')
 
 function withTooltip(text: string, node: ReturnType<typeof h>) {
   return h(UTooltip, { text }, { default: () => node })
@@ -368,9 +371,39 @@ function makeCell(key: string, type: string) {
 
 const loadError = ref<unknown>(null)
 
+const { describeError } = useMongocampError()
+const rowSelection = ref<Record<string, boolean>>({})
+const selectedDocIds = computed(() => Object.keys(rowSelection.value).filter(id => rowSelection.value[id]))
+const bulkDeleting = ref(false)
+const bulkError = ref('')
+
+function rowId(row: Row, index: number): string {
+  return getDocId(row) ?? String(index)
+}
+
+async function handleBulkDelete() {
+  bulkDeleting.value = true
+  bulkError.value = ''
+  const ids = [...selectedDocIds.value]
+  try {
+    const { failed } = await runBulkDelete(ids, documentId => documentApi._delete({ collectionName: props.collectionName, documentId }))
+    await fetchDocuments()
+    if (failed.length > 0) {
+      // keep only what is still there selected, and say why
+      rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
+      bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: ids.length, reason: describeError(failed[0]!.error).message })
+    }
+  }
+  finally {
+    bulkDeleting.value = false
+  }
+}
+
 async function fetchDocuments() {
   loading.value = true
   loadError.value = null
+  // paging, filtering and sorting all fetch — a selection from rows no longer on screen must not survive
+  rowSelection.value = {}
   try {
     const res = await documentApi.listDocumentsRaw({
       collectionName: props.collectionName,
@@ -399,6 +432,11 @@ async function fetchDocuments() {
         ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
+      // GridFS files/chunks documents are managed through the bucket (deleting them one by one would
+      // orphan the other half of a file), so bucket collections get no bulk selection
+      if (!isBucketCollection(props.collectionName)) {
+        columns.value.unshift(createSelectColumn<Row>(UCheckbox, { selectAll: t('nuxtUiMongocamp.bulk.selectAll'), selectRow: t('nuxtUiMongocamp.bulk.selectRow') }))
+      }
       columns.value.push(makeActionsColumn())
     }
   }
@@ -566,9 +604,20 @@ watch(() => props.collectionName, init, { immediate: true })
       @retry="fetchDocuments"
     />
 
+    <MongocampBulkDelete
+      :selected="selectedDocIds"
+      :deleting="bulkDeleting"
+      :error="bulkError"
+      @open="bulkError = ''"
+      @clear="rowSelection = {}"
+      @confirm="handleBulkDelete"
+    />
+
     <UTable
       v-model:sorting="sorting"
       v-model:column-visibility="columnVisibility"
+      v-model:row-selection="rowSelection"
+      :get-row-id="rowId"
       :sorting-options="{ manualSorting: true }"
       :data="documents"
       :columns="columns"

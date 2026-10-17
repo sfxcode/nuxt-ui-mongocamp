@@ -3,8 +3,10 @@ import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { Grant, Role } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n } from '#imports'
+import { useI18n, useMongocampError } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
+import { runBulkDelete } from '../composables/useMongocampBulkDelete'
+import { createSelectColumn } from '../utils/createSelectColumn'
 
 const props = defineProps<{
   grantsPath?: string
@@ -52,9 +54,35 @@ const editRoleSchema = reactive([
 
 const loadError = ref<unknown>(null)
 
+const { describeError } = useMongocampError()
+const rowSelection = ref<Record<string, boolean>>({})
+const selectedRoleNames = computed(() => Object.keys(rowSelection.value).filter(name => rowSelection.value[name]))
+const bulkDeleting = ref(false)
+const bulkError = ref('')
+
+async function handleBulkDelete() {
+  bulkDeleting.value = true
+  bulkError.value = ''
+  const names = [...selectedRoleNames.value]
+  try {
+    const { failed } = await runBulkDelete(names, name => deleteRole(name))
+    await fetchRoles()
+    if (failed.length > 0) {
+      // keep only what is still there selected, and say why
+      rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
+      bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: names.length, reason: describeError(failed[0]!.error).message })
+    }
+  }
+  finally {
+    bulkDeleting.value = false
+  }
+}
+
 async function fetchRoles() {
   loading.value = true
   loadError.value = null
+  // a reload can change which rows exist, so a stale selection must never survive it
+  rowSelection.value = {}
   try {
     roles.value = await listRoles(filterText.value)
   }
@@ -117,6 +145,7 @@ async function handleDeleteRole() {
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
+const UCheckbox = resolveComponent('UCheckbox')
 
 function withTooltip(text: string, node: ReturnType<typeof h>) {
   return h(UTooltip, { text }, { default: () => node })
@@ -139,6 +168,7 @@ function sortHeader(column: Column<Role>, label: string) {
 }
 
 const columns = computed<TableColumn<Role>[]>(() => [
+  createSelectColumn<Role>(UCheckbox, { selectAll: t('nuxtUiMongocamp.bulk.selectAll'), selectRow: t('nuxtUiMongocamp.bulk.selectRow') }),
   {
     accessorKey: 'name',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.roles.columnRole')),
@@ -237,8 +267,19 @@ fetchRoles()
       @retry="fetchRoles"
     />
 
+    <MongocampBulkDelete
+      :selected="selectedRoleNames"
+      :deleting="bulkDeleting"
+      :error="bulkError"
+      @open="bulkError = ''"
+      @clear="rowSelection = {}"
+      @confirm="handleBulkDelete"
+    />
+
     <UTable
       v-model:sorting="sorting"
+      v-model:row-selection="rowSelection"
+      :get-row-id="(row: Role) => row.name"
       :data="roles"
       :columns="columns"
       :loading="loading"

@@ -292,6 +292,19 @@
       "collections": "Collections",
       "users": "Users",
       "roles": "Roles"
+    },
+    "bulk": {
+      "selectedCount": "{count} selected",
+      "deleteSelected": "Delete selected",
+      "clearSelection": "Clear selection",
+      "deleteTitle": "Delete {count} selected item? | Delete {count} selected items?",
+      "deleteDescription": "This permanently deletes the selected items. This action cannot be undone.",
+      "moreItems": "…and {count} more",
+      "confirmDelete": "Delete {count}",
+      "selectAll": "Select all rows on this page",
+      "selectRow": "Select row",
+      "partialFailure": "{failed} of {total} could not be deleted: {reason}",
+      "cannotSelectSelf": "You cannot delete your own account"
     }
   }
 }

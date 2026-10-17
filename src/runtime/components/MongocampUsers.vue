@@ -3,8 +3,10 @@ import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n } from '#imports'
+import { useI18n, useMongocampError, useMongocampStorage } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
+import { runBulkDelete } from '../composables/useMongocampBulkDelete'
+import { createSelectColumn } from '../utils/createSelectColumn'
 
 interface RoleItem {
   value: string
@@ -92,9 +94,41 @@ const editUserSchema = reactive([
 
 const loadError = ref<unknown>(null)
 
+const { describeError } = useMongocampError()
+const storage = useMongocampStorage()
+const rowSelection = ref<Record<string, boolean>>({})
+const selectedUserIds = computed(() => Object.keys(rowSelection.value).filter(id => rowSelection.value[id]))
+const bulkDeleting = ref(false)
+const bulkError = ref('')
+
+// the signed-in user can't be selected: deleting yourself would end your own session
+function canSelectUser(row: { original: UserProfile }): boolean {
+  return row.original.user !== storage.value?.profile.user
+}
+
+async function handleBulkDelete() {
+  bulkDeleting.value = true
+  bulkError.value = ''
+  const ids = [...selectedUserIds.value]
+  try {
+    const { failed } = await runBulkDelete(ids, id => deleteUser(id))
+    await fetchUsers()
+    if (failed.length > 0) {
+      // keep only what is still there selected, and say why
+      rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
+      bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: ids.length, reason: describeError(failed[0]!.error).message })
+    }
+  }
+  finally {
+    bulkDeleting.value = false
+  }
+}
+
 async function fetchUsers() {
   loading.value = true
   loadError.value = null
+  // a reload can change which rows exist, so a stale selection must never survive it
+  rowSelection.value = {}
   try {
     users.value = await listUsers(filterText.value)
   }
@@ -172,6 +206,7 @@ async function handleDeleteUser() {
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
+const UCheckbox = resolveComponent('UCheckbox')
 
 function withTooltip(text: string, node: ReturnType<typeof h>) {
   return h(UTooltip, { text }, { default: () => node })
@@ -194,6 +229,7 @@ function sortHeader(column: Column<UserProfile>, label: string) {
 }
 
 const columns = computed<TableColumn<UserProfile>[]>(() => [
+  createSelectColumn<UserProfile>(UCheckbox, { selectAll: t('nuxtUiMongocamp.bulk.selectAll'), selectRow: t('nuxtUiMongocamp.bulk.selectRow') }),
   {
     accessorKey: 'user',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.users.columnUser')),
@@ -289,8 +325,20 @@ fetchRoles()
       @retry="fetchUsers"
     />
 
+    <MongocampBulkDelete
+      :selected="selectedUserIds"
+      :deleting="bulkDeleting"
+      :error="bulkError"
+      @open="bulkError = ''"
+      @clear="rowSelection = {}"
+      @confirm="handleBulkDelete"
+    />
+
     <UTable
       v-model:sorting="sorting"
+      v-model:row-selection="rowSelection"
+      :get-row-id="(row: UserProfile) => row.user"
+      :row-selection-options="{ enableRowSelection: canSelectUser }"
       :data="users"
       :columns="columns"
       :loading="loading"

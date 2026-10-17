@@ -309,6 +309,65 @@ describe('MongocampCollectionData', () => {
     })
   })
 
+  describe('bulk delete', () => {
+    const rows = [
+      { _id: { $oid: 'doc-1' }, name: 'Alice' },
+      { _id: { $oid: 'doc-2' }, name: 'Bob' },
+      { _id: { $oid: 'doc-3' }, name: 'Carol' },
+    ]
+
+    async function mountAndSelectFirstTwo() {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '3'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers' },
+      })
+      await wait()
+      const boxes = component.findAll('[aria-label="Select row"]')
+      await boxes[0]!.trigger('click')
+      await boxes[1]!.trigger('click')
+      return component
+    }
+
+    it('deletes exactly the selected documents by id after confirming, then reloads the page', async () => {
+      const component = await mountAndSelectFirstTwo()
+      expect(component.text()).toContain('2 selected')
+
+      await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+      await wait()
+      expect(mockDelete).not.toHaveBeenCalled()
+
+      await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+      await wait()
+
+      expect(mockDelete.mock.calls.map(c => c[0].documentId).sort()).toEqual(['doc-1', 'doc-2'])
+      expect(mockDelete.mock.calls.every(c => c[0].collectionName === 'customers')).toBe(true)
+      expect(mockListDocumentsRaw).toHaveBeenCalledTimes(2)
+    })
+
+    it('drops the selection when another page is fetched, so off-screen rows can never be deleted', async () => {
+      const component = await mountAndSelectFirstTwo()
+      expect(component.text()).toContain('2 selected')
+
+      await component.find('[aria-label="Reload"]').trigger('click')
+      await wait()
+
+      expect(component.text()).not.toContain('selected')
+    })
+
+    it('offers no selection on GridFS bucket collections, where documents are managed through the bucket', async () => {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: { $oid: 'file-1' }, filename: 'a.png' }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'images.files' },
+      })
+      await wait()
+
+      expect(component.text()).toContain('a.png')
+      expect(component.find('[aria-label="Select row"]').exists()).toBe(false)
+    })
+  })
+
   describe('GridFS bucket collections', () => {
     it('shows an upload button instead of insert, and a download button per row', async () => {
       mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: { $oid: 'file-1' }, filename: 'a.png' }], '1'))
