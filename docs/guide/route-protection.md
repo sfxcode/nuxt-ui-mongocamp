@@ -39,7 +39,11 @@ Route parts are glob patterns matched with [`minimatch`](https://www.npmjs.com/p
 
 This middleware is **UI-level gating**, not access control — it only decides which pages render, not which data is reachable. Actual data access is still protected server-side by MongoCamp's own tokens/api key, independently of this middleware.
 
-Login state lives in `sessionStorage`, which server-side rendering never sees. If your app runs with SSR enabled, the middleware evaluates `isLoggedIn` as `false` on every server-rendered request — including a hard refresh of a secured page by an already-logged-in user, who gets redirected to `notAllowedPath` even though they're still logged in. The playground and this module's own test fixtures all run with `ssr: false` for this reason; `useGlobalAuthMiddleware` is not currently verified against an SSR app.
+Login state lives in the `mongocamp-session` **cookie** (`{ token, profile }`, 30 days by default, shared by every tab of the same origin), which the browser sends with each request. Older versions of the underlying `@sfxcode/nuxt-mongocamp-server` kept it in `sessionStorage`, which server-side rendering can never see — if you are on such a version, an SSR app evaluates `isLoggedIn` as `false` on every server-rendered request and redirects logged-in users on a hard refresh. With the cookie, SSR can in principle read the session, but this module's own tests and playground all run with `ssr: false`, so `useGlobalAuthMiddleware` is not verified against an SSR app.
+
+## A stale session looks logged in
+
+The session token is a JWT valid for 6 hours on a stock MongoCamp server, and the browser refreshes it every `tokenRefreshInterval` only while a page of your app is open. If the token expires (or the server stops accepting it) while no page is open, the cookie — and therefore `isLoggedIn` — stays in place, so the app *looks* logged in while every request fails. The client library clears the session on a `401` response, but when your app and the MongoCamp server are on different origins and the server's `401` carries no CORS headers, the browser reports a plain network error instead and that safety net never runs. Components show this as "The server could not be reached, or your session has expired"; logging out and in again fixes it. Adding CORS headers to authentication failures on the MongoCamp server (or serving both from one origin) lets the client see the `401` and clear the session itself.
 
 ## Manager vs. admin
 
