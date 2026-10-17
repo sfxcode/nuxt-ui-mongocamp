@@ -92,6 +92,41 @@ describe('MongocampUsers', () => {
     expect(component.text()).toContain('bob@example.com')
   })
 
+  describe('deleting your own account', () => {
+    const users = [
+      { user: 'alice@example.com', isAdmin: true, roles: [] }, // the signed-in user, see useMongocampStorage above
+      { user: 'bob@example.com', isAdmin: false, roles: [] },
+    ]
+
+    it('disables the signed-in user\'s row delete button and says why, but leaves other rows alone', async () => {
+      mockListUsers.mockResolvedValue(users)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+
+      const buttons = component.findAll('[aria-label="Delete user"]')
+      expect(buttons).toHaveLength(2)
+      expect(buttons[0]!.attributes('disabled')).toBeDefined()
+      expect(buttons[1]!.attributes('disabled')).toBeUndefined()
+      expect(component.findAll('[title="You cannot delete your own account"]').length).toBeGreaterThan(0)
+    })
+
+    it('does not open a delete dialog for the signed-in user, while another user\'s still opens one', async () => {
+      mockListUsers.mockResolvedValue(users)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+      const buttons = component.findAll('[aria-label="Delete user"]')
+
+      await buttons[0]!.trigger('click')
+      await wait()
+      expect(modal().text()).not.toContain('Delete User')
+
+      await buttons[1]!.trigger('click')
+      await wait()
+      expect(modal().text()).toContain('bob@example.com')
+      expect(mockDeleteUser).not.toHaveBeenCalled()
+    })
+  })
+
   describe('single-row delete', () => {
     const fetchError = Object.assign(new Error('The request failed'), { name: 'FetchError' })
 
@@ -192,7 +227,8 @@ describe('MongocampUsers', () => {
       const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
       await flushPromises()
 
-      expect(component.findAll('[title="You cannot delete your own account"]')).toHaveLength(1)
+      // the checkbox and the row's delete button both carry the explanation
+      expect(component.findAll('[title="You cannot delete your own account"]')).toHaveLength(2)
     })
 
     it('select-all skips the signed-in user too, so a bulk delete can never include them', async () => {

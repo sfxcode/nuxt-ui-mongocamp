@@ -101,9 +101,15 @@ const selectedUserIds = computed(() => Object.keys(rowSelection.value).filter(id
 const bulkDeleting = ref(false)
 const bulkError = ref('')
 
-// the signed-in user can't be selected: deleting yourself would end your own session
+// Deleting yourself would end your own session, so the signed-in user is protected everywhere a delete can
+// start: not selectable for bulk delete (not even via select-all) and no row delete button.
+function isSelf(userId: string): boolean {
+  const me = storage.value?.profile.user
+  return !!me && userId === me
+}
+
 function canSelectUser(row: { original: UserProfile }): boolean {
-  return row.original.user !== storage.value?.profile.user
+  return !isSelf(row.original.user)
 }
 
 async function handleBulkDelete() {
@@ -243,6 +249,24 @@ function sortHeader(column: Column<UserProfile>, label: string) {
   })
 }
 
+// A disabled button swallows hover events, so for the signed-in user the explanation sits on a wrapper
+// (a native tooltip) instead of the usual UTooltip.
+function deleteButton(userId: string) {
+  const button = (disabled: boolean) => h(UButton, {
+    'icon': 'i-lucide-trash-2',
+    'color': 'error',
+    'variant': 'ghost',
+    'size': 'sm',
+    'aria-label': t('nuxtUiMongocamp.users.deleteUserTooltip'),
+    disabled,
+    'onClick': () => confirmDelete(userId),
+  })
+  if (isSelf(userId)) {
+    return h('span', { class: 'inline-flex', title: t('nuxtUiMongocamp.bulk.cannotSelectSelf') }, [button(true)])
+  }
+  return withTooltip(t('nuxtUiMongocamp.users.deleteUserTooltip'), button(false))
+}
+
 const columns = computed<TableColumn<UserProfile>[]>(() => [
   createSelectColumn<UserProfile>(UCheckbox, {
     selectAll: t('nuxtUiMongocamp.bulk.selectAll'),
@@ -290,14 +314,7 @@ const columns = computed<TableColumn<UserProfile>[]>(() => [
           'aria-label': t('nuxtUiMongocamp.users.editUserTooltip'),
           'onClick': () => openEdit(row.original),
         })),
-        withTooltip(t('nuxtUiMongocamp.users.deleteUserTooltip'), h(UButton, {
-          'icon': 'i-lucide-trash-2',
-          'color': 'error',
-          'variant': 'ghost',
-          'size': 'sm',
-          'aria-label': t('nuxtUiMongocamp.users.deleteUserTooltip'),
-          'onClick': () => confirmDelete(row.original.user),
-        })),
+        deleteButton(row.original.user),
       ]),
   },
 ])
