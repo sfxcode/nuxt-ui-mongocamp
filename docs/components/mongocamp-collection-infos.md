@@ -27,7 +27,7 @@ Backed by [`useMongocampIndex`](/composables/use-mongocamp-index), not just `get
 
 - **Create Index** opens a form (field name, sort direction, index type — standard / unique / text / expiring, with an "expire after" duration field used only for the expiring type) and calls the matching `useMongocampIndex` creator.
 - Every row except the default `_id_` index (which MongoDB won't let you drop) gets a delete button, behind a confirmation modal.
-- Type flags render as badges using the app's semantic color tokens: `unique` → `warning`, `text` → `info`, `expire` → `secondary`.
+- Type flags render as badges using the app's semantic color tokens: `unique` → `warning`, `text` → `info`, `expire` → `secondary`. An index with none of these flags shows a neutral `standard` badge, so the Type column is never blank.
 
 ## Schema card
 

@@ -105,6 +105,7 @@ Kept in sync with `docs/composables/index.md` (the canonical, per-composable-doc
 - **`useMongocampAccount`** — account self-service: profile, password change, API key regeneration
 - **`useMongocampSystem`** — read-only database viewer (list, per-database info, collections)
 - **`useMongocampFilterBuilder`** — pure `buildFilterQuery(group, fieldTypes)` / `buildCondition`: filter rows (field, operator, value) → one Lucene string; operators depend on field type, incomplete rows are skipped, range bounds only accept plain numbers/ISO dates (the query helpers don't escape them); operator set is limited to what a real server was verified to handle — no open-ended `[x TO *]`, no `_id`, no `_exists_`, see its docs page
+- **`useMongocampExport`** — `rowsToCsv` / `downloadTextFile` for exporting the rows already on screen (used by `MongocampCollectionData`'s export menu)
 - **`useMongocampBulkDelete`** — `runBulkDelete(items, remove, concurrency)`: limited-concurrency deletes returning `{ deleted, failed }` per item
 - **`useMongocampError`** — `describeError(e)` maps API errors (`FetchError` → network, 401, 403, other) to i18n messages for `MongocampErrorAlert`
 - **`useMongocampQuery`** — high-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …)

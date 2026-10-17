@@ -76,6 +76,7 @@ export default defineConfig({
             { text: 'useMongocampError', link: '/composables/use-mongocamp-error' },
             { text: 'useMongocampBulkDelete', link: '/composables/use-mongocamp-bulk-delete' },
             { text: 'useMongocampFilterBuilder', link: '/composables/use-mongocamp-filter-builder' },
+            { text: 'useMongocampExport', link: '/composables/use-mongocamp-export' },
             { text: 'useMongocampQuery', link: '/composables/use-mongocamp-query' },
             { text: 'useMongocampQueryBuilder', link: '/composables/use-mongocamp-query-builder' },
             { text: 'useMongocampExtendedJson', link: '/composables/use-mongocamp-extended-json' },

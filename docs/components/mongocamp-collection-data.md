@@ -1,6 +1,6 @@
 # MongocampCollectionData
 
-Paginated, filterable, sortable document table for a collection, with insert/edit/delete, and — for GridFS bucket collections — per-row download and bucket upload.
+Paginated, filterable, sortable document table for a collection, with insert/edit/delete, bulk delete, a filter builder, page export and a column menu, and — for GridFS bucket collections — per-row download and bucket upload.
 
 ## Usage
 
@@ -18,11 +18,11 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 
 ## Columns
 
-Columns are derived from the first fetched row's keys (`_id` first, `metaData` last, everything else A–Z).
+Columns are derived from the first fetched row's keys (`_id` first, `metaData` last, everything else A–Z). The first data column stays pinned while the table scrolls sideways, so rows stay identifiable on narrow screens; the [column menu](#toolbar) hides and shows the rest.
 
 ## Cell rendering
 
-- `date-time`-looking values and MongoDB `$date` extended JSON → locale-formatted date string
+- ISO timestamp strings (date **and** time, e.g. `2018-02-02T22:23:44Z`) and MongoDB `$date` extended JSON → locale-formatted date string, decided per cell — a column that mixes both formats renders consistently. Date-only strings (`2018-02-02`) are left as they are
 - MongoDB `$oid` → monospaced ID string
 - `metaData` objects (with `created`/`updated` fields) → structured `created` / `updated` / `by` rows
 - Other scalar values longer than 60 characters are truncated with `…`; the full value is available via a hover tooltip
@@ -35,6 +35,26 @@ Columns are derived from the first fetched row's keys (`_id` first, `metaData` l
 - The **Filters** button (badge = number of active conditions) opens a [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) panel. **Apply filters** reloads from page 1; each applied condition shows as a removable chip with a **Clear filters** link. The builder and the search input narrow the result together (AND).
   - The fields offered come from the rows on the first page, with their types inferred from the values. `_id` is not offered (a real server rejects `_id` filters), nor are arrays and objects (no operators for them). The button is disabled for an empty collection.
   - Applied filters, the panel and the draft are reset when `collectionName` changes and by the reload button.
+
+## Toolbar
+
+- **Filters** — see above.
+- **Columns** — a checklist of every data column; unchecked columns are hidden (and left out of the CSV export). Resets when you reload or switch collection.
+- **Export** — downloads the rows **on the current page**, as JSON (full documents, extended JSON unwrapped to plain values) or CSV (visible columns; nested values as JSON; RFC 4180 quoting). No extra request is made, so export what you need page by page, or raise the page size first.
+- **Rows per page** — 10, 20 (default), 50 or 100; changing it reloads from page 1.
+- **Reload** — refetches and resets sorting, search, filters and column choices.
+
+## Selecting and deleting several documents
+
+The first column is a checkbox column (with select-all for the current page). While rows are selected a bar shows **N selected · Delete selected · Clear selection**; deleting asks for confirmation first, listing the first few ids ([`MongocampBulkDelete`](/components/mongocamp-bulk-delete)).
+
+- The selection is dropped whenever the table reloads — paging, sorting, searching, filtering, page size — so rows you can no longer see are never deleted.
+- Deletions run a few at a time; if some fail the rest are still deleted, the failed ones stay selected and the modal reports how many failed and why.
+- GridFS bucket collections (`*.files` / `*.chunks`) have no selection: deleting those documents one by one would orphan the other half of a file. Use [`MongocampBucketFiles`](/components/mongocamp-bucket-files) for buckets.
+
+## When loading fails
+
+A failed load shows a [`MongocampErrorAlert`](/components/mongocamp-error-alert) above the table (retry, or "log in again" when the session has expired) instead of an empty table, and an empty result shows an empty state. A filter the server rejects looks like a network error to the browser, so it is reported the same way — remove the last filter chip to recover.
 
 ## Insert / Edit / Delete
 
@@ -58,3 +78,4 @@ This logic is provided by [`useMongocampBucket`](/composables/use-mongocamp-buck
 - [`useMongocampQuery`](/composables/use-mongocamp-query) / [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) — for building custom Lucene filters
 - [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) — extended-JSON unwrap/rewrap that feeds `FUAutoForm`'s Add/Edit modal
 - [`useMongocampDocument`](/composables/use-mongocamp-document) — `ensureMetaData` stamps `metaData` on insert/update
+- [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder), [`useMongocampExport`](/composables/use-mongocamp-export), [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) — the logic behind the filter panel, page export and bulk delete

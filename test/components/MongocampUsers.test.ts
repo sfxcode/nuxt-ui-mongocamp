@@ -119,6 +119,14 @@ describe('MongocampUsers', () => {
       expect(boxes[1]!.attributes('disabled')).toBeUndefined()
     })
 
+    it('explains why the signed-in user\'s checkbox is disabled', async () => {
+      mockListUsers.mockResolvedValue(users)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+
+      expect(component.findAll('[title="You cannot delete your own account"]')).toHaveLength(1)
+    })
+
     it('select-all skips the signed-in user too, so a bulk delete can never include them', async () => {
       mockListUsers.mockResolvedValue(users)
       const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })

@@ -229,7 +229,11 @@ function sortHeader(column: Column<UserProfile>, label: string) {
 }
 
 const columns = computed<TableColumn<UserProfile>[]>(() => [
-  createSelectColumn<UserProfile>(UCheckbox, { selectAll: t('nuxtUiMongocamp.bulk.selectAll'), selectRow: t('nuxtUiMongocamp.bulk.selectRow') }),
+  createSelectColumn<UserProfile>(UCheckbox, {
+    selectAll: t('nuxtUiMongocamp.bulk.selectAll'),
+    selectRow: t('nuxtUiMongocamp.bulk.selectRow'),
+    unselectable: t('nuxtUiMongocamp.bulk.cannotSelectSelf'),
+  }),
   {
     accessorKey: 'user',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.users.columnUser')),

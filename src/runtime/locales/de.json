@@ -241,8 +241,7 @@
       "columnCollections": "Collections",
       "columnEmpty": "Leer",
       "emptyBadge": "Leer",
-      "loadFailedTitle": "Datenbanken konnten nicht geladen werden",
-      "errorLoad": "Datenbanken konnten nicht geladen werden"
+      "loadFailedTitle": "Datenbanken konnten nicht geladen werden"
     },
     "version": {
       "unavailable": "MongoCamp nicht verfügbar"

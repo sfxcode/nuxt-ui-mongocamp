@@ -21,6 +21,8 @@ None.
 - **Edit** — change roles and reset the password from separate modals.
 - **Delete** — confirmation modal before calling `deleteUser`.
 - **Sorting** — clickable column headers via `sortHeader()`.
+- **Bulk delete** — a checkbox column (with select-all) and a selection bar; confirming deletes the selected users a few at a time via `deleteUser` ([`MongocampBulkDelete`](/components/mongocamp-bulk-delete)). The signed-in user can't be selected, not even through select-all (the checkbox is disabled and says why), since deleting yourself would end your own session. The selection is cleared on every reload; failures are reported and stay selected.
+- **Errors / empty** — a failed load shows [`MongocampErrorAlert`](/components/mongocamp-error-alert) with retry; no rows shows an empty state.
 
 ## Related composables
 

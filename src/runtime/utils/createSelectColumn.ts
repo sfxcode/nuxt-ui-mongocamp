@@ -9,7 +9,7 @@ import type { TableColumn } from '@nuxt/ui'
 // skips them too — a per-checkbox `disabled` alone would not stop select-all.
 export function createSelectColumn<T>(
   checkbox: Component | string,
-  labels: { selectAll: string, selectRow: string },
+  labels: { selectAll: string, selectRow: string, unselectable?: string },
 ): TableColumn<T> {
   return {
     id: 'select',
@@ -21,6 +21,8 @@ export function createSelectColumn<T>(
     cell: ({ row }) => h(checkbox, {
       'modelValue': row.getIsSelected(),
       'disabled': !row.getCanSelect(),
+      // a greyed-out checkbox with no explanation looks like a bug
+      'title': row.getCanSelect() ? undefined : labels.unselectable,
       'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
       'aria-label': labels.selectRow,
     }),
