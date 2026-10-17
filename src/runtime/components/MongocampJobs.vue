@@ -3,9 +3,10 @@ import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n, useMongocampJobs, useToast } from '#imports'
+import { useI18n, useMongocampError, useMongocampJobs, useToast } from '#imports'
 
 const { t } = useI18n()
+const { describeError } = useMongocampError()
 const { listJobs, listPossibleJobs, registerJob, updateJob, executeJob, deleteJob } = useMongocampJobs()
 const toast = useToast()
 
@@ -175,15 +176,30 @@ async function handleEditJob() {
 
 const jobToDelete = ref({ group: '', name: '' })
 
+const deleteError = ref('')
+const deleting = ref(false)
+
 function confirmDelete(group: string, name: string) {
   jobToDelete.value = { group, name }
+  deleteError.value = ''
   isDeleteModalOpen.value = true
 }
 
+// A refused delete must not close the modal: it stays open with the reason so the user can try again or cancel.
 async function handleDeleteJob() {
-  await deleteJob(jobToDelete.value.group, jobToDelete.value.name)
-  isDeleteModalOpen.value = false
-  await fetchJobs()
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await deleteJob(jobToDelete.value.group, jobToDelete.value.name)
+    isDeleteModalOpen.value = false
+    await fetchJobs()
+  }
+  catch (e: unknown) {
+    deleteError.value = describeError(e, 'nuxtUiMongocamp.jobs.errorDelete').message
+  }
+  finally {
+    deleting.value = false
+  }
 }
 
 async function handleExecuteJob(group: string, name: string) {
@@ -384,18 +400,28 @@ fetchJobs()
     >
       <template #body>
         <p>{{ t('nuxtUiMongocamp.jobs.confirmDelete', { name: jobToDelete.name }) }}</p>
+        <UAlert
+          v-if="deleteError"
+          class="mt-3"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :description="deleteError"
+        />
       </template>
       <template #footer>
         <UButton
           :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
+          :disabled="deleting"
           @click="isDeleteModalOpen = false"
         />
         <UButton
           :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
           icon="i-lucide-trash-2"
+          :loading="deleting"
           @click="handleDeleteJob"
         />
       </template>

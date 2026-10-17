@@ -131,15 +131,30 @@ async function handleEditRole() {
   }
 }
 
+const deleteError = ref('')
+const deleting = ref(false)
+
 function confirmDelete(roleName: string) {
   roleToDelete.value = roleName
+  deleteError.value = ''
   isDeleteModalOpen.value = true
 }
 
+// A refused delete must not close the modal: it stays open with the reason so the user can try again or cancel.
 async function handleDeleteRole() {
-  await deleteRole(roleToDelete.value)
-  isDeleteModalOpen.value = false
-  await fetchRoles()
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await deleteRole(roleToDelete.value)
+    isDeleteModalOpen.value = false
+    await fetchRoles()
+  }
+  catch (e: unknown) {
+    deleteError.value = describeError(e, 'nuxtUiMongocamp.roles.errorDelete').message
+  }
+  finally {
+    deleting.value = false
+  }
 }
 
 const UBadge = resolveComponent('UBadge')
@@ -341,17 +356,27 @@ fetchRoles()
     >
       <template #body>
         <p>{{ t('nuxtUiMongocamp.roles.confirmDelete', { roleName: roleToDelete }) }}</p>
+        <UAlert
+          v-if="deleteError"
+          class="mt-3"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :description="deleteError"
+        />
       </template>
       <template #footer>
         <UButton
           :label="t('nuxtUiMongocamp.common.cancel')"
           color="neutral"
           variant="ghost"
+          :disabled="deleting"
           @click="isDeleteModalOpen = false"
         />
         <UButton
           :label="t('nuxtUiMongocamp.common.delete')"
           color="error"
+          :loading="deleting"
           @click="handleDeleteRole"
         />
       </template>

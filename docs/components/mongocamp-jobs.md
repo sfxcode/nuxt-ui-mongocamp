@@ -31,7 +31,7 @@ None — the job list is global, not scoped to a collection or role.
 - **Add** — the "Job Class" field is a select populated from `listPossibleJobs()`, fetched fresh every time the Add modal opens (not once at mount) so the option list can't go stale.
 - **Edit** — the form omits the Job Class field entirely (the implementation class isn't expected to change after registration); the original `jobGroup`/`jobName` are kept separately from the editable `name`/`group` fields so `updateJob(originalGroup, originalName, jobConfig)` still identifies the right job even if you rename it or move it to a different group.
 - **Execute now** — triggers the job immediately via `executeJob`; shows a success/error toast (the UI can't observe the job's actual side effect, only whether the API call succeeded).
-- **Delete** — confirmation modal before calling `deleteJob`.
+- **Delete** — confirmation modal before calling `deleteJob`. If the server refuses, the dialog stays open and shows why so you can try again or cancel; the list is only reloaded after a successful delete.
 
 ## Related composables
 

@@ -92,6 +92,74 @@ describe('MongocampUsers', () => {
     expect(component.text()).toContain('bob@example.com')
   })
 
+  describe('single-row delete', () => {
+    const fetchError = Object.assign(new Error('The request failed'), { name: 'FetchError' })
+
+    async function openDelete() {
+      mockListUsers.mockResolvedValue([{ user: 'bob@example.com', isAdmin: false, roles: [] }])
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+      await component.find('[aria-label="Delete user"]').trigger('click')
+      await wait()
+      return component
+    }
+
+    const confirm = () => modal().findAll('button').find(b => b.text() === 'Delete')
+
+    it('deletes after confirming, then reloads', async () => {
+      await openDelete()
+      expect(mockDeleteUser).not.toHaveBeenCalled()
+
+      await confirm()?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteUser).toHaveBeenCalledWith('bob@example.com')
+      expect(mockListUsers).toHaveBeenCalledTimes(2)
+    })
+
+    it('keeps the dialog open and says why when the server refuses, instead of failing silently', async () => {
+      await openDelete()
+      mockDeleteUser.mockRejectedValueOnce(fetchError)
+
+      await confirm()?.trigger('click')
+      await flushPromises()
+
+      expect(modal().text()).toContain('Delete User')
+      expect(modal().text()).toContain('could not be reached')
+      expect(mockListUsers).toHaveBeenCalledTimes(1) // nothing was deleted, so nothing is reloaded
+    })
+
+    it('lets the user try again after a refusal', async () => {
+      await openDelete()
+      mockDeleteUser.mockRejectedValueOnce(fetchError)
+      await confirm()?.trigger('click')
+      await flushPromises()
+      expect(modal().text()).toContain('could not be reached')
+
+      await confirm()?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteUser).toHaveBeenCalledTimes(2)
+      expect(mockListUsers).toHaveBeenCalledTimes(2)
+      expect(modal().text()).not.toContain('could not be reached')
+    })
+
+    it('shows a permission message for a 403 and clears a stale error when reopened', async () => {
+      const component = await openDelete()
+      mockDeleteUser.mockRejectedValueOnce({ name: 'ResponseError', response: { status: 403 } })
+      await confirm()?.trigger('click')
+      await flushPromises()
+      expect(modal().text()).toContain('You do not have permission to do this.')
+
+      await modal().findAll('button').find(b => b.text() === 'Cancel')?.trigger('click')
+      await wait(400)
+      await component.find('[aria-label="Delete user"]').trigger('click')
+      await wait()
+
+      expect(modal().text()).not.toContain('You do not have permission')
+    })
+  })
+
   describe('bulk delete', () => {
     const users = [
       { user: 'alice@example.com', isAdmin: true, roles: [] },

@@ -43,7 +43,8 @@
       "editUserTooltip": "Edit user",
       "deleteUserTooltip": "Delete user",
       "errorAddUser": "Failed to add user",
-      "errorEditUser": "Failed to update user"
+      "errorEditUser": "Failed to update user",
+      "errorDelete": "Failed to delete user"
     },
     "roles": {
       "heading": "Roles",
@@ -61,7 +62,8 @@
       "editRoleTooltip": "Edit role",
       "deleteRoleTooltip": "Delete role",
       "errorAddRole": "Failed to add role",
-      "errorEditRole": "Failed to update role"
+      "errorEditRole": "Failed to update role",
+      "errorDelete": "Failed to delete role"
     },
     "roleGrants": {
       "heading": "Grants: {roleName}",
@@ -211,7 +213,8 @@
       "executionFailedTitle": "Execution failed",
       "executionFailedDescription": "Could not execute \"{name}\".",
       "errorAdd": "Failed to register job",
-      "errorEdit": "Failed to update job"
+      "errorEdit": "Failed to update job",
+      "errorDelete": "Failed to delete job"
     },
     "account": {
       "heading": "Account",
@@ -271,9 +274,9 @@
     },
     "errors": {
       "loadFailedTitle": "Failed to load data",
-      "network": "The server could not be reached, or your session has expired. Retry, or log in again.",
+      "network": "The server could not be reached, or your session has expired. Try again, or log in again.",
       "unauthorized": "Your session has expired. Please log in again.",
-      "forbidden": "You do not have permission to view this.",
+      "forbidden": "You do not have permission to do this.",
       "generic": "Something went wrong.",
       "loginAgain": "Log in again",
       "filterRejectedTitle": "The filter could not be applied",

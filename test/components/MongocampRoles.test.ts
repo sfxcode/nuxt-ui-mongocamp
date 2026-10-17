@@ -112,6 +112,74 @@ describe('MongocampRoles', () => {
     }
   })
 
+  describe('single-row delete', () => {
+    const fetchError = Object.assign(new Error('The request failed'), { name: 'FetchError' })
+
+    async function openDelete() {
+      mockListRoles.mockResolvedValue([{ name: 'support', isAdmin: false, collectionGrants: [] }])
+      const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+      await flushPromises()
+      await component.find('[aria-label="Delete role"]').trigger('click')
+      await wait()
+      return component
+    }
+
+    const confirm = () => modal().findAll('button').find(b => b.text() === 'Delete')
+
+    it('deletes after confirming, then reloads', async () => {
+      await openDelete()
+      expect(mockDeleteRole).not.toHaveBeenCalled()
+
+      await confirm()?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteRole).toHaveBeenCalledWith('support')
+      expect(mockListRoles).toHaveBeenCalledTimes(2)
+    })
+
+    it('keeps the dialog open and says why when the server refuses, instead of failing silently', async () => {
+      await openDelete()
+      mockDeleteRole.mockRejectedValueOnce(fetchError)
+
+      await confirm()?.trigger('click')
+      await flushPromises()
+
+      expect(modal().text()).toContain('Delete Role')
+      expect(modal().text()).toContain('could not be reached')
+      expect(mockListRoles).toHaveBeenCalledTimes(1) // nothing was deleted, so nothing is reloaded
+    })
+
+    it('lets the user try again after a refusal', async () => {
+      await openDelete()
+      mockDeleteRole.mockRejectedValueOnce(fetchError)
+      await confirm()?.trigger('click')
+      await flushPromises()
+      expect(modal().text()).toContain('could not be reached')
+
+      await confirm()?.trigger('click')
+      await flushPromises()
+
+      expect(mockDeleteRole).toHaveBeenCalledTimes(2)
+      expect(mockListRoles).toHaveBeenCalledTimes(2)
+      expect(modal().text()).not.toContain('could not be reached')
+    })
+
+    it('shows a permission message for a 403 and clears a stale error when reopened', async () => {
+      const component = await openDelete()
+      mockDeleteRole.mockRejectedValueOnce({ name: 'ResponseError', response: { status: 403 } })
+      await confirm()?.trigger('click')
+      await flushPromises()
+      expect(modal().text()).toContain('You do not have permission to do this.')
+
+      await modal().findAll('button').find(b => b.text() === 'Cancel')?.trigger('click')
+      await wait(400)
+      await component.find('[aria-label="Delete role"]').trigger('click')
+      await wait()
+
+      expect(modal().text()).not.toContain('You do not have permission')
+    })
+  })
+
   describe('bulk delete', () => {
     async function selectSupportAndSales() {
       mockListRoles.mockResolvedValue([

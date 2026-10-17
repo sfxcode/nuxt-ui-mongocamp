@@ -20,7 +20,7 @@ Full CRUD table for managing roles — create, edit (admin flag, collection gran
 
 - **List** — fetched via `useMongocampAdmin().listRoles(filter)`, debounced 300ms on the search input.
 - **Add / Edit** — name, `isAdmin` flag.
-- **Delete** — confirmation modal before calling `deleteRole`.
+- **Delete** — confirmation modal before calling `deleteRole`. If the server refuses, the dialog stays open and shows why so you can try again or cancel; the list is only reloaded after a successful delete.
 - **Bulk delete** — a checkbox column (with select-all) and a selection bar; confirming deletes the selected roles a few at a time ([`MongocampBulkDelete`](/components/mongocamp-bulk-delete)). The selection is cleared on every reload; failures are reported and stay selected.
 - **Errors / empty** — a failed load shows [`MongocampErrorAlert`](/components/mongocamp-error-alert) with retry; no rows shows an empty state.
 - Grant management itself lives in [`MongocampRoleGrants`](/components/mongocamp-role-grants), reached via the key icon.
