@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import { DOMWrapper, enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp, USelect } from '#components'
@@ -365,6 +365,119 @@ describe('MongocampCollectionData', () => {
 
       expect(component.text()).toContain('a.png')
       expect(component.find('[aria-label="Select row"]').exists()).toBe(false)
+    })
+  })
+
+  describe('filter builder', () => {
+    const rows = [
+      { _id: { $oid: 'doc-1' }, name: 'Alice', age: 30 },
+      { _id: { $oid: 'doc-2' }, name: 'Bob', age: 25 },
+    ]
+
+    async function mountWithRows() {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '2'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers' },
+      })
+      await wait()
+      return component
+    }
+
+    async function applyNameContains(component: Awaited<ReturnType<typeof mountWithRows>>, value: string) {
+      await component.find('[aria-label="Filters"]').trigger('click')
+      await wait()
+      await component.findAll('button').find(b => b.text() === 'Add condition')?.trigger('click')
+      await wait()
+      // the new row starts on the first field ("age", a number — `_id` is not offered); point it at "name" with "contains"
+      const selectByLabel = (label: string) => component.findAllComponents(USelect).find(select => select.html().includes(`aria-label="${label}"`))!
+      selectByLabel('Field').vm.$emit('update:modelValue', 'name')
+      await wait()
+      selectByLabel('Operator').vm.$emit('update:modelValue', 'contains')
+      await wait()
+      await component.find('input[aria-label="Value"]').setValue(value)
+      await component.findAll('button').find(b => b.text() === 'Apply filters')?.trigger('click')
+      await wait()
+    }
+
+    it('is unavailable until the collection has rows to learn the fields from', async () => {
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers' },
+      })
+      await wait()
+
+      expect(component.find('[aria-label="Filters"]').attributes('disabled')).toBeDefined()
+    })
+
+    it('does not offer _id or fields without operators (arrays, objects) in the field list', async () => {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([
+        { _id: { $oid: 'doc-1' }, name: 'Alice', age: 30, tags: ['a'], address: { city: 'X' } },
+      ], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers' },
+      })
+      await wait()
+      await component.find('[aria-label="Filters"]').trigger('click')
+      await wait()
+      await component.findAll('button').find(b => b.text() === 'Add condition')?.trigger('click')
+      await wait()
+
+      const fieldSelect = component.findAllComponents(USelect).find(select => select.html().includes('aria-label="Field"'))!
+      const offered = (fieldSelect.vm.$props as unknown as { items: { value: string }[] }).items.map(item => item.value)
+      expect(offered).toEqual(['age', 'name'])
+    })
+
+    it('applies the built filter from page 1 and shows it as a removable chip', async () => {
+      const component = await mountWithRows()
+      await applyNameContains(component, 'ali')
+
+      const lastCall = mockListDocumentsRaw.mock.calls.at(-1)![0]
+      expect(lastCall.filter).toBe('name:*ali*')
+      expect(lastCall.page).toBe(1)
+      expect(component.text()).toContain('name contains ali')
+    })
+
+    it('combines the builder filter with the quick search using AND', async () => {
+      const component = await mountWithRows()
+      await applyNameContains(component, 'ali')
+
+      await component.find('input[placeholder="Filter rows..."]').setValue('bo')
+      await wait(400) // the quick filter is debounced
+
+      expect(mockListDocumentsRaw.mock.calls.at(-1)![0].filter).toBe('(name:*bo* AND name:*ali*)')
+    })
+
+    it('removing a chip drops that filter and reloads', async () => {
+      const component = await mountWithRows()
+      await applyNameContains(component, 'ali')
+
+      await component.find('[aria-label="Remove filter name contains ali"]').trigger('click')
+      await wait()
+
+      expect(mockListDocumentsRaw.mock.calls.at(-1)![0].filter).toBeUndefined()
+      expect(component.text()).not.toContain('name contains ali')
+    })
+
+    it('forgets the filters, and closes the panel, when the collection changes', async () => {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '2'))
+      // a host that owns the collectionName prop, so it can be changed after mount like a router param would
+      const collectionName = ref('customers')
+      const Host = defineComponent({
+        setup: () => () => h(UApp, () => h(MongocampCollectionData, { collectionName: collectionName.value })),
+      })
+      const component = await mountSuspended(Host, { route: '/' })
+      await wait()
+      await applyNameContains(component as never, 'ali')
+      expect(component.text()).toContain('name contains ali')
+
+      collectionName.value = 'orders'
+      await wait()
+
+      expect(component.text()).not.toContain('name contains ali')
+      expect(component.text()).not.toContain('Apply filters')
+      expect(mockListDocumentsRaw.mock.calls.at(-1)![0]).toMatchObject({ collectionName: 'orders', filter: undefined })
     })
   })
 

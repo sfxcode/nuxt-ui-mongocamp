@@ -2,13 +2,23 @@
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampError } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampError, useMongocampSchema } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { isIsoDateTimeString, unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
 import { downloadTextFile, rowsToCsv } from '../composables/useMongocampExport'
 import { runBulkDelete } from '../composables/useMongocampBulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
+import {
+  buildCondition,
+  buildFilterQuery,
+  conditionValueText,
+  countActiveConditions,
+  operatorLabelKey,
+  operatorsFor,
+  toFilterFieldType,
+} from '../composables/useMongocampFilterBuilder'
+import type { FilterFieldType, FilterGroup } from '../composables/useMongocampFilterBuilder'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 
@@ -21,7 +31,8 @@ const { documentApi } = useMongocampClientApi()
 const { pagination, total } = useMongocampCollection()
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
 const { ensureMetaData } = useMongocampDocument()
-const { like, or } = useMongocampQuery()
+const { and, like, or } = useMongocampQuery()
+const { schemaFromSamples } = useMongocampSchema()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
@@ -227,6 +238,24 @@ const documents = ref<Row[]>([])
 const loading = ref(false)
 const filterText = ref('')
 const filterableColumns = ref<string[]>([])
+
+const emptyFilterGroup = (): FilterGroup => ({ match: 'all', conditions: [] })
+const filtersOpen = ref(false)
+// the draft is what the panel edits; the applied group is what the table is actually filtered by
+const filterDraft = ref<FilterGroup>(emptyFilterGroup())
+const appliedFilterGroup = ref<FilterGroup>(emptyFilterGroup())
+const appliedFilterQuery = ref('')
+const filterFields = ref<{ key: string, type: FilterFieldType }[]>([])
+const filterFieldTypes = computed<Record<string, FilterFieldType>>(() => Object.fromEntries(filterFields.value.map(f => [f.key, f.type])))
+const activeFilterCount = computed(() => countActiveConditions(appliedFilterGroup.value, filterFieldTypes.value))
+const filterChips = computed(() =>
+  appliedFilterGroup.value.conditions
+    .filter(c => buildCondition(c, filterFieldTypes.value[c.field] ?? 'string') !== '')
+    .map(c => ({
+      id: c.id,
+      label: [c.field, t(operatorLabelKey(c.operator, filterFieldTypes.value[c.field] ?? 'string')), conditionValueText(c)].filter(Boolean).join(' '),
+    })),
+)
 const sorting = ref<SortEntry[]>([])
 const columnVisibility = ref<Record<string, boolean>>({})
 const PAGE_SIZES = [10, 20, 50, 100]
@@ -240,10 +269,13 @@ function openDetail(value: unknown) {
   detailOpen.value = true
 }
 
+// the quick search box and the filter builder both narrow the result, so they combine with AND
 function buildLuceneFilter(term: string): string | undefined {
   const trimmed = term.trim()
-  if (!trimmed || filterableColumns.value.length === 0) return undefined
-  return or(...filterableColumns.value.map(col => like(col, trimmed))) || undefined
+  const quick = trimmed && filterableColumns.value.length > 0
+    ? or(...filterableColumns.value.map(col => like(col, trimmed)))
+    : ''
+  return and(quick, appliedFilterQuery.value) || undefined
 }
 
 function onFilterInput() {
@@ -432,6 +464,12 @@ async function fetchDocuments() {
         ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
+      // `_id` is left out on purpose: checked against a real server, `_id:"<oid>"` and `_id:<oid>` both fail the
+      // request, so offering it would only produce a broken filter. Arrays/objects have no operators either.
+      filterFields.value = schemaFromSamples(rows)
+        .filter(c => c.columnKey !== '_id')
+        .map(c => ({ key: c.columnKey, type: toFilterFieldType(c.columnType) }))
+        .filter(f => operatorsFor(f.type).length > 0)
       // GridFS files/chunks documents are managed through the bucket (deleting them one by one would
       // orphan the other half of a file), so bucket collections get no bulk selection
       if (!isBucketCollection(props.collectionName)) {
@@ -448,6 +486,26 @@ async function fetchDocuments() {
   finally {
     loading.value = false
   }
+}
+
+function onFilterApply(query: string) {
+  appliedFilterGroup.value = { match: filterDraft.value.match, conditions: filterDraft.value.conditions.map(c => ({ ...c })) }
+  appliedFilterQuery.value = query
+  pagination.value.pageIndex = 1
+  fetchDocuments()
+}
+
+function removeFilterChip(id: string) {
+  filterDraft.value = { ...filterDraft.value, conditions: filterDraft.value.conditions.filter(c => c.id !== id) }
+  appliedFilterGroup.value = { ...appliedFilterGroup.value, conditions: appliedFilterGroup.value.conditions.filter(c => c.id !== id) }
+  appliedFilterQuery.value = buildFilterQuery(appliedFilterGroup.value, filterFieldTypes.value)
+  pagination.value.pageIndex = 1
+  fetchDocuments()
+}
+
+function clearFilterChips() {
+  filterDraft.value = emptyFilterGroup()
+  onFilterApply('')
 }
 
 function onPageSizeChange() {
@@ -494,6 +552,11 @@ async function init() {
   pagination.value.pageIndex = 1
   filterText.value = ''
   filterableColumns.value = []
+  filterFields.value = []
+  filterDraft.value = emptyFilterGroup()
+  appliedFilterGroup.value = emptyFilterGroup()
+  appliedFilterQuery.value = ''
+  filtersOpen.value = false
   columnVisibility.value = {}
   columns.value = []
   documents.value = []
@@ -563,6 +626,22 @@ watch(() => props.collectionName, init, { immediate: true })
             @click="init"
           />
         </UTooltip>
+        <UChip
+          :text="activeFilterCount"
+          :show="activeFilterCount > 0"
+          size="sm"
+        >
+          <UButton
+            icon="i-lucide-list-filter"
+            color="neutral"
+            :variant="filtersOpen ? 'subtle' : 'ghost'"
+            size="sm"
+            :disabled="filterFields.length === 0"
+            :aria-pressed="filtersOpen"
+            :aria-label="t('nuxtUiMongocamp.collectionData.filtersTooltip')"
+            @click="filtersOpen = !filtersOpen"
+          />
+        </UChip>
         <UDropdownMenu :items="columnMenuItems">
           <UButton
             icon="i-lucide-columns-3"
@@ -599,6 +678,44 @@ watch(() => props.collectionName, init, { immediate: true })
         />
       </div>
     </div>
+    <MongocampFilterBuilder
+      v-if="filtersOpen"
+      v-model="filterDraft"
+      :fields="filterFields"
+      @apply="onFilterApply"
+    />
+
+    <div
+      v-if="filterChips.length > 0"
+      class="flex flex-wrap items-center gap-2"
+    >
+      <UBadge
+        v-for="chip in filterChips"
+        :key="chip.id"
+        color="neutral"
+        variant="subtle"
+        class="gap-1"
+      >
+        {{ chip.label }}
+        <UButton
+          icon="i-lucide-x"
+          color="neutral"
+          variant="link"
+          size="xs"
+          class="p-0"
+          :aria-label="t('nuxtUiMongocamp.collectionData.removeFilter', { filter: chip.label })"
+          @click="removeFilterChip(chip.id)"
+        />
+      </UBadge>
+      <UButton
+        color="neutral"
+        variant="link"
+        size="xs"
+        :label="t('nuxtUiMongocamp.collectionData.clearFilters')"
+        @click="clearFilterChips"
+      />
+    </div>
+
     <MongocampErrorAlert
       :error="loadError"
       @retry="fetchDocuments"

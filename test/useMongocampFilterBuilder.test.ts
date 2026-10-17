@@ -2,9 +2,12 @@ import { describe, it, expect } from 'vitest'
 import {
   buildCondition,
   buildFilterQuery,
+  conditionValueText,
   countActiveConditions,
   FILTER_OPERATORS_BY_TYPE,
+  operatorLabelKey,
   operatorsFor,
+  toFilterFieldType,
   valueCountFor,
 } from '../src/runtime/composables/useMongocampFilterBuilder'
 import type { FilterCondition, FilterFieldType, FilterGroup, FilterOperator } from '../src/runtime/composables/useMongocampFilterBuilder'
@@ -18,13 +21,15 @@ describe('operator tables', () => {
     expect(operatorsFor('string')).toContain('contains')
     expect(operatorsFor('number')).toContain('between')
     expect(operatorsFor('number')).not.toContain('contains')
-    expect(operatorsFor('date-time')).toEqual(['gte', 'lte', 'between', 'isEmpty', 'isNotEmpty'])
-    expect(operatorsFor('boolean')).toEqual(['isTrue', 'isFalse', 'isEmpty', 'isNotEmpty'])
-    expect(operatorsFor('array')).toEqual(['isNotEmpty', 'isEmpty'])
+    expect(operatorsFor('date-time')).toEqual(['gte', 'lte', 'between'])
+    expect(operatorsFor('boolean')).toEqual(['isTrue', 'isFalse'])
+    expect(operatorsFor('array')).toEqual([])
+    expect(operatorsFor('object')).toEqual([])
   })
 
   it('falls back to the string operators for an unknown type', () => {
     expect(operatorsFor('mystery' as FilterFieldType)).toEqual(FILTER_OPERATORS_BY_TYPE.string)
+    expect(operatorsFor('constructor' as FilterFieldType)).toEqual(FILTER_OPERATORS_BY_TYPE.string)
   })
 
   it('says how many value inputs an operator needs', () => {
@@ -74,16 +79,27 @@ describe('buildCondition: numbers', () => {
     expect(buildCondition(age('oneOf', '1, 2'), 'number')).toBe('age:(1 OR 2)')
   })
 
-  it('builds inclusive and open-ended ranges', () => {
-    expect(buildCondition(age('gte', '5'), 'number')).toBe('age:[5 TO *]')
-    expect(buildCondition(age('lte', '5'), 'number')).toBe('age:[* TO 5]')
+  it('keeps the digits as typed, so numbers beyond 2^53 are not rounded to a different value', () => {
+    expect(buildCondition(age('equals', '19185237114620650'), 'number')).toBe('age:19185237114620650')
+    expect(buildCondition(age('gte', '19185237114620650'), 'number')).toBe('age:[19185237114620650 TO 9223372036854775807]')
+    expect(buildCondition(age('oneOf', '19185237114620650, 1'), 'number')).toBe('age:(19185237114620650 OR 1)')
+    expect(buildCondition(age('equals', ' 007 '), 'number')).toBe('age:007') // surrounding whitespace is trimmed, nothing else
+    expect(buildCondition(age('equals', '.5'), 'number')).toBe('age:.5')
+  })
+
+  it('builds inclusive ranges, closing "at least"/"at most" with far bounds because a real server rejects `[x TO *]`', () => {
+    expect(buildCondition(age('gte', '5'), 'number')).toBe('age:[5 TO 9223372036854775807]')
+    expect(buildCondition(age('lte', '5'), 'number')).toBe('age:[-9223372036854775808 TO 5]')
     expect(buildCondition(age('between', '1', '5'), 'number')).toBe('age:[1 TO 5]')
+    expect(buildCondition(age('gte', '5'), 'number')).not.toContain('*')
   })
 
   it('ignores rows whose numbers are missing or not numbers', () => {
     expect(buildCondition(age('equals', 'abc'), 'number')).toBe('')
     expect(buildCondition(age('equals', ''), 'number')).toBe('')
     expect(buildCondition(age('equals', 'Infinity'), 'number')).toBe('')
+    expect(buildCondition(age('equals', '1e3'), 'number')).toBe('')
+    expect(buildCondition(age('equals', '1,5'), 'number')).toBe('')
     expect(buildCondition(age('between', '1'), 'number')).toBe('')
     expect(buildCondition(age('between', '', '5'), 'number')).toBe('')
   })
@@ -96,11 +112,16 @@ describe('buildCondition: numbers', () => {
 describe('buildCondition: dates', () => {
   const created = (operator: FilterOperator, value?: string, value2?: string) => row(operator, value, value2, 'created')
 
-  it('builds range queries from ISO dates and timestamps', () => {
-    expect(buildCondition(created('gte', '2024-01-01'), 'date-time')).toBe('created:[2024-01-01 TO *]')
-    expect(buildCondition(created('lte', '2024-01-01'), 'date-time')).toBe('created:[* TO 2024-01-01]')
-    expect(buildCondition(created('between', '2024-01-01T10:00:00Z', '2024-02-01'), 'date-time'))
-      .toBe('created:[2024-01-01T10:00:00Z TO 2024-02-01]')
+  it('widens a bare date to the whole day in UTC, so "on or before" includes that day', () => {
+    expect(buildCondition(created('gte', '2024-01-01'), 'date-time')).toBe('created:[2024-01-01T00:00:00Z TO 9999-12-31T23:59:59.999Z]')
+    expect(buildCondition(created('lte', '2024-01-01'), 'date-time')).toBe('created:[0001-01-01T00:00:00Z TO 2024-01-01T23:59:59.999Z]')
+    expect(buildCondition(created('between', '2024-01-01', '2024-01-31'), 'date-time'))
+      .toBe('created:[2024-01-01T00:00:00Z TO 2024-01-31T23:59:59.999Z]')
+  })
+
+  it('leaves a full timestamp exactly as given', () => {
+    expect(buildCondition(created('between', '2024-01-01T10:00:00Z', '2024-02-01T12:30:00Z'), 'date-time'))
+      .toBe('created:[2024-01-01T10:00:00Z TO 2024-02-01T12:30:00Z]')
   })
 
   it('ignores values that are not valid ISO dates', () => {
@@ -116,10 +137,17 @@ describe('buildCondition: booleans and existence', () => {
     expect(buildCondition(row('isFalse', undefined, undefined, 'active'), 'boolean')).toBe('active:false')
   })
 
-  it('maps isEmpty / isNotEmpty to field absent / present for every type', () => {
-    for (const type of ['string', 'number', 'date-time', 'boolean', 'array', 'object'] as const) {
-      expect(buildCondition(row('isNotEmpty'), type)).toBe('_exists_:name')
-      expect(buildCondition(row('isEmpty'), type)).toBe('-_exists_:name')
+  it('writes "has a value" / "has no value" as a wildcard term, for text fields', () => {
+    expect(buildCondition(row('isNotEmpty'), 'string')).toBe('name:*')
+    expect(buildCondition(row('isEmpty'), 'string')).toBe('-name:*')
+  })
+
+  it('does not offer existence tests for other types, where a real server returned wrong results', () => {
+    for (const type of ['number', 'date-time', 'boolean', 'array', 'object'] as const) {
+      expect(operatorsFor(type)).not.toContain('isEmpty')
+      expect(operatorsFor(type)).not.toContain('isNotEmpty')
+      expect(buildCondition(row('isNotEmpty'), type)).toBe('')
+      expect(buildCondition(row('isEmpty'), type)).toBe('')
     }
   })
 })
@@ -137,7 +165,7 @@ describe('buildCondition: validity and safety', () => {
 
   it('escapes special characters in field names, including for exists', () => {
     expect(buildCondition(row('equals', 'x', undefined, 'first name'), 'string')).toBe('first\\ name:"x"')
-    expect(buildCondition(row('isNotEmpty', undefined, undefined, 'first name'), 'string')).toBe('_exists_:first\\ name')
+    expect(buildCondition(row('isNotEmpty', undefined, undefined, 'first name'), 'string')).toBe('first\\ name:*')
   })
 
   it('cannot be tricked into extra query syntax through a value', () => {
@@ -181,5 +209,30 @@ describe('buildFilterQuery / countActiveConditions', () => {
   it('counts only the rows that contribute to the query', () => {
     const rows = [row('contains', 'a'), row('equals', ''), row('equals', '30', undefined, 'age'), row('equals', 'abc', undefined, 'age')]
     expect(countActiveConditions(group('all', ...rows), types)).toBe(2)
+  })
+})
+
+describe('helpers for the UI', () => {
+  it('maps inferred schema types onto filter types, defaulting to string', () => {
+    expect(toFilterFieldType('number')).toBe('number')
+    expect(toFilterFieldType('integer')).toBe('number')
+    expect(toFilterFieldType('date-time')).toBe('date-time')
+    expect(toFilterFieldType('boolean')).toBe('boolean')
+    expect(toFilterFieldType('array')).toBe('array')
+    expect(toFilterFieldType('unknown')).toBe('string')
+    expect(toFilterFieldType('toString')).toBe('string') // not fooled by Object.prototype keys
+  })
+
+  it('uses date wording for range operators on dates only', () => {
+    expect(operatorLabelKey('gte', 'date-time')).toBe('nuxtUiMongocamp.filterBuilder.operators.gteDate')
+    expect(operatorLabelKey('between', 'date-time')).toBe('nuxtUiMongocamp.filterBuilder.operators.betweenDate')
+    expect(operatorLabelKey('gte', 'number')).toBe('nuxtUiMongocamp.filterBuilder.operators.gte')
+    expect(operatorLabelKey('isNotEmpty', 'string')).toBe('nuxtUiMongocamp.filterBuilder.operators.isNotEmpty')
+  })
+
+  it('summarises a row\'s value for a chip', () => {
+    expect(conditionValueText(row('contains', ' ali '))).toBe('ali')
+    expect(conditionValueText(row('between', '1', '5'))).toBe('1 – 5')
+    expect(conditionValueText(row('isNotEmpty', 'ignored'))).toBe('')
   })
 })

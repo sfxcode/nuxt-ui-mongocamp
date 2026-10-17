@@ -157,7 +157,10 @@
       "exportTooltip": "Diese Seite exportieren",
       "exportJson": "Seite als JSON exportieren",
       "exportCsv": "Seite als CSV exportieren",
-      "pageSizeLabel": "Zeilen pro Seite"
+      "pageSizeLabel": "Zeilen pro Seite",
+      "filtersTooltip": "Filter",
+      "removeFilter": "Filter {filter} entfernen",
+      "clearFilters": "Filter zurücksetzen"
     },
     "bucketFiles": {
       "filterPlaceholder": "Nach Dateiname filtern...",

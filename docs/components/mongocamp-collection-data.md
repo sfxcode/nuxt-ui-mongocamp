@@ -32,6 +32,9 @@ Columns are derived from the first fetched row's keys (`_id` first, `metaData` l
 
 - The search input is debounced (300ms) and built with [`useMongocampQuery`](/composables/use-mongocamp-query)'s `like`/`or` helpers (`col1:"*term*" OR col2:"*term*"`) across all string-typed columns — disabled until at least one such column exists.
 - Column headers are clickable and trigger a server-side sort (`field` / `-field`) via `documentApi.listDocumentsRaw`.
+- The **Filters** button (badge = number of active conditions) opens a [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) panel. **Apply filters** reloads from page 1; each applied condition shows as a removable chip with a **Clear filters** link. The builder and the search input narrow the result together (AND).
+  - The fields offered come from the rows on the first page, with their types inferred from the values. `_id` is not offered (a real server rejects `_id` filters), nor are arrays and objects (no operators for them). The button is disabled for an empty collection.
+  - Applied filters, the panel and the draft are reset when `collectionName` changes and by the reload button.
 
 ## Insert / Edit / Delete
 

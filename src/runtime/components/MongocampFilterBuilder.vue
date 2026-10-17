@@ -4,6 +4,7 @@ import { useI18n } from '#imports'
 import {
   buildFilterQuery,
   countActiveConditions,
+  operatorLabelKey,
   operatorsFor,
   valueCountFor,
 } from '../composables/useMongocampFilterBuilder'
@@ -37,14 +38,8 @@ function typeOf(field: string): FilterFieldType {
   return fieldTypes.value[field] ?? 'string'
 }
 
-// date operators read "on or after" rather than "at least"
-function operatorLabel(operator: FilterOperator, type: FilterFieldType): string {
-  const suffix = type === 'date-time' && ['gte', 'lte', 'between'].includes(operator) ? 'Date' : ''
-  return t(`nuxtUiMongocamp.filterBuilder.operators.${operator}${suffix}`)
-}
-
 function operatorItems(type: FilterFieldType) {
-  return operatorsFor(type).map(operator => ({ label: operatorLabel(operator, type), value: operator }))
+  return operatorsFor(type).map(operator => ({ label: t(operatorLabelKey(operator, type)), value: operator }))
 }
 
 const matchItems = computed(() => [
@@ -155,8 +150,8 @@ function clearAll() {
         <template v-if="valueCountFor(condition.operator) > 0">
           <UInput
             :model-value="condition.value ?? ''"
-            :type="typeOf(condition.field) === 'date-time' ? 'date' : typeOf(condition.field) === 'number' && condition.operator !== 'oneOf' ? 'number' : 'text'"
-            :step="typeOf(condition.field) === 'number' ? 'any' : undefined"
+            :type="typeOf(condition.field) === 'date-time' ? 'date' : 'text'"
+            :inputmode="typeOf(condition.field) === 'number' ? 'decimal' : undefined"
             :placeholder="condition.operator === 'oneOf' ? t('nuxtUiMongocamp.filterBuilder.listPlaceholder') : undefined"
             size="sm"
             class="w-48"
@@ -167,8 +162,8 @@ function clearAll() {
             <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.filterBuilder.and') }}</span>
             <UInput
               :model-value="condition.value2 ?? ''"
-              :type="typeOf(condition.field) === 'date-time' ? 'date' : 'number'"
-              :step="typeOf(condition.field) === 'number' ? 'any' : undefined"
+              :type="typeOf(condition.field) === 'date-time' ? 'date' : 'text'"
+              :inputmode="typeOf(condition.field) === 'number' ? 'decimal' : undefined"
               size="sm"
               class="w-48"
               :aria-label="t('nuxtUiMongocamp.filterBuilder.valueTo')"

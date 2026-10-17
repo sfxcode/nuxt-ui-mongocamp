@@ -157,7 +157,10 @@
       "exportTooltip": "Export this page",
       "exportJson": "Export page as JSON",
       "exportCsv": "Export page as CSV",
-      "pageSizeLabel": "Rows per page"
+      "pageSizeLabel": "Rows per page",
+      "filtersTooltip": "Filters",
+      "removeFilter": "Remove filter {filter}",
+      "clearFilters": "Clear filters"
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",

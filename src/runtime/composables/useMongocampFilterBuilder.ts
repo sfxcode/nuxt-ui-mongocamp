@@ -27,19 +27,41 @@ export interface FilterGroup {
   conditions: FilterCondition[]
 }
 
-// `isEmpty` / `isNotEmpty` mean "field is absent / present" (Lucene `_exists_`) — for arrays and
-// objects that is the only sensible test, and the UI labels them "exists" / "does not exist" there.
+// Only what was checked against a real MongoCamp server is offered. `isEmpty` / `isNotEmpty` (written
+// `-field:*` / `field:*`) work for text fields; `_exists_:field` matched nothing, and `field:*` matched
+// nothing on a date, so existence tests are text-only. Arrays and objects therefore have no operators.
 export const FILTER_OPERATORS_BY_TYPE: Record<FilterFieldType, FilterOperator[]> = {
   'string': ['contains', 'equals', 'notEquals', 'startsWith', 'endsWith', 'oneOf', 'isEmpty', 'isNotEmpty'],
-  'number': ['equals', 'notEquals', 'gte', 'lte', 'between', 'oneOf', 'isEmpty', 'isNotEmpty'],
-  'date-time': ['gte', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
-  'boolean': ['isTrue', 'isFalse', 'isEmpty', 'isNotEmpty'],
-  'array': ['isNotEmpty', 'isEmpty'],
-  'object': ['isNotEmpty', 'isEmpty'],
+  'number': ['equals', 'notEquals', 'gte', 'lte', 'between', 'oneOf'],
+  'date-time': ['gte', 'lte', 'between'],
+  'boolean': ['isTrue', 'isFalse'],
+  'array': [],
+  'object': [],
 }
 
 export function operatorsFor(type: FilterFieldType): FilterOperator[] {
-  return FILTER_OPERATORS_BY_TYPE[type] ?? FILTER_OPERATORS_BY_TYPE.string
+  // own-property check: a stray type like 'constructor' must not resolve to an Object.prototype member
+  return Object.hasOwn(FILTER_OPERATORS_BY_TYPE, type) ? FILTER_OPERATORS_BY_TYPE[type] : FILTER_OPERATORS_BY_TYPE.string
+}
+
+/** Maps the type names `useMongocampSchema` infers onto the ones the builder understands. */
+export function toFilterFieldType(columnType: string): FilterFieldType {
+  if (columnType === 'integer') return 'number'
+  return Object.hasOwn(FILTER_OPERATORS_BY_TYPE, columnType) ? columnType as FilterFieldType : 'string'
+}
+
+/** i18n key for an operator's label; date fields read "on or after" instead of "at least". */
+export function operatorLabelKey(operator: FilterOperator, type: FilterFieldType): string {
+  const dateWording = type === 'date-time' && (operator === 'gte' || operator === 'lte' || operator === 'between')
+  return `nuxtUiMongocamp.filterBuilder.operators.${operator}${dateWording ? 'Date' : ''}`
+}
+
+/** The value part of a row as text for a summary chip: `''`, `a`, or `a – b` for a range. */
+export function conditionValueText(condition: FilterCondition): string {
+  const count = valueCountFor(condition.operator)
+  if (count === 0) return ''
+  const value = (condition.value ?? '').trim()
+  return count === 2 ? `${value} – ${(condition.value2 ?? '').trim()}` : value
 }
 
 /** How many value inputs an operator needs (0 = none, 2 = a range). */
@@ -55,20 +77,40 @@ function escapeFieldName(name: string): string {
   return name.replace(/[+\-&|!(){}[\]^"~:\\/ *?]/g, '\\$&')
 }
 
-function parseNumber(raw: string): number | null {
-  if (raw === '') return null
-  const parsed = Number(raw)
-  return Number.isFinite(parsed) ? parsed : null
+const PLAIN_NUMBER_REGEX = /^-?(?:\d+(?:\.\d+)?|\.\d+)$/
+
+// Returns the digits as typed rather than a JS number: ids and account numbers beyond 2^53 would
+// otherwise be silently rounded to a different value. Exponent notation (1e3) is not accepted.
+function parseNumber(raw: string): string | null {
+  return PLAIN_NUMBER_REGEX.test(raw) ? raw : null
+}
+
+// `field:v` for one value, `field:(a OR b)` for several — numbers stay unquoted so Lucene treats them as numeric
+function numericTerm(field: string, values: string[]): string {
+  return values.length === 1 ? `${field}:${values[0]}` : `${field}:(${values.join(' OR ')})`
 }
 
 // `useMongocampQuery().inRange` copies its bounds into the query unescaped, so anything that reaches
 // it must already be a number or an ISO date — free text there could smuggle in query syntax.
-function parseRangeBound(type: FilterFieldType, raw: string): string | null {
-  if (type === 'number') {
-    const parsed = parseNumber(raw)
-    return parsed === null ? null : String(parsed)
+// Checked against a real MongoCamp server: `[x TO *]` (an open end) makes the request fail, while a closed
+// range works. So "at least"/"at most" use these far-away bounds instead of `*`. The number bounds are the
+// 64-bit integer limits, the date bounds the earliest/latest year.
+const FAR_BOUND: Partial<Record<FilterFieldType, { from: string, to: string }>> = {
+  'number': { from: '-9223372036854775808', to: '9223372036854775807' },
+  'date-time': { from: '0001-01-01T00:00:00Z', to: '9999-12-31T23:59:59.999Z' },
+}
+
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
+
+// A bare date is widened to a full UTC timestamp — start of day for the lower bound, end of day for the
+// upper — so "on or before 2018-01-01" includes that whole day. Closed ranges with timestamps like this
+// work against a real MongoCamp server.
+function parseRangeBound(type: FilterFieldType, raw: string, edge: 'from' | 'to'): string | null {
+  if (type === 'number') return parseNumber(raw)
+  if (type === 'date-time') {
+    if (!isIsoDateTimeString(raw)) return null
+    return DATE_ONLY_REGEX.test(raw) ? `${raw}${edge === 'from' ? 'T00:00:00Z' : 'T23:59:59.999Z'}` : raw
   }
-  if (type === 'date-time') return isIsoDateTimeString(raw) ? raw : null
   return null
 }
 
@@ -86,23 +128,23 @@ export function buildCondition(condition: FilterCondition, type: FilterFieldType
   const value2 = (condition.value2 ?? '').trim()
 
   switch (condition.operator) {
-    // exists/notExists escape the name themselves, so they get the raw one
-    case 'isEmpty': return h.notExists(condition.field)
-    case 'isNotEmpty': return h.exists(condition.field)
+    // `field:*` = "has a value"; only offered for text fields (see FILTER_OPERATORS_BY_TYPE)
+    case 'isEmpty': return `-${field}:*`
+    case 'isNotEmpty': return `${field}:*`
     case 'isTrue': return `${field}:true`
     case 'isFalse': return `${field}:false`
 
     case 'gte': {
-      const from = parseRangeBound(type, value)
-      return from === null ? '' : h.inRange(field, from, null)
+      const from = parseRangeBound(type, value, 'from')
+      return from === null ? '' : h.inRange(field, from, FAR_BOUND[type]?.to ?? null)
     }
     case 'lte': {
-      const to = parseRangeBound(type, value)
-      return to === null ? '' : h.inRange(field, null, to)
+      const to = parseRangeBound(type, value, 'to')
+      return to === null ? '' : h.inRange(field, FAR_BOUND[type]?.from ?? null, to)
     }
     case 'between': {
-      const from = parseRangeBound(type, value)
-      const to = parseRangeBound(type, value2)
+      const from = parseRangeBound(type, value, 'from')
+      const to = parseRangeBound(type, value2, 'to')
       return from === null || to === null ? '' : h.inRange(field, from, to)
     }
 
@@ -116,8 +158,7 @@ export function buildCondition(condition: FilterCondition, type: FilterFieldType
       if (type === 'number') {
         const parsed = parseNumber(value)
         if (parsed === null) return ''
-        // numbers stay unquoted (what inClause does for numbers) so Lucene treats them as numeric
-        const expression = h.inClause(field, [parsed])
+        const expression = numericTerm(field, [parsed])
         return negate ? `-${expression}` : expression
       }
       return negate ? h.notEquals(field, value) : h.equals(field, value)
@@ -129,7 +170,7 @@ export function buildCondition(condition: FilterCondition, type: FilterFieldType
       if (type === 'number') {
         const numbers = items.map(parseNumber)
         // one bad entry makes the whole row invalid rather than silently dropping it
-        return numbers.includes(null) ? '' : h.inClause(field, numbers as number[])
+        return numbers.includes(null) ? '' : numericTerm(field, numbers as string[])
       }
       return h.inClause(field, items)
     }
@@ -150,5 +191,5 @@ export function countActiveConditions(group: FilterGroup, fieldTypes: Record<str
 }
 
 export function useMongocampFilterBuilder() {
-  return { operatorsFor, valueCountFor, buildCondition, buildFilterQuery, countActiveConditions }
+  return { operatorsFor, valueCountFor, toFilterFieldType, operatorLabelKey, conditionValueText, buildCondition, buildFilterQuery, countActiveConditions }
 }

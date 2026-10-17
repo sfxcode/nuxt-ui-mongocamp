@@ -23,12 +23,12 @@ const query = buildFilterQuery(
 | Type | Operators |
 |---|---|
 | `string` | `contains`, `equals`, `notEquals`, `startsWith`, `endsWith`, `oneOf` (comma list), `isEmpty`, `isNotEmpty` |
-| `number` | `equals`, `notEquals`, `gte`, `lte`, `between`, `oneOf`, `isEmpty`, `isNotEmpty` |
-| `date-time` | `gte`, `lte`, `between`, `isEmpty`, `isNotEmpty` |
-| `boolean` | `isTrue`, `isFalse`, `isEmpty`, `isNotEmpty` |
-| `array`, `object` | `isNotEmpty`, `isEmpty` |
+| `number` | `equals`, `notEquals`, `gte`, `lte`, `between`, `oneOf` |
+| `date-time` | `gte`, `lte`, `between` |
+| `boolean` | `isTrue`, `isFalse` |
+| `array`, `object` | none — `operatorsFor` returns `[]`, so leave these fields out of the builder |
 
-`isEmpty` / `isNotEmpty` mean the field is absent / present (`_exists_`). `gte`/`lte`/`between` are inclusive.
+`gte`/`lte`/`between` are inclusive. `isEmpty` / `isNotEmpty` ("has no value" / "has a value") are written `-field:*` / `field:*` and are offered for text fields only.
 
 ## Functions
 
@@ -45,6 +45,21 @@ const query = buildFilterQuery(
 - **Incomplete or invalid rows are skipped**, never turned into "match everything": empty values, non-numeric numbers, non-ISO dates, an operator that doesn't fit the field type. A `oneOf` list with a single bad number is rejected as a whole.
 - **Safe against query injection:** values are escaped; field names are escaped (a field called `first name` works); range bounds — which the query helpers copy in verbatim — are accepted only as finite numbers or ISO dates.
 - **`contains` keeps `*` and `?` as wildcards**, so `a*b` matches "a…b". A leading wildcard (`contains`, `endsWith`) cannot use an index and is slow on large collections.
-- **Numbers and booleans are written unquoted** (`age:30`, `active:true`), strings quoted (`name:"ali"`). This follows the existing `inClause` convention; confirm it against your server before relying on numeric/boolean equality.
+- **Numbers keep the digits as typed** and are written unquoted (`age:30`); only plain decimals are accepted (no `1e3`). Ids and account numbers beyond 2^53 therefore aren't rounded. Strings are written quoted (`name:"ali"`).
+- **Dates**: a bare date means the whole day in UTC — `gte 2024-01-01` is `[2024-01-01T00:00:00Z …`, `lte 2024-01-01` ends at `2024-01-01T23:59:59.999Z`. A full timestamp is used as given.
+- **No open-ended ranges.** `gte` / `lte` close the range with a far-away bound (the 64-bit integer limits for numbers, year 0001 / 9999 for dates) instead of `*`.
+
+## Checked against a real server
+
+These behaviours were verified against a MongoCamp server (1.5.x) and are why the operator tables are not larger:
+
+| Works | Does not work |
+|---|---|
+| `name:*x*`, `name:"x"`, `name:x*`, `name:*x`, `name:("a" OR "b")` | `_id:"<oid>"` and `_id:<oid>` — the request fails, so `_id` can't be filtered |
+| `n:12345` (unquoted number, exact digits), `n:[a TO b]` (closed range) | `n:[a TO *]` / `[* TO b]` (open end) — the request fails |
+| `d:[2018-01-01T00:00:00Z TO 2018-12-31T23:59:59.999Z]` | `_exists_:field` — matches nothing; `-_exists_:field` matches everything |
+| `name:*` / `-name:*` on a text field | `field:*` on a date field — matches nothing |
+
+Boolean terms (`active:true`) and `oneOf` on numbers are written the obvious way but were not exercised against the server.
 
 See also [`useMongocampQuery`](/composables/use-mongocamp-query).
