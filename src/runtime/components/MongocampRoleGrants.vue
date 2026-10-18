@@ -156,6 +156,24 @@ async function removeGrant(index: number) {
   await saveGrants(grants.value.filter((_, i) => i !== index))
 }
 
+// collections without a grant yet, minus MongoCamp's own `mc_` tables
+const missingReadCollections = computed(() => {
+  const grantedNames = new Set(grants.value.map(g => g.name))
+  return allCollections.value.filter(c => !c.startsWith('mc_') && !grantedNames.has(c))
+})
+
+async function addAllReadGrants() {
+  const added: Grant[] = missingReadCollections.value.map(name => ({
+    name,
+    read: true,
+    write: false,
+    administrate: false,
+    grantType: 'COLLECTION',
+  }))
+  if (!added.length) return
+  await saveGrants([...grants.value, ...added])
+}
+
 function openAdd() {
   const grantedNames = new Set(grants.value.map(g => g.name))
   addGrantSchema[0]!.options = allCollections.value.filter(c => !grantedNames.has(c))
@@ -263,6 +281,16 @@ fetchCollections()
             :loading="loading"
             :aria-label="t('nuxtUiMongocamp.common.refresh')"
             @click="fetchRole"
+          />
+        </UTooltip>
+        <UTooltip :text="t('nuxtUiMongocamp.roleGrants.addAllReadTooltip')">
+          <UButton
+            icon="i-lucide-eye"
+            color="neutral"
+            variant="outline"
+            :label="t('nuxtUiMongocamp.roleGrants.addAllRead')"
+            :disabled="saving || loading || !missingReadCollections.length"
+            @click="addAllReadGrants"
           />
         </UTooltip>
         <UButton

@@ -23,12 +23,18 @@ let filterTimer: ReturnType<typeof setTimeout> | undefined
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
+const isCloneModalOpen = ref(false)
 const roleToDelete = ref('')
 const errorMessage = ref('')
 
 const newRole = ref({ name: '', isAdmin: false })
 const editRole = ref({ roleName: '', isAdmin: false })
 const editGrants = ref<Grant[]>([])
+const cloneSource = ref('')
+const cloneRole = ref({ name: '', isAdmin: false })
+const cloneGrants = ref<Grant[]>([])
+const cloneError = ref('')
+const cloning = ref(false)
 
 const addRoleSchema = reactive([
   {
@@ -45,6 +51,20 @@ const addRoleSchema = reactive([
 ])
 
 const editRoleSchema = reactive([
+  {
+    $formkit: 'nuxtUISwitch',
+    name: 'isAdmin',
+    label: t('nuxtUiMongocamp.roles.adminRole'),
+  },
+])
+
+const cloneRoleSchema = reactive([
+  {
+    $formkit: 'nuxtUIInput',
+    name: 'name',
+    label: t('nuxtUiMongocamp.roles.roleName'),
+    validation: 'required|length:2',
+  },
   {
     $formkit: 'nuxtUISwitch',
     name: 'isAdmin',
@@ -128,6 +148,31 @@ async function handleEditRole() {
   }
   catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.roles.errorEditRole')
+  }
+}
+
+function openClone(role: Role) {
+  cloneSource.value = role.name
+  cloneRole.value = { name: '', isAdmin: role.isAdmin }
+  cloneGrants.value = (role.collectionGrants ?? []).map(g => ({ ...g }))
+  cloneError.value = ''
+  isCloneModalOpen.value = true
+}
+
+// A refused clone keeps the dialog open with the reason (e.g. the name is taken) so the input isn't lost.
+async function handleCloneRole() {
+  cloning.value = true
+  cloneError.value = ''
+  try {
+    await addRole(cloneRole.value.name, cloneRole.value.isAdmin, cloneGrants.value)
+    isCloneModalOpen.value = false
+    await fetchRoles()
+  }
+  catch (e: unknown) {
+    cloneError.value = describeError(e, 'nuxtUiMongocamp.roles.errorClone').message
+  }
+  finally {
+    cloning.value = false
   }
 }
 
@@ -228,6 +273,14 @@ const columns = computed<TableColumn<Role>[]>(() => [
           'size': 'sm',
           'aria-label': t('nuxtUiMongocamp.roles.editRoleTooltip'),
           'onClick': () => openEdit(row.original),
+        })),
+        withTooltip(t('nuxtUiMongocamp.roles.cloneRoleTooltip'), h(UButton, {
+          'icon': 'i-lucide-copy',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': t('nuxtUiMongocamp.roles.cloneRoleTooltip'),
+          'onClick': () => openClone(row.original),
         })),
         withTooltip(t('nuxtUiMongocamp.roles.deleteRoleTooltip'), h(UButton, {
           'icon': 'i-lucide-trash-2',
@@ -345,6 +398,33 @@ fetchRoles()
         >
           {{ errorMessage }}
         </p>
+      </template>
+    </UModal>
+
+    <!-- Clone Role Modal -->
+    <UModal
+      v-model:open="isCloneModalOpen"
+      :title="t('nuxtUiMongocamp.roles.cloneRoleTitle', { roleName: cloneSource })"
+    >
+      <template #body>
+        <p class="mb-3 text-sm text-dimmed">
+          {{ t('nuxtUiMongocamp.roles.cloneRoleHint', { count: cloneGrants.length }) }}
+        </p>
+        <FUDataEdit
+          :data="cloneRole"
+          :schema="cloneRoleSchema"
+          :submit-label="t('nuxtUiMongocamp.roles.cloneRole')"
+          submit-icon="i-lucide-copy"
+          @data-saved="handleCloneRole"
+        />
+        <UAlert
+          v-if="cloneError"
+          class="mt-3"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :description="cloneError"
+        />
       </template>
     </UModal>
 

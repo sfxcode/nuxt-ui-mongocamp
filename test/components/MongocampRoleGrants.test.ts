@@ -155,6 +155,41 @@ describe('MongocampRoleGrants', () => {
     })
   })
 
+  describe('add all read-only', () => {
+    const usersGrant = { name: 'users', read: true, write: true, administrate: false, grantType: 'COLLECTION' }
+
+    async function mountRole() {
+      mockListRoles.mockResolvedValue([{ name: 'support', isAdmin: false, collectionGrants: [{ ...usersGrant }] }])
+      const component = await mountSuspended(withUApp(MongocampRoleGrants), { route: '/', props: { roleName: 'support' } })
+      await flushPromises()
+      return component
+    }
+
+    const addAllButton = (component: Awaited<ReturnType<typeof mountRole>>) =>
+      component.findAll('button').find(b => b.text() === 'Add all read-only')!
+
+    it('grants read-only access to collections without a grant, skipping mc_ collections and keeping existing grants', async () => {
+      mockListCollections.mockResolvedValue(['users', 'orders', 'mc_users', 'mc_jobs', 'items'])
+      const component = await mountRole()
+
+      await addAllButton(component).trigger('click')
+      await flushPromises()
+
+      expect(mockUpdateRole).toHaveBeenCalledWith('support', false, [
+        usersGrant,
+        { name: 'orders', read: true, write: false, administrate: false, grantType: 'COLLECTION' },
+        { name: 'items', read: true, write: false, administrate: false, grantType: 'COLLECTION' },
+      ])
+    })
+
+    it('is disabled when only granted and mc_ collections are left', async () => {
+      mockListCollections.mockResolvedValue(['users', 'mc_users'])
+      const component = await mountRole()
+
+      expect(addAllButton(component).attributes('disabled')).toBeDefined()
+    })
+  })
+
   it('removes a grant: clicking remove calls updateRole with the remaining grants and does not mutate the fetched API response', async () => {
     const originalGrants = [
       { name: 'users', read: true, write: false, administrate: false, grantType: 'COLLECTION' },

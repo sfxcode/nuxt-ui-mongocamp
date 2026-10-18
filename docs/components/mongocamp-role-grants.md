@@ -31,6 +31,7 @@ Per-role collection grant management — lists collection grants for a named rol
 - **Edit** — toggle permissions for an existing grant.
 - **Delete** — removes the grant immediately (no confirmation modal).
 - Every save calls `updateRole(roleName, isAdmin, grants)` — the API replaces the **entire** grants array, so this component always shallow-clones grants from the role before editing to avoid mutating the source object in place.
+- **Add all read-only** — one click grants `read` (no `write`/`administrate`) on every collection that has no grant yet, in a single save. MongoCamp's own collections (names starting with `mc_`) are skipped and existing grants are left untouched. The button is disabled when there is nothing left to add.
 - **The table only changes after a confirmed save.** Add, edit and remove build the new grant list as a *copy*, save it, and then reload the role from the server. If the server refuses, nothing in the table changes (it still shows what the server really has) and the reason is shown: inside the dialog for add/edit, which stays open so your input isn't lost, or as a "Failed to save grants" alert above the table for a remove. The alert clears on the next save, reload or dialog open. Edit and remove buttons are disabled while a save is running.
 - A failed load shows [`MongocampErrorAlert`](/components/mongocamp-error-alert) with retry; no grants shows an empty state.
 

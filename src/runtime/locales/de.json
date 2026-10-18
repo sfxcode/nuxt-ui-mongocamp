@@ -61,6 +61,11 @@
       "manageGrantsTooltip": "Berechtigungen verwalten",
       "editRoleTooltip": "Rolle bearbeiten",
       "deleteRoleTooltip": "Rolle löschen",
+      "cloneRoleTooltip": "Rolle klonen",
+      "cloneRoleTitle": "Rolle klonen: {roleName}",
+      "cloneRole": "Rolle klonen",
+      "cloneRoleHint": "Die neue Rolle erhält eine Kopie des Admin-Flags und aller {count} Berechtigungen.",
+      "errorClone": "Rolle konnte nicht geklont werden",
       "errorAddRole": "Rolle konnte nicht hinzugefügt werden",
       "errorEditRole": "Rolle konnte nicht aktualisiert werden",
       "errorDelete": "Rolle konnte nicht gelöscht werden"
@@ -68,6 +73,8 @@
     "roleGrants": {
       "heading": "Berechtigungen: {roleName}",
       "addGrant": "Berechtigung hinzufügen",
+      "addAllRead": "Alle nur lesend hinzufügen",
+      "addAllReadTooltip": "Lesezugriff auf alle Collections ohne Berechtigung geben, außer auf die mc_-Collections von MongoCamp",
       "editGrantTitle": "Berechtigung bearbeiten: {name}",
       "collection": "Collection",
       "read": "Lesen",

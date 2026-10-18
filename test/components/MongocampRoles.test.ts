@@ -261,6 +261,43 @@ describe('MongocampRoles', () => {
     ])
   })
 
+  describe('clone', () => {
+    const grant = { name: 'users', read: true, write: false, administrate: false, grantType: 'COLLECTION' }
+
+    async function openClone() {
+      mockListRoles.mockResolvedValueOnce([{ name: 'support', isAdmin: true, collectionGrants: [{ ...grant }] }])
+      const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+      await component.find('[aria-label="Clone role"]').trigger('click')
+      await wait()
+      await modal().find('input[type="text"]').setValue('support-copy')
+      await wait()
+      return component
+    }
+
+    it('creates a new role with the source role\'s admin flag and grants', async () => {
+      await openClone()
+      expect(modal().text()).toContain('Clone Role: support')
+
+      await modal().find('button[type="submit"]').trigger('click')
+      await flushPromises()
+
+      expect(mockAddRole).toHaveBeenCalledWith('support-copy', true, [grant])
+      expect(mockListRoles).toHaveBeenCalledTimes(2)
+    })
+
+    it('keeps the dialog open with the reason when the server refuses', async () => {
+      await openClone()
+      mockAddRole.mockRejectedValueOnce(Object.assign(new Error('The request failed'), { name: 'FetchError' }))
+
+      await modal().find('button[type="submit"]').trigger('click')
+      await flushPromises()
+
+      expect(modal().text()).toContain('Clone Role: support')
+      expect(modal().text()).toContain('could not be reached')
+      expect(mockListRoles).toHaveBeenCalledTimes(1)
+    })
+  })
+
   it('deletes a role: confirming the modal calls deleteRole with the role name', async () => {
     mockListRoles.mockResolvedValueOnce([{ name: 'support', isAdmin: false, collectionGrants: [] }])
     const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })

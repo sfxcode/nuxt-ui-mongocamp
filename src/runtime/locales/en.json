@@ -61,6 +61,11 @@
       "manageGrantsTooltip": "Manage grants",
       "editRoleTooltip": "Edit role",
       "deleteRoleTooltip": "Delete role",
+      "cloneRoleTooltip": "Clone role",
+      "cloneRoleTitle": "Clone Role: {roleName}",
+      "cloneRole": "Clone Role",
+      "cloneRoleHint": "The new role gets a copy of the admin flag and all {count} grants.",
+      "errorClone": "Failed to clone role",
       "errorAddRole": "Failed to add role",
       "errorEditRole": "Failed to update role",
       "errorDelete": "Failed to delete role"
@@ -68,6 +73,8 @@
     "roleGrants": {
       "heading": "Grants: {roleName}",
       "addGrant": "Add Grant",
+      "addAllRead": "Add all read-only",
+      "addAllReadTooltip": "Grant read access to every collection without a grant, except MongoCamp's own mc_ collections",
       "editGrantTitle": "Edit Grant: {name}",
       "collection": "Collection",
       "read": "Read",

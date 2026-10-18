@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { url } from '@nuxt/test-utils/e2e'
 
 export interface FakeSession {
   token: string
@@ -12,16 +13,16 @@ export interface FakeSession {
 }
 
 /**
- * Seeds sessionStorage with a fake login session, matching the exact shape/key
- * `useMongocampStorage()` (`useSessionStorage('mongocamp', { token, profile })`) reads.
+ * Seeds the `mongocamp-session` cookie with a fake login session, matching the exact name/shape
+ * `useMongocampStorage()` (`useCookie('mongocamp-session', ...)`) reads. A cookie — unlike the
+ * `sessionStorage` the dependency used before — reaches the server too, so SSR sees the session.
  *
- * MUST be called BEFORE the first `page.goto()`/`createPage()` navigation for this `page` —
- * `addInitScript` only affects loads that happen *after* it's registered, so calling this
- * after the page has already navigated silently no-ops (no error, the seed just never applies).
+ * Call it before the first `page.goto()` so the very first request already carries the cookie.
  */
 export async function seedSession(page: Page, session: FakeSession): Promise<void> {
-  const serialized = JSON.stringify(session)
-  await page.addInitScript((value) => {
-    window.sessionStorage.setItem('mongocamp', value)
-  }, serialized)
+  await page.context().addCookies([{
+    name: 'mongocamp-session',
+    value: encodeURIComponent(JSON.stringify(session)),
+    url: url('/'),
+  }])
 }
