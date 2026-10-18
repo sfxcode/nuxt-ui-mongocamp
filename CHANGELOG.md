@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.3.1
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.0...v1.3.1)
+
+### 🚀 Enhancements
+
+- **roles:** Add functionality to clone roles and grant read-only access to collections ([a0d255b](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a0d255b))
+
+### 🩹 Fixes
+
+- **release:** Update changelogen command to use patch versioning ([ed01ac8](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/ed01ac8))
+
+### ❤️ Contributors
+
+- Sfxcode <tom@sfxcode.com>
+
 ## v1.3.0
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.2.7...v1.3.0)
