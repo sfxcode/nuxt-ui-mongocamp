@@ -15,7 +15,8 @@ All composables are auto-imported.
 | [`useMongocampSystem`](/composables/use-mongocamp-system) | Read-only database viewer (list, per-database info, collections) |
 | [`useMongocampExport`](/composables/use-mongocamp-export) | `rowsToCsv` and `downloadTextFile` for exporting rows already on screen |
 | [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder) | Turns filter rows (field, operator, value) into one Lucene query; type-aware operators, injection-safe |
-| [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) | `runBulkDelete`: delete many items with limited concurrency and a per-item failure report |
+| [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) | `runBulkDelete`: delete many items with limited concurrency (or one request per chunk) and a per-item failure report |
+| [`useMongocampImport`](/composables/use-mongocamp-import) | `importRows`: insert documents in batches with a per-batch failure report |
 | [`useMongocampError`](/composables/use-mongocamp-error) | Maps API errors (network / 401 / 403 / other) to readable messages |
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |

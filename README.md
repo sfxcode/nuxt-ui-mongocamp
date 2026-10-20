@@ -52,7 +52,7 @@ The `mongocamp` key is forwarded to `@sfxcode/nuxt-mongocamp-server`. Set `MONGO
 
 ## Components
 
-All components are auto-imported. The sections below cover the main ones; the [component reference](https://sfxcode.github.io/nuxt-ui-mongocamp/components/) lists every component, including `MongocampDashboard` (admin landing page), `MongocampJobs`, `MongocampAccount`, `MongocampDatabases`, `MongocampBucketFiles`, and the building blocks `MongocampFilterBuilder`, `MongocampBulkDelete`, `MongocampErrorAlert` and `MongocampEmptyState`.
+All components are auto-imported. The sections below cover the main ones; the [component reference](https://sfxcode.github.io/nuxt-ui-mongocamp/components/) lists every component, including `MongocampDashboard` (admin landing page), `MongocampJobs`, `MongocampAccount`, `MongocampDatabases`, `MongocampBucketFiles`, and the building blocks `MongocampFilterBuilder`, `MongocampBulkDelete`, `MongocampBulkEdit`, `MongocampImport`, `MongocampErrorAlert` and `MongocampEmptyState`.
 
 ### `<MongocampLogin />`
 

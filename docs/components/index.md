@@ -18,6 +18,8 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampVersion`](/components/mongocamp-version) | Server name/version badge |
 | [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) | Visual filter builder: type-aware conditions, match all/any, emits a Lucene query |
 | [`MongocampBulkDelete`](/components/mongocamp-bulk-delete) | Selection bar + confirmation modal for bulk delete (used by Users, Roles, CollectionData) |
+| [`MongocampBulkEdit`](/components/mongocamp-bulk-edit) | Dialog to set one field to one value on every selected document (used by CollectionData) |
+| [`MongocampImport`](/components/mongocamp-import) | Dialog to import documents from a JSON or CSV file in batches (part of CollectionData's toolbar) |
 | [`MongocampDashboard`](/components/mongocamp-dashboard) | Admin landing page: linked collection/user/role counts, server version, slot for extra content |
 | [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |
 | [`MongocampEmptyState`](/components/mongocamp-empty-state) | Icon + message for empty tables |

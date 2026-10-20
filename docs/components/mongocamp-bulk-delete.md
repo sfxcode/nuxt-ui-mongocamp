@@ -12,6 +12,14 @@ You normally don't use it directly. It is documented for apps that build their o
 | `deleting` | `boolean` | Parent is running the deletion — disables Cancel and shows a spinner on confirm |
 | `error` | `string` | Shown in the modal, which then stays open (e.g. a partial-failure message) |
 
+## Slots
+
+| Slot | Description |
+|---|---|
+| `actions` | Extra buttons in the selection bar, next to **Delete selected** — `MongocampCollectionData` puts **Edit selected** here (see [`MongocampBulkEdit`](/components/mongocamp-bulk-edit)) |
+
+Keep any dialog an extra action opens *outside* this component: the bar is only rendered while rows are selected, and a reload clears the selection, so a dialog inside it would be destroyed while it reports a failure.
+
 ## Events
 
 | Event | Description |
@@ -28,3 +36,4 @@ The modal closes by itself when `deleting` goes back to `false` and there is no 
 - `MongocampUsers` does not allow selecting the signed-in user (also not via select-all).
 - `MongocampCollectionData` offers no selection on GridFS bucket collections (`*.files` / `*.chunks`) — manage those through [`MongocampBucketFiles`](/components/mongocamp-bucket-files).
 - Failures don't stop the run: everything that could be deleted is deleted, the rest stays selected and the modal reports how many failed and why.
+- In `MongocampCollectionData` the selected documents are deleted with one `deleteMany` request (`{ $or: [{ _id: … }, …] }`) instead of one request each; a request that fails or deletes fewer documents than selected falls back to deleting them one by one, so a short count is never reported as success. An empty filter would delete the whole collection, so it is never sent.

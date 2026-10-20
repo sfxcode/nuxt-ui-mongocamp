@@ -47,6 +47,7 @@ watch(() => props.deleting, (now, before) => {
       :label="t('nuxtUiMongocamp.bulk.deleteSelected')"
       @click="openModal"
     />
+    <slot name="actions" />
     <UButton
       color="neutral"
       variant="ghost"

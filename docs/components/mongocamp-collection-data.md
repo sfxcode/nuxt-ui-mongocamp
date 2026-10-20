@@ -1,6 +1,6 @@
 # MongocampCollectionData
 
-Paginated, filterable, sortable document table for a collection, with insert/edit/delete, bulk delete, a filter builder, page export and a column menu, and — for GridFS bucket collections — per-row download and bucket upload.
+Paginated, filterable, sortable document table for a collection, with insert/edit/delete, import, bulk edit and bulk delete, a filter builder, page export and a column menu, and — for GridFS bucket collections — per-row download and bucket upload.
 
 ## Usage
 
@@ -39,17 +39,21 @@ Columns are derived from the first fetched row's keys (`_id` first, `metaData` l
 ## Toolbar
 
 - **Filters** — see above.
+- **Import documents** — opens [`MongocampImport`](/components/mongocamp-import): load a JSON or CSV file, check the preview and insert it in batches. Not shown for GridFS bucket collections; the table reloads when rows were imported.
 - **Columns** — a checklist of every data column; unchecked columns are hidden (and left out of the CSV export). Resets when you reload or switch collection.
 - **Export** — downloads the rows **on the current page**, as JSON (full documents, extended JSON unwrapped to plain values) or CSV (visible columns; nested values as JSON; RFC 4180 quoting). No extra request is made, so export what you need page by page, or raise the page size first.
 - **Rows per page** — 10, 20 (default), 50 or 100; changing it reloads from page 1.
 - **Reload** — refetches and resets sorting, search, filters and column choices.
 
-## Selecting and deleting several documents
+## Selecting, editing and deleting several documents
 
-The first column is a checkbox column (with select-all for the current page). While rows are selected a bar shows **N selected · Delete selected · Clear selection**; deleting asks for confirmation first, listing the first few ids ([`MongocampBulkDelete`](/components/mongocamp-bulk-delete)).
+The first column is a checkbox column (with select-all for the current page). While rows are selected a bar shows **N selected · Delete selected · Edit selected · Clear selection** ([`MongocampBulkDelete`](/components/mongocamp-bulk-delete)).
+
+- **Edit selected** ([`MongocampBulkEdit`](/components/mongocamp-bulk-edit)) sets one scalar field to one value on every selected document, in one request per 100 documents. Fields that were not updated stay selected and are reported; `metaData` is not touched.
+- **Delete selected** asks for confirmation first, listing the first few ids.
 
 - The selection is dropped whenever the table reloads — paging, sorting, searching, filtering, page size — so rows you can no longer see are never deleted.
-- Deletions run a few at a time; if some fail the rest are still deleted, the failed ones stay selected and the modal reports how many failed and why.
+- Deletion is one `deleteMany` request for the selection (with a one-by-one fallback); if some fail the rest are still deleted, the failed ones stay selected and the modal reports how many failed and why. Documents whose `_id` is not a 24-character hex string can only be deleted one by one, and cannot be bulk-edited.
 - GridFS bucket collections (`*.files` / `*.chunks`) have no selection: deleting those documents one by one would orphan the other half of a file. Use [`MongocampBucketFiles`](/components/mongocamp-bucket-files) for buckets.
 
 ## When loading fails
@@ -79,3 +83,4 @@ This logic is provided by [`useMongocampBucket`](/composables/use-mongocamp-buck
 - [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) — extended-JSON unwrap/rewrap that feeds `FUAutoForm`'s Add/Edit modal
 - [`useMongocampDocument`](/composables/use-mongocamp-document) — `ensureMetaData` stamps `metaData` on insert/update
 - [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder), [`useMongocampExport`](/composables/use-mongocamp-export), [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) — the logic behind the filter panel, page export and bulk delete
+- [`useMongocampImport`](/composables/use-mongocamp-import) — the batched insert behind the import dialog

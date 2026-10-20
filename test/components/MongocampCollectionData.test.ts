@@ -38,6 +38,8 @@ function findInputByLabel(scope: DOMWrapper<Element>, labelText: string) {
 const mockListDocumentsRaw = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
+const mockUpdateMany = vi.fn()
+const mockDeleteMany = vi.fn()
 const mockDelete = vi.fn()
 const mockGetFileInformation = vi.fn()
 const mockGetFile = vi.fn()
@@ -61,6 +63,8 @@ mockNuxtImport('useMongocampApi', () => {
       listDocumentsRaw: mockListDocumentsRaw,
       insert: mockInsert,
       update: mockUpdate,
+      updateMany: mockUpdateMany,
+      deleteMany: mockDeleteMany,
       _delete: mockDelete,
     },
     fileApi: {
@@ -106,6 +110,16 @@ describe('MongocampCollectionData', () => {
     expect(headers.indexOf('_id')).toBeLessThan(headers.indexOf('age'))
     expect(headers.indexOf('age')).toBeLessThan(headers.indexOf('name'))
     expect(headers.indexOf('name')).toBeLessThan(headers.indexOf('metaData'))
+  })
+
+  it('offers document import for an ordinary collection', async () => {
+    const component = await mountSuspended(withUApp(MongocampCollectionData), {
+      route: '/',
+      props: { collectionName: 'customers' },
+    })
+    await wait()
+
+    expect(component.find('[aria-label="Import documents"]').exists()).toBe(true)
   })
 
   it('formats ISO date strings in the first row as localized dates, not raw ISO text', async () => {
@@ -345,6 +359,63 @@ describe('MongocampCollectionData', () => {
       expect(mockListDocumentsRaw).toHaveBeenCalledTimes(2)
     })
 
+    describe('with ids the server can address (24-hex)', () => {
+      const hex = (n: number) => n.toString(16).padStart(24, '0')
+      const hexRows = [
+        { _id: hex(1), name: 'Alice' },
+        { _id: hex(2), name: 'Bob' },
+        { _id: hex(3), name: 'Carol' },
+      ]
+
+      // clearAllMocks keeps implementations, so the rejections set below must not leak into other tests
+      afterEach(() => {
+        mockDeleteMany.mockReset()
+        mockDelete.mockReset()
+      })
+
+      async function selectFirstTwoAndConfirm() {
+        mockListDocumentsRaw.mockResolvedValue(mockRawResponse(hexRows, '3'))
+        const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+        await wait()
+        const boxes = component.findAll('[aria-label="Select row"]')
+        await boxes[0]!.trigger('click')
+        await boxes[1]!.trigger('click')
+        await component.findAll('button').find(b => b.text() === 'Delete selected')?.trigger('click')
+        await wait()
+        await modal().findAll('button').find(b => b.text() === 'Delete 2')?.trigger('click')
+        await wait()
+        return component
+      }
+
+      it('deletes the selection with one deleteMany over an $or of the ids, not one request per document', async () => {
+        mockDeleteMany.mockResolvedValue({ wasAcknowledged: true, deletedCount: 2 })
+        await selectFirstTwoAndConfirm()
+
+        expect(mockDeleteMany).toHaveBeenCalledTimes(1)
+        expect(mockDeleteMany).toHaveBeenCalledWith({ collectionName: 'customers', requestBody: { $or: [{ _id: hex(1) }, { _id: hex(2) }] } })
+        expect(mockDelete).not.toHaveBeenCalled()
+        expect(mockListDocumentsRaw).toHaveBeenCalledTimes(2)
+      })
+
+      it('re-deletes one by one when deleteMany reports fewer deletions than ids, instead of claiming success', async () => {
+        mockDeleteMany.mockResolvedValue({ wasAcknowledged: true, deletedCount: 1 })
+        await selectFirstTwoAndConfirm()
+
+        expect(mockDelete.mock.calls.map(c => c[0].documentId).sort()).toEqual([hex(1), hex(2)])
+      })
+
+      it('falls back to single deletes when deleteMany fails, and reports what those could not delete', async () => {
+        mockDeleteMany.mockRejectedValue(new Error('fast path down'))
+        mockDelete.mockImplementation(async (p: { documentId: string }) => {
+          if (p.documentId === hex(2)) throw new Error('forbidden')
+        })
+        await selectFirstTwoAndConfirm()
+
+        expect(mockDelete).toHaveBeenCalledTimes(2)
+        expect(modal().text()).toContain('1 of 2 could not be deleted: forbidden')
+      })
+    })
+
     it('drops the selection when another page is fetched, so off-screen rows can never be deleted', async () => {
       const component = await mountAndSelectFirstTwo()
       expect(component.text()).toContain('2 selected')
@@ -564,6 +635,116 @@ describe('MongocampCollectionData', () => {
     })
   })
 
+  describe('bulk edit', () => {
+    const hex = (n: number) => n.toString(16).padStart(24, '0')
+    const rows = [
+      { _id: hex(1), name: 'Alice', age: 30, metaData: { createdBy: 'x' } },
+      { _id: hex(2), name: 'Bob', age: 25, metaData: { createdBy: 'x' } },
+      { _id: hex(3), name: 'Carol', age: 41, metaData: { createdBy: 'x' } },
+    ]
+
+    async function mountAndSelectFirstTwo(data: Record<string, unknown>[] = rows) {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(data, String(data.length)))
+      mockUpdateMany.mockImplementation(async (p: { updateRequest: { filter: { $or: unknown[] } } }) => ({ matchedCount: p.updateRequest.filter.$or.length, modifiedCount: p.updateRequest.filter.$or.length }))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      const boxes = component.findAll('[aria-label="Select row"]')
+      await boxes[0]!.trigger('click')
+      await boxes[1]!.trigger('click')
+      await component.findAll('button').find(b => b.text() === 'Edit selected')?.trigger('click')
+      await wait()
+      return component
+    }
+
+    const selectByLabel = (component: Awaited<ReturnType<typeof mountAndSelectFirstTwo>>, label: string) =>
+      component.findAllComponents(USelect).find(select => select.html().includes(`aria-label="${label}"`))!
+
+    it('offers only scalar fields of the rows — never _id or the metaData object', async () => {
+      const component = await mountAndSelectFirstTwo()
+
+      const offered = (selectByLabel(component, 'Field').vm.$props as unknown as { items: { value: string }[] }).items.map(i => i.value)
+      expect(offered).toEqual(['age', 'name'])
+    })
+
+    it('updates the selected documents with one updateMany over an $or of their ids, then reloads', async () => {
+      const component = await mountAndSelectFirstTwo()
+
+      selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+      await wait()
+      await modal().find('input[aria-label="Value"]').setValue('31')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Update 2')?.trigger('click')
+      await wait()
+
+      expect(mockUpdateMany).toHaveBeenCalledTimes(1)
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        collectionName: 'customers',
+        updateRequest: { filter: { $or: [{ _id: hex(1) }, { _id: hex(2) }] }, document: { age: 31 } },
+      })
+      expect(mockListDocumentsRaw).toHaveBeenCalledTimes(2)
+    })
+
+    it('blocks an invalid value instead of sending it', async () => {
+      const component = await mountAndSelectFirstTwo()
+
+      selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+      await wait()
+      await modal().find('input[aria-label="Value"]').setValue('abc')
+      await wait()
+
+      expect(modal().text()).toContain('Not a valid number')
+      expect(modal().findAll('button').find(b => b.text() === 'Update 2')?.attributes('disabled')).toBeDefined()
+      expect(mockUpdateMany).not.toHaveBeenCalled()
+    })
+
+    it('refuses ids the server cannot address, without a request, and keeps those rows selected', async () => {
+      const component = await mountAndSelectFirstTwo([
+        { _id: { $oid: 'doc-1' }, name: 'Alice', age: 30 },
+        { _id: { $oid: 'doc-2' }, name: 'Bob', age: 25 },
+      ])
+
+      selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'name')
+      await wait()
+      await modal().find('input[aria-label="Value"]').setValue('Zed')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Update 2')?.trigger('click')
+      await wait()
+
+      expect(mockUpdateMany).not.toHaveBeenCalled()
+      expect(modal().text()).toContain('2 of 2 could not be updated: this document id cannot be updated in bulk')
+      expect(component.text()).toContain('2 selected')
+    })
+
+    it('keeps the dialog open and the rows selected when the update fails, and says so', async () => {
+      const component = await mountAndSelectFirstTwo()
+      mockUpdateMany.mockRejectedValueOnce(new Error('server said no'))
+
+      selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+      await wait()
+      await modal().find('input[aria-label="Value"]').setValue('31')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Update 2')?.trigger('click')
+      await wait()
+
+      expect(modal().text()).toContain('2 of 2 could not be updated: server said no')
+      expect(component.text()).toContain('2 selected')
+    })
+
+    it('does not call fewer matches a success', async () => {
+      const component = await mountAndSelectFirstTwo()
+      mockUpdateMany.mockResolvedValueOnce({ matchedCount: 1, modifiedCount: 1 })
+
+      selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+      await wait()
+      await modal().find('input[aria-label="Value"]').setValue('31')
+      await wait()
+      await modal().findAll('button').find(b => b.text() === 'Update 2')?.trigger('click')
+      await wait()
+
+      expect(modal().text()).toContain('only 1 of 2 selected documents were found')
+    })
+  })
+
   describe('GridFS bucket collections', () => {
     it('shows an upload button instead of insert, and a download button per row', async () => {
       mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: { $oid: 'file-1' }, filename: 'a.png' }], '1'))
@@ -576,6 +757,16 @@ describe('MongocampCollectionData', () => {
       expect(component.find('[aria-label="Insert document"]').exists()).toBe(false)
       expect(component.find('[aria-label="Upload file"]').exists()).toBe(true)
       expect(component.find('[aria-label="Download file"]').exists()).toBe(true)
+    })
+
+    it('offers no document import (a file\'s chunks must never be imported as plain documents)', async () => {
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'images.files' },
+      })
+      await wait()
+
+      expect(component.find('[aria-label="Import documents"]').exists()).toBe(false)
     })
 
     it('downloading a row triggers fileApi against the bucket name derived from the collection', async () => {

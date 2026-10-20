@@ -9,6 +9,9 @@ import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocam
 import { isIsoDateTimeString } from '../utils/isoDate'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 import { runBulkDelete } from '../utils/bulkDelete'
+import { BulkMatchShortfall, BulkUnaddressableId, buildIdFilter, isEditableField, runBulkUpdate } from '../utils/bulkEdit'
+import type { ImportColumnType } from '../utils/importRows'
+import { isObjectIdHex } from '../utils/objectId'
 import { createSelectColumn } from '../utils/createSelectColumn'
 import {
   buildCondition,
@@ -411,6 +414,14 @@ const rowSelection = ref<Record<string, boolean>>({})
 const selectedDocIds = computed(() => Object.keys(rowSelection.value).filter(id => rowSelection.value[id]))
 const bulkDeleting = ref(false)
 const bulkError = ref('')
+const bulkEditing = ref(false)
+const bulkEditError = ref('')
+const bulkEditOpen = ref(false)
+
+function openBulkEdit() {
+  bulkEditError.value = ''
+  bulkEditOpen.value = true
+}
 
 function rowId(row: Row, index: number): string {
   return getDocId(row) ?? String(index)
@@ -421,7 +432,20 @@ async function handleBulkDelete() {
   bulkError.value = ''
   const ids = [...selectedDocIds.value]
   try {
-    const { failed } = await runBulkDelete(ids, documentId => documentApi._delete({ collectionName: props.collectionName, documentId }))
+    const { failed } = await runBulkDelete(
+      ids,
+      documentId => documentApi._delete({ collectionName: props.collectionName, documentId }),
+      undefined,
+      {
+        // one request per chunk for ids a filter can address; the rest (and any chunk that does not
+        // come back fully deleted) go one by one. The generated type says string values only.
+        canHandle: isObjectIdHex,
+        run: async chunk => (await documentApi.deleteMany({
+          collectionName: props.collectionName,
+          requestBody: buildIdFilter(chunk) as unknown as { [key: string]: string },
+        })).deletedCount,
+      },
+    )
     await fetchDocuments()
     if (failed.length > 0) {
       // keep only what is still there selected, and say why
@@ -431,6 +455,47 @@ async function handleBulkDelete() {
   }
   finally {
     bulkDeleting.value = false
+  }
+}
+
+// scalar fields of the loaded rows a bulk edit can write; `_id` and the metaData object are never offered
+const editableFields = computed<{ key: string, type: ImportColumnType }[]>(() =>
+  filterFields.value
+    .filter(f => f.key !== 'metaData' && isEditableField(f.key))
+    .map(f => ({ key: f.key, type: f.type === 'array' || f.type === 'object' ? 'json' : f.type })),
+)
+
+function bulkEditFailureReason(error: unknown): string {
+  if (error instanceof BulkMatchShortfall) return t('nuxtUiMongocamp.bulk.editShortfall', { matched: error.matched, expected: error.expected })
+  if (error instanceof BulkUnaddressableId) return t('nuxtUiMongocamp.bulk.editUnaddressable')
+  return describeError(error).message
+}
+
+async function handleBulkEdit(edit: { field: string, value: unknown }) {
+  bulkEditing.value = true
+  bulkEditError.value = ''
+  const ids = [...selectedDocIds.value]
+  // the generated types say string values only; the server takes any JSON value
+  const document = { [edit.field]: edit.value } as unknown as { [key: string]: string }
+  try {
+    const { failed } = await runBulkUpdate(
+      ids,
+      chunk => documentApi.updateMany({
+        collectionName: props.collectionName,
+        updateRequest: { filter: buildIdFilter(chunk) as unknown as { [key: string]: string }, document },
+      }),
+    )
+    await fetchDocuments()
+    if (failed.length > 0) {
+      // keep selected only what is still on screen and was not updated, and say why
+      const onScreen = new Set(documents.value.map(row => getDocId(row)))
+      const failedIds = failed.flatMap(f => f.ids)
+      rowSelection.value = Object.fromEntries(failedIds.filter(id => onScreen.has(id)).map(id => [id, true]))
+      bulkEditError.value = t('nuxtUiMongocamp.bulk.editPartialFailure', { failed: failedIds.length, total: ids.length, reason: bulkEditFailureReason(failed[0]!.error) })
+    }
+  }
+  finally {
+    bulkEditing.value = false
   }
 }
 
@@ -641,6 +706,11 @@ watch(() => props.collectionName, init, { immediate: true })
           class="hidden"
           @change="handleFileSelected"
         >
+        <MongocampImport
+          v-if="!isBucketCollection(collectionName)"
+          :collection-name="collectionName"
+          @imported="init"
+        />
         <UTooltip :text="t('nuxtUiMongocamp.collectionData.reloadTooltip')">
           <UButton
             icon="i-lucide-refresh-cw"
@@ -755,6 +825,26 @@ watch(() => props.collectionName, init, { immediate: true })
       @open="bulkError = ''"
       @clear="rowSelection = {}"
       @confirm="handleBulkDelete"
+    >
+      <template #actions>
+        <UButton
+          v-if="editableFields.length > 0"
+          icon="i-lucide-pencil"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          :label="t('nuxtUiMongocamp.bulk.editSelected')"
+          @click="openBulkEdit"
+        />
+      </template>
+    </MongocampBulkDelete>
+    <MongocampBulkEdit
+      v-model:open="bulkEditOpen"
+      :selected="selectedDocIds.length"
+      :fields="editableFields"
+      :saving="bulkEditing"
+      :error="bulkEditError"
+      @apply="handleBulkEdit"
     />
 
     <UTable
