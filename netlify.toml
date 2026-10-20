@@ -12,9 +12,11 @@
 # MONGOCAMP_ADMIN_PASSWORD are not used by the playground at all (they are the login you type in).
 
 [build]
-  # The playground loads the module from ../dist, so the module is built first. The check makes a
-  # missing MONGOCAMP_URL fail the build with a clear message instead of producing a broken site.
-  command = "test -n \"$MONGOCAMP_URL\" || { echo 'MONGOCAMP_URL is not set: add it under Site configuration > Environment variables'; exit 1; } && pnpm run prepack && pnpm exec nuxt generate playground"
+  # The playground loads the module from ../dist, so the module is built first, and the module build
+  # needs the generated .nuxt/tsconfig.json (tsconfig.json extends it, it is not committed), hence
+  # `nuxt-module-build prepare` first. The check makes a missing MONGOCAMP_URL fail the build with a
+  # clear message instead of producing a broken site.
+  command = "test -n \"$MONGOCAMP_URL\" || { echo 'MONGOCAMP_URL is not set: add it under Site configuration > Environment variables'; exit 1; } && pnpm exec nuxt-module-build prepare && pnpm run prepack && pnpm exec nuxt generate playground"
   publish = "playground/.output/public"
   # Skip the build when nothing that goes into the playground changed (docs, tests, ...). Exit code 0
   # means "skip". Without a cached commit (the first deploy) the `test` fails, so the site is built — an
