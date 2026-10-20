@@ -1,0 +1,57 @@
+  # Netlify configuration for the playground (https://nuxt-ui-mongocamp-playground.netlify.app).
+#
+# The playground is a client-side-only Nuxt app (`ssr: false`), so it is built with `nuxt generate`
+# and served as plain static files — there is no server.
+#
+# Set in the Netlify UI (Site configuration > Environment variables), not in this file:
+#   MONGOCAMP_URL   URL of the MongoCamp server the playground talks to. It is baked into the build and
+#                   visible in the browser. That server must allow this site's origin in its CORS settings.
+#
+# Do NOT set MONGOCAMP_API_KEY, MONGOCAMP_USE_SERVER_PROXY or MONGOCAMP_PROXY_SHARED_SECRET: server proxy
+# mode needs a running server, which a static deploy does not have. MONGOCAMP_ADMIN_USER and
+# MONGOCAMP_ADMIN_PASSWORD are not used by the playground at all (they are the login you type in).
+
+[build]
+  # The playground loads the module from ../dist, so the module is built first. The check makes a
+  # missing MONGOCAMP_URL fail the build with a clear message instead of producing a broken site.
+  command = "test -n \"$MONGOCAMP_URL\" || { echo 'MONGOCAMP_URL is not set: add it under Site configuration > Environment variables'; exit 1; } && pnpm run prepack && pnpm exec nuxt generate playground"
+  publish = "playground/.output/public"
+  # Skip the build when nothing that goes into the playground changed (docs, tests, ...). Exit code 0
+  # means "skip". Without a cached commit (the first deploy) the `test` fails, so the site is built — an
+  # empty ref would otherwise make `git diff` compare the working tree with HEAD and skip it.
+  ignore = "test -n \"$CACHED_COMMIT_REF\" && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src playground package.json pnpm-lock.yaml pnpm-workspace.yaml netlify.toml"
+
+[build.environment]
+  # package.json pins pnpm 11 ("packageManager", picked up by Netlify through Corepack), which needs
+  # Node >= 22.13; "22" is the latest 22.x.
+  NODE_VERSION = "22"
+  # If the install ever fails with "Cannot find matching keyid" (a Corepack older than 0.31 cannot verify
+  # pnpm 11's registry signature), uncomment this. The exact pnpm tarball stays pinned by the sha512 hash
+  # in "packageManager", which Corepack still checks.
+  # COREPACK_INTEGRITY_KEYS = "0"
+
+# A hashed asset that does not exist must be a 404, not the app shell served as JavaScript.
+[[redirects]]
+  from = "/_nuxt/*"
+  to = "/404.html"
+  status = 404
+
+# Client-side routing: every other path that is not a generated file gets the SPA fallback page.
+[[redirects]]
+  from = "/*"
+  to = "/200.html"
+  status = 200
+
+# Files in /_nuxt carry a content hash in their name.
+[[headers]]
+  for = "/_nuxt/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# The playground is a login page for a database admin UI: no framing, no sniffing.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
