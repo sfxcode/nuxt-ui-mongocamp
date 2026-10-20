@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from '#imports'
 import {
   buildFilterQuery,
@@ -9,10 +9,15 @@ import {
   valueCountFor,
 } from '../utils/filterBuilder'
 import type { FilterCondition, FilterFieldType, FilterGroup, FilterOperator } from '../utils/filterBuilder'
+import { suggestionOptions, wantsSuggestions } from '../utils/filterSuggestions'
 
 const props = defineProps<{
   // the fields a condition can target, with the type that decides which operators it offers
   fields: { key: string, type: FilterFieldType }[]
+  // optional: the values a text field really has, offered while typing an exact-match value. Asked for
+  // when the value input is focused; the parent decides what to cache and may answer with [] (no
+  // suggestions — e.g. too many distinct values to be useful). A rejection just means no suggestions.
+  loadDistinct?: (field: string) => Promise<string[]>
 }>()
 
 // the draft being edited — the parent owns it so it survives the panel being hidden and shown
@@ -78,6 +83,28 @@ function changeField(index: number, field: string) {
     value: '',
     value2: '',
   })
+}
+
+// suggestions per field, filled the first time a value input of that field gets focus
+const suggestions = ref<Record<string, string[]>>({})
+const loading = new Set<string>()
+
+async function ensureSuggestions(condition: FilterCondition) {
+  if (!props.loadDistinct || !wantsSuggestions(typeOf(condition.field), condition.operator) || loading.has(condition.field)) return
+  loading.add(condition.field)
+  try {
+    suggestions.value = { ...suggestions.value, [condition.field]: await props.loadDistinct(condition.field) }
+  }
+  catch {
+    suggestions.value = { ...suggestions.value, [condition.field]: [] }
+  }
+  finally {
+    loading.delete(condition.field)
+  }
+}
+
+function listId(condition: FilterCondition): string | undefined {
+  return props.loadDistinct && wantsSuggestions(typeOf(condition.field), condition.operator) ? `${condition.id}-suggestions` : undefined
 }
 
 function setMatch(match: 'all' | 'any') {
@@ -153,11 +180,24 @@ function clearAll() {
             :type="typeOf(condition.field) === 'date-time' ? 'date' : 'text'"
             :inputmode="typeOf(condition.field) === 'number' ? 'decimal' : undefined"
             :placeholder="condition.operator === 'oneOf' ? t('nuxtUiMongocamp.filterBuilder.listPlaceholder') : undefined"
+            :list="listId(condition)"
             size="sm"
             class="w-48"
             :aria-label="t('nuxtUiMongocamp.filterBuilder.value')"
+            @focus="ensureSuggestions(condition)"
             @update:model-value="(value: string | number | undefined) => updateCondition(index, { value: String(value ?? '') })"
           />
+          <datalist
+            v-if="listId(condition)"
+            :id="listId(condition)"
+          >
+            <option
+              v-for="option in suggestionOptions(suggestions[condition.field] ?? [], condition.operator, condition.value ?? '')"
+              :key="option.value"
+              :value="option.value"
+              :label="option.label"
+            />
+          </datalist>
           <template v-if="valueCountFor(condition.operator) === 2">
             <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.filterBuilder.and') }}</span>
             <UInput

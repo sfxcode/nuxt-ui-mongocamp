@@ -17,6 +17,7 @@ All composables are auto-imported.
 | [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder) | Turns filter rows (field, operator, value) into one Lucene query; type-aware operators, injection-safe |
 | [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) | `runBulkDelete`: delete many items with limited concurrency (or one request per chunk) and a per-item failure report |
 | [`useMongocampImport`](/composables/use-mongocamp-import) | `importRows`: insert documents in batches with a per-batch failure report |
+| [`useMongocampAggregation`](/composables/use-mongocamp-aggregation) | `runAggregation` (server-side paging, deny-listed stages refused), `listDistinct`, `sampleDocuments`, readable aggregation errors |
 | [`useMongocampError`](/composables/use-mongocamp-error) | Maps API errors (network / 401 / 403 / other) to readable messages |
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |

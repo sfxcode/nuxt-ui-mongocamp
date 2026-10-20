@@ -137,7 +137,19 @@
       "confirmDeleteIndex": "Möchten Sie den Index \"{indexName}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "errorCreateIndex": "Fehler beim Erstellen des Index",
       "errorDeleteIndex": "Fehler beim Löschen des Index",
-      "typeStandard": "Standard"
+      "typeStandard": "Standard",
+      "statsTitle": "Feldstatistik",
+      "statsAnalyze": "Felder analysieren",
+      "statsSampleSize": "Stichprobengröße",
+      "statsSampled": "{sampled} von {total} Dokumenten geprüft",
+      "statsHint": "Zählt, wie oft jedes Feld vorkommt und welche Werte es enthält, anhand einer zufälligen Stichprobe von Dokumenten.",
+      "statsNote": "Aus einer zufälligen Stichprobe berechnet, nicht aus der gesamten Collection.",
+      "statsTruncated": "Es werden nur die ersten {count} Felder angezeigt.",
+      "statsColumnPresent": "Vorhanden",
+      "statsPresentTitle": "In {present} von {sampled} geprüften Dokumenten",
+      "statsColumnValues": "Häufige Werte",
+      "statsEmpty": "Keine Dokumente zum Analysieren",
+      "statsFailed": "Die Feldstatistik konnte nicht geladen werden"
     },
     "collectionData": {
       "filterPlaceholder": "Zeilen filtern...",
@@ -430,6 +442,58 @@
         "invalid-boolean": "Erwartet true/false, yes/no oder 1/0",
         "invalid-date": "Kein gültiges ISO-Datum",
         "invalid-json-value": "Kein gültiges JSON"
+      }
+    },
+    "aggregation": {
+      "errors": {
+        "forbidden": "Diese Pipeline verwendet {operator}, was hier nicht erlaubt ist.",
+        "retryable": "Die Anfrage wurde auf dem Weg zum Server blockiert. Bitte erneut versuchen."
+      },
+      "modeVisual": "Stufen",
+      "modeJson": "JSON",
+      "addStage": "Stufe hinzufügen",
+      "newStageType": "Stufentyp",
+      "stageTitle": "Stufe {n}",
+      "stageValue": "JSON der Stufe {type}",
+      "moveUp": "Stufe nach oben",
+      "moveDown": "Stufe nach unten",
+      "removeStage": "Stufe entfernen",
+      "jsonLabel": "Pipeline (JSON-Array)",
+      "run": "Ausführen",
+      "resultsCount": "{count} Ergebnis | {count} Ergebnisse",
+      "pageSize": "Zeilen pro Seite",
+      "exportTooltip": "Diese Seite exportieren",
+      "exportJson": "Seite als JSON exportieren",
+      "exportCsv": "Seite als CSV exportieren",
+      "noResults": "Die Pipeline hat keine Ergebnisse geliefert",
+      "precisionNote": "Die Ergebnisse sind reines JSON: Datumswerte erscheinen als ISO-Text, ganze Zahlen über 2^53 können gerundet sein.",
+      "runFailedTitle": "Die Pipeline konnte nicht ausgeführt werden",
+      "fixStages": "Bitte zuerst die unten markierten Stufen korrigieren.",
+      "fixStagesFirst": "Bitte zuerst die fehlerhaften Stufen korrigieren, bevor zu JSON gewechselt wird.",
+      "cannotShowVisually": "Diese Pipeline verwendet Stufen, für die der Stufen-Editor kein Formular hat. Bitte in der JSON-Ansicht bleiben.",
+      "stageTypes": {
+        "$match": "$match — Dokumente filtern",
+        "$group": "$group — gruppieren und aggregieren",
+        "$sort": "$sort — sortieren",
+        "$project": "$project — Felder wählen oder berechnen",
+        "$limit": "$limit — die ersten N behalten"
+      },
+      "stageErrors": {
+        "invalid-json": "Kein gültiges JSON",
+        "not-object": "Diese Stufe braucht ein JSON-Objekt",
+        "invalid-limit": "Das Limit muss eine ganze Zahl ab 1 sein",
+        "invalid-sort": "Sortierrichtungen müssen 1 oder -1 sein",
+        "group-needs-id": "$group braucht eine _id (null gruppiert alles)",
+        "forbidden": "{operator} ist nicht erlaubt"
+      },
+      "pipelineErrors": {
+        "too-large": "Die Pipeline ist zu groß",
+        "invalid-json": "Die Pipeline ist kein gültiges JSON",
+        "not-array": "Die Pipeline muss ein JSON-Array von Stufen sein",
+        "too-many-stages": "Eine Pipeline darf höchstens 50 Stufen haben",
+        "stage-shape": "Stufe {n} muss ein Objekt mit genau einem Schlüssel sein, der mit $ beginnt, zum Beispiel \"$match\"",
+        "forbidden-operator": "{operator} ist nicht erlaubt (Stufe {n})",
+        "too-deep": "Stufe {n} ist zu tief verschachtelt"
       }
     }
   }

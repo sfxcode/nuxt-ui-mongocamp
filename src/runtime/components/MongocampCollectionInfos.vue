@@ -4,6 +4,10 @@ import { useI18n, useMongocampClientApi, useMongocampIndex, useMongocampSchema, 
 import type { TableColumn } from '@nuxt/ui'
 import type { CollectionStatus, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 import type { ColumnDefinition } from '../composables/useMongocampSchema'
+import { useMongocampAggregation } from '../composables/useMongocampAggregation'
+import type { DescribedAggregationError } from '../composables/useMongocampAggregation'
+import { analyzeSamples } from '../utils/analyzeSamples'
+import type { FieldStatistic, SampleAnalysis, ValueKind } from '../utils/analyzeSamples'
 
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -16,6 +20,7 @@ const { t } = useI18n()
 const { collectionApi, documentApi } = useMongocampClientApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
 const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
+const { sampleDocuments, describeAggregationError } = useMongocampAggregation()
 
 const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
@@ -113,6 +118,92 @@ const schemaTableColumns = computed<TableColumn<SchemaRow>[]>(() => [
       row.original.required
         ? h(UIcon, { name: 'i-lucide-check', class: 'size-4 text-success' })
         : h('span', { class: 'text-dimmed' }, '—'),
+  },
+])
+
+// ---- field statistics ---------------------------------------------------------------------------
+// Computed here from a random sample (an aggregation with `$sample`), on demand. The server's own
+// schema-analysis endpoint is deliberately not used: it returns an accumulation of every earlier
+// analysis across collections.
+
+const STATS_SAMPLE_SIZES = [100, 500, 1000]
+const KIND_COLORS: Record<ValueKind, string> = {
+  string: 'neutral',
+  number: 'warning',
+  boolean: 'success',
+  date: 'info',
+  object: 'secondary',
+  array: 'primary',
+  null: 'neutral',
+}
+
+const statsSampleSize = ref(500)
+const statsLoading = ref(false)
+const statsError = ref<DescribedAggregationError | null>(null)
+const statsAnalysis = ref<SampleAnalysis | null>(null)
+let statsRun = 0
+
+async function analyzeFields() {
+  const run = ++statsRun
+  statsLoading.value = true
+  statsError.value = null
+  try {
+    const { rows } = await sampleDocuments(props.collectionName, statsSampleSize.value)
+    if (run !== statsRun) return
+    statsAnalysis.value = analyzeSamples(rows)
+  }
+  catch (error) {
+    const described = await describeAggregationError(error)
+    if (run !== statsRun) return
+    statsAnalysis.value = null
+    statsError.value = described
+  }
+  finally {
+    if (run === statsRun) statsLoading.value = false
+  }
+}
+
+// statistics belong to one collection
+watch(() => props.collectionName, () => {
+  statsRun++
+  statsAnalysis.value = null
+  statsError.value = null
+  statsLoading.value = false
+})
+
+function percent(share: number): string {
+  if (share >= 1) return '100%'
+  return share > 0 && share < 0.01 ? '<1%' : `${Math.round(share * 100)}%`
+}
+
+const statsColumns = computed<TableColumn<FieldStatistic>[]>(() => [
+  {
+    accessorKey: 'path',
+    header: t('nuxtUiMongocamp.collectionInfos.columnField'),
+  },
+  {
+    id: 'types',
+    header: t('nuxtUiMongocamp.collectionInfos.columnType'),
+    cell: ({ row }) => h('div', { class: 'flex flex-wrap gap-1' }, row.original.types.map(({ type, count }) =>
+      h(UBadge, {
+        label: row.original.types.length > 1 ? `${type} ${percent(count / row.original.present)}` : type,
+        color: KIND_COLORS[type] ?? 'neutral',
+        variant: 'subtle',
+        size: 'sm',
+      }),
+    )),
+  },
+  {
+    id: 'present',
+    header: t('nuxtUiMongocamp.collectionInfos.statsColumnPresent'),
+    cell: ({ row }) => h('span', { title: t('nuxtUiMongocamp.collectionInfos.statsPresentTitle', { present: row.original.present, sampled: statsAnalysis.value?.sampled ?? 0 }) }, percent(row.original.share)),
+  },
+  {
+    id: 'values',
+    header: t('nuxtUiMongocamp.collectionInfos.statsColumnValues'),
+    cell: ({ row }) => row.original.topValues
+      ? h('span', { class: 'text-xs' }, row.original.topValues.map(v => `${v.value} (${v.count})`).join(', '))
+      : h('span', { class: 'text-dimmed' }, '—'),
   },
 ])
 
@@ -406,6 +497,95 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
         :data="schemaRows"
         :columns="schemaTableColumns"
       />
+    </UCard>
+
+    <UCard v-if="info && !loading">
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-lucide-chart-no-axes-column"
+              class="size-4 text-(--ui-primary)"
+            />
+            <span class="font-semibold">{{ t('nuxtUiMongocamp.collectionInfos.statsTitle') }}</span>
+            <UBadge
+              v-if="statsAnalysis"
+              :label="t('nuxtUiMongocamp.collectionInfos.statsSampled', { sampled: statsAnalysis.sampled, total: info.count })"
+              variant="subtle"
+              color="neutral"
+              size="sm"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <USelect
+              v-model="statsSampleSize"
+              :items="STATS_SAMPLE_SIZES"
+              size="sm"
+              class="w-24"
+              :aria-label="t('nuxtUiMongocamp.collectionInfos.statsSampleSize')"
+            />
+            <UButton
+              icon="i-lucide-activity"
+              :label="t('nuxtUiMongocamp.collectionInfos.statsAnalyze')"
+              color="neutral"
+              variant="subtle"
+              size="sm"
+              :loading="statsLoading"
+              @click="analyzeFields"
+            />
+          </div>
+        </div>
+      </template>
+
+      <p
+        v-if="!statsAnalysis && !statsError && !statsLoading"
+        class="text-sm text-dimmed"
+      >
+        {{ t('nuxtUiMongocamp.collectionInfos.statsHint') }}
+      </p>
+      <UAlert
+        v-if="statsError"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-circle-alert"
+        :title="t('nuxtUiMongocamp.collectionInfos.statsFailed')"
+        :description="statsError.message"
+      >
+        <template #actions>
+          <UButton
+            v-if="statsError.kind === 'unauthorized'"
+            :label="t('nuxtUiMongocamp.errors.loginAgain')"
+            to="/"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-log-in"
+          />
+          <UButton
+            v-else
+            :label="t('nuxtUiMongocamp.common.retry')"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-refresh-cw"
+            @click="analyzeFields"
+          />
+        </template>
+      </UAlert>
+      <template v-if="statsAnalysis">
+        <p class="mb-2 text-xs text-dimmed">
+          {{ t('nuxtUiMongocamp.collectionInfos.statsNote') }}
+          <template v-if="statsAnalysis.truncated">
+            {{ t('nuxtUiMongocamp.collectionInfos.statsTruncated', { count: statsAnalysis.fields.length }) }}
+          </template>
+        </p>
+        <UTable
+          :data="statsAnalysis.fields"
+          :columns="statsColumns"
+        >
+          <template #empty>
+            <MongocampEmptyState :title="t('nuxtUiMongocamp.collectionInfos.statsEmpty')" />
+          </template>
+        </UTable>
+      </template>
     </UCard>
 
     <UModal

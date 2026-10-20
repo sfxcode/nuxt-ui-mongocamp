@@ -32,6 +32,7 @@ function onApply(query: string) {
 |---|---|---|
 | `v-model` | `FilterGroup` | The draft: `{ match: 'all' \| 'any', conditions: FilterCondition[] }` |
 | `fields` | `{ key: string, type: FilterFieldType }[]` | Fields a condition can target; `type` is `string`, `number`, `date-time`, `boolean`, `array` or `object`. With no fields the panel says so and offers no controls |
+| `loadDistinct` | `(field: string) => Promise<string[]>` | Optional. Supplies the values a text field really has; they are offered as suggestions while typing an "equals" / "not equals" / "is one of" value (see below). Called when such a value input is focused; may resolve to `[]` for "no suggestions", and a rejection just means none |
 
 ## Events
 
@@ -43,6 +44,7 @@ function onApply(query: string) {
 
 - Choosing a different field resets the condition's values, and its operator too unless the new field's type also supports it (a name's "contains" becomes a number's "equals").
 - Rows that are incomplete or invalid (empty value, a non-numeric number, a non-ISO date) are ignored rather than matching everything.
+- **Value suggestions** (only with `loadDistinct`, only for text fields and the operators *equals*, *not equals* and *is one of*): the value input becomes a combo box — type freely or pick a value (a native `<datalist>`). For *is one of* a choice extends the list typed so far and values already in it are not offered again. Values containing `: * ? ( )` or a backslash are never suggested — the server treats those as query syntax even inside quotes, so a filter on them fails or misses; neither are values with a comma in a list.
 - Labels are translated (English and German); date operators read "on or after" / "on or before".
 
 ## Related

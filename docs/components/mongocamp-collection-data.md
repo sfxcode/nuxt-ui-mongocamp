@@ -35,6 +35,7 @@ Columns are derived from the first fetched row's keys (`_id` first, `metaData` l
 - The **Filters** button (badge = number of active conditions) opens a [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) panel. **Apply filters** reloads from page 1; each applied condition shows as a removable chip with a **Clear filters** link. The builder and the search input narrow the result together (AND).
   - The fields offered come from the rows on the first page, with their types inferred from the values. `_id` is not offered (a real server rejects `_id` filters), nor are arrays and objects (no operators for them). The button is disabled for an empty collection.
   - Applied filters, the panel and the draft are reset when `collectionName` changes and by the reload button.
+  - **Value suggestions:** focusing the value of a text field's *equals* / *not equals* / *is one of* condition lists that field's distinct values (one `distinct` request per field, cached until the collection changes or the table is reloaded; sorted, up to 100). A field with more than 100 distinct values (names, ids) gets no suggestions — an arbitrary hundred would only mislead — and a failed lookup quietly leaves a plain input.
 
 ## Toolbar
 

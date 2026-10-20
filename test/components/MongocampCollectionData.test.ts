@@ -39,6 +39,7 @@ const mockListDocumentsRaw = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
 const mockUpdateMany = vi.fn()
+const mockDistinctRaw = vi.fn()
 const mockDeleteMany = vi.fn()
 const mockDelete = vi.fn()
 const mockGetFileInformation = vi.fn()
@@ -73,6 +74,7 @@ mockNuxtImport('useMongocampApi', () => {
       insertFile: mockInsertFile,
     },
     bucketApi: {},
+    collectionApi: { distinctRaw: mockDistinctRaw },
   })
 })
 
@@ -470,6 +472,104 @@ describe('MongocampCollectionData', () => {
       await component.findAll('button').find(b => b.text() === 'Apply filters')?.trigger('click')
       await wait()
     }
+
+    describe('value suggestions', () => {
+      const distinctResponse = (values: unknown[], total = values.length) => ({
+        raw: { headers: { get: (name: string) => (name === 'x-pagination-count-rows' ? String(total) : null) } },
+        value: () => Promise.resolve(values),
+      })
+
+      // opens the panel and makes a "name equals" condition, leaving the value input ready to focus
+      async function openNameEquals(component: Awaited<ReturnType<typeof mountWithRows>>) {
+        await component.find('[aria-label="Filters"]').trigger('click')
+        await wait()
+        await component.findAll('button').find(b => b.text() === 'Add condition')?.trigger('click')
+        await wait()
+        const selectByLabel = (label: string) => component.findAllComponents(USelect).find(select => select.html().includes(`aria-label="${label}"`))!
+        selectByLabel('Field').vm.$emit('update:modelValue', 'name')
+        await wait()
+        selectByLabel('Operator').vm.$emit('update:modelValue', 'equals')
+        await wait()
+        return component.find('input[aria-label="Value"]')
+      }
+
+      const optionLabels = (component: Awaited<ReturnType<typeof mountWithRows>>) => component.findAll('datalist option').map(o => o.attributes('label'))
+
+      afterEach(() => {
+        mockDistinctRaw.mockReset()
+      })
+
+      it('suggests the field\'s distinct values, sorted, when the value input of an exact-match condition is focused', async () => {
+        mockDistinctRaw.mockResolvedValue(distinctResponse(['Carol', 'alice', 'Bob', 'Bob']))
+        const component = await mountWithRows()
+        const input = await openNameEquals(component)
+        expect(mockDistinctRaw).not.toHaveBeenCalled()
+
+        await input.trigger('focus')
+        await wait()
+
+        expect(mockDistinctRaw).toHaveBeenCalledWith({ collectionName: 'customers', field: 'name', rowsPerPage: 100, page: 1 }, expect.objectContaining({ signal: expect.any(AbortSignal) }))
+        expect(optionLabels(component)).toEqual(['alice', 'Bob', 'Carol'])
+      })
+
+      it('asks the server once per field, not on every focus', async () => {
+        mockDistinctRaw.mockResolvedValue(distinctResponse(['Alice', 'Bob']))
+        const component = await mountWithRows()
+        const input = await openNameEquals(component)
+
+        await input.trigger('focus')
+        await wait()
+        await input.trigger('focus')
+        await wait()
+
+        expect(mockDistinctRaw).toHaveBeenCalledTimes(1)
+      })
+
+      it('asks again after the table is reloaded', async () => {
+        mockDistinctRaw.mockResolvedValue(distinctResponse(['Alice']))
+        const component = await mountWithRows()
+        const input = await openNameEquals(component)
+        await input.trigger('focus')
+        await wait()
+        expect(mockDistinctRaw).toHaveBeenCalledTimes(1)
+
+        await component.find('[aria-label="Reload"]').trigger('click')
+        await wait()
+        const again = await openNameEquals(component)
+        await again.trigger('focus')
+        await wait()
+
+        expect(mockDistinctRaw).toHaveBeenCalledTimes(2)
+      })
+
+      it('offers nothing for a field with more distinct values than fit in one page — an arbitrary hundred would mislead', async () => {
+        mockDistinctRaw.mockResolvedValue(distinctResponse(Array.from({ length: 100 }, (_, i) => `name${i}`), 1000))
+        const component = await mountWithRows()
+        const input = await openNameEquals(component)
+
+        await input.trigger('focus')
+        await wait()
+
+        expect(optionLabels(component)).toEqual([])
+      })
+
+      it('keeps working as a plain input when the lookup fails, and does not hammer a failing server', async () => {
+        mockDistinctRaw.mockRejectedValue(new Error('server down'))
+        const component = await mountWithRows()
+        const input = await openNameEquals(component)
+
+        await input.trigger('focus')
+        await wait()
+        await input.trigger('focus')
+        await wait()
+
+        expect(optionLabels(component)).toEqual([])
+        expect(component.text()).not.toContain('server down')
+        expect(mockDistinctRaw).toHaveBeenCalledTimes(1)
+        await input.setValue('Alice')
+        expect((input.element as HTMLInputElement).value).toBe('Alice')
+      })
+    })
 
     it('is unavailable until the collection has rows to learn the fields from', async () => {
       const component = await mountSuspended(withUApp(MongocampCollectionData), {

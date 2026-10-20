@@ -20,6 +20,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampBulkDelete`](/components/mongocamp-bulk-delete) | Selection bar + confirmation modal for bulk delete (used by Users, Roles, CollectionData) |
 | [`MongocampBulkEdit`](/components/mongocamp-bulk-edit) | Dialog to set one field to one value on every selected document (used by CollectionData) |
 | [`MongocampImport`](/components/mongocamp-import) | Dialog to import documents from a JSON or CSV file in batches (part of CollectionData's toolbar) |
+| [`MongocampAggregationBuilder`](/components/mongocamp-aggregation-builder) | Build and run an aggregation pipeline (stage editor or JSON), page through and export the result |
 | [`MongocampDashboard`](/components/mongocamp-dashboard) | Admin landing page: linked collection/user/role counts, server version, slot for extra content |
 | [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |
 | [`MongocampEmptyState`](/components/mongocamp-empty-state) | Icon + message for empty tables |

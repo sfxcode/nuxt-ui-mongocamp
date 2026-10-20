@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { VueWrapper } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { USelect } from '#components'
@@ -18,13 +18,14 @@ function condition(partial: Partial<FilterCondition> & Pick<FilterCondition, 'id
 }
 
 // The parent owns the v-model, so wire the update event back into the props like a real parent would.
-async function mountBuilder(group: FilterGroup, builderFields = fields) {
+async function mountBuilder(group: FilterGroup, builderFields = fields, extraProps: Record<string, unknown> = {}) {
   const holder = {} as { wrapper: Wrapper }
   let latest = group
   const wrapper = await mountSuspended(MongocampFilterBuilder, {
     route: '/',
     props: {
       'fields': builderFields,
+      ...extraProps,
       'modelValue': group,
       'onUpdate:modelValue': (value: FilterGroup) => {
         latest = value
@@ -157,5 +158,106 @@ describe('MongocampFilterBuilder', () => {
 
     expect(wrapper.text()).toContain('No fields to filter on yet')
     expect(button(wrapper, 'Add condition')).toBeUndefined()
+  })
+
+  describe('value suggestions', () => {
+    const nameEquals: FilterGroup = { match: 'all', conditions: [condition({ id: 'a', field: 'name', operator: 'equals' })] }
+    const optionLabels = (wrapper: Wrapper) => wrapper.findAll('datalist option').map(o => o.attributes('label'))
+
+    it('offers nothing — no datalist, no list attribute — when the parent gives no loader', async () => {
+      const { wrapper } = await mountBuilder(nameEquals)
+
+      expect(wrapper.find('datalist').exists()).toBe(false)
+      expect(wrapper.find('input[aria-label="Value"]').attributes('list')).toBeUndefined()
+    })
+
+    it('asks the loader for the field when its value input is focused and lists the values it returns', async () => {
+      const loadDistinct = vi.fn().mockResolvedValue(['Alice', 'Bob'])
+      const { wrapper } = await mountBuilder(nameEquals, fields, { loadDistinct })
+      expect(loadDistinct).not.toHaveBeenCalled()
+
+      const input = wrapper.find('input[aria-label="Value"]')
+      expect(input.attributes('list')).toBe('a-suggestions')
+      await input.trigger('focus')
+      await new Promise(resolve => setTimeout(resolve, 20))
+
+      expect(loadDistinct).toHaveBeenCalledTimes(1)
+      expect(loadDistinct).toHaveBeenCalledWith('name')
+      expect(wrapper.find('datalist').attributes('id')).toBe('a-suggestions')
+      expect(optionLabels(wrapper)).toEqual(['Alice', 'Bob'])
+    })
+
+    it('does not ask twice while the first request is still running', async () => {
+      let resolve: (values: string[]) => void = () => {}
+      const loadDistinct = vi.fn().mockReturnValue(new Promise<string[]>((r) => {
+        resolve = r
+      }))
+      const { wrapper } = await mountBuilder(nameEquals, fields, { loadDistinct })
+
+      const input = wrapper.find('input[aria-label="Value"]')
+      await input.trigger('focus')
+      await input.trigger('focus')
+      resolve(['Alice'])
+      await new Promise(r => setTimeout(r, 20))
+
+      expect(loadDistinct).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not ask for operators that take free text, or for fields that are not text', async () => {
+      const loadDistinct = vi.fn().mockResolvedValue(['x'])
+      const { wrapper } = await mountBuilder({
+        match: 'all',
+        conditions: [
+          condition({ id: 'a', field: 'name', operator: 'contains' }),
+          condition({ id: 'b', field: 'age', operator: 'equals' }),
+        ],
+      }, fields, { loadDistinct })
+
+      for (const input of wrapper.findAll('input[aria-label="Value"]')) {
+        expect(input.attributes('list')).toBeUndefined()
+        await input.trigger('focus')
+      }
+
+      expect(loadDistinct).not.toHaveBeenCalled()
+      expect(wrapper.find('datalist').exists()).toBe(false)
+    })
+
+    it('falls back to a plain input without any error when the loader fails', async () => {
+      const loadDistinct = vi.fn().mockRejectedValue(new Error('server down'))
+      const { wrapper } = await mountBuilder(nameEquals, fields, { loadDistinct })
+
+      await wrapper.find('input[aria-label="Value"]').trigger('focus')
+      await new Promise(resolve => setTimeout(resolve, 20))
+
+      expect(optionLabels(wrapper)).toEqual([])
+      expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('server down')
+    })
+
+    it('does not offer values the server cannot filter on reliably (query syntax characters)', async () => {
+      const loadDistinct = vi.fn().mockResolvedValue(['Alice', 'x:y', 'star*', '(paren)', 'Bob'])
+      const { wrapper } = await mountBuilder(nameEquals, fields, { loadDistinct })
+
+      await wrapper.find('input[aria-label="Value"]').trigger('focus')
+      await new Promise(resolve => setTimeout(resolve, 20))
+
+      expect(optionLabels(wrapper)).toEqual(['Alice', 'Bob'])
+    })
+
+    it('for "is one of", offers the values not yet in the list, each prefixed with the entries already typed', async () => {
+      const loadDistinct = vi.fn().mockResolvedValue(['Alice', 'Bob', 'Cy'])
+      const { wrapper } = await mountBuilder({
+        match: 'all',
+        conditions: [condition({ id: 'a', field: 'name', operator: 'oneOf', value: 'Alice, ' })],
+      }, fields, { loadDistinct })
+
+      await wrapper.find('input[aria-label="Value"]').trigger('focus')
+      await new Promise(resolve => setTimeout(resolve, 20))
+
+      expect(wrapper.findAll('datalist option').map(o => [o.attributes('value'), o.attributes('label')])).toEqual([
+        ['Alice, Bob', 'Bob'],
+        ['Alice, Cy', 'Cy'],
+      ])
+    })
   })
 })

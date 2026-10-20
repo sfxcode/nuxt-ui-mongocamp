@@ -25,6 +25,7 @@ import {
 import type { FilterFieldType, FilterGroup } from '../utils/filterBuilder'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
+import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 
 const props = defineProps<{
   collectionName: string
@@ -37,6 +38,7 @@ const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloa
 const { ensureMetaData } = useMongocampDocument()
 const { and, like, or } = useMongocampQuery()
 const { schemaFromSamples } = useMongocampSchema()
+const { listDistinct } = useMongocampAggregation()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
@@ -636,7 +638,33 @@ const exportMenuItems = computed(() => [
   { label: t('nuxtUiMongocamp.collectionData.exportCsv'), icon: 'i-lucide-file-spreadsheet', onSelect: () => exportPage('csv') },
 ])
 
+// Values a text field really has, for the filter builder's suggestions. Only offered when the whole
+// value set fits in one page of results: for a field with more distinct values (names, ids) an
+// arbitrary hundred of them would only mislead. Cached per field until the collection changes or the
+// table is reloaded; a failed lookup is cached as "no suggestions" so a dead server is not asked on every focus.
+const DISTINCT_SUGGESTION_LIMIT = 100
+let distinctCache = new Map<string, string[]>()
+
+async function loadDistinctSuggestions(field: string): Promise<string[]> {
+  const cached = distinctCache.get(field)
+  if (cached) return cached
+  const cache = distinctCache
+  const collection = props.collectionName
+  let suggestions: string[] = []
+  try {
+    const { values, truncated } = await listDistinct(collection, field, DISTINCT_SUGGESTION_LIMIT)
+    if (!truncated) suggestions = [...new Set(values.map(String))].sort((a, b) => a.localeCompare(b))
+  }
+  catch {
+    // no suggestions
+  }
+  // a reload or a collection change while the request ran must not be overwritten with stale values
+  if (cache === distinctCache && collection === props.collectionName) cache.set(field, suggestions)
+  return suggestions
+}
+
 async function init() {
+  distinctCache = new Map()
   isInitializing.value = true
   sorting.value = []
   pagination.value.pageIndex = 1
@@ -777,6 +805,7 @@ watch(() => props.collectionName, init, { immediate: true })
       v-if="filtersOpen"
       v-model="filterDraft"
       :fields="filterFields"
+      :load-distinct="loadDistinctSuggestions"
       @apply="onFilterApply"
     />
 

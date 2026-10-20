@@ -137,7 +137,19 @@
       "confirmDeleteIndex": "Are you sure you want to delete the index \"{indexName}\"? This action cannot be undone.",
       "errorCreateIndex": "Error creating index",
       "errorDeleteIndex": "Error deleting index",
-      "typeStandard": "standard"
+      "typeStandard": "standard",
+      "statsTitle": "Field statistics",
+      "statsAnalyze": "Analyze fields",
+      "statsSampleSize": "Sample size",
+      "statsSampled": "{sampled} of {total} documents sampled",
+      "statsHint": "Counts how often each field occurs and which values it holds, from a random sample of documents.",
+      "statsNote": "Computed from a random sample, not from the whole collection.",
+      "statsTruncated": "Only the first {count} fields are shown.",
+      "statsColumnPresent": "Present",
+      "statsPresentTitle": "In {present} of {sampled} sampled documents",
+      "statsColumnValues": "Common values",
+      "statsEmpty": "No documents to analyze",
+      "statsFailed": "The field statistics could not be loaded"
     },
     "collectionData": {
       "filterPlaceholder": "Filter rows...",
@@ -430,6 +442,58 @@
         "invalid-boolean": "Expected true/false, yes/no or 1/0",
         "invalid-date": "Not a valid ISO date",
         "invalid-json-value": "Not valid JSON"
+      }
+    },
+    "aggregation": {
+      "errors": {
+        "forbidden": "This pipeline uses {operator}, which is not allowed here.",
+        "retryable": "The request was blocked on its way to the server. Try again."
+      },
+      "modeVisual": "Stages",
+      "modeJson": "JSON",
+      "addStage": "Add stage",
+      "newStageType": "Stage type",
+      "stageTitle": "Stage {n}",
+      "stageValue": "JSON of the {type} stage",
+      "moveUp": "Move stage up",
+      "moveDown": "Move stage down",
+      "removeStage": "Remove stage",
+      "jsonLabel": "Pipeline (JSON array)",
+      "run": "Run",
+      "resultsCount": "{count} result | {count} results",
+      "pageSize": "Rows per page",
+      "exportTooltip": "Export this page",
+      "exportJson": "Export page as JSON",
+      "exportCsv": "Export page as CSV",
+      "noResults": "The pipeline returned no results",
+      "precisionNote": "Results are plain JSON: dates appear as ISO text and whole numbers beyond 2^53 may be rounded.",
+      "runFailedTitle": "The pipeline could not be run",
+      "fixStages": "Fix the stages marked below first.",
+      "fixStagesFirst": "Fix the stages with errors before switching to JSON.",
+      "cannotShowVisually": "This pipeline uses stages the stage editor has no form for. Stay in the JSON view.",
+      "stageTypes": {
+        "$match": "$match — filter documents",
+        "$group": "$group — group and aggregate",
+        "$sort": "$sort — order",
+        "$project": "$project — choose or compute fields",
+        "$limit": "$limit — keep the first N"
+      },
+      "stageErrors": {
+        "invalid-json": "Not valid JSON",
+        "not-object": "This stage needs a JSON object",
+        "invalid-limit": "The limit must be a whole number of 1 or more",
+        "invalid-sort": "Sort directions must be 1 or -1",
+        "group-needs-id": "$group needs an _id (use null to group everything)",
+        "forbidden": "{operator} is not allowed"
+      },
+      "pipelineErrors": {
+        "too-large": "The pipeline is too large",
+        "invalid-json": "The pipeline is not valid JSON",
+        "not-array": "The pipeline must be a JSON array of stages",
+        "too-many-stages": "A pipeline can have at most 50 stages",
+        "stage-shape": "Stage {n} must be an object with exactly one key that starts with $, for example \"$match\"",
+        "forbidden-operator": "{operator} is not allowed (stage {n})",
+        "too-deep": "Stage {n} is nested too deeply"
       }
     }
   }

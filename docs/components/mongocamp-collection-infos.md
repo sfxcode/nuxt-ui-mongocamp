@@ -1,6 +1,6 @@
 # MongocampCollectionInfos
 
-Stat-card grid for a single collection — document count, data size, storage size, avg doc size, index count, and total index size — plus an index management table, and an inferred schema table with a "Copy as TS Interface" action.
+Stat-card grid for a single collection — document count, data size, storage size, avg doc size, index count, and total index size — plus an index management table, an inferred schema table with a "Copy as TS Interface" action, and on-demand field statistics.
 
 ## Usage
 
@@ -65,7 +65,23 @@ interface CartsShippingAddress {
 }
 ```
 
+## Field statistics card
+
+An **Analyze fields** button (nothing is requested until it is clicked) with a **sample size** select (100 / 500 / 1 000). It takes a random sample of that many documents — one `$sample` aggregation, see [`useMongocampAggregation`](/composables/use-mongocamp-aggregation) — and shows, per field:
+
+| Column | Meaning |
+|---|---|
+| Field | the path: `address.city` for a nested field, `items[].sku` for a field of the objects inside an array (the parent object/array is listed too; nesting is followed three levels deep, at most 200 fields are shown) |
+| Type | the kinds of value found — string, number, boolean, date (an ISO string), object, array, null; when a field holds several, each badge carries its share |
+| Present | in what percentage of the sampled documents the field occurs (the counts in a tooltip); `null` counts as present |
+| Common values | the most frequent values (up to five, with counts) — only for scalar fields with at most 20 distinct values; ids and names, which say nothing, get none |
+
+The badge in the card header says how many of the collection's documents were sampled, and a note reminds you it is a sample, not the whole collection. A field with many distinct values or large values makes the sample heavier — pick a smaller size for a collection with big documents. Asking again always gives a fresh, equally sized answer.
+
+The statistics are computed in the browser from the sample. The server's own schema-analysis endpoint (`getSchemaAnalysis`) is deliberately **not used**: on MongoCamp 1.5.10 it returns an accumulation of every analysis made since the server started — fields of *other* collections included — and its answer grows with every call. The card also drops its result when `collectionName` changes.
+
 ## Related composables
 
+- [`useMongocampAggregation`](/composables/use-mongocamp-aggregation)
 - [`useMongocampSchema`](/composables/use-mongocamp-schema)
 - [`useMongocampIndex`](/composables/use-mongocamp-index)
