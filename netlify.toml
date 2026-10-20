@@ -27,6 +27,11 @@
   # package.json pins pnpm 11 ("packageManager", picked up by Netlify through Corepack), which needs
   # Node >= 22.13; "22" is the latest 22.x.
   NODE_VERSION = "22"
+  # Netlify's build sets NETLIFY=true, which makes Nitro pick its `netlify-static` preset: it writes to
+  # playground/dist and adds its own _redirects with `/* /404.html 404`, which would turn every deep link
+  # of this single-page app into a 404 (Netlify reads _redirects before this file). The plain `static`
+  # preset gives the same output everywhere: playground/.output/public, redirects and headers from here.
+  NITRO_PRESET = "static"
   # If the install ever fails with "Cannot find matching keyid" (a Corepack older than 0.31 cannot verify
   # pnpm 11's registry signature), uncomment this. The exact pnpm tarball stays pinned by the sha512 hash
   # in "packageManager", which Corepack still checks.
