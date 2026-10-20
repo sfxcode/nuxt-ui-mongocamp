@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.3.2
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.1...v1.3.2)
+
+### 🚀 Enhancements
+
+- **bulk:** Import documents, bulk edit and one-request bulk delete ([833f552](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/833f552))
+- **aggregation:** Aggregation builder, value suggestions and field statistics ([8ca2387](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8ca2387))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.3.1
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.0...v1.3.1)
