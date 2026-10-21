@@ -14,6 +14,9 @@ const mockAdminApi = {
 
 const mockCollectionApi = {
   listCollections: vi.fn(),
+  clearCollection: vi.fn(),
+  deleteCollection: vi.fn(),
+  getJsonSchema: vi.fn(),
 }
 
 vi.mock('#imports', () => ({
@@ -199,5 +202,27 @@ describe('deleteRole', () => {
     await deleteRole('editor')
 
     expect(mockAdminApi.deleteRole).toHaveBeenCalledWith({ roleName: 'editor' })
+  })
+})
+
+describe('collection lifecycle', () => {
+  it.each([
+    ['clearCollection', 'clearCollection'],
+    ['deleteCollection', 'deleteCollection'],
+    ['getJsonSchema', 'getJsonSchema'],
+  ] as const)('%s calls the API with the collection name and a timeout signal', async (method, apiMethod) => {
+    mockCollectionApi[apiMethod].mockResolvedValueOnce({ ok: true })
+
+    const result = await useMongocampAdmin()[method]('scratch')
+
+    expect(mockCollectionApi[apiMethod]).toHaveBeenCalledWith({ collectionName: 'scratch' }, { signal: expect.any(AbortSignal) })
+    expect(result).toEqual({ ok: true })
+  })
+
+  it('lets a rejected call (timeout, 403) reach the caller', async () => {
+    const error = Object.assign(new Error('forbidden'), { response: { status: 403 } })
+    mockCollectionApi.deleteCollection.mockRejectedValueOnce(error)
+
+    await expect(useMongocampAdmin().deleteCollection('scratch')).rejects.toBe(error)
   })
 })

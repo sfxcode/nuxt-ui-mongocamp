@@ -1,5 +1,12 @@
 import { useMongocampClientApi } from '#imports'
-import type { Grant, Role, UserProfile } from '@sfxcode/nuxt-mongocamp-server'
+import type { Grant, JsonSchema, Role, UserProfile } from '@sfxcode/nuxt-mongocamp-server'
+
+const REQUEST_TIMEOUT_MS = 15000
+
+// The generated client has no timeout; a hung server would leave the confirm modal spinning forever.
+function withTimeout(): RequestInit {
+  return { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }
+}
 
 export default () => {
   const { adminApi, collectionApi } = useMongocampClientApi()
@@ -57,5 +64,19 @@ export default () => {
     return adminApi.deleteRole({ roleName })
   }
 
-  return { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles, addRole, updateRole, deleteRole, listCollections }
+  // Irreversible: removes every document / the collection itself. Callers gate these behind a
+  // type-the-name confirmation and `isProtectedCollection`.
+  async function clearCollection(collectionName: string) {
+    return collectionApi.clearCollection({ collectionName }, withTimeout())
+  }
+
+  async function deleteCollection(collectionName: string) {
+    return collectionApi.deleteCollection({ collectionName }, withTimeout())
+  }
+
+  async function getJsonSchema(collectionName: string): Promise<JsonSchema> {
+    return collectionApi.getJsonSchema({ collectionName }, withTimeout())
+  }
+
+  return { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles, addRole, updateRole, deleteRole, listCollections, clearCollection, deleteCollection, getJsonSchema }
 }

@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useI18n, useMongocampClientApi, useToast } from '#imports'
 import type { BucketInformation, FileInformation } from '@sfxcode/nuxt-mongocamp-server'
+import { BUCKET_COLLECTION_SUFFIX } from '../utils/collectionProtection'
 
 export interface ListFilesOptions {
   filter?: string
@@ -19,8 +20,6 @@ export interface UpdateFileInformationOptions {
   filename?: string
   metadata?: Record<string, string>
 }
-
-const BUCKET_COLLECTION_SUFFIX = /\.(?:files|chunks)$/
 
 function unwrapId(value: unknown): string | undefined {
   if (typeof value === 'string') return value
