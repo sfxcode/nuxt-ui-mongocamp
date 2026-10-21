@@ -4,6 +4,7 @@ const mockIndexApi = {
   listIndices: vi.fn(),
   createIndex: vi.fn(),
   createUniqueIndex: vi.fn(),
+  createIndexForField: vi.fn(),
   createTextIndex: vi.fn(),
   createExpiringIndex: vi.fn(),
   deleteIndex: vi.fn(),
@@ -111,5 +112,31 @@ describe('deleteIndex', () => {
 
     expect(mockIndexApi.deleteIndex).toHaveBeenCalledWith({ collectionName: 'users', indexName: 'email_1' })
     expect(result).toEqual({ dropped: true })
+  })
+})
+
+describe('createIndexForField', () => {
+  it('passes collection, field and direction, with a timeout signal', async () => {
+    mockIndexApi.createIndexForField.mockResolvedValueOnce({ name: 'email_-1' })
+
+    const result = await useMongocampIndex().createIndexForField('users', 'email', false)
+
+    expect(mockIndexApi.createIndexForField).toHaveBeenCalledWith({ collectionName: 'users', fieldName: 'email', sortAscending: false }, { signal: expect.any(AbortSignal) })
+    expect(result).toEqual({ name: 'email_-1' })
+  })
+
+  it('defaults to ascending', async () => {
+    mockIndexApi.createIndexForField.mockResolvedValueOnce({ name: 'email_1' })
+
+    await useMongocampIndex().createIndexForField('users', 'email')
+
+    expect(mockIndexApi.createIndexForField).toHaveBeenCalledWith({ collectionName: 'users', fieldName: 'email', sortAscending: true }, expect.anything())
+  })
+
+  it('rethrows a refusal (duplicate or incompatible index) instead of swallowing it', async () => {
+    const error = Object.assign(new Error('conflict'), { response: { status: 500 } })
+    mockIndexApi.createIndexForField.mockRejectedValueOnce(error)
+
+    await expect(useMongocampIndex().createIndexForField('users', 'email')).rejects.toBe(error)
   })
 })

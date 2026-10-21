@@ -10,6 +10,9 @@ const mockAdminApi = {
   addRole: vi.fn(),
   updateRole: vi.fn(),
   deleteRole: vi.fn(),
+  getUser: vi.fn(),
+  getRole: vi.fn(),
+  gnerateNewApiKeyForUser: vi.fn(),
 }
 
 const mockCollectionApi = {
@@ -224,5 +227,42 @@ describe('collection lifecycle', () => {
     mockCollectionApi.deleteCollection.mockRejectedValueOnce(error)
 
     await expect(useMongocampAdmin().deleteCollection('scratch')).rejects.toBe(error)
+  })
+})
+
+describe('getUser / getRole / regenerateUserApiKey', () => {
+  it('getUser asks the API for one user by id, with a timeout signal', async () => {
+    mockAdminApi.getUser.mockResolvedValueOnce({ user: 'alice' })
+
+    const result = await useMongocampAdmin().getUser('alice')
+
+    expect(mockAdminApi.getUser).toHaveBeenCalledWith({ userId: 'alice' }, { signal: expect.any(AbortSignal) })
+    expect(result).toEqual({ user: 'alice' })
+  })
+
+  it('getRole asks the API for one role by name, with a timeout signal', async () => {
+    mockAdminApi.getRole.mockResolvedValueOnce({ name: 'support' })
+
+    const result = await useMongocampAdmin().getRole('support')
+
+    expect(mockAdminApi.getRole).toHaveBeenCalledWith({ roleName: 'support' }, { signal: expect.any(AbortSignal) })
+    expect(result).toEqual({ name: 'support' })
+  })
+
+  it('regenerateUserApiKey calls the misspelled client method exactly once and returns the plain key', async () => {
+    mockAdminApi.gnerateNewApiKeyForUser.mockResolvedValueOnce({ value: 'new-key' })
+
+    const result = await useMongocampAdmin().regenerateUserApiKey('alice')
+
+    expect(mockAdminApi.gnerateNewApiKeyForUser).toHaveBeenCalledTimes(1)
+    expect(mockAdminApi.gnerateNewApiKeyForUser).toHaveBeenCalledWith({ userId: 'alice' }, { signal: expect.any(AbortSignal) })
+    expect(result).toBe('new-key')
+  })
+
+  it('lets a rejected regeneration reach the caller (the old key may still be valid)', async () => {
+    const error = Object.assign(new Error('forbidden'), { response: { status: 403 } })
+    mockAdminApi.gnerateNewApiKeyForUser.mockRejectedValueOnce(error)
+
+    await expect(useMongocampAdmin().regenerateUserApiKey('alice')).rejects.toBe(error)
   })
 })

@@ -1,6 +1,13 @@
 import { useMongocampClientApi } from '#imports'
 import type { IndexCreateResponse, IndexDropResponse, IndexOptionsRequest, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 
+const REQUEST_TIMEOUT_MS = 15000
+
+// The generated client has no timeout; a hung server would leave a quick action spinning forever.
+function withTimeout(): RequestInit {
+  return { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }
+}
+
 export function useMongocampIndex() {
   const { indexApi } = useMongocampClientApi()
 
@@ -10,6 +17,12 @@ export function useMongocampIndex() {
 
   async function createIndex(collectionName: string, keys: Record<string, number>, options?: IndexOptionsRequest): Promise<IndexCreateResponse> {
     return indexApi.createIndex({ collectionName, indexCreateRequest: { keys, indexOptionsRequest: options } })
+  }
+
+  // One call for a plain single-field index; a duplicate or incompatible existing index is refused by
+  // the server and the error reaches the caller.
+  async function createIndexForField(collectionName: string, fieldName: string, sortAscending: boolean = true): Promise<IndexCreateResponse> {
+    return indexApi.createIndexForField({ collectionName, fieldName, sortAscending }, withTimeout())
   }
 
   async function createUniqueIndex(collectionName: string, fieldName: string, sortAscending?: boolean): Promise<IndexCreateResponse> {
@@ -28,5 +41,5 @@ export function useMongocampIndex() {
     return indexApi.deleteIndex({ collectionName, indexName })
   }
 
-  return { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex }
+  return { listIndexes, createIndex, createIndexForField, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex }
 }

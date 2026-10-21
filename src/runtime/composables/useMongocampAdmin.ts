@@ -78,5 +78,21 @@ export default () => {
     return collectionApi.getJsonSchema({ collectionName }, withTimeout())
   }
 
-  return { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles, addRole, updateRole, deleteRole, listCollections, clearCollection, deleteCollection, getJsonSchema }
+  async function getUser(userId: string): Promise<UserProfile> {
+    return adminApi.getUser({ userId }, withTimeout())
+  }
+
+  async function getRole(roleName: string): Promise<Role> {
+    return adminApi.getRole({ roleName }, withTimeout())
+  }
+
+  // Invalidates the user's current key immediately. The generated client misspells the method
+  // (`gnerateNewApiKeyForUser`); that typo stays confined to this wrapper. The new key is returned
+  // once, for the caller to show and discard — it is never stored here.
+  async function regenerateUserApiKey(userId: string): Promise<string> {
+    const result = await adminApi.gnerateNewApiKeyForUser({ userId }, withTimeout())
+    return result.value
+  }
+
+  return { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles, addRole, updateRole, deleteRole, listCollections, clearCollection, deleteCollection, getJsonSchema, getUser, getRole, regenerateUserApiKey }
 }
