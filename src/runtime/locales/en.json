@@ -1,5 +1,8 @@
 {
   "nuxtUiMongocamp": {
+    "confirmByName": {
+      "prompt": "Type \"{name}\" to confirm"
+    },
     "common": {
       "cancel": "Cancel",
       "delete": "Delete",
