@@ -6,7 +6,9 @@ import type { CollectionStatus, MongoIndex } from '@sfxcode/nuxt-mongocamp-serve
 import type { ColumnDefinition } from '../composables/useMongocampSchema'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import type { DescribedAggregationError } from '../composables/useMongocampAggregation'
+import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { analyzeSamples } from '../utils/analyzeSamples'
+import { downloadTextFile } from '../utils/exportRows'
 import type { FieldStatistic, SampleAnalysis, ValueKind } from '../utils/analyzeSamples'
 
 const props = withDefaults(defineProps<{
@@ -21,6 +23,7 @@ const { collectionApi, documentApi } = useMongocampClientApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
 const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
 const { sampleDocuments, describeAggregationError } = useMongocampAggregation()
+const { getJsonSchema } = useMongocampAdmin()
 
 const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
@@ -95,6 +98,55 @@ async function copySchemaAsTs() {
   await navigator.clipboard.writeText(tsInterface.value)
   toast.add({ title: t('nuxtUiMongocamp.collectionInfos.copiedTitle'), description: t('nuxtUiMongocamp.collectionInfos.copiedDescription'), color: 'success' })
 }
+
+// The server's inferred JSON schema, fetched only when the viewer is opened. It is shown verbatim —
+// nothing here reads into its structure.
+const isSchemaOpen = ref(false)
+const schemaJson = ref('')
+const schemaLoading = ref(false)
+const schemaError = ref<unknown>(null)
+let schemaRun = 0
+
+async function loadJsonSchema() {
+  const run = ++schemaRun
+  schemaLoading.value = true
+  schemaError.value = null
+  try {
+    const schema: unknown = await getJsonSchema(props.collectionName)
+    if (run !== schemaRun) return
+    schemaJson.value = JSON.stringify(schema, null, 2)
+  }
+  catch (e: unknown) {
+    if (run !== schemaRun) return
+    schemaError.value = e
+  }
+  finally {
+    if (run === schemaRun) schemaLoading.value = false
+  }
+}
+
+function openJsonSchema() {
+  isSchemaOpen.value = true
+  if (!schemaJson.value) loadJsonSchema()
+}
+
+async function copyJsonSchema() {
+  await navigator.clipboard.writeText(schemaJson.value)
+  toast.add({ title: t('nuxtUiMongocamp.collectionInfos.copiedTitle'), description: t('nuxtUiMongocamp.collectionInfos.schemaCopiedDescription'), color: 'success' })
+}
+
+function downloadJsonSchema() {
+  downloadTextFile(`${props.collectionName}.schema.json`, schemaJson.value, 'application/json')
+}
+
+// the schema belongs to one collection
+watch(() => props.collectionName, () => {
+  schemaRun++
+  schemaJson.value = ''
+  schemaError.value = null
+  schemaLoading.value = false
+  isSchemaOpen.value = false
+})
 
 const schemaTableColumns = computed<TableColumn<SchemaRow>[]>(() => [
   {
@@ -483,14 +535,24 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
               size="sm"
             />
           </div>
-          <UButton
-            icon="i-lucide-copy"
-            :label="t('nuxtUiMongocamp.collectionInfos.copyAsTs')"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="copySchemaAsTs"
-          />
+          <div class="flex items-center gap-1">
+            <UButton
+              icon="i-lucide-file-json"
+              :label="t('nuxtUiMongocamp.collectionInfos.jsonSchema')"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="openJsonSchema"
+            />
+            <UButton
+              icon="i-lucide-copy"
+              :label="t('nuxtUiMongocamp.collectionInfos.copyAsTs')"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="copySchemaAsTs"
+            />
+          </div>
         </div>
       </template>
       <UTable
@@ -635,6 +697,51 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
           color="error"
           icon="i-lucide-trash-2"
           @click="handleDeleteIndex"
+        />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isSchemaOpen"
+      :title="t('nuxtUiMongocamp.collectionInfos.jsonSchemaTitle', { name: collectionName })"
+      :ui="{ content: 'sm:max-w-3xl', footer: 'justify-end' }"
+    >
+      <template #body>
+        <MongocampErrorAlert
+          :error="schemaError"
+          :title="t('nuxtUiMongocamp.collectionInfos.jsonSchemaFailedTitle')"
+          @retry="loadJsonSchema"
+        />
+        <div
+          v-if="schemaLoading"
+          class="flex justify-center py-8"
+        >
+          <UIcon
+            name="i-lucide-loader-circle"
+            class="size-6 animate-spin text-dimmed"
+          />
+        </div>
+        <pre
+          v-else-if="schemaJson"
+          class="max-h-[60vh] overflow-auto rounded-md bg-elevated p-3 text-xs"
+          tabindex="0"
+          :aria-label="t('nuxtUiMongocamp.collectionInfos.jsonSchema')"
+        >{{ schemaJson }}</pre>
+      </template>
+      <template #footer>
+        <UButton
+          icon="i-lucide-copy"
+          :label="t('nuxtUiMongocamp.common.copy')"
+          color="neutral"
+          variant="ghost"
+          :disabled="!schemaJson"
+          @click="copyJsonSchema"
+        />
+        <UButton
+          icon="i-lucide-download"
+          :label="t('nuxtUiMongocamp.collectionInfos.downloadSchema')"
+          :disabled="!schemaJson"
+          @click="downloadJsonSchema"
         />
       </template>
     </UModal>

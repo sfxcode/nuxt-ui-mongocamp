@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent, h, nextTick, ref } from 'vue'
-import { enableAutoUnmount } from '@vue/test-utils'
+import { DOMWrapper, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp, USelect } from '#components'
 import MongocampCollectionInfos from '../../src/runtime/components/MongocampCollectionInfos.vue'
@@ -24,10 +24,17 @@ const mockGetCollectionInformation = vi.fn()
 const mockListDocuments = vi.fn()
 const mockListIndices = vi.fn()
 const mockAggregateRaw = vi.fn()
+const mockGetJsonSchema = vi.fn()
+const mockDownload = vi.hoisted(() => vi.fn())
+
+vi.mock('../../src/runtime/utils/exportRows', async importOriginal => ({
+  ...await importOriginal<typeof import('../../src/runtime/utils/exportRows')>(),
+  downloadTextFile: mockDownload,
+}))
 
 mockNuxtImport('useMongocampApi', () => {
   return () => ({
-    collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: mockAggregateRaw },
+    collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: mockAggregateRaw, getJsonSchema: mockGetJsonSchema },
     documentApi: { listDocuments: mockListDocuments },
     indexApi: { listIndices: mockListIndices },
   })
@@ -43,6 +50,7 @@ beforeEach(() => {
   mockListDocuments.mockResolvedValue([{ _id: 'a', name: 'x' }])
   mockListIndices.mockResolvedValue([])
   mockAggregateRaw.mockResolvedValue(rawResponse([]))
+  mockGetJsonSchema.mockResolvedValue({ $schema: 'http://json-schema.org/draft-07/schema#', $ref: '#/definitions/people', definitions: { people: { type: 'object' } } })
 })
 
 async function mountInfos() {
@@ -199,5 +207,87 @@ describe('MongocampCollectionInfos — field statistics', () => {
     await wait()
 
     expect(component.text()).not.toContain('documents sampled')
+  })
+})
+
+// the viewer is a teleported UModal, so it is queried through document.body
+const body = () => new DOMWrapper(document.body)
+const schemaButton = (component: Mounted) => component.findAll('button').find(b => b.text() === 'JSON schema')!
+const footerButton = (label: string) => body().findAll('button').find(b => b.text() === label)!
+
+describe('MongocampCollectionInfos — JSON schema viewer', () => {
+  it('does not load the schema until the viewer is opened', async () => {
+    await mountInfos()
+
+    expect(mockGetJsonSchema).not.toHaveBeenCalled()
+  })
+
+  it('loads the schema for this collection on open and shows it verbatim', async () => {
+    const component = await mountInfos()
+
+    await schemaButton(component).trigger('click')
+    await flushPromises()
+    await wait()
+
+    expect(mockGetJsonSchema).toHaveBeenCalledTimes(1)
+    expect(mockGetJsonSchema).toHaveBeenCalledWith({ collectionName: 'people' }, { signal: expect.any(AbortSignal) })
+    expect(body().find('pre').text()).toBe(JSON.stringify(await mockGetJsonSchema.mock.results[0]!.value, null, 2))
+  })
+
+  it('does not fetch again when reopened after a successful load', async () => {
+    const component = await mountInfos()
+    await schemaButton(component).trigger('click')
+    await flushPromises()
+    await wait()
+    await body().find('button[aria-label="Close"]').trigger('click')
+    await wait(300)
+
+    await schemaButton(component).trigger('click')
+    await wait()
+
+    expect(mockGetJsonSchema).toHaveBeenCalledTimes(1)
+  })
+
+  it('downloads the shown schema as <collection>.schema.json', async () => {
+    const component = await mountInfos()
+    await schemaButton(component).trigger('click')
+    await flushPromises()
+    await wait()
+
+    await footerButton('Download').trigger('click')
+
+    expect(mockDownload).toHaveBeenCalledWith('people.schema.json', body().find('pre').text(), 'application/json')
+  })
+
+  it('copies the shown schema to the clipboard', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    const component = await mountInfos()
+    await schemaButton(component).trigger('click')
+    await flushPromises()
+    await wait()
+
+    await footerButton('Copy').trigger('click')
+
+    expect(writeText).toHaveBeenCalledWith(body().find('pre').text())
+  })
+
+  it('shows the error alert with a retry when loading fails, and retry loads it', async () => {
+    mockGetJsonSchema.mockRejectedValueOnce(Object.assign(new Error('x'), { name: 'FetchError' }))
+    const component = await mountInfos()
+
+    await schemaButton(component).trigger('click')
+    await flushPromises()
+    await wait()
+
+    expect(body().text()).toContain('The JSON schema could not be loaded')
+    expect(footerButton('Download').attributes('disabled')).toBeDefined()
+
+    await body().findAll('button').find(b => b.text() === 'Retry')!.trigger('click')
+    await flushPromises()
+    await wait()
+
+    expect(mockGetJsonSchema).toHaveBeenCalledTimes(2)
+    expect(body().find('pre').exists()).toBe(true)
   })
 })
