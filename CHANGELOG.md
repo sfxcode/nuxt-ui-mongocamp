@@ -1,6 +1,48 @@
 # Changelog
 
 
+## v1.3.3
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.2...v1.3.3)
+
+### 🚀 Enhancements
+
+- **collections:** Add clear/drop/json-schema methods and protection rule ([7d22337](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/7d22337))
+- **collections:** Add MongocampConfirmByName type-the-name modal ([ffb6784](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/ffb6784))
+- **collections:** Clear and drop collections behind a type-the-name confirm ([a7d1e3a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a7d1e3a))
+- **collections:** Add a JSON schema viewer to MongocampCollectionInfos ([d325f51](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/d325f51))
+- **admin:** Wrap getUser, getRole, regenerateUserApiKey and createIndexForField ([a2cdf56](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a2cdf56))
+- **users:** Let admins regenerate another user's API key ([00ec3c3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/00ec3c3))
+- **admin:** Add read-only detail drawers for users and roles ([d841fa3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/d841fa3))
+- **collection-data:** Add an "Index this field" menu to column headers ([1fe91b8](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1fe91b8))
+- **session:** Add a JWT expiry helper ([71f2a19](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/71f2a19))
+- **session:** Add useMongocampSession and a rate-limited server probe ([6ab9606](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6ab9606))
+- **session:** Add the opt-in sessionGuard route middleware and loginPath ([1c099fc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1c099fc))
+- **errors:** Tell a dead session from a dead server in MongocampErrorAlert ([cdee07f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cdee07f))
+- **settings:** Add the read-only MongocampSettings viewer ([1881427](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1881427))
+
+### 🩹 Fixes
+
+- **playground:** Generate .nuxt before the module build on Netlify ([5e16d69](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/5e16d69))
+- **playground:** Pin the static Nitro preset on Netlify ([2ece19b](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2ece19b))
+- **playground:** Update Netlify configuration for improved build process and environment settings ([021eb56](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/021eb56))
+- **aggregation:** Soften the 503 message and offer retry ([8e20583](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8e20583))
+- **admin:** Widen the detail drawers so the grants table fits ([c5e36fb](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c5e36fb))
+
+### 📖 Documentation
+
+- **collections:** Document clear/drop, the confirm modal and the JSON schema viewer ([33691f6](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/33691f6))
+- **admin:** Document API-key regeneration, detail drawers and the index menu ([16b2161](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/16b2161))
+- **session:** Add the Session Handling guide ([cdd5db8](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cdd5db8))
+
+### 🏡 Chore
+
+- **playground:** Add netlify.toml for the playground deploy ([4c8fc1b](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/4c8fc1b))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.3.2
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.1...v1.3.2)
