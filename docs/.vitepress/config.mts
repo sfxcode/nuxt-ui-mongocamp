@@ -30,6 +30,7 @@ export default defineConfig({
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Configuration', link: '/guide/configuration' },
             { text: 'Route Protection', link: '/guide/route-protection' },
+            { text: 'Session Handling', link: '/guide/session-handling' },
             { text: 'Server Proxy Auth', link: '/guide/server-proxy-auth' },
           ],
         },
