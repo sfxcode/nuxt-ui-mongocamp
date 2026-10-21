@@ -2,11 +2,13 @@
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampError, useMongocampSchema } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampError, useMongocampRoles, useMongocampSchema, useToast } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
+import { useMongocampIndex } from '../composables/useMongocampIndex'
 import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
 import { isIsoDateTimeString } from '../utils/isoDate'
+import { parseServerError } from '../utils/aggregationErrors'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { BulkMatchShortfall, BulkUnaddressableId, buildIdFilter, isEditableField, runBulkUpdate } from '../utils/bulkEdit'
@@ -27,9 +29,13 @@ import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   collectionName: string
-}>()
+  // base path of the page rendering MongocampCollectionInfos (`<infoPath>/<name>`); the "index created" toast links there
+  infoPath?: string
+}>(), {
+  infoPath: '/secured/admin/collections',
+})
 
 const { t } = useI18n()
 const { documentApi } = useMongocampClientApi()
@@ -39,6 +45,9 @@ const { ensureMetaData } = useMongocampDocument()
 const { and, like, or } = useMongocampQuery()
 const { schemaFromSamples } = useMongocampSchema()
 const { listDistinct } = useMongocampAggregation()
+const { createIndexForField } = useMongocampIndex()
+const { isManager } = useMongocampRoles()
+const toast = useToast()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
@@ -57,6 +66,7 @@ async function handleFileSelected(event: Event) {
 
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UCheckbox = resolveComponent('UCheckbox')
 
 function withTooltip(text: string, node: ReturnType<typeof h>) {
@@ -237,6 +247,77 @@ function sortHeader(column: Column<Row>, label: string) {
     class: '-mx-2.5',
     onClick: () => column.toggleSorting(isSorted === 'asc'),
   })
+}
+
+// "Index this field": one plain single-field index from the column header. Managers only, never on GridFS
+// buckets (their own indexes are the bucket's business), and not for `_id` (always indexed) or the
+// `metaData` object.
+const indexing = ref<Set<string>>(new Set())
+
+function canIndexField(key: string): boolean {
+  return isManager.value && !isBucketCollection(props.collectionName) && key !== '_id' && key !== 'metaData'
+}
+
+// The server's refusal (a duplicate or conflicting index) is the useful part; its text can carry the
+// database host:port, which parseServerError strips.
+async function indexFailureMessage(error: unknown): Promise<string> {
+  try {
+    const body = await (error as { response?: Response } | null)?.response?.clone().json() as { msg?: unknown } | undefined
+    if (typeof body?.msg === 'string' && body.msg) {
+      const message = parseServerError(body.msg).message
+      if (message) return message
+    }
+  }
+  catch {
+    // no readable body — fall back to the generic description
+  }
+  return describeError(error).message
+}
+
+async function indexField(key: string, ascending: boolean) {
+  if (indexing.value.has(key)) return
+  indexing.value = new Set(indexing.value).add(key)
+  try {
+    const created = await createIndexForField(props.collectionName, key, ascending)
+    toast.add({
+      title: t('nuxtUiMongocamp.collectionData.indexCreatedTitle'),
+      description: t('nuxtUiMongocamp.collectionData.indexCreatedDescription', { name: created.name, collection: props.collectionName }),
+      color: 'success',
+      actions: [{ label: t('nuxtUiMongocamp.collectionData.viewIndexes'), to: `${props.infoPath}/${props.collectionName}` }],
+    })
+  }
+  catch (e: unknown) {
+    toast.add({ title: t('nuxtUiMongocamp.collectionData.indexFailedTitle', { field: key }), description: await indexFailureMessage(e), color: 'error' })
+  }
+  finally {
+    const next = new Set(indexing.value)
+    next.delete(key)
+    indexing.value = next
+  }
+}
+
+function columnHeader(column: Column<Row>, key: string) {
+  const sort = sortHeader(column, key)
+  if (!canIndexField(key)) return sort
+  const label = t('nuxtUiMongocamp.collectionData.indexFieldTooltip', { field: key })
+  return h('div', { class: 'flex items-center gap-1' }, [
+    sort,
+    h(UDropdownMenu, {
+      items: [[
+        { label: t('nuxtUiMongocamp.collectionData.indexAscending'), icon: 'i-lucide-arrow-up-narrow-wide', onSelect: () => indexField(key, true) },
+        { label: t('nuxtUiMongocamp.collectionData.indexDescending'), icon: 'i-lucide-arrow-down-wide-narrow', onSelect: () => indexField(key, false) },
+      ]],
+    }, {
+      default: () => h(UButton, {
+        'icon': 'i-lucide-list-tree',
+        'color': 'neutral',
+        'variant': 'ghost',
+        'size': 'xs',
+        'aria-label': label,
+        'loading': indexing.value.has(key),
+      }),
+    }),
+  ])
 }
 
 const columns = ref<TableColumn<Row>[]>([])
@@ -530,7 +611,7 @@ async function fetchDocuments() {
       ]
       columns.value = orderedKeys.map((key, index) => ({
         accessorKey: key,
-        header: ({ column }: { column: Column<Row> }) => sortHeader(column, key),
+        header: ({ column }: { column: Column<Row> }) => columnHeader(column, key),
         cell: makeCell(key, 'string'),
         // keep the first column (usually _id) pinned so rows stay identifiable when the table scrolls sideways
         ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),

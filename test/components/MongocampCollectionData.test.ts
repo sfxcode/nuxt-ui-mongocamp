@@ -45,6 +45,8 @@ const mockDelete = vi.fn()
 const mockGetFileInformation = vi.fn()
 const mockGetFile = vi.fn()
 const mockInsertFile = vi.fn()
+const mockCreateIndexForField = vi.fn()
+const session = { isAdmin: false }
 
 function mockRawResponse<T>(value: T, totalHeader?: string) {
   return {
@@ -75,11 +77,16 @@ mockNuxtImport('useMongocampApi', () => {
     },
     bucketApi: {},
     collectionApi: { distinctRaw: mockDistinctRaw },
+    indexApi: { createIndexForField: mockCreateIndexForField },
   })
 })
 
+// who is signed in decides whether the header index menu is offered
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: session.isAdmin, roles: [] } } }))
+
 beforeEach(() => {
   vi.clearAllMocks()
+  session.isAdmin = false
   mockListDocumentsRaw.mockResolvedValue(mockRawResponse([], '0'))
 })
 
@@ -884,6 +891,84 @@ describe('MongocampCollectionData', () => {
       await wait()
 
       expect(mockGetFileInformation).toHaveBeenCalledWith({ bucketName: 'images', fileId: 'file-1' })
+    })
+  })
+
+  describe('index this field', () => {
+    const rows = [{ _id: 'doc-1', email: 'a@x.de', age: 3, metaData: { created: '2024-01-01T00:00:00.000Z' } }]
+
+    async function mountData(collectionName = 'customers') {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName } })
+      await wait()
+      return component
+    }
+
+    const indexButtons = (component: Awaited<ReturnType<typeof mountData>>) => component.findAll('button').filter(b => (b.attributes('aria-label') ?? '').startsWith('Index '))
+
+    async function choose(component: Awaited<ReturnType<typeof mountData>>, field: string, item: string) {
+      const trigger = component.find(`button[aria-label="Index ${field}"]`)
+      await trigger.trigger('keydown', { key: 'Enter' })
+      await wait()
+      await modal().findAll('[role="menuitem"]').find(i => i.text() === item)!.trigger('click')
+      await wait()
+    }
+
+    it('offers nothing to someone who is not a manager', async () => {
+      const component = await mountData()
+
+      expect(indexButtons(component)).toHaveLength(0)
+    })
+
+    it('offers it for data fields to a manager, but not for _id or metaData', async () => {
+      session.isAdmin = true
+      const component = await mountData()
+
+      expect(indexButtons(component).map(b => b.attributes('aria-label')).sort()).toEqual(['Index age', 'Index email'])
+    })
+
+    it('offers nothing on a GridFS bucket collection', async () => {
+      session.isAdmin = true
+      const component = await mountData('images.files')
+
+      expect(indexButtons(component)).toHaveLength(0)
+    })
+
+    it('creates an ascending index for the field and reports it with a link to the index panel', async () => {
+      session.isAdmin = true
+      mockCreateIndexForField.mockResolvedValueOnce({ name: 'email_1' })
+      const component = await mountData()
+
+      await choose(component, 'email', 'Create ascending index')
+
+      expect(mockCreateIndexForField).toHaveBeenCalledWith({ collectionName: 'customers', fieldName: 'email', sortAscending: true }, { signal: expect.any(AbortSignal) })
+      expect(document.body.textContent).toContain('Index email_1 on customers was created.')
+      expect(document.body.querySelector('a[href="/secured/admin/collections/customers"]')).not.toBeNull()
+    })
+
+    it('creates a descending index when asked', async () => {
+      session.isAdmin = true
+      mockCreateIndexForField.mockResolvedValueOnce({ name: 'age_-1' })
+      const component = await mountData()
+
+      await choose(component, 'age', 'Create descending index')
+
+      expect(mockCreateIndexForField).toHaveBeenCalledWith({ collectionName: 'customers', fieldName: 'age', sortAscending: false }, { signal: expect.any(AbortSignal) })
+    })
+
+    it('shows the server\'s refusal without its database address', async () => {
+      session.isAdmin = true
+      const body = { code: -1, msg: 'Command failed with error 85 (IndexOptionsConflict): \'Index already exists with a different name\' on server 10.1.2.3:27017. The full response is {}' }
+      mockCreateIndexForField.mockRejectedValueOnce(Object.assign(new Error('x'), { response: new Response(JSON.stringify(body), { status: 500 }) }))
+      const component = await mountData()
+      const createdBefore = document.body.textContent!.match(/was created/g)?.length ?? 0
+
+      await choose(component, 'email', 'Create ascending index')
+
+      expect(document.body.textContent!.match(/was created/g)?.length ?? 0).toBe(createdBefore)
+      expect(document.body.textContent).toContain('Could not index email')
+      expect(document.body.textContent).toContain('Index already exists with a different name')
+      expect(document.body.textContent).not.toContain('10.1.2.3')
     })
   })
 })
