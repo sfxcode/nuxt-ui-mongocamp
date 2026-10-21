@@ -334,3 +334,52 @@ describe('MongocampRoles', () => {
     })
   })
 })
+
+describe('role details drawer', () => {
+  const support = {
+    name: 'support',
+    isAdmin: false,
+    collectionGrants: [
+      { name: 'orders', read: true, write: true, administrate: false, grantType: 'COLLECTION' },
+      { name: 'customers', read: true, write: false, administrate: false, grantType: 'COLLECTION' },
+    ],
+  }
+
+  async function open(rows: unknown[]) {
+    mockListRoles.mockResolvedValue(rows)
+    const component = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+    await flushPromises()
+    await component.find('[aria-label="Details"]').trigger('click')
+    await wait()
+    return component
+  }
+
+  it('lists the role\'s grants from the list row, with no extra API call', async () => {
+    await open([support])
+
+    expect(modal().text()).toContain('Role: support')
+    expect(modal().text()).toContain('orders')
+    expect(modal().text()).toContain('customers')
+    expect(mockListRoles).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the read/write/administrate flags per grant', async () => {
+    await open([support])
+
+    const ordersRow = modal().findAll('tbody tr').find(tr => tr.text().includes('orders'))!
+    expect(ordersRow.findAll('td').slice(2).map(td => td.text())).toEqual(['Yes', 'Yes', 'No'])
+  })
+
+  it('says so when the role has no grants', async () => {
+    await open([{ name: 'empty', isAdmin: false, collectionGrants: [] }])
+
+    expect(modal().text()).toContain('No grants yet')
+  })
+
+  it('does not alter the list row it was opened from', async () => {
+    const row = structuredClone(support)
+    await open([row])
+
+    expect(row).toEqual(support)
+  })
+})

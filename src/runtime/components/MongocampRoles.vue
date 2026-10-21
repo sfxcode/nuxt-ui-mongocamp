@@ -202,6 +202,21 @@ async function handleDeleteRole() {
   }
 }
 
+// Read-only details of a role, rendered from the list row (`getRole` returns exactly the same object).
+// It shows a copy, so the row is never touched; editing keeps going through the edit modal and
+// MongocampRoleGrants.
+const isDetailOpen = ref(false)
+const detail = ref<{ name: string, isAdmin: boolean, grants: Grant[] } | null>(null)
+
+function openDetail(role: Role) {
+  detail.value = {
+    name: role.name,
+    isAdmin: role.isAdmin,
+    grants: (role.collectionGrants ?? []).map(g => ({ ...g })),
+  }
+  isDetailOpen.value = true
+}
+
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
@@ -258,6 +273,14 @@ const columns = computed<TableColumn<Role>[]>(() => [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
+        withTooltip(t('nuxtUiMongocamp.roles.detailsTooltip'), h(UButton, {
+          'icon': 'i-lucide-info',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': t('nuxtUiMongocamp.roles.detailsTooltip'),
+          'onClick': () => openDetail(row.original),
+        })),
         withTooltip(t('nuxtUiMongocamp.roles.manageGrantsTooltip'), h(UButton, {
           'icon': 'i-lucide-key',
           'color': 'neutral',
@@ -461,5 +484,31 @@ fetchRoles()
         />
       </template>
     </UModal>
+
+    <USlideover
+      v-model:open="isDetailOpen"
+      :title="t('nuxtUiMongocamp.roles.detailsTitle', { roleName: detail?.name ?? '' })"
+    >
+      <template #body>
+        <div
+          v-if="detail"
+          class="flex flex-col gap-4"
+        >
+          <div class="flex items-center gap-2">
+            <UBadge
+              :label="detail.isAdmin ? t('nuxtUiMongocamp.common.admin') : t('nuxtUiMongocamp.common.standard')"
+              :color="detail.isAdmin ? 'error' : 'neutral'"
+              variant="subtle"
+            />
+          </div>
+          <section class="flex flex-col gap-2">
+            <h3 class="text-sm font-semibold">
+              {{ t('nuxtUiMongocamp.roles.detailsGrants') }}
+            </h3>
+            <MongocampGrantList :grants="detail.grants" />
+          </section>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>

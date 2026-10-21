@@ -2,7 +2,7 @@
 import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
+import type { Grant, UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useMongocampStorage, useToast } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { runBulkDelete } from '../utils/bulkDelete'
@@ -271,6 +271,29 @@ watch(isKeyModalOpen, (isOpen) => {
   keyError.value = ''
 })
 
+// Read-only details of a user, rendered from the list row (`getUser` was verified to return exactly the
+// same object, so there is nothing to fetch). It works on a copy so the table row is never touched, and it
+// deliberately leaves out `apiKey`, which the row carries but nothing here needs to show.
+interface UserDetail {
+  user: string
+  isAdmin: boolean
+  roles: string[]
+  grants: Grant[]
+}
+
+const isDetailOpen = ref(false)
+const detail = ref<UserDetail | null>(null)
+
+function openDetail(user: UserProfile) {
+  detail.value = {
+    user: user.user,
+    isAdmin: user.isAdmin,
+    roles: [...(user.roles ?? [])],
+    grants: (user.grants ?? []).map(g => ({ ...g })),
+  }
+  isDetailOpen.value = true
+}
+
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
 const UCheckbox = resolveComponent('UCheckbox')
@@ -352,6 +375,14 @@ const columns = computed<TableColumn<UserProfile>[]>(() => [
     header: '',
     cell: ({ row }) =>
       h('div', { class: 'flex gap-1 justify-end' }, [
+        withTooltip(t('nuxtUiMongocamp.users.detailsTooltip'), h(UButton, {
+          'icon': 'i-lucide-info',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': t('nuxtUiMongocamp.users.detailsTooltip'),
+          'onClick': () => openDetail(row.original),
+        })),
         withTooltip(t('nuxtUiMongocamp.users.editUserTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
           'color': 'neutral',
@@ -585,5 +616,54 @@ fetchRoles()
         </template>
       </template>
     </UModal>
+
+    <USlideover
+      v-model:open="isDetailOpen"
+      :title="t('nuxtUiMongocamp.users.detailsTitle', { userId: detail?.user ?? '' })"
+    >
+      <template #body>
+        <div
+          v-if="detail"
+          class="flex flex-col gap-4"
+        >
+          <div class="flex items-center gap-2">
+            <UBadge
+              :label="detail.isAdmin ? t('nuxtUiMongocamp.users.roleAdmin') : t('nuxtUiMongocamp.users.roleUser')"
+              :color="detail.isAdmin ? 'error' : 'neutral'"
+              variant="subtle"
+            />
+          </div>
+          <section class="flex flex-col gap-2">
+            <h3 class="text-sm font-semibold">
+              {{ t('nuxtUiMongocamp.users.detailsRoles') }}
+            </h3>
+            <div
+              v-if="detail.roles.length"
+              class="flex flex-wrap gap-1"
+            >
+              <UBadge
+                v-for="role in detail.roles"
+                :key="role"
+                :label="role"
+                color="primary"
+                variant="subtle"
+              />
+            </div>
+            <p
+              v-else
+              class="text-sm text-dimmed"
+            >
+              {{ t('nuxtUiMongocamp.users.detailsNoRoles') }}
+            </p>
+          </section>
+          <section class="flex flex-col gap-2">
+            <h3 class="text-sm font-semibold">
+              {{ t('nuxtUiMongocamp.users.detailsGrants') }}
+            </h3>
+            <MongocampGrantList :grants="detail.grants" />
+          </section>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>

@@ -449,3 +449,52 @@ describe('regenerating another user\'s API key', () => {
     expect(dialogButton('Regenerate')).toBeDefined()
   })
 })
+
+describe('user details drawer', () => {
+  const bob = {
+    user: 'bob@example.com',
+    isAdmin: false,
+    apiKey: 'BOB-SECRET-KEY',
+    roles: ['support', 'manager'],
+    grants: [{ name: 'orders', read: true, write: false, administrate: false, grantType: 'COLLECTION' }],
+  }
+
+  async function open(rows: unknown[]) {
+    mockListUsers.mockResolvedValue(rows)
+    const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    await flushPromises()
+    await component.find('[aria-label="Details"]').trigger('click')
+    await wait()
+    return component
+  }
+
+  it('shows roles and effective grants from the list row, with no extra API call', async () => {
+    await open([bob])
+
+    expect(modal().text()).toContain('User: bob@example.com')
+    expect(modal().text()).toContain('support')
+    expect(modal().text()).toContain('manager')
+    expect(modal().text()).toContain('orders')
+    expect(mockListUsers).toHaveBeenCalledTimes(1)
+  })
+
+  it('never shows the API key the row carries', async () => {
+    await open([bob])
+
+    expect(document.body.innerHTML).not.toContain('BOB-SECRET-KEY')
+  })
+
+  it('says so when the user has no roles and no grants', async () => {
+    await open([{ user: 'carol@example.com', isAdmin: false, roles: [], grants: [] }])
+
+    expect(modal().text()).toContain('No roles assigned')
+    expect(modal().text()).toContain('No grants yet')
+  })
+
+  it('does not alter the list row it was opened from', async () => {
+    const row = structuredClone(bob)
+    await open([row])
+
+    expect(row).toEqual(bob)
+  })
+})
