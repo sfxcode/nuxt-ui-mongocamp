@@ -6,6 +6,8 @@
 // The request carries no credentials, at most one is in flight, and the last answer (success or not) is
 // reused for a few seconds, so a burst of failing requests never turns into a burst of probes.
 
+import { createThrottled } from './throttled'
+
 export type ProbeResult = 'reachable' | 'unreachable' | 'skipped'
 
 interface ServerProbeOptions {
@@ -17,9 +19,7 @@ interface ServerProbeOptions {
 }
 
 export function createServerProbe(options: ServerProbeOptions): () => Promise<ProbeResult> {
-  const { getUrl, fetchFn = (...args) => fetch(...args), now = Date.now, cooldownMs = 5000, timeoutMs = 5000 } = options
-  let inFlight: Promise<ProbeResult> | null = null
-  let last: { result: ProbeResult, at: number } | null = null
+  const { getUrl, fetchFn = (...args) => fetch(...args), now, cooldownMs, timeoutMs = 5000 } = options
 
   async function ask(url: string): Promise<ProbeResult> {
     try {
@@ -37,17 +37,13 @@ export function createServerProbe(options: ServerProbeOptions): () => Promise<Pr
     }
   }
 
+  let currentUrl = ''
+  const throttled = createThrottled(() => ask(currentUrl), { now, cooldownMs })
+
   return function probe() {
     const url = getUrl()
     if (!url) return Promise.resolve('skipped')
-    if (inFlight) return inFlight
-    if (last && now() - last.at < cooldownMs) return Promise.resolve(last.result)
-    inFlight = ask(url).then((result) => {
-      last = { result, at: now() }
-      return result
-    }).finally(() => {
-      inFlight = null
-    })
-    return inFlight
+    currentUrl = url
+    return throttled()
   }
 }

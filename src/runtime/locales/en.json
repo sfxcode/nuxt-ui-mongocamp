@@ -336,6 +336,7 @@
       "forbidden": "You do not have permission to do this.",
       "generic": "Something went wrong.",
       "loginAgain": "Log in again",
+      "requestRefused": "The server is reachable and your session is valid, but it refused this request. Try again, or change what you asked for.",
       "filterRejectedTitle": "The filter could not be applied",
       "filterRejected": "The server rejected the current search or filters, although the collection itself loads. Clear them, or remove the last condition, and try again.",
       "clearFilters": "Clear filters"

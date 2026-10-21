@@ -336,6 +336,7 @@
       "forbidden": "Dafür fehlt dir die Berechtigung.",
       "generic": "Etwas ist schiefgelaufen.",
       "loginAgain": "Erneut anmelden",
+      "requestRefused": "Der Server ist erreichbar und Ihre Sitzung ist gültig, hat diese Anfrage aber abgelehnt. Versuchen Sie es erneut oder ändern Sie Ihre Anfrage.",
       "filterRejectedTitle": "Der Filter konnte nicht angewendet werden",
       "filterRejected": "Der Server hat die aktuelle Suche oder die Filter abgelehnt, obwohl die Collection selbst lädt. Setze sie zurück oder entferne die letzte Bedingung und versuche es erneut.",
       "clearFilters": "Filter zurücksetzen"

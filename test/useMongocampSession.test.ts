@@ -4,6 +4,7 @@ let mockOptions: Record<string, unknown> = {}
 let mockMongocamp: Record<string, unknown> = {}
 let mockSession: { token?: string } | null = null
 const mockLogout = vi.fn()
+const mockIsAuthenticated = vi.fn()
 
 vi.mock('#app', () => ({
   useRuntimeConfig: () => ({ public: { nuxtUiMongocampOptions: mockOptions, mongocamp: mockMongocamp } }),
@@ -11,6 +12,7 @@ vi.mock('#app', () => ({
 
 vi.mock('#imports', () => ({
   useMongocampAuth: () => ({ logout: mockLogout }),
+  useMongocampClientApi: () => ({ authApi: { isAuthenticated: mockIsAuthenticated } }),
   useMongocampStorage: () => ({ get value() { return mockSession } }),
 }))
 
@@ -36,6 +38,7 @@ beforeEach(() => {
   mockMongocamp = { url: 'https://mc.example.com' }
   mockSession = { token: tokenExpiringIn(3600) }
   fetchMock.mockResolvedValue(new Response('{}', { status: 200 }))
+  mockIsAuthenticated.mockResolvedValue({ value: true })
   vi.stubGlobal('fetch', fetchMock)
 })
 
@@ -82,9 +85,36 @@ describe('diagnoseFailure (after a request failed with a network error)', () => 
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('is rejected when the server answers while our calls fail', async () => {
+  it('is rejected when the server answers but refuses our token', async () => {
+    mockIsAuthenticated.mockRejectedValue(Object.assign(new Error('The request failed'), { name: 'FetchError' }))
+
     expect(await (await loadComposable()).diagnoseFailure()).toBe('rejected')
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(mockIsAuthenticated).toHaveBeenCalledTimes(1)
+  })
+
+  it('is active — the session is fine — when the server answers and accepts the token: the failed request was refused for its own reasons', async () => {
+    expect(await (await loadComposable()).diagnoseFailure()).toBe('active')
+    expect(mockIsAuthenticated).toHaveBeenCalledTimes(1)
+  })
+
+  it('is active only when the server says the token is authenticated: `false` counts as refused', async () => {
+    mockIsAuthenticated.mockResolvedValue({ value: false })
+
+    expect(await (await loadComposable()).diagnoseFailure()).toBe('rejected')
+  })
+
+  it('does not check the token when the server cannot be reached at all', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    expect(await (await loadComposable()).diagnoseFailure()).toBe('unknown')
+    expect(mockIsAuthenticated).not.toHaveBeenCalled()
+  })
+
+  it('bounds the token check with a timeout signal', async () => {
+    await (await loadComposable()).diagnoseFailure()
+
+    expect(mockIsAuthenticated).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
   })
 
   it('is unknown — not a dead session — when the server cannot be reached either', async () => {
@@ -100,13 +130,14 @@ describe('diagnoseFailure (after a request failed with a network error)', () => 
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('answers a burst of failures with one probe', async () => {
+  it('answers a burst of failures with one probe and one token check', async () => {
     const session = await loadComposable()
 
     await Promise.all([session.diagnoseFailure(), session.diagnoseFailure(), session.diagnoseFailure()])
     await session.diagnoseFailure()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(mockIsAuthenticated).toHaveBeenCalledTimes(1)
   })
 
   it('is unknown when no MongoCamp URL is configured to ask', async () => {
@@ -163,6 +194,7 @@ describe('server proxy mode (no login, no token)', () => {
     await session.invalidateSession()
 
     expect(fetchMock).not.toHaveBeenCalled()
+    expect(mockIsAuthenticated).not.toHaveBeenCalled()
     expect(mockLogout).not.toHaveBeenCalled()
   })
 })
