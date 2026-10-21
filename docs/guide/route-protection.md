@@ -45,6 +45,18 @@ Login state lives in the `mongocamp-session` **cookie** (`{ token, profile }`, 3
 
 The session token is a JWT valid for 6 hours on a stock MongoCamp server, and the browser refreshes it every `tokenRefreshInterval` only while a page of your app is open. If the token expires (or the server stops accepting it) while no page is open, the cookie — and therefore `isLoggedIn` — stays in place, so the app *looks* logged in while every request fails. The client library clears the session on a `401` response, but when your app and the MongoCamp server are on different origins and the server's `401` carries no CORS headers, the browser reports a plain network error instead and that safety net never runs. Components show this as "The server could not be reached, or your session has expired"; logging out and in again fixes it. Adding CORS headers to authentication failures on the MongoCamp server (or serving both from one origin) lets the client see the `401` and clear the session itself.
 
+### The session guard (opt-in)
+
+Set `sessionGuard: true` (and `loginPath`, e.g. `'/login'`) to stop the app from *looking* logged in after the token has run out. It registers a global `session-guard` route middleware, ahead of `global-auth`, that on every navigation (the first one included) reads the token's `exp` claim — it is **decoded, not verified**; the server stays the only authority — and:
+
+| Token | What happens |
+|---|---|
+| Not expired | Nothing |
+| Unreadable (not a JWT, no `exp`, ...) or missing | Nothing — an unknown state never logs anyone out |
+| Expired (more than 30 s past `exp`, to forgive clock skew) | The session is cleared through `logout()`. If the route asked for is no longer reachable without a login, the user is sent to `loginPath`; a public page stays where it is |
+
+`loginPath` is always allowed — like `notAllowedPath` and `logoutRedirectPath` — and the guard never redirects away from it, so it cannot loop. It only looks at the token itself, so it cannot notice a token the server stopped accepting; that case is for the failed-request diagnosis in [`useMongocampSession`](/composables/use-mongocamp-session). In [server proxy mode](/guide/server-proxy-auth) there is no login, so the guard is not registered (a build-time warning fires if both options are on).
+
 ## Manager vs. admin
 
 - **Admin** — `useMongocampStorage().value.profile.isAdmin`, set by the MongoCamp server on login.

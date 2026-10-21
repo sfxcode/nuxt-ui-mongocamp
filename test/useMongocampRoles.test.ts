@@ -58,6 +58,29 @@ describe('logoutRedirectPath', () => {
   })
 })
 
+describe('loginPath', () => {
+  it('defaults to \'/\'', () => {
+    const { loginPath } = useMongocampRoles()
+    expect(loginPath).toBe('/')
+  })
+
+  it('reflects the configured value, independently of notAllowedPath', () => {
+    mockOptions.loginPath = '/signin'
+    mockOptions.notAllowedPath = '/denied'
+    const { loginPath, notAllowedPath } = useMongocampRoles()
+    expect(loginPath).toBe('/signin')
+    expect(notAllowedPath).toBe('/denied')
+  })
+
+  it('is always an allowed path, even where a secured pattern covers it, so a redirect to it can never loop', () => {
+    mockOptions.loginPath = '/signin'
+    mockOptions.securedRouteParts = ['/**']
+    const { isAllowedPathForRoute } = useMongocampRoles()
+    expect(isAllowedPathForRoute('/signin')).toBe(true)
+    expect(isAllowedPathForRoute('/elsewhere')).toBe(false)
+  })
+})
+
 describe('logoutPath', () => {
   it('defaults to \'/logout\'', () => {
     const { logoutPath } = useMongocampRoles()

@@ -17,6 +17,10 @@ export default defineNuxtConfig({
     // Mirrors notAllowedPath here since this fixture models an app gated entirely behind
     // login — logout should land back on the login page, not the (unrelated) default '/'.
     logoutRedirectPath: '/login',
+    // The fake sessions seeded by the other e2e tests carry a non-JWT token, which the guard must leave alone
+    // (unknown is never expired); session-guard.test.ts seeds real expired/valid JWTs.
+    sessionGuard: true,
+    loginPath: '/login',
     managerRoles: ['support'],
     // '/login' is deliberately also listed here — notAllowedPath must stay reachable even when
     // it overlaps a configured pattern (phase 7's guarantee test); without this, that test

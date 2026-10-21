@@ -19,6 +19,12 @@ describe('ssr', async () => {
     expect(options.serverProxyPath).toBe('/api/_mongocamp')
   })
 
+  it('leaves the session guard off by default and defaults the login path', async () => {
+    const options = await $fetch<{ sessionGuard: boolean, loginPath: string }>('/api/mongocamp-options')
+    expect(options.sessionGuard).toBe(false)
+    expect(options.loginPath).toBe('/')
+  })
+
   it('404s on the proxy route when useServerProxy is disabled (the default)', async () => {
     await expect($fetch('/api/_mongocamp/document/find')).rejects.toMatchObject({ statusCode: 404 })
   })

@@ -11,6 +11,7 @@ export function useMongocampRoles() {
   const notAllowedPath: string = config.public.nuxtUiMongocampOptions.notAllowedPath ?? '/'
   const logoutRedirectPath: string = config.public.nuxtUiMongocampOptions.logoutRedirectPath ?? '/'
   const logoutPath: string = config.public.nuxtUiMongocampOptions.logoutPath ?? '/logout'
+  const loginPath: string = config.public.nuxtUiMongocampOptions.loginPath ?? '/'
   const managerRoles: string[] = config.public.nuxtUiMongocampOptions.managerRoles ?? []
   const securedRouteParts: string[] = config.public.nuxtUiMongocampOptions.securedRouteParts ?? []
   const managementRouteParts: string[] = config.public.nuxtUiMongocampOptions.managementRouteParts ?? []
@@ -32,7 +33,7 @@ export function useMongocampRoles() {
 
   function isAllowedPathForRoute(route: string): boolean {
     // Always allowed, so the middleware's own redirect targets can never cause a loop.
-    if (route === notAllowedPath || route === logoutRedirectPath) {
+    if (route === notAllowedPath || route === logoutRedirectPath || route === loginPath) {
       return true
     }
     if (!isLoggedIn.value && matchesAnyPattern(route, securedRouteParts)) {
@@ -48,5 +49,5 @@ export function useMongocampRoles() {
     return true
   }
 
-  return { isLoggedIn, isAdmin, isManager, notAllowedPath, logoutRedirectPath, logoutPath, isAllowedPathForRoute }
+  return { isLoggedIn, isAdmin, isManager, notAllowedPath, logoutRedirectPath, logoutPath, loginPath, isAllowedPathForRoute }
 }

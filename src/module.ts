@@ -1,6 +1,7 @@
 import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImportsDir, addServerHandler } from '@nuxt/kit'
 import { defu } from 'defu'
 import { consola } from 'consola'
+import { optionWarnings } from './optionWarnings'
 
 // Computed at the top level (needs only `import.meta.url`, not a Nuxt/setup context) so the
 // same absolute paths can be used both in the static `moduleDependencies` config below (for
@@ -32,6 +33,20 @@ export interface ModuleOptions {
    * by the middleware itself, so it can never cause a redirect loop.
    */
   logoutPath?: string
+
+  /**
+   * Opt-in dead-session guard: a route middleware that clears a session whose token says it has
+   * expired (the JWT `exp`, never verified) and sends the user to `loginPath` when the route they
+   * asked for needs a login. An unreadable token is never treated as expired. No effect in
+   * server proxy mode (there is no login).
+   */
+  sessionGuard?: boolean
+
+  /**
+   * Path the session guard navigates to after clearing an expired session — e.g. '/login'. Always
+   * treated as allowed by the middleware itself, so it can never cause a redirect loop.
+   */
+  loginPath?: string
 
   /**
    * Roles with management access
@@ -86,6 +101,8 @@ export default defineNuxtModule<ModuleOptions>({
     notAllowedPath: '/',
     logoutRedirectPath: '/',
     logoutPath: '/logout',
+    sessionGuard: false,
+    loginPath: '/',
     managerRoles: [],
     securedRouteParts: [],
     managementRouteParts: [],
@@ -144,14 +161,7 @@ export default defineNuxtModule<ModuleOptions>({
       })
     })
 
-    if (options.useServerProxy && options.useGlobalAuthMiddleware) {
-      consola.warn(
-        '[nuxt-ui-mongocamp] `useServerProxy` and `useGlobalAuthMiddleware` are both enabled. '
-        + 'Server proxy mode has no login/session, so `isLoggedIn`/`isAdmin`/`isManager` can never '
-        + 'become true — every route matched by `securedRouteParts`, `managementRouteParts`, or '
-        + '`adminRouteParts` will be permanently unreachable.',
-      )
-    }
+    for (const warning of optionWarnings(options)) consola.warn(warning)
 
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolve(runtimeDir, 'plugin'))

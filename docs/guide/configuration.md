@@ -13,6 +13,8 @@ export default defineNuxtConfig({
     notAllowedPath: '/login',                       // default: '/'
     logoutRedirectPath: '/',                         // default: '/'
     logoutPath: '/logout',                          // default: '/logout'
+    sessionGuard: true,                             // default: false
+    loginPath: '/login',                            // default: '/'
     managerRoles: ['support'],                      // default: []
     securedRouteParts: ['/secured/**'],              // default: []
     managementRouteParts: ['/secured/manage/**'],    // default: []
@@ -29,6 +31,8 @@ export default defineNuxtConfig({
 | `notAllowedPath` | `string` | `'/'` | Where the middleware redirects on any disallowed route. Always treated as allowed by the middleware itself, so it can never cause a redirect loop — set it to e.g. `'/login'` for apps that gate everything behind a login page. |
 | `logoutRedirectPath` | `string` | `'/'` | Where the middleware redirects after `/logout`. A separate option from `notAllowedPath`, also always treated as allowed — so a deliberate logout can land somewhere different from an auth-failure redirect (e.g. the home page instead of the login page). |
 | `logoutPath` | `string` | `'/logout'` | The path that triggers logout when navigated to. Always treated as allowed by the middleware itself. |
+| `sessionGuard` | `boolean` | `false` | Opt-in [dead-session guard](/guide/route-protection#a-stale-session-looks-logged-in): clears a session whose token says it has expired and sends the user to `loginPath` when the route they asked for needs a login. Never acts on a token it cannot read. No effect (and a build-time warning) with `useServerProxy`. |
+| `loginPath` | `string` | `'/'` | Where the session guard sends the user after clearing an expired session — e.g. `'/login'`. Always treated as allowed by the middleware itself, so it can never cause a redirect loop. |
 | `managerRoles` | `string[]` | `[]` | Role names (matched against the logged-in profile's `roles`) that grant manager status. An admin always counts as a manager too, regardless of this list. |
 | `securedRouteParts` | `string[]` | `[]` | Glob patterns (matched with [`minimatch`](https://www.npmjs.com/package/minimatch)) requiring the user to be logged in. |
 | `managementRouteParts` | `string[]` | `[]` | Glob patterns requiring the user to be a manager (see `managerRoles`). |
