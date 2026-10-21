@@ -488,6 +488,7 @@ fetchRoles()
     <USlideover
       v-model:open="isDetailOpen"
       :title="t('nuxtUiMongocamp.roles.detailsTitle', { roleName: detail?.name ?? '' })"
+      :ui="{ content: 'sm:max-w-xl' }"
     >
       <template #body>
         <div
