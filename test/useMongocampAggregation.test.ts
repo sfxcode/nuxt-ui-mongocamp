@@ -212,6 +212,13 @@ describe('describeAggregationError', () => {
     expect(result.kind).toBe('retryable')
   })
 
+  it('treats a body-less 503 from the proxy as retryable (an empty result looks like this)', async () => {
+    const result = await useMongocampAggregation().describeAggregationError(responseError(503, ''))
+
+    expect(result.kind).toBe('retryable')
+    expect(result.message).toContain('unavailable')
+  })
+
   it('names the refused operator for a forbidden pipeline', async () => {
     const error = new ForbiddenPipelineError([{ stageIndex: 0, operator: '$out', path: '$out' }])
 

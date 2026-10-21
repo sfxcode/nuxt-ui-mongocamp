@@ -144,6 +144,9 @@ export function useMongocampAggregation() {
     const response = (error as { response?: Response } | null)?.response
     const status = response?.status
     if (status === 405) return { kind: 'retryable', message: t('nuxtUiMongocamp.aggregation.errors.retryable') }
+    // the hosted server's front proxy answers an aggregation with no result at all with a body-less 503
+    // (the backend's 500 is rewritten), which cannot be told apart from an outage
+    if (status === 503) return { kind: 'retryable', message: t('nuxtUiMongocamp.aggregation.errors.unavailable') }
     if (response && status !== undefined && status >= 400 && status !== 401 && status !== 403) {
       try {
         const body = await response.clone().json() as { msg?: unknown }

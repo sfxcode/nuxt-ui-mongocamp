@@ -368,7 +368,7 @@ const exportMenuItems = computed(() => [
 
     <UAlert
       v-if="runError"
-      color="error"
+      :color="runError.kind === 'retryable' ? 'warning' : 'error'"
       variant="subtle"
       icon="i-lucide-circle-alert"
       :title="t('nuxtUiMongocamp.aggregation.runFailedTitle')"
@@ -386,7 +386,7 @@ const exportMenuItems = computed(() => [
         <UButton
           v-else-if="runError.kind !== 'forbidden'"
           :label="t('nuxtUiMongocamp.common.retry')"
-          color="error"
+          :color="runError.kind === 'retryable' ? 'warning' : 'error'"
           variant="subtle"
           icon="i-lucide-refresh-cw"
           @click="execute(page)"

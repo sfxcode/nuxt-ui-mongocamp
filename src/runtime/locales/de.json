@@ -447,7 +447,8 @@
     "aggregation": {
       "errors": {
         "forbidden": "Diese Pipeline verwendet {operator}, was hier nicht erlaubt ist.",
-        "retryable": "Die Anfrage wurde auf dem Weg zum Server blockiert. Bitte erneut versuchen."
+        "retryable": "Die Anfrage wurde auf dem Weg zum Server blockiert. Bitte erneut versuchen.",
+        "unavailable": "Der Server hat diese Anfrage nicht beantwortet. Möglicherweise liefert die Pipeline keine Ergebnisse; versuche es erneut oder lockere den Filter."
       },
       "modeVisual": "Stufen",
       "modeJson": "JSON",
