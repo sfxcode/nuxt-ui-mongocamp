@@ -15,10 +15,17 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 | Prop | Type | Description |
 |---|---|---|
 | `collectionName` | `string` | Required. Collection to browse. |
+| `infoPath` | `string` | Base path of the page rendering [`MongocampCollectionInfos`](/components/mongocamp-collection-infos); the "index created" toast links to `<infoPath>/<collectionName>`. Default `/secured/admin/collections`. |
 
 ## Columns
 
 Columns are derived from the first fetched row's keys (`_id` first, `metaData` last, everything else A–Z). The first data column stays pinned while the table scrolls sideways, so rows stay identifiable on narrow screens; the [column menu](#toolbar) hides and shows the rest.
+
+### Index this field
+
+Managers (`useMongocampRoles().isManager`) get a small menu next to the sort button of each data column: **Create ascending index** / **Create descending index**. It makes one plain single-field index through [`useMongocampIndex().createIndexForField`](/composables/use-mongocamp-index). It is not offered for GridFS bucket collections, for `_id` (always indexed) or for the `metaData` object, nor to non-managers.
+
+On success a toast names the index and offers **View indexes** (the info page, see `infoPath`). On failure a toast shows the server's own message (a conflicting existing index, for example) with the database address removed. Asking for an index that already exists is **not** an error: MongoDB treats an identical request as a no-op and the server answers with the same index name. Compound, unique, text and expiring indexes stay in the Indexes card of `MongocampCollectionInfos`.
 
 ## Cell rendering
 

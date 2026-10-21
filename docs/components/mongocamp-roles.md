@@ -19,6 +19,7 @@ Full CRUD table for managing roles — create, edit (admin flag, collection gran
 ## Behavior
 
 - **List** — fetched via `useMongocampAdmin().listRoles(filter)`, debounced 300ms on the search input.
+- **Details** — the info icon opens a read-only side drawer with the role's Admin/Standard badge and its grants ([`MongocampGrantList`](/components/mongocamp-grant-list)), rendered from the list row (`getRole` returns exactly the same object, so there is no extra request) on a copy. Editing keeps going through the edit dialog and [`MongocampRoleGrants`](/components/mongocamp-role-grants).
 - **Clone** — the copy icon opens a dialog asking for the new role name; the new role gets the source role's admin flag and a copy of all its grants (created with a single `addRole` call). A refused clone (e.g. name already taken) keeps the dialog open with the reason.
 - **Add / Edit** — name, `isAdmin` flag.
 - **Delete** — confirmation modal before calling `deleteRole`. If the server refuses, the dialog stays open and shows why so you can try again or cancel; the list is only reloaded after a successful delete.

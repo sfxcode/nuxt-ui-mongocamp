@@ -6,6 +6,7 @@ Wraps `indexApi` for MongoDB index management — used by [`MongocampCollectionI
 const {
   listIndexes,         // (collectionName: string) => Promise<MongoIndex[]>
   createIndex,          // (collectionName: string, keys: Record<string, number>, options?: IndexOptionsRequest) => Promise<IndexCreateResponse>
+  createIndexForField,   // (collectionName: string, fieldName: string, sortAscending?: boolean) => Promise<IndexCreateResponse>
   createUniqueIndex,     // (collectionName: string, fieldName: string, sortAscending?: boolean) => Promise<IndexCreateResponse>
   createTextIndex,       // (collectionName: string, fieldName: string) => Promise<IndexCreateResponse>
   createExpiringIndex,   // (collectionName: string, fieldName: string, duration: string) => Promise<IndexCreateResponse>
@@ -29,6 +30,10 @@ await createUniqueIndex('users', 'email', false)   // sortAscending, not a keys 
 await createTextIndex('users', 'name')
 await createExpiringIndex('sessions', 'createdAt', '3600s')
 ```
+
+## `createIndexForField`
+
+A plain single-field index in one call (`sortAscending` defaults to `true`), with a 15 s timeout — used by the "Index this field" column menu of [`MongocampCollectionData`](/components/mongocamp-collection-data). Like the other single-field creators it takes flat parameters. A refusal from the server is rethrown unchanged; requesting an index that already exists is not a refusal (MongoDB answers with the existing name).
 
 ## `MongoIndex.keys` vs the create request's `keys`
 

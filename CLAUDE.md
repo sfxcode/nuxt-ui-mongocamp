@@ -72,12 +72,12 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | Component | Purpose |
 |---|---|
 | `MongocampLogin` | FormKit schema-driven login form; persists last userId in a cookie |
-| `MongocampUsers` | Full CRUD table for users — add/edit (with role transfer listbox) / delete via UModal |
-| `MongocampRoles` | Full CRUD table for roles — add/edit / delete via UModal; key icon links to grant management page (configurable via `grantsPath` prop) |
+| `MongocampUsers` | Full CRUD table for users — add/edit (with role transfer listbox) / delete via UModal; per-row **Details** drawer (`USlideover`, built from a *copy* of the list row — `getUser` returns the same object — never shows `apiKey`) and **Regenerate API key** (not on the signed-in user's row; confirm → key shown once → dropped on close; list reloaded) |
+| `MongocampRoles` | Full CRUD table for roles — add/edit / delete via UModal; key icon links to grant management page (configurable via `grantsPath` prop); per-row **Details** drawer with the role's grants (copy of the row, `getRole` adds nothing) |
 | `MongocampRoleGrants` | Per-role grant CRUD — lists collection grants for a named role, add/edit/delete; filters available collections to exclude already-granted ones |
 | `MongocampCollections` | Table of all collections, with links to info/data pages; admins get **Clear**/**Drop** on ordinary collections (never `mc_*` or GridFS members — `isProtectedCollection`), behind `MongocampConfirmByName`; `canManage` prop hides them, `changed` event after a success; the bucket clear/delete use the same confirmation |
 | `MongocampCollectionInfos` | Stat cards + indexes + inferred schema for one collection, plus a **JSON schema** modal (the server's own `getJsonSchema`, loaded on first open, copy/download) and an on-demand **Field statistics** card computed client-side from a `$sample` (`analyzeSamples`; never the server's `getSchemaAnalysis`, which leaks state across collections) |
-| `MongocampCollectionData` | Paginated, filterable, sortable document table |
+| `MongocampCollectionData` | Paginated, filterable, sortable document table; managers get an **Index this field** menu (asc/desc, `createIndexForField`) in each data column header — not for buckets, `_id` or `metaData`; `infoPath` prop for the "View indexes" toast link; re-creating an existing index is a server no-op, not an error |
 | `MongocampBucketFiles` | Paginated/filterable GridFS bucket file browser — list/download/upload/delete/rename via `useMongocampBucket`; reached from `MongocampCollections`' bucket rows via `bucketFilesPath` |
 | `MongocampJobs` | Full CRUD table for scheduled background jobs |
 | `MongocampAccount` | Current-user account page: profile, password change, API key |
@@ -89,6 +89,7 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | `MongocampImport` | Trigger button + wizard dialog (file → preview → batched import → result/retry) importing JSON/CSV into a collection; part of `MongocampCollectionData`'s toolbar, hidden for GridFS bucket collections; emits `imported(count)` |
 | `MongocampAggregationBuilder` | Stage editor (`$match/$group/$sort/$project/$limit` as JSON text) + raw JSON view of one pipeline; server-side paging, plain-JSON result table, page export; deny-listed operators (`$out $merge $function $accumulator $where $lookup $unionWith $graphLookup`) are refused at any depth in the UI and again in `runAggregation`. Playground page `…/collections/[name]/aggregate` |
 | `MongocampDashboard` | Admin landing page: linked collection/user/role counts + server version; default slot for app-specific content; exposes `refresh()` |
+| `MongocampGrantList` | Read-only grants table (`grants: Grant[]`: collection, type, read/write/administrate badges, empty state); used by the user and role detail drawers |
 | `MongocampConfirmByName` | Type-the-name confirm modal (`name`, `title`, `description`, `confirmLabel`, `onConfirm: () => Promise<void>`, `v-model:open`): confirm disabled until the trimmed input equals `name` (case-sensitive), Enter goes through the same guard, a rejection keeps it open with the `useMongocampError` message |
 | `MongocampErrorAlert` | Failed-load banner (retry, or log-in-again on 401); used by every list component |
 | `MongocampEmptyState` | Icon + message for `UTable`'s `#empty` slot |
@@ -99,12 +100,12 @@ UTable columns with custom cells use `h()` + `resolveComponent()` (not `<templat
 
 Kept in sync with `docs/composables/index.md` (the canonical, per-composable-documented list) — check there first if this list looks stale.
 
-- **`useMongocampAdmin`** — wraps `adminApi` and `collectionApi` from `useMongocampApi()` for user and role CRUD (`listUsers`, `addUser`, `deleteUser`, `updateUserRoles`, `updateUserPassword`, `listRoles`, `addRole`, `updateRole`, `deleteRole`, `listCollections`, `clearCollection`, `deleteCollection`, `getJsonSchema` — the last three with a 15 s timeout; clear/delete are irreversible and unguarded, so callers put them behind `MongocampConfirmByName` and `isProtectedCollection`)
+- **`useMongocampAdmin`** — wraps `adminApi` and `collectionApi` from `useMongocampApi()` for user and role CRUD (`listUsers`, `addUser`, `deleteUser`, `updateUserRoles`, `updateUserPassword`, `listRoles`, `addRole`, `updateRole`, `deleteRole`, `listCollections`, `clearCollection`, `deleteCollection`, `getJsonSchema`, `getUser`, `getRole`, `regenerateUserApiKey` (returns the plain key; the misspelled client method `gnerateNewApiKeyForUser` is called only there) — the last six with a 15 s timeout; clear/delete are irreversible and unguarded, so callers put them behind `MongocampConfirmByName` and `isProtectedCollection`)
 - **`useMongocampCollection`** — reactive state for paginated collection queries: `filter`, `sort`, `projection`, `pagination` (pageIndex + pageSize), `total`
 - **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
 - **`useMongocampSchema`** — exports `useJsonSchema()` with `schemaToColumnDefinition(definition, fields)` for mapping a `JsonSchemaDefinition` to UTable column configs; sorts `_id` first, then id-containing fields, then others; detects `date-time` and `number` types
 - **`useMongocampBucket`** — GridFS bucket detection, file-id resolution, upload/download/delete/rename
-- **`useMongocampIndex`** — create/list/delete MongoDB indexes (standard, unique, text, expiring)
+- **`useMongocampIndex`** — create/list/delete MongoDB indexes (standard, unique, text, expiring) plus `createIndexForField(collection, field, ascending = true)` (plain single-field index, 15 s timeout)
 - **`useMongocampJobs`** — list/register/update/execute/delete scheduled background jobs
 - **`useMongocampAccount`** — account self-service: profile, password change, API key regeneration
 - **`useMongocampSystem`** — read-only database viewer (list, per-database info, collections)
