@@ -294,6 +294,25 @@
       "changeFailedTitle": "Änderung fehlgeschlagen",
       "changeFailedFallback": "Ihr Passwort konnte nicht geändert werden."
     },
+    "settings": {
+      "heading": "Servereinstellungen",
+      "loadFailedTitle": "Die Servereinstellungen konnten nicht geladen werden",
+      "adminOnly": "Nur Administratoren können die Servereinstellungen einsehen.",
+      "pluginsHeading": "Plugins",
+      "routesPlugins": "Routen-Plugins",
+      "filePlugins": "Datei-Plugins",
+      "ignoredPlugins": "Ignorierte Plugins",
+      "noPlugins": "Keine",
+      "searchPlaceholder": "Einstellungen durchsuchen...",
+      "maskedNote": "Geheime Werte (Passwörter, Schlüssel, Zugangsdaten, Hosts) werden nie angezeigt.",
+      "maskedHint": "Verborgen: dieser Wert ist geheim",
+      "columnKey": "Einstellung",
+      "columnValue": "Wert",
+      "columnType": "Typ",
+      "columnRestart": "Neustart",
+      "restartNeeded": "Neustart nötig",
+      "empty": "Keine Einstellungen gefunden"
+    },
     "databases": {
       "heading": "Datenbanken",
       "columnDatabase": "Datenbank",

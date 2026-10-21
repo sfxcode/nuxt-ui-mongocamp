@@ -294,6 +294,25 @@
       "changeFailedTitle": "Change failed",
       "changeFailedFallback": "Could not change your password."
     },
+    "settings": {
+      "heading": "Server settings",
+      "loadFailedTitle": "Failed to load the server settings",
+      "adminOnly": "Only administrators can view the server settings.",
+      "pluginsHeading": "Plugins",
+      "routesPlugins": "Route plugins",
+      "filePlugins": "File plugins",
+      "ignoredPlugins": "Ignored plugins",
+      "noPlugins": "None",
+      "searchPlaceholder": "Search settings...",
+      "maskedNote": "Secret values (passwords, keys, credentials, hosts) are never shown.",
+      "maskedHint": "Hidden: this value is a secret",
+      "columnKey": "Setting",
+      "columnValue": "Value",
+      "columnType": "Type",
+      "columnRestart": "Restart",
+      "restartNeeded": "needs restart",
+      "empty": "No settings found"
+    },
     "databases": {
       "heading": "Databases",
       "columnDatabase": "Database",

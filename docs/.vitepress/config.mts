@@ -50,6 +50,7 @@ export default defineConfig({
             { text: 'MongocampJobs', link: '/components/mongocamp-jobs' },
             { text: 'MongocampAccount', link: '/components/mongocamp-account' },
             { text: 'MongocampDatabases', link: '/components/mongocamp-databases' },
+            { text: 'MongocampSettings', link: '/components/mongocamp-settings' },
             { text: 'MongocampVersion', link: '/components/mongocamp-version' },
             { text: 'MongocampDashboard', link: '/components/mongocamp-dashboard' },
             { text: 'MongocampBulkDelete', link: '/components/mongocamp-bulk-delete' },

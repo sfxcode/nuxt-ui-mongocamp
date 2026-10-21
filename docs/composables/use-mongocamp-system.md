@@ -1,6 +1,6 @@
 # useMongocampSystem
 
-Read-only wrapper for `databaseApi`. Powers [`MongocampDatabases`](/components/mongocamp-databases).
+Read-only wrapper for `databaseApi` and `applicationApi`. Powers [`MongocampDatabases`](/components/mongocamp-databases) and [`MongocampSettings`](/components/mongocamp-settings).
 
 ```ts
 const {
@@ -8,16 +8,22 @@ const {
   getDatabaseInfos,          // () => Promise<DatabaseInfo[]>
   getDatabaseInfo,           // (databaseName: string) => Promise<DatabaseInfo>
   listCollectionsByDatabase, // (databaseName: string) => Promise<string[]>
+  getSettings,               // () => Promise<{ routesPlugins, filePlugins, ignoredPlugins }>
+  listConfigurations,        // () => Promise<ConfigRow[]>   — sorted by key, secrets already masked
+  getConfig,                 // (configurationKey: string) => Promise<ConfigRow>  — masked
 } = useMongocampSystem()
 ```
 
-## Deliberately scoped to databases only
+## Read-only, and secrets never leave it
 
-`databaseApi.deleteDatabase` is **not** wrapped here — it's a cross-cutting, highly destructive action, and every other component in this module implicitly assumes a single default database, so exposing multi-database deletion needs its own design pass, not a bolt-on to a generic viewer.
+`databaseApi.deleteDatabase`, `applicationApi.shutdown` and `applicationApi.updateConfiguration` are **not** wrapped here — they are cross-cutting and highly destructive, and the composable does not expose a write path of any kind. If you need one, call `useMongocampApi()` directly rather than extending this composable, which keeps the "read-only" contract honest for anything that relies on it.
 
-`applicationApi` (server settings, plugin list, configuration values) is not wrapped by this composable at all for now.
+The server's settings and configuration payloads contain real secrets (the auth secret, database credentials and host), so the settings methods never hand them out:
 
-If you need write access to databases or access to `applicationApi`, call `useMongocampApi()` directly rather than extending this composable — that keeps the "read-only, databases-only" contract here honest for anything that does rely on it.
+- `getSettings()` returns the three plugin lists only; the response's repeated configuration map is dropped.
+- `listConfigurations()` and `getConfig(key)` return `ConfigRow`s — `{ key, value, masked, configType, needsRestart, comment }` — in which a secret's `value` is already `"••••••••"` and the original was never copied. See [`MongocampSettings`](/components/mongocamp-settings) for the masking rule. `getConfig` throws if the server answers with something that is not a configuration.
+
+Values are normalised on the way in: the generated client types a configuration's `value` as a number, but real values are numbers, booleans, strings, lists, `null` and Option values wrapped as `{ value }`.
 
 ## `getDatabaseInfos` vs `listDatabases`
 

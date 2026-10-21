@@ -14,6 +14,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampBucketFiles`](/components/mongocamp-bucket-files) | Paginated, filterable GridFS bucket file browser with upload/download/delete/rename |
 | [`MongocampJobs`](/components/mongocamp-jobs) | Full CRUD table for scheduled background jobs |
 | [`MongocampAccount`](/components/mongocamp-account) | Current-user account page: profile, password change, API key |
+| [`MongocampSettings`](/components/mongocamp-settings) | Read-only server settings: plugins and a searchable, paged configuration table with secrets masked (admins only) |
 | [`MongocampDatabases`](/components/mongocamp-databases) | Read-only table of all databases (size, collection count) |
 | [`MongocampVersion`](/components/mongocamp-version) | Server name/version badge |
 | [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) | Visual filter builder: type-aware conditions, match all/any, emits a Lucene query |
