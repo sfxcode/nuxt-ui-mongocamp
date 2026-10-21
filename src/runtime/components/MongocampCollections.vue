@@ -2,12 +2,23 @@
 import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampBucket } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampBucket, useMongocampRoles, useToast } from '#imports'
+import useMongocampAdmin from '../composables/useMongocampAdmin'
+import { isProtectedCollection } from '../utils/collectionProtection'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   infoPath?: string
   dataPath?: string
   bucketFilesPath?: string
+  // set to false to hide clear/drop for ordinary collections even for an admin
+  canManage?: boolean
+}>(), {
+  canManage: true,
+})
+
+const emit = defineEmits<{
+  // a collection was cleared or dropped (or a bucket was) and the list has been refreshed
+  changed: []
 }>()
 
 interface CollectionRow {
@@ -20,6 +31,12 @@ interface CollectionRow {
 const { t } = useI18n()
 const { collectionApi } = useMongocampClientApi()
 const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, deleteBucket } = useMongocampBucket()
+const { clearCollection, deleteCollection } = useMongocampAdmin()
+const { isAdmin } = useMongocampRoles()
+const toast = useToast()
+
+// Clear/drop are irreversible and, in server-proxy mode, run with the api key's power — admins only.
+const canClearOrDrop = computed(() => props.canManage && isAdmin.value)
 
 const collections = ref<CollectionRow[]>([])
 const loading = ref(false)
@@ -66,34 +83,57 @@ function withTooltip(text: string, node: ReturnType<typeof h>) {
 const globalFilter = ref('')
 const sorting = ref<{ id: string, desc: boolean }[]>([])
 
-const isClearBucketModalOpen = ref(false)
-const bucketToClear = ref<string | undefined>(undefined)
+type PendingKind = 'clear' | 'drop' | 'clearBucket' | 'deleteBucket'
 
-function confirmClearBucket(bucketName: string) {
-  bucketToClear.value = bucketName
-  isClearBucketModalOpen.value = true
+// One confirmation drives all four destructive actions; `name` is what the user has to type.
+const pending = ref<{ kind: PendingKind, name: string } | null>(null)
+const isConfirmOpen = ref(false)
+
+function askToConfirm(kind: PendingKind, name: string) {
+  pending.value = { kind, name }
+  isConfirmOpen.value = true
 }
 
-async function handleClearBucket() {
-  if (!bucketToClear.value) return
-  const success = await clearBucket(bucketToClear.value)
-  isClearBucketModalOpen.value = false
-  if (success) await fetchCollections()
+const confirmTexts = computed(() => {
+  const name = pending.value?.name ?? ''
+  switch (pending.value?.kind) {
+    case 'clear':
+      return { title: t('nuxtUiMongocamp.collections.clearTitle'), description: t('nuxtUiMongocamp.collections.confirmClear', { name }), label: t('nuxtUiMongocamp.collections.clearTitle'), color: 'warning' as const, icon: 'i-lucide-eraser' }
+    case 'drop':
+      return { title: t('nuxtUiMongocamp.collections.dropTitle'), description: t('nuxtUiMongocamp.collections.confirmDrop', { name }), label: t('nuxtUiMongocamp.collections.dropTitle'), color: 'error' as const, icon: 'i-lucide-trash-2' }
+    case 'clearBucket':
+      return { title: t('nuxtUiMongocamp.collections.clearBucketTitle'), description: t('nuxtUiMongocamp.collections.confirmClearBucket', { bucketName: name }), label: t('nuxtUiMongocamp.collections.clearBucketTitle'), color: 'warning' as const, icon: 'i-lucide-eraser' }
+    default:
+      return { title: t('nuxtUiMongocamp.collections.deleteBucketTitle'), description: t('nuxtUiMongocamp.collections.confirmDeleteBucket', { bucketName: name }), label: t('nuxtUiMongocamp.collections.deleteBucketTitle'), color: 'error' as const, icon: 'i-lucide-trash-2' }
+  }
+})
+
+// The bucket composable reports failure as `false` (and toasts); the modal needs a rejection to stay open.
+async function runBucketAction(action: (bucketName: string) => Promise<boolean>, bucketName: string) {
+  if (!await action(bucketName)) throw new Error(t('nuxtUiMongocamp.collections.bucketActionFailed', { bucketName }))
 }
 
-const isDeleteBucketModalOpen = ref(false)
-const bucketToDelete = ref<string | undefined>(undefined)
-
-function confirmDeleteBucket(bucketName: string) {
-  bucketToDelete.value = bucketName
-  isDeleteBucketModalOpen.value = true
-}
-
-async function handleDeleteBucket() {
-  if (!bucketToDelete.value) return
-  const success = await deleteBucket(bucketToDelete.value)
-  isDeleteBucketModalOpen.value = false
-  if (success) await fetchCollections()
+async function runPending() {
+  const action = pending.value
+  if (!action) return
+  switch (action.kind) {
+    case 'clear':
+      await clearCollection(action.name)
+      toast.add({ title: t('nuxtUiMongocamp.collections.clearedTitle'), description: t('nuxtUiMongocamp.collections.clearedDescription', { name: action.name }), color: 'success' })
+      break
+    case 'drop':
+      await deleteCollection(action.name)
+      toast.add({ title: t('nuxtUiMongocamp.collections.droppedTitle'), description: t('nuxtUiMongocamp.collections.droppedDescription', { name: action.name }), color: 'success' })
+      break
+    case 'clearBucket':
+      await runBucketAction(clearBucket, action.name)
+      break
+    case 'deleteBucket':
+      await runBucketAction(deleteBucket, action.name)
+      break
+  }
+  await fetchCollections()
+  emit('changed')
 }
 
 function sortHeader<T>(column: Column<T>, label: string) {
@@ -176,7 +216,7 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
             'size': 'sm',
             'aria-label': t('nuxtUiMongocamp.collections.clearBucketTooltip'),
             'loading': bucketActionInFlight.value.has(bucketName),
-            'onClick': () => confirmClearBucket(bucketName),
+            'onClick': () => askToConfirm('clearBucket', bucketName),
           })),
           withTooltip(t('nuxtUiMongocamp.collections.deleteBucketTooltip'), h(UButton, {
             'icon': 'i-lucide-trash-2',
@@ -185,7 +225,28 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
             'size': 'sm',
             'aria-label': t('nuxtUiMongocamp.collections.deleteBucketTooltip'),
             'loading': bucketActionInFlight.value.has(bucketName),
-            'onClick': () => confirmDeleteBucket(bucketName),
+            'onClick': () => askToConfirm('deleteBucket', bucketName),
+          })),
+        )
+      }
+      else if (canClearOrDrop.value && !isProtectedCollection(row.original.name)) {
+        const name = row.original.name
+        buttons.push(
+          withTooltip(t('nuxtUiMongocamp.collections.clearTooltip'), h(UButton, {
+            'icon': 'i-lucide-eraser',
+            'color': 'warning',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': t('nuxtUiMongocamp.collections.clearTooltip'),
+            'onClick': () => askToConfirm('clear', name),
+          })),
+          withTooltip(t('nuxtUiMongocamp.collections.dropTooltip'), h(UButton, {
+            'icon': 'i-lucide-trash-2',
+            'color': 'error',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': t('nuxtUiMongocamp.collections.dropTooltip'),
+            'onClick': () => askToConfirm('drop', name),
           })),
         )
       }
@@ -241,52 +302,16 @@ fetchCollections()
       </template>
     </UTable>
 
-    <UModal
-      v-model:open="isClearBucketModalOpen"
-      :title="t('nuxtUiMongocamp.collections.clearBucketTitle')"
-      :ui="{ footer: 'justify-end' }"
-    >
-      <template #body>
-        <p>{{ t('nuxtUiMongocamp.collections.confirmClearBucket', { bucketName: bucketToClear }) }}</p>
-      </template>
-      <template #footer>
-        <UButton
-          :label="t('nuxtUiMongocamp.common.cancel')"
-          color="neutral"
-          variant="ghost"
-          @click="isClearBucketModalOpen = false"
-        />
-        <UButton
-          :label="t('nuxtUiMongocamp.collections.clearBucketTitle')"
-          color="warning"
-          icon="i-lucide-eraser"
-          @click="handleClearBucket"
-        />
-      </template>
-    </UModal>
-
-    <UModal
-      v-model:open="isDeleteBucketModalOpen"
-      :title="t('nuxtUiMongocamp.collections.deleteBucketTitle')"
-      :ui="{ footer: 'justify-end' }"
-    >
-      <template #body>
-        <p>{{ t('nuxtUiMongocamp.collections.confirmDeleteBucket', { bucketName: bucketToDelete }) }}</p>
-      </template>
-      <template #footer>
-        <UButton
-          :label="t('nuxtUiMongocamp.common.cancel')"
-          color="neutral"
-          variant="ghost"
-          @click="isDeleteBucketModalOpen = false"
-        />
-        <UButton
-          :label="t('nuxtUiMongocamp.collections.deleteBucketTitle')"
-          color="error"
-          icon="i-lucide-trash-2"
-          @click="handleDeleteBucket"
-        />
-      </template>
-    </UModal>
+    <MongocampConfirmByName
+      v-if="pending"
+      v-model:open="isConfirmOpen"
+      :name="pending.name"
+      :title="confirmTexts.title"
+      :description="confirmTexts.description"
+      :confirm-label="confirmTexts.label"
+      :confirm-color="confirmTexts.color"
+      :confirm-icon="confirmTexts.icon"
+      :on-confirm="runPending"
+    />
   </div>
 </template>

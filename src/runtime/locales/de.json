@@ -108,7 +108,18 @@
       "clearBucketTitle": "Bucket leeren",
       "confirmClearBucket": "Möchten Sie wirklich alle Dateien im Bucket \"{bucketName}\" löschen? Der Bucket selbst bleibt erhalten, aber alle darin enthaltenen Dateien werden dauerhaft entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleteBucketTitle": "Bucket löschen",
-      "confirmDeleteBucket": "Möchten Sie den Bucket \"{bucketName}\" wirklich löschen? Dadurch werden sowohl die Collection \"{bucketName}.files\" als auch \"{bucketName}.chunks\" dauerhaft entfernt. Diese Aktion kann nicht rückgängig gemacht werden."
+      "confirmDeleteBucket": "Möchten Sie den Bucket \"{bucketName}\" wirklich löschen? Dadurch werden sowohl die Collection \"{bucketName}.files\" als auch \"{bucketName}.chunks\" dauerhaft entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "clearTooltip": "Collection leeren",
+      "dropTooltip": "Collection löschen",
+      "clearTitle": "Collection leeren",
+      "dropTitle": "Collection löschen",
+      "confirmClear": "Dadurch werden alle Dokumente in \"{name}\" dauerhaft gelöscht. Die Collection selbst bleibt erhalten. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmDrop": "Dadurch wird die Collection \"{name}\" samt allen Dokumenten und Indizes dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "clearedTitle": "Collection geleert",
+      "clearedDescription": "Alle Dokumente in \"{name}\" wurden gelöscht.",
+      "droppedTitle": "Collection gelöscht",
+      "droppedDescription": "Die Collection \"{name}\" wurde gelöscht.",
+      "bucketActionFailed": "Die Aktion für den Bucket \"{bucketName}\" ist fehlgeschlagen."
     },
     "collectionInfos": {
       "documents": "Dokumente",

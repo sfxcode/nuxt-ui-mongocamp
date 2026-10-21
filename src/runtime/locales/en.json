@@ -108,7 +108,18 @@
       "clearBucketTitle": "Clear Bucket",
       "confirmClearBucket": "Are you sure you want to delete every file in the \"{bucketName}\" bucket? The bucket itself is kept, but all files in it are permanently removed. This action cannot be undone.",
       "deleteBucketTitle": "Delete Bucket",
-      "confirmDeleteBucket": "Are you sure you want to delete the \"{bucketName}\" bucket? This permanently removes both the \"{bucketName}.files\" and \"{bucketName}.chunks\" collections. This action cannot be undone."
+      "confirmDeleteBucket": "Are you sure you want to delete the \"{bucketName}\" bucket? This permanently removes both the \"{bucketName}.files\" and \"{bucketName}.chunks\" collections. This action cannot be undone.",
+      "clearTooltip": "Clear collection",
+      "dropTooltip": "Drop collection",
+      "clearTitle": "Clear Collection",
+      "dropTitle": "Drop Collection",
+      "confirmClear": "This permanently deletes every document in \"{name}\". The collection itself is kept. This action cannot be undone.",
+      "confirmDrop": "This permanently deletes the collection \"{name}\" together with all its documents and indexes. This action cannot be undone.",
+      "clearedTitle": "Collection cleared",
+      "clearedDescription": "Every document in \"{name}\" was deleted.",
+      "droppedTitle": "Collection dropped",
+      "droppedDescription": "The collection \"{name}\" was deleted.",
+      "bucketActionFailed": "The action on the bucket \"{bucketName}\" failed."
     },
     "collectionInfos": {
       "documents": "Documents",
