@@ -31,11 +31,15 @@ Backed by [`useMongocampIndex`](/composables/use-mongocamp-index), not just `get
 
 ## Schema card
 
-The schema is **not** fetched from `collectionApi.getJsonSchema()` — it's inferred client-side by sampling up to `sampleSize` real documents (`documentApi.listDocuments`) and running them through [`useMongocampSchema().schemaFromSamples()`](/composables/use-mongocamp-schema). This means:
+The table below is **not** built from `collectionApi.getJsonSchema()` — it's inferred client-side by sampling up to `sampleSize` real documents (`documentApi.listDocuments`) and running them through [`useMongocampSchema().schemaFromSamples()`](/composables/use-mongocamp-schema). This means:
 
 - Nested objects and arrays (including arrays of objects) get real inferred shapes, not just a generic "object"/"array" label.
 - The **Type** badge uses the app's semantic color tokens (`neutral`/`warning`/`info`/`success`/`secondary`/`primary`) per type.
 - **"In all samples"** reflects whether the field had a non-null value in *every* sampled document — not just whether the key was present.
+
+### JSON schema
+
+The **JSON schema** header button opens a modal with the server's own inferred schema (`collectionApi.getJsonSchema()`, via [`useMongocampAdmin().getJsonSchema`](/composables/use-mongocamp-admin)), shown verbatim as formatted JSON — useful because it is more precise than the sampled table (for example `objectId` and `integer`, with `null` as an alternative). Nothing is requested until the modal is first opened; the answer is kept until `collectionName` changes. **Copy** puts the JSON on the clipboard, **Download** saves it as `<collection>.schema.json`, and a failed load shows the error alert with **Retry**.
 
 ### Copy as TS Interface
 
@@ -85,3 +89,4 @@ The statistics are computed in the browser from the sample. The server's own sch
 - [`useMongocampAggregation`](/composables/use-mongocamp-aggregation)
 - [`useMongocampSchema`](/composables/use-mongocamp-schema)
 - [`useMongocampIndex`](/composables/use-mongocamp-index)
+- [`useMongocampAdmin`](/composables/use-mongocamp-admin) (`getJsonSchema`)

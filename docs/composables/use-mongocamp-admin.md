@@ -14,8 +14,15 @@ const {
   updateRole,         // (roleName, isAdmin, collectionGrants?) => Promise<Role>
   deleteRole,         // (roleName) => Promise<void>
   listCollections,    // () => Promise<string[]>
+  clearCollection,    // (collectionName) => Promise<JsonValueBoolean>  — deletes every document
+  deleteCollection,   // (collectionName) => Promise<JsonValueBoolean>  — drops the collection
+  getJsonSchema,      // (collectionName) => Promise<JsonSchema>
 } = useMongocampAdmin()
 ```
+
+## Clearing and dropping collections
+
+`clearCollection` and `deleteCollection` are **irreversible** and have no guard of their own. Put them behind a type-the-name confirmation ([`MongocampConfirmByName`](/components/mongocamp-confirm-by-name)) and keep MongoCamp's `mc_*` collections and GridFS `.files`/`.chunks` members out of reach (they belong to the bucket actions — see [`useMongocampBucket`](/composables/use-mongocamp-bucket)); [`MongocampCollections`](/components/mongocamp-collections) does both. The three collection methods are bounded by a 15 s timeout, so a hung server rejects instead of hanging, and a refused call (`403`, ...) is rethrown unchanged.
 
 ## `updateRole` replaces the whole grants array
 

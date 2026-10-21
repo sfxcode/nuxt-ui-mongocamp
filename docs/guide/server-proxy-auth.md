@@ -36,6 +36,8 @@ The module registers a catch-all route at `serverProxyPath` (`/api/_mongocamp/**
 
 The api key grants **full** access to MongoCamp — documents, admin user/role management, buckets, job execution, everything. Anyone who can reach `serverProxyPath` gets that same access, since the route is a generic passthrough with no built-in caller authentication. If your Nuxt server is reachable by anyone other than fully trusted callers, you must guard it yourself.
 
+That includes the destructive calls: [`MongocampCollections`](/components/mongocamp-collections) offers **Clear** and **Drop** for every collection, and in this mode its admin-only check cannot protect them (there is no login, so nobody is "not an admin"). The type-the-name confirmation only guards against slips, not against a caller who hits the route directly. Guard the route with the hook below, and pass `can-manage="false"` to hide the buttons where they are not wanted.
+
 ### The `mongocamp-proxy:authorize` hook
 
 Register a Nitro hook from your own app — e.g. in `server/plugins/mongocamp-proxy-guard.ts` — to reject requests before they reach MongoCamp:

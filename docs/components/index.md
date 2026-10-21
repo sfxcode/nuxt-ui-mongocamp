@@ -9,7 +9,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampRoles`](/components/mongocamp-roles) | Full CRUD table for roles |
 | [`MongocampRoleGrants`](/components/mongocamp-role-grants) | Per-role collection grant management |
 | [`MongocampCollections`](/components/mongocamp-collections) | Table of all collections, with links to info/data pages |
-| [`MongocampCollectionInfos`](/components/mongocamp-collection-infos) | Stat cards + inferred schema for one collection |
+| [`MongocampCollectionInfos`](/components/mongocamp-collection-infos) | Stat cards + inferred schema (and the server's JSON schema) for one collection |
 | [`MongocampCollectionData`](/components/mongocamp-collection-data) | Paginated, filterable, sortable document table |
 | [`MongocampBucketFiles`](/components/mongocamp-bucket-files) | Paginated, filterable GridFS bucket file browser with upload/download/delete/rename |
 | [`MongocampJobs`](/components/mongocamp-jobs) | Full CRUD table for scheduled background jobs |
@@ -22,6 +22,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampImport`](/components/mongocamp-import) | Dialog to import documents from a JSON or CSV file in batches (part of CollectionData's toolbar) |
 | [`MongocampAggregationBuilder`](/components/mongocamp-aggregation-builder) | Build and run an aggregation pipeline (stage editor or JSON), page through and export the result |
 | [`MongocampDashboard`](/components/mongocamp-dashboard) | Admin landing page: linked collection/user/role counts, server version, slot for extra content |
+| [`MongocampConfirmByName`](/components/mongocamp-confirm-by-name) | Type-the-name confirmation modal for destructive actions (clear/drop collection, bucket clear/delete) |
 | [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |
 | [`MongocampEmptyState`](/components/mongocamp-empty-state) | Icon + message for empty tables |
 
