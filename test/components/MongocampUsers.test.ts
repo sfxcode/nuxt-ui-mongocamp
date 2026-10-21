@@ -55,6 +55,7 @@ const mockDeleteUser = vi.fn()
 const mockUpdateUserRoles = vi.fn()
 const mockUpdateUserPassword = vi.fn()
 const mockListRoles = vi.fn()
+const mockRegenerateUserApiKey = vi.fn()
 
 // Mocking mechanism proven in phase 2 (04-component-test-coverage) — see MongocampRoles.test.ts.
 vi.mock('../../src/runtime/composables/useMongocampAdmin', () => ({
@@ -65,6 +66,7 @@ vi.mock('../../src/runtime/composables/useMongocampAdmin', () => ({
     updateUserRoles: mockUpdateUserRoles,
     updateUserPassword: mockUpdateUserPassword,
     listRoles: mockListRoles,
+    regenerateUserApiKey: mockRegenerateUserApiKey,
   }),
 }))
 
@@ -354,5 +356,96 @@ describe('MongocampUsers', () => {
     await flushPromises()
 
     expect(mockDeleteUser).toHaveBeenCalledWith('bob@example.com')
+  })
+})
+
+describe('regenerating another user\'s API key', () => {
+  const users = [
+    { user: 'alice@example.com', isAdmin: true, roles: [] }, // the signed-in user
+    { user: 'bob@example.com', isAdmin: false, roles: [] },
+  ]
+  const regenerateButtons = (component: Awaited<ReturnType<typeof mountSuspended>>) => component.findAll('[aria-label="Regenerate API key"]')
+  const dialogButton = (label: string) => modal().findAll('button').find(b => b.text() === label)
+
+  async function openFor(component: Awaited<ReturnType<typeof mountSuspended>>) {
+    await regenerateButtons(component)[0]!.trigger('click')
+    await wait()
+  }
+
+  it('offers the action for other users but not for the signed-in one (they use the account page)', async () => {
+    mockListUsers.mockResolvedValue(users)
+    const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    await flushPromises()
+
+    expect(regenerateButtons(component)).toHaveLength(1)
+  })
+
+  it('explains that the old key stops working and calls nothing until confirmed', async () => {
+    mockListUsers.mockResolvedValue(users)
+    const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    await flushPromises()
+
+    await openFor(component)
+
+    expect(modal().text()).toContain('bob@example.com')
+    expect(modal().text()).toContain('stops working immediately')
+    expect(mockRegenerateUserApiKey).not.toHaveBeenCalled()
+  })
+
+  it('shows the new key once after confirming, reloads the list, and drops the key when closed', async () => {
+    mockListUsers.mockResolvedValue(users)
+    mockRegenerateUserApiKey.mockResolvedValueOnce('SECRET-NEW-KEY')
+    const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    await flushPromises()
+    await openFor(component)
+    mockListUsers.mockClear()
+
+    await dialogButton('Regenerate')!.trigger('click')
+    await flushPromises()
+    await wait()
+
+    expect(mockRegenerateUserApiKey).toHaveBeenCalledWith('bob@example.com')
+    expect((modal().find('input[aria-label="New API key"]').element as HTMLInputElement).value).toBe('SECRET-NEW-KEY')
+    expect(modal().text()).toContain('shown only once')
+    expect(mockListUsers).toHaveBeenCalledTimes(1)
+
+    await dialogButton('Dismiss')!.trigger('click')
+    await wait(300)
+
+    expect(document.body.innerHTML).not.toContain('SECRET-NEW-KEY')
+  })
+
+  it('does not show the key again when the modal is reopened for the same user', async () => {
+    mockListUsers.mockResolvedValue(users)
+    mockRegenerateUserApiKey.mockResolvedValueOnce('SECRET-NEW-KEY')
+    const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    await flushPromises()
+    await openFor(component)
+    await dialogButton('Regenerate')!.trigger('click')
+    await flushPromises()
+    await wait()
+    await dialogButton('Dismiss')!.trigger('click')
+    await wait(300)
+
+    await openFor(component)
+
+    expect(document.body.innerHTML).not.toContain('SECRET-NEW-KEY')
+    expect(modal().text()).toContain('stops working immediately')
+  })
+
+  it('stays open with the reason and shows no key when the server refuses', async () => {
+    mockListUsers.mockResolvedValue(users)
+    mockRegenerateUserApiKey.mockRejectedValueOnce(Object.assign(new Error('nope'), { response: { status: 403 } }))
+    const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    await flushPromises()
+    await openFor(component)
+
+    await dialogButton('Regenerate')!.trigger('click')
+    await flushPromises()
+    await wait()
+
+    expect(modal().text()).toContain('You do not have permission to do this.')
+    expect(modal().find('input[aria-label="New API key"]').exists()).toBe(false)
+    expect(dialogButton('Regenerate')).toBeDefined()
   })
 })

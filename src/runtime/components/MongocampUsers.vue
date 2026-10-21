@@ -1,9 +1,9 @@
 <script setup lang='ts'>
-import { computed, h, reactive, ref, resolveComponent } from 'vue'
+import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { UserProfile } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n, useMongocampError, useMongocampStorage } from '#imports'
+import { useI18n, useMongocampError, useMongocampStorage, useToast } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
@@ -14,7 +14,8 @@ interface RoleItem {
 }
 
 const { t } = useI18n()
-const { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles } = useMongocampAdmin()
+const { listUsers, addUser, deleteUser, updateUserRoles, updateUserPassword, listRoles, regenerateUserApiKey } = useMongocampAdmin()
+const toast = useToast()
 
 const users = ref<UserProfile[]>([])
 const loading = ref(false)
@@ -225,6 +226,51 @@ async function handleDeleteUser() {
 }
 
 const UBadge = resolveComponent('UBadge')
+// Regenerating another user's API key: confirm -> the new key is shown once. The key lives only in
+// `newApiKey` and is dropped as soon as the modal closes; it is never stored or logged. The signed-in user
+// has `MongocampAccount` for their own key (their session profile carries it), so they get no action here.
+const isKeyModalOpen = ref(false)
+const keyUser = ref('')
+const newApiKey = ref<string | null>(null)
+const keyBusy = ref(false)
+const keyError = ref('')
+
+function confirmRegenerateKey(userId: string) {
+  keyUser.value = userId
+  newApiKey.value = null
+  keyError.value = ''
+  isKeyModalOpen.value = true
+}
+
+async function handleRegenerateKey() {
+  if (isSelf(keyUser.value) || keyBusy.value) return
+  keyBusy.value = true
+  keyError.value = ''
+  try {
+    newApiKey.value = await regenerateUserApiKey(keyUser.value)
+    // the list rows carry the old key; reload so nothing stale stays in memory
+    await fetchUsers()
+  }
+  catch (e: unknown) {
+    keyError.value = describeError(e).message
+  }
+  finally {
+    keyBusy.value = false
+  }
+}
+
+async function copyNewApiKey() {
+  if (!newApiKey.value) return
+  await navigator.clipboard.writeText(newApiKey.value)
+  toast.add({ title: t('nuxtUiMongocamp.account.copiedTitle'), description: t('nuxtUiMongocamp.account.copiedDescription'), color: 'success' })
+}
+
+watch(isKeyModalOpen, (isOpen) => {
+  if (isOpen) return
+  newApiKey.value = null
+  keyError.value = ''
+})
+
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
 const UCheckbox = resolveComponent('UCheckbox')
@@ -314,6 +360,16 @@ const columns = computed<TableColumn<UserProfile>[]>(() => [
           'aria-label': t('nuxtUiMongocamp.users.editUserTooltip'),
           'onClick': () => openEdit(row.original),
         })),
+        isSelf(row.original.user)
+          ? null
+          : withTooltip(t('nuxtUiMongocamp.users.regenerateKeyTooltip'), h(UButton, {
+              'icon': 'i-lucide-key-round',
+              'color': 'warning',
+              'variant': 'ghost',
+              'size': 'sm',
+              'aria-label': t('nuxtUiMongocamp.users.regenerateKeyTooltip'),
+              'onClick': () => confirmRegenerateKey(row.original.user),
+            })),
         deleteButton(row.original.user),
       ]),
   },
@@ -459,6 +515,74 @@ fetchRoles()
           :loading="deleting"
           @click="handleDeleteUser"
         />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isKeyModalOpen"
+      :title="t('nuxtUiMongocamp.users.regenerateKeyTitle', { userId: keyUser })"
+      :dismissible="!keyBusy"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <div
+          v-if="newApiKey"
+          class="flex flex-col gap-2"
+        >
+          <p class="text-sm text-warning-500">
+            {{ t('nuxtUiMongocamp.account.apiKeyOnceWarning') }}
+          </p>
+          <div class="flex items-center gap-2">
+            <UInput
+              :model-value="newApiKey"
+              readonly
+              class="flex-1 font-mono text-xs"
+              :aria-label="t('nuxtUiMongocamp.users.newApiKeyLabel')"
+            />
+            <UButton
+              icon="i-lucide-copy"
+              :label="t('nuxtUiMongocamp.common.copy')"
+              color="neutral"
+              variant="subtle"
+              @click="copyNewApiKey"
+            />
+          </div>
+        </div>
+        <template v-else>
+          <p>{{ t('nuxtUiMongocamp.users.confirmRegenerateKey', { userId: keyUser }) }}</p>
+          <UAlert
+            v-if="keyError"
+            class="mt-3"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-circle-alert"
+            :description="keyError"
+          />
+        </template>
+      </template>
+      <template #footer>
+        <template v-if="newApiKey">
+          <UButton
+            :label="t('nuxtUiMongocamp.common.dismiss')"
+            @click="isKeyModalOpen = false"
+          />
+        </template>
+        <template v-else>
+          <UButton
+            :label="t('nuxtUiMongocamp.common.cancel')"
+            color="neutral"
+            variant="ghost"
+            :disabled="keyBusy"
+            @click="isKeyModalOpen = false"
+          />
+          <UButton
+            :label="t('nuxtUiMongocamp.account.regenerate')"
+            color="error"
+            icon="i-lucide-key-round"
+            :loading="keyBusy"
+            @click="handleRegenerateKey"
+          />
+        </template>
       </template>
     </UModal>
   </div>
