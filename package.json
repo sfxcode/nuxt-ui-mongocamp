@@ -63,29 +63,29 @@
     "@sfxcode/nuxt-ui-formkit": "^1.4.1",
     "consola": "^3.4.2",
     "defu": "^6.1.7",
-    "minimatch": "^10.2.6",
+    "minimatch": "^11.0.3",
     "unocss-nuxt-ui": "^1.2.2"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.145",
-    "@nuxt/devtools": "4.0.0-beta.5",
+    "@iconify-json/lucide": "^1.2.150",
+    "@nuxt/devtools": "^4.0.0",
     "@nuxt/eslint-config": "^1.17.0",
-    "@nuxt/kit": "^4.6.2",
+    "@nuxt/kit": "^4.6.3",
     "@nuxt/module-builder": "^1.0.3",
-    "@nuxt/schema": "^4.6.2",
+    "@nuxt/schema": "^4.6.3",
     "@nuxt/test-utils": "^4.3.4",
     "@playwright/test": "^1.64.1",
     "@types/node": "latest",
     "@unhead/vue": "^3.4.3",
     "@vue/test-utils": "^2.5.1",
     "changelogen": "^0.6.2",
-    "eslint": "^10.13.0",
-    "happy-dom": "^21.0.3",
-    "nuxt": "^4.6.2",
+    "eslint": "^10.14.0",
+    "happy-dom": "^21.0.4",
+    "nuxt": "^4.6.3",
     "typescript": "~6.0.3",
     "vitepress": "2.0.0-alpha.18",
     "vitest": "^5.0.5",
-    "vue-tsc": "^3.3.13"
+    "vue-tsc": "^3.3.14"
   },
   "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1"
 }
