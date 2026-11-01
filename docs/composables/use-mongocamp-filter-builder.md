@@ -60,7 +60,7 @@ These behaviours were verified against a MongoCamp server (1.5.x, re-checked on 
 | `n:12345` (unquoted number, exact digits), `n:[a TO b]` (closed range) | `n:>=x`, `n:>x` — silently match nothing |
 | `d:[2018-01-01T00:00:00Z TO 2018-12-31T23:59:59.999Z]` | `d:[2018-09-22 TO 2018-09-22]` (a bare date as upper bound ends at midnight, so a one-day range matches nothing) |
 | `name:*` / `-name:*` on a text field; a closed full-range for numbers and dates (as "exists") | `_exists_:field` — matches nothing; `-_exists_:field` matches everything |
-| `(a OR b OR c)` of the above; each clause negated and ANDed; since 1.6.1 also `_id:"<oid>"`, `_id:("a" OR "b")`, `-_id:"<oid>"` (case-insensitive) and `-(x)` / `NOT (x)` around a *single* clause | `-( a AND b )` around a compound group gives a wrong count (36 where at least 201 was expected); `field:*` on a number or date — matches nothing |
+| `(a OR b OR c)` of the above; each clause negated and ANDed; since 1.6.1 also `_id:"<oid>"`, `_id:("a" OR "b")`, `-_id:"<oid>"` (case-insensitive) and `-(x)` / `NOT (x)` around a *single* clause | `-( a AND b )` is evaluated like `-( a OR b )` (the inner `AND` is ignored; [MongoCamp/mongocamp-server#69](https://github.com/MongoCamp/mongocamp-server/issues/69)); `field:*` on a number or date — matches nothing |
 
 Boolean terms (`active:true`) and `oneOf` on numbers are written the obvious way but were not exercised against the server.
 
