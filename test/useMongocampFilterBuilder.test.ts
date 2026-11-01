@@ -23,6 +23,7 @@ describe('operator tables', () => {
     expect(operatorsFor('number')).not.toContain('contains')
     expect(operatorsFor('date-time')).toEqual(['gte', 'lte', 'between', 'isEmpty', 'isNotEmpty'])
     expect(operatorsFor('boolean')).toEqual(['isTrue', 'isFalse'])
+    expect(operatorsFor('objectId')).toEqual(['equals', 'notEquals', 'oneOf'])
     expect(operatorsFor('array')).toEqual([])
     expect(operatorsFor('object')).toEqual([])
   })
@@ -128,6 +129,30 @@ describe('buildCondition: dates', () => {
     expect(buildCondition(created('gte', 'yesterday'), 'date-time')).toBe('')
     expect(buildCondition(created('gte', '2024-13-45'), 'date-time')).toBe('')
     expect(buildCondition(created('between', '2024-01-01', 'soon'), 'date-time')).toBe('')
+  })
+})
+
+describe('buildCondition: document ids', () => {
+  const ID = '6ad7e73817a3486bfb8cecd1'
+  const ID2 = '6ad7e73817a3486bfb8cecd2'
+
+  it('matches an id exactly, negated or as a list (the forms server 1.6.1 evaluates)', () => {
+    expect(buildCondition(row('equals', ID, undefined, '_id'), 'objectId')).toBe(`_id:"${ID}"`)
+    expect(buildCondition(row('notEquals', ID, undefined, '_id'), 'objectId')).toBe(`-_id:"${ID}"`)
+    expect(buildCondition(row('oneOf', `${ID}, ${ID2}`, undefined, '_id'), 'objectId')).toBe(`_id:("${ID}" OR "${ID2}")`)
+  })
+
+  it('skips a row whose value is not a 24-character hex id, instead of sending a filter that matches nothing', () => {
+    expect(buildCondition(row('equals', 'abc', undefined, '_id'), 'objectId')).toBe('')
+    expect(buildCondition(row('equals', '', undefined, '_id'), 'objectId')).toBe('')
+    expect(buildCondition(row('oneOf', `${ID}, nope`, undefined, '_id'), 'objectId')).toBe('')
+    expect(buildCondition(row('oneOf', ' , ', undefined, '_id'), 'objectId')).toBe('')
+  })
+
+  it('offers no wildcard or existence operator, which the server answers with "no match"', () => {
+    for (const operator of ['contains', 'startsWith', 'endsWith', 'isEmpty', 'isNotEmpty'] as const) {
+      expect(buildCondition(row(operator, ID, undefined, '_id'), 'objectId')).toBe('')
+    }
   })
 })
 

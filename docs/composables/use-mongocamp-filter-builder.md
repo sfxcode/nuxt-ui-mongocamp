@@ -26,6 +26,7 @@ const query = buildFilterQuery(
 | `number` | `equals`, `notEquals`, `gte`, `lte`, `between`, `oneOf`, `isEmpty`, `isNotEmpty` |
 | `date-time` | `gte`, `lte`, `between`, `isEmpty`, `isNotEmpty` |
 | `boolean` | `isTrue`, `isFalse` |
+| `objectId` (the document `_id`) | `equals`, `notEquals`, `oneOf` — each value must be a 24-character hex id, otherwise the row is skipped |
 | `array`, `object` | none — `operatorsFor` returns `[]`, so leave these fields out of the builder |
 
 `gte`/`lte`/`between` are inclusive. `isEmpty` / `isNotEmpty` ("does not exist" / "exists") use [`useMongocampQuery`](/composables/use-mongocamp-query)'s typed `exists` / `notExists`; booleans, arrays and objects have none.
@@ -51,15 +52,15 @@ const query = buildFilterQuery(
 
 ## Checked against a real server
 
-These behaviours were verified against a MongoCamp server (1.5.x) and are why the operator tables look the way they do — see also [`useMongocampQuery`](/composables/use-mongocamp-query#existence):
+These behaviours were verified against a MongoCamp server (1.5.x, re-checked on 1.6.1 on 2026-11-01) and are why the operator tables look the way they do — see also [`useMongocampQuery`](/composables/use-mongocamp-query#existence):
 
 | Works | Does not work |
 |---|---|
-| `name:*x*`, `name:"x"`, `name:x*`, `name:*x`, `name:("a" OR "b")` | `_id:"<oid>"` and `_id:<oid>` — the request fails, so `_id` can't be filtered |
-| `n:12345` (unquoted number, exact digits), `n:[a TO b]` (closed range) | `n:[a TO *]` / `[* TO b]` (open end) — the request fails |
-| `d:[2018-01-01T00:00:00Z TO 2018-12-31T23:59:59.999Z]` | `d:[2018-01-01 TO 2018-12-31]` (bare dates) — silently matches nothing |
+| `name:*x*`, `name:"x"`, `name:x*`, `name:*x`, `name:("a" OR "b")` | `n:[a TO *]` / `[* TO b]` (open end) — the request fails; `_id:*`, `_id:abc*`, `_id:*abc` (wildcards on `_id`) — silently match nothing |
+| `n:12345` (unquoted number, exact digits), `n:[a TO b]` (closed range) | `n:>=x`, `n:>x` — silently match nothing |
+| `d:[2018-01-01T00:00:00Z TO 2018-12-31T23:59:59.999Z]` | `d:[2018-09-22 TO 2018-09-22]` (a bare date as upper bound ends at midnight, so a one-day range matches nothing) |
 | `name:*` / `-name:*` on a text field; a closed full-range for numbers and dates (as "exists") | `_exists_:field` — matches nothing; `-_exists_:field` matches everything |
-| `(a OR b OR c)` of the above; each clause negated and ANDed | `-( … )` / `NOT ( … )` on a group — the negation is ignored; `field:*` on a number or date — matches nothing |
+| `(a OR b OR c)` of the above; each clause negated and ANDed; since 1.6.1 also `_id:"<oid>"`, `_id:("a" OR "b")`, `-_id:"<oid>"` (case-insensitive) and `-(x)` / `NOT (x)` around a *single* clause | `-( a AND b )` around a compound group gives a wrong count (36 where at least 201 was expected); `field:*` on a number or date — matches nothing |
 
 Boolean terms (`active:true`) and `oneOf` on numbers are written the obvious way but were not exercised against the server.
 

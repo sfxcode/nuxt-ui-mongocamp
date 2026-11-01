@@ -545,7 +545,7 @@ async function handleBulkDelete() {
 const editableFields = computed<{ key: string, type: ImportColumnType }[]>(() =>
   filterFields.value
     .filter(f => f.key !== 'metaData' && isEditableField(f.key))
-    .map(f => ({ key: f.key, type: f.type === 'array' || f.type === 'object' ? 'json' : f.type })),
+    .flatMap(f => f.type === 'objectId' ? [] : [{ key: f.key, type: f.type === 'array' || f.type === 'object' ? 'json' as const : f.type }]),
 )
 
 function bulkEditFailureReason(error: unknown): string {
@@ -617,11 +617,10 @@ async function fetchDocuments() {
         ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
-      // `_id` is left out on purpose: checked against a real server, `_id:"<oid>"` and `_id:<oid>` both fail the
-      // request, so offering it would only produce a broken filter. Arrays/objects have no operators either.
+      // `_id` only gets the exact operators (server 1.6.1 matches `_id:"<oid>"`; before that the request failed,
+      // and wildcards on it still match nothing). Arrays/objects have no operators at all.
       filterFields.value = schemaFromSamples(rows)
-        .filter(c => c.columnKey !== '_id')
-        .map(c => ({ key: c.columnKey, type: toFilterFieldType(c.columnType) }))
+        .map(c => ({ key: c.columnKey, type: c.columnKey === '_id' ? 'objectId' as const : toFilterFieldType(c.columnType) }))
         .filter(f => operatorsFor(f.type).length > 0)
       // GridFS files/chunks documents are managed through the bucket (deleting them one by one would
       // orphan the other half of a file), so bucket collections get no bulk selection

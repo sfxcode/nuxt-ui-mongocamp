@@ -2,11 +2,14 @@ import { useMongocampQuery } from '../composables/useMongocampQuery'
 import type { ExistsFieldType } from '../composables/useMongocampQuery'
 import { escapeFieldName } from './escapeFieldName'
 import { isIsoDateTimeString } from './isoDate'
+import { isObjectIdHex } from './objectId'
 
 // Pure logic behind the visual filter builder: turns a list of "field · operator · value" rows into
 // one Lucene query string. No Nuxt context, no UI — the component only edits `FilterGroup` data.
 
-export type FilterFieldType = 'string' | 'number' | 'date-time' | 'boolean' | 'array' | 'object'
+// 'objectId' is the document `_id`: server 1.6.1 matches it exactly (`_id:"<hex>"`, a list of them, negated), but
+// every wildcard form (`contains`, `startsWith`, `endsWith`, `*`) silently matches nothing, so only exact operators.
+export type FilterFieldType = 'string' | 'number' | 'date-time' | 'boolean' | 'array' | 'object' | 'objectId'
 
 export type FilterOperator
   = | 'contains' | 'equals' | 'notEquals' | 'startsWith' | 'endsWith' | 'oneOf'
@@ -37,6 +40,7 @@ export const FILTER_OPERATORS_BY_TYPE: Record<FilterFieldType, FilterOperator[]>
   'number': ['equals', 'notEquals', 'gte', 'lte', 'between', 'oneOf', 'isEmpty', 'isNotEmpty'],
   'date-time': ['gte', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
   'boolean': ['isTrue', 'isFalse'],
+  'objectId': ['equals', 'notEquals', 'oneOf'],
   'array': [],
   'object': [],
 }
@@ -117,6 +121,14 @@ export function buildCondition(condition: FilterCondition, type: FilterFieldType
   const escapedField = escapeFieldName(condition.field)
   const value = (condition.value ?? '').trim()
   const value2 = (condition.value2 ?? '').trim()
+
+  // an id the server cannot read as an ObjectId matches nothing, so the row is not applied at all
+  if (type === 'objectId') {
+    const ids = condition.operator === 'oneOf' ? splitList(value) : [value]
+    if (ids.length === 0 || !ids.every(isObjectIdHex)) return ''
+    if (condition.operator === 'oneOf') return h.inClause(field, ids)
+    return condition.operator === 'notEquals' ? h.notEquals(field, value) : h.equals(field, value)
+  }
 
   switch (condition.operator) {
     case 'isEmpty': return h.notExists(field, existsType(type))

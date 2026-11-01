@@ -16,7 +16,7 @@ export interface MongocampQueryHelper {
    * Matches documents where the field has a value. Without `type` this ORs a text wildcard with a
    * full-range number and a full-range date clause, so it works for any of those types.
    *
-   * MongoCamp 1.5 does not understand `_exists_:field` (it matches nothing), and `field:*` only matches text,
+   * MongoCamp (1.5 and still 1.6.1) does not understand `_exists_:field` (it matches nothing), and `field:*` only matches text,
    * which is why this is not just a wildcard.
    */
   exists: (fieldName: string, type?: ExistsFieldType) => string
@@ -42,7 +42,7 @@ export interface MongocampQueryHelper {
   /**
    * `field:[from TO to]` — inclusive range.
    *
-   * Pass `null` (or `'*'`) for an open end. MongoCamp 1.5 rejects `[x TO *]`, so the open end is replaced by
+   * Pass `null` (or `'*'`) for an open end. MongoCamp (1.5 and still 1.6.1) rejects `[x TO *]`, so the open end is replaced by
    * the far bound of the other bound's type: the 64-bit integer limits for numbers, year 0001 / 9999 for
    * dates. Both ends open means "has a value" and returns `exists(field)`. An open end next to a *text*
    * bound can't be expressed and still becomes `*`, which the server rejects.

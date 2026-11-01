@@ -588,7 +588,7 @@ describe('MongocampCollectionData', () => {
       expect(component.find('[aria-label="Filters"]').attributes('disabled')).toBeDefined()
     })
 
-    it('does not offer _id or fields without operators (arrays, objects) in the field list', async () => {
+    it('offers _id (exact operators only) but not fields without operators (arrays, objects) in the field list', async () => {
       mockListDocumentsRaw.mockResolvedValue(mockRawResponse([
         { _id: { $oid: 'doc-1' }, name: 'Alice', age: 30, tags: ['a'], address: { city: 'X' } },
       ], '1'))
@@ -604,7 +604,14 @@ describe('MongocampCollectionData', () => {
 
       const fieldSelect = component.findAllComponents(USelect).find(select => select.html().includes('aria-label="Field"'))!
       const offered = (fieldSelect.vm.$props as unknown as { items: { value: string }[] }).items.map(item => item.value)
-      expect(offered).toEqual(['age', 'name'])
+      expect(offered).toEqual(['_id', 'age', 'name'])
+    })
+
+    it('never offers _id as a bulk-edit target, even though the filter builder knows it', async () => {
+      const component = await mountWithRows()
+      await wait()
+      const fields = (component.findComponent({ name: 'MongocampBulkEdit' }).props() as { fields: { key: string }[] }).fields
+      expect(fields.map(f => f.key)).not.toContain('_id')
     })
 
     it('applies the built filter from page 1 and shows it as a removable chip', async () => {

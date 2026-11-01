@@ -68,7 +68,7 @@ h.exists('name', 'text')         // name:*
 
 ## Known server limits
 
-Verified against a MongoCamp 1.5 server: `_id` cannot be filtered at all (`_id:"…"`, `_id:…` and `_id:*` all fail the request), and `>=` / `>` range syntax silently matches nothing. These helpers can't work around that.
+Re-verified on MongoCamp server 1.6.1 (2026-11-01): `_id:"<oid>"`, `_id:<oid>` and lists of ids work with `equals`, `notEquals` and `inClause` (1.5 failed the request), but wildcards on `_id` (`like`, `startsWith`, `endsWith`, `_id:*`) match nothing, open ranges `[x TO *]` still fail the request, and `>=` / `>` range syntax still silently matches nothing. Negating a compound group (`-(a AND b)`) still returns a wrong result, which is why `notExists` negates clause by clause. These helpers can't work around that. A bare date as the upper bound ends at midnight, which is why dates are widened to the whole day.
 
 ## Building a filter from form state
 
