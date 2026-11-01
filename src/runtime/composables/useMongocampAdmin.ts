@@ -1,5 +1,5 @@
 import { useMongocampClientApi } from '#imports'
-import type { Grant, JsonSchema, Role, UserProfile } from '@sfxcode/nuxt-mongocamp-server'
+import type { Grant, JsonSchema, JsonValueBoolean, Role, UserProfile } from '@sfxcode/nuxt-mongocamp-server'
 
 const REQUEST_TIMEOUT_MS = 15000
 
@@ -70,8 +70,29 @@ export default () => {
     return collectionApi.clearCollection({ collectionName }, withTimeout())
   }
 
-  async function deleteCollection(collectionName: string) {
-    return collectionApi.deleteCollection({ collectionName }, withTimeout())
+  // After a failed drop: is the collection really still there? A failing lookup counts as "still there",
+  // so the original error is never swallowed on a guess.
+  async function collectionIsGone(collectionName: string): Promise<boolean> {
+    try {
+      return !(await collectionApi.listCollections(withTimeout())).includes(collectionName)
+    }
+    catch {
+      return false
+    }
+  }
+
+  // MongoCamp server 1.6.1 answers every drop with `500 "Boxed Exception"` although the collection is dropped
+  // (brain/project/mongocamp-bulk-endpoints-server-behavior.md). Only a 500 is second-guessed — a 403, a
+  // timeout or a network error is a real failure — and only by looking at the collection list: gone means done.
+  async function deleteCollection(collectionName: string): Promise<JsonValueBoolean> {
+    try {
+      return await collectionApi.deleteCollection({ collectionName }, withTimeout())
+    }
+    catch (error) {
+      const status = (error as { response?: { status?: number } } | null)?.response?.status
+      if (status === 500 && await collectionIsGone(collectionName)) return { value: true }
+      throw error
+    }
   }
 
   async function getJsonSchema(collectionName: string): Promise<JsonSchema> {

@@ -25,6 +25,8 @@ const {
 
 ## Clearing and dropping collections
 
+MongoCamp server 1.6.1 answers every drop with `500 "Boxed Exception"` even though the collection is dropped. `deleteCollection` therefore re-reads the collection list after a **500** and resolves with `{ value: true }` when the collection is gone; if it is still listed, or the list can't be read, the original error is thrown. Other statuses, timeouts and network errors are never second-guessed.
+
 `clearCollection` and `deleteCollection` are **irreversible** and have no guard of their own. Put them behind a type-the-name confirmation ([`MongocampConfirmByName`](/components/mongocamp-confirm-by-name)) and keep MongoCamp's `mc_*` collections and GridFS `.files`/`.chunks` members out of reach (they belong to the bucket actions — see [`useMongocampBucket`](/composables/use-mongocamp-bucket)); [`MongocampCollections`](/components/mongocamp-collections) does both. The three collection methods are bounded by a 15 s timeout, so a hung server rejects instead of hanging, and a refused call (`403`, ...) is rethrown unchanged.
 
 ## `getUser`, `getRole`
