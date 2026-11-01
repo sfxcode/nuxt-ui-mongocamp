@@ -16,10 +16,6 @@ describe('parseServerError', () => {
     expect(JSON.stringify(info)).not.toContain('27017')
   })
 
-  it('recognises the Java exception an empty aggregation result produces', () => {
-    expect(parseServerError('Index 0 out of bounds for length 0')).toEqual({ kind: 'empty-result', message: 'Index 0 out of bounds for length 0' })
-  })
-
   it('removes server addresses from any other message', () => {
     expect(parseServerError('Timed out while talking to the database on server 10.0.0.5:27017. Giving up').message).not.toMatch(/10\.0\.0\.5|27017/)
     expect(parseServerError('connect failed: 192.168.1.20:5455').message).not.toMatch(/192\.168|5455/)

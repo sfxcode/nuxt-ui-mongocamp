@@ -9,8 +9,7 @@ export class ForbiddenPipelineError extends Error {
 }
 
 export interface ServerErrorInfo {
-  // 'empty-result': the exception the server throws when an aggregation returns no documents at all
-  kind: 'mongo' | 'empty-result' | 'other'
+  kind: 'mongo' | 'other'
   message: string
 }
 
@@ -22,12 +21,10 @@ const SERVER_ADDRESS = / on server \S+?(?=\.(?:\s|$)|\s|$)/g
 const BARE_ADDRESS = /\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b|\b[a-z0-9-]+(?:\.[a-z0-9-]+)+:\d{2,5}\b/gi
 
 // Reduces the server's `msg` to something showable: the MongoDB message alone for a failed command,
-// a marker for the Java exception an empty result produces, otherwise the text with every
-// address removed.
+// otherwise the text with every address removed.
 export function parseServerError(msg: string): ServerErrorInfo {
   const text = msg.trim()
   const command = MONGO_COMMAND_FAILED.exec(text)
   if (command) return { kind: 'mongo', message: command[1]!.trim() }
-  if (/^Index 0 out of bounds for length 0$/.test(text)) return { kind: 'empty-result', message: text }
   return { kind: 'other', message: text.replace(SERVER_ADDRESS, '').replace(BARE_ADDRESS, '').replace(/\s{2,}/g, ' ').trim() }
 }

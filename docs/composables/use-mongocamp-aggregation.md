@@ -22,7 +22,7 @@ const { rows, total, pages, page } = await runAggregation('customers', [
 `total`, `pages` and `page` come from the server's `x-pagination-*` headers (falling back to the row count, `1` and the requested page); `rowsPerPage` defaults to the server's 100. Entries that are not objects are dropped. The request has a 30 s timeout and always sends `allowDiskUse: false` (the server requires the field).
 
 - **Refuses forbidden pipelines.** Before any request, a pipeline using `$out`, `$merge`, `$function`, `$accumulator`, `$where`, `$lookup`, `$unionWith` or `$graphLookup` — as a stage or nested at any depth — is rejected with a `ForbiddenPipelineError` (`.findings` lists operator, stage and path). The server does not restrict stages itself.
-- **An empty result is an empty page.** The server answers an aggregation with no documents at all with `500 "Index 0 out of bounds for length 0"` (on existing collections too). `runAggregation` turns exactly that error into `{ rows: [], total: 0, pages: 0, page }`. Any other error rejects with the original error.
+- **An empty result is an empty page.** Since server 1.6.1 an aggregation with no documents answers `200 []` with a count of `0`. Older servers (1.5.x) answered `500 "Index 0 out of bounds for length 0"`, which is no longer special-cased and rejects like any other error.
 
 ## `listDistinct(collection, field, limit = 100)`
 

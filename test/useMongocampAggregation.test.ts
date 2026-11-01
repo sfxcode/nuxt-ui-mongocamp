@@ -82,47 +82,22 @@ describe('runAggregation', () => {
     expect(mockCollectionApi.aggregateRaw).not.toHaveBeenCalled()
   })
 
-  describe('an empty result', () => {
-    const emptyResultError = (status = 500, msg = 'Index 0 out of bounds for length 0') => Object.assign(new Error('Response returned an error code'), {
+  it('returns an empty page for a result with no rows (the server answers 200 with [] since 1.6.1)', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValueOnce(rawResponse([], { 'x-pagination-count-rows': '0' }))
+
+    const result = await useMongocampAggregation().runAggregation('people', [{ stage: '$match', value: { x: 'nothing' } }], { page: 4 })
+
+    expect(result).toEqual({ rows: [], total: 0, pages: 1, page: 4 })
+  })
+
+  it('no longer treats the old "Index 0 out of bounds" 500 as an empty result', async () => {
+    const legacy = Object.assign(new Error('Response returned an error code'), {
       name: 'ResponseError',
-      response: new Response(JSON.stringify({ code: -1, msg }), { status }),
+      response: new Response(JSON.stringify({ code: -1, msg: 'Index 0 out of bounds for length 0' }), { status: 500 }),
     })
+    mockCollectionApi.aggregateRaw.mockRejectedValueOnce(legacy)
 
-    it('is "no results", not a failure: the server answers 500 "Index 0 out of bounds for length 0" for it', async () => {
-      mockCollectionApi.aggregateRaw.mockRejectedValueOnce(emptyResultError())
-
-      const result = await useMongocampAggregation().runAggregation('people', [{ stage: '$match', value: { x: 'nothing' } }], { page: 1 })
-
-      expect(result).toEqual({ rows: [], total: 0, pages: 0, page: 1 })
-    })
-
-    it('keeps the requested page in the empty result', async () => {
-      mockCollectionApi.aggregateRaw.mockRejectedValueOnce(emptyResultError())
-
-      expect((await useMongocampAggregation().runAggregation('people', [], { page: 4 })).page).toBe(4)
-    })
-
-    it('makes a sample of an empty collection an empty sample', async () => {
-      mockCollectionApi.aggregateRaw.mockRejectedValueOnce(emptyResultError())
-
-      expect((await useMongocampAggregation().sampleDocuments('people')).rows).toEqual([])
-    })
-
-    it('does not swallow any other server error, nor the same text with another status', async () => {
-      const other = emptyResultError(500, 'Command failed with error 2 (BadValue): \'nope\' on server 10.0.0.5:27017. The full response is {}')
-      mockCollectionApi.aggregateRaw.mockRejectedValueOnce(other)
-      await expect(useMongocampAggregation().runAggregation('people', [])).rejects.toBe(other)
-
-      const notFound = emptyResultError(404)
-      mockCollectionApi.aggregateRaw.mockRejectedValueOnce(notFound)
-      await expect(useMongocampAggregation().runAggregation('people', [])).rejects.toBe(notFound)
-    })
-
-    it('does not swallow an error that carries no response body', async () => {
-      const boom = new Error('network down')
-      mockCollectionApi.aggregateRaw.mockRejectedValueOnce(boom)
-      await expect(useMongocampAggregation().runAggregation('people', [])).rejects.toBe(boom)
-    })
+    await expect(useMongocampAggregation().runAggregation('people', [])).rejects.toBe(legacy)
   })
 
   it('rejects with the original error when the API fails', async () => {
@@ -212,7 +187,7 @@ describe('describeAggregationError', () => {
     expect(result.kind).toBe('retryable')
   })
 
-  it('treats a body-less 503 from the proxy as retryable (an empty result looks like this)', async () => {
+  it('treats a body-less 503 from the proxy as retryable', async () => {
     const result = await useMongocampAggregation().describeAggregationError(responseError(503, ''))
 
     expect(result.kind).toBe('retryable')

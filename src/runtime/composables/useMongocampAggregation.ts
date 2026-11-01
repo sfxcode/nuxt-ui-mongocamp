@@ -54,28 +54,9 @@ function headerNumber(headers: { get: (name: string) => string | null } | undefi
   return Number.isNaN(parsed) ? undefined : parsed
 }
 
-async function responseMessage(error: unknown): Promise<string | undefined> {
-  const response = (error as { response?: Response } | null)?.response
-  if (!response) return undefined
-  try {
-    const body = await response.clone().json() as { msg?: unknown }
-    return typeof body?.msg === 'string' ? body.msg : undefined
-  }
-  catch {
-    return undefined
-  }
-}
-
-async function isEmptyResultError(error: unknown): Promise<boolean> {
-  const status = (error as { response?: Response } | null)?.response?.status
-  if (status !== 500) return false
-  const message = await responseMessage(error)
-  return message !== undefined && parseServerError(message).kind === 'empty-result'
-}
-
 // Aggregation and sampling over `collectionApi.aggregate`/`distinct`. Results are plain JSON: dates
 // come back as ISO strings without milliseconds and 64-bit numbers beyond 2^53 are already rounded
-// by JSON parsing. `getSchemaAnalysis` is deliberately not used — the real server returns an
+// by JSON parsing. `getSchemaAnalysis` is deliberately not used — server < 1.6.1 returned an
 // accumulation of every earlier analysis across collections (see
 // brain/project/mongocamp-aggregation-server-behavior.md).
 export function useMongocampAggregation() {
@@ -90,22 +71,14 @@ export function useMongocampAggregation() {
     if (findings.length > 0) throw new ForbiddenPipelineError(findings)
 
     const page = paging.page ?? 1
-    let response
-    try {
-      response = await collectionApi.aggregateRaw({
-        collectionName,
-        // the generated type says string values; the server takes any JSON. allowDiskUse is required.
-        mongoAggregateRequest: { pipeline: pipeline as unknown as PipelineStage[], allowDiskUse: false },
-        rowsPerPage: paging.rowsPerPage,
-        page,
-      }, withTimeout(AGGREGATE_TIMEOUT_MS))
-    }
-    catch (error) {
-      // an aggregation with no result at all is answered with a 500 (the server reads the first element
-      // of an empty list) — that is "no results", not a failure; a page past the end is a normal empty page
-      if (await isEmptyResultError(error)) return { rows: [], total: 0, pages: 0, page }
-      throw error
-    }
+    // no result at all is a normal `200 []` since server 1.6.1 (older servers answered 500 "Index 0 out of bounds")
+    const response = await collectionApi.aggregateRaw({
+      collectionName,
+      // the generated type says string values; the server takes any JSON. allowDiskUse is required.
+      mongoAggregateRequest: { pipeline: pipeline as unknown as PipelineStage[], allowDiskUse: false },
+      rowsPerPage: paging.rowsPerPage,
+      page,
+    }, withTimeout(AGGREGATE_TIMEOUT_MS))
     const value: unknown = await response.value()
     const rows = Array.isArray(value) ? value.filter(isPlainObject) : []
     const headers = response.raw?.headers
@@ -144,16 +117,14 @@ export function useMongocampAggregation() {
     const response = (error as { response?: Response } | null)?.response
     const status = response?.status
     if (status === 405) return { kind: 'retryable', message: t('nuxtUiMongocamp.aggregation.errors.retryable') }
-    // the hosted server's front proxy answers an aggregation with no result at all with a body-less 503
-    // (the backend's 500 is rewritten), which cannot be told apart from an outage
+    // the hosted server's front proxy rewrites upstream errors into a body-less 503
     if (status === 503) return { kind: 'retryable', message: t('nuxtUiMongocamp.aggregation.errors.unavailable') }
     if (response && status !== undefined && status >= 400 && status !== 401 && status !== 403) {
       try {
         const body = await response.clone().json() as { msg?: unknown }
         if (typeof body?.msg === 'string' && body.msg) {
           const info = parseServerError(body.msg)
-          // an empty result never gets here (runAggregation turns it into an empty page)
-          if (info.kind !== 'empty-result' && info.message) return { kind: info.kind, message: info.message }
+          if (info.message) return { kind: info.kind, message: info.message }
         }
       }
       catch {
