@@ -1,6 +1,31 @@
 # Changelog
 
 
+## v1.3.4
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.3...v1.3.4)
+
+### 🚀 Enhancements
+
+- **filter:** Offer _id in the filter builder (exact operators only) ([cfa5bfc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cfa5bfc))
+
+### 🩹 Fixes
+
+- **collections:** Treat a dropped collection as dropped despite the 500 from server 1.6.1 ([280ad30](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/280ad30))
+
+### 💅 Refactors
+
+- **aggregation:** Drop the empty-result workaround for server 1.6.1 ([a5fc3e7](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a5fc3e7))
+
+### 📖 Documentation
+
+- **session:** Note that server 1.6.1 sends CORS headers on 401 ([e327c06](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e327c06))
+- **filter:** Name the exact negated-group problem and link the server issue ([924b599](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/924b599))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.3.3
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.2...v1.3.3)
