@@ -4,6 +4,10 @@ A MongoCamp login is a JWT stored in the `mongocamp-session` cookie. This page e
 
 ## The problem: a dead session looks like a dead network
 
+::: tip MongoCamp server 1.6.1 and later
+Since 1.6.1 the server sends CORS headers on `401` responses, so the browser sees the `401`, the client library clears the session by itself and `MongocampErrorAlert` shows "session expired" straight away (verified against the hosted dev server, 2026-11-01). The problem below remains for **older servers (1.5.x)**, for servers behind a proxy that strips those headers, and for an expired token that was never sent anywhere (the session guard covers that without a request). The diagnosis stays in place as the fallback.
+:::
+
 The token is valid for 6 hours on a stock MongoCamp server, and the browser only refreshes it while a page of your app is open. When it expires — or the server stops accepting it — the cookie stays, so the app still looks logged in while every request fails. The server answers such a request with a `401` that carries **no CORS headers** when your app and the server are on different origins, so the browser does not let the client see the `401` and reports a plain network error instead. The client library's own safety net ("any `401` clears the session") never runs, and from the outside the failure is indistinguishable from the server being down or from the server refusing one particular request (for example a filter it cannot parse).
 
 ## What the module does about it
@@ -46,7 +50,7 @@ The alert then says so: "Your session has expired" with a **Log in again** butto
 
 ## What only the server can fix
 
-Adding CORS headers to authentication failures (`401`/`403`) on the MongoCamp server — or serving the app and the server from one origin — lets the client library see the `401` itself and clear the session on its own, which makes most of the guesswork above unnecessary. This module cannot change that; the diagnosis and the guard are the best it can do from the browser.
+Done in MongoCamp server 1.6.1. On older servers, adding CORS headers to authentication failures (`401`/`403`) on the MongoCamp server — or serving the app and the server from one origin — lets the client library see the `401` itself and clear the session on its own, which makes most of the guesswork above unnecessary. This module cannot change that; the diagnosis and the guard are the best it can do from the browser.
 
 ## Related
 

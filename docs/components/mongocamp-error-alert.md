@@ -30,7 +30,7 @@ async function load() {
 
 ## Telling a dead session from a dead server
 
-A token the server refuses is a `401` without CORS headers, which the browser reports exactly like a dead network. So for a network failure the alert asks [`useMongocampSession().diagnoseFailure()`](/composables/use-mongocamp-session) (a shared, rate-limited check; none at all in server proxy mode) and picks the message:
+On servers before 1.6.1 a token the server refuses is a `401` without CORS headers, which the browser reports exactly like a dead network (1.6.1+ answers a readable `401`, which goes straight to "session expired"). So for a network failure the alert asks [`useMongocampSession().diagnoseFailure()`](/composables/use-mongocamp-session) (a shared, rate-limited check; none at all in server proxy mode) and picks the message:
 
 | Diagnosis | Message | Button |
 |---|---|---|

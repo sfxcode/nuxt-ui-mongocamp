@@ -1,6 +1,6 @@
 # useMongocampSession
 
-Answers "is my MongoCamp login still usable?". An expired or rejected token is answered with a `401` **without CORS headers**, which the browser reports like a dead network, so the answer has to be worked out: from the token's own `exp`, and — after a request failed — from whether the server answers at all. Used by the opt-in [session guard](/guide/route-protection#the-session-guard-opt-in).
+Answers "is my MongoCamp login still usable?". On MongoCamp servers before 1.6.1 an expired or rejected token is answered with a `401` **without CORS headers**, which the browser reports like a dead network (1.6.1+ sends the headers, so the `401` is readable and the fallback below is rarely reached), so the answer has to be worked out: from the token's own `exp`, and — after a request failed — from whether the server answers at all. Used by the opt-in [session guard](/guide/route-protection#the-session-guard-opt-in).
 
 ```ts
 const {
