@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.3.5
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.4...v1.3.5)
+
+### 🩹 Fixes
+
+- Support mongocamp server 1.6.3 and drop the collection-drop workaround ([fed2e4a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/fed2e4a))
+
+### 💅 Refactors
+
+- Make mongocamp server 1.6.3 the baseline, drop pre-1.6.3 compat code ([f27f82e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f27f82e))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.3.4
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.3...v1.3.4)
