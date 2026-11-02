@@ -154,7 +154,7 @@ function openEdit(job: JobInformation) {
   editJob.value = {
     name: job.name,
     group: job.group,
-    description: job.description,
+    description: job.description ?? '',
     cronExpression: job.cronExpression,
     priority: job.priority,
   }

@@ -87,7 +87,7 @@ MONGOCAMP_PROXY_SHARED_SECRET=
 
 The module's runtime plugin runs on app boot:
 
-1. Fetches the MongoCamp server version via `informationApi.version()` and provides it as `$mongocampVersion`.
+1. Fetches the MongoCamp server version via `systemApi.version()` and provides it as `$mongocampVersion`.
 2. Registers the global route middleware described in [Route Protection](/guide/route-protection).
 
 ```ts

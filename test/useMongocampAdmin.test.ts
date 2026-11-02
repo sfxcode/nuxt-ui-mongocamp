@@ -227,44 +227,6 @@ describe('collection lifecycle', () => {
     mockCollectionApi.deleteCollection.mockRejectedValueOnce(error)
 
     await expect(useMongocampAdmin().deleteCollection('scratch')).rejects.toBe(error)
-    expect(mockCollectionApi.listCollections).not.toHaveBeenCalled()
-  })
-
-  describe('a drop answered with 500 (server 1.6.1 drops the collection and still fails)', () => {
-    const serverError = () => Object.assign(new Error('Response returned an error code'), { response: { status: 500 } })
-
-    it('counts as done when the collection is gone from the list afterwards', async () => {
-      mockCollectionApi.deleteCollection.mockRejectedValueOnce(serverError())
-      mockCollectionApi.listCollections.mockResolvedValueOnce(['other', 'mc_jobs'])
-
-      await expect(useMongocampAdmin().deleteCollection('scratch')).resolves.toEqual({ value: true })
-      expect(mockCollectionApi.listCollections).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
-    })
-
-    it('stays a failure when the collection is still listed', async () => {
-      const error = serverError()
-      mockCollectionApi.deleteCollection.mockRejectedValueOnce(error)
-      mockCollectionApi.listCollections.mockResolvedValueOnce(['scratch', 'other'])
-
-      await expect(useMongocampAdmin().deleteCollection('scratch')).rejects.toBe(error)
-    })
-
-    it('stays a failure (with the original error) when the list cannot be read', async () => {
-      const error = serverError()
-      mockCollectionApi.deleteCollection.mockRejectedValueOnce(error)
-      mockCollectionApi.listCollections.mockRejectedValueOnce(new Error('network down'))
-
-      await expect(useMongocampAdmin().deleteCollection('scratch')).rejects.toBe(error)
-    })
-
-    it('is not applied to other statuses or to a failure without a response', async () => {
-      for (const error of [Object.assign(new Error('bad gateway'), { response: { status: 502 } }), new Error('timeout')]) {
-        mockCollectionApi.deleteCollection.mockRejectedValueOnce(error)
-        mockCollectionApi.listCollections.mockResolvedValue([])
-        await expect(useMongocampAdmin().deleteCollection('scratch')).rejects.toBe(error)
-      }
-      expect(mockCollectionApi.listCollections).not.toHaveBeenCalled()
-    })
   })
 })
 

@@ -48,7 +48,7 @@ Also warns at build time (via `consola`) if `useServerProxy` and `useGlobalAuthM
 
 ### Runtime plugin — `src/runtime/plugin.ts`
 
-Runs on app boot. Fetches the MongoCamp server version via `informationApi.version()` and provides it as `$mongocampVersion`. If the module's `useGlobalAuthMiddleware` option is `true` (default `false` — opt-in), registers a global `global-auth` route middleware built on `useMongocampRoles()`:
+Runs on app boot. Fetches the MongoCamp server version via `systemApi.version()` and provides it as `$mongocampVersion`. If the module's `useGlobalAuthMiddleware` option is `true` (default `false` — opt-in), registers a global `global-auth` route middleware built on `useMongocampRoles()`:
 - Gates routes by glob pattern against `securedRouteParts` (requires login), `managementRouteParts` (requires manager/admin), and `adminRouteParts` (requires admin) — all configured under the module's own `nuxtUiMongocamp` key, all defaulting to `[]` (nothing protected until configured)
 - Optional `session-guard` middleware (module option `sessionGuard`, default `false`; registered before `global-auth`, never in proxy mode): an expired token (`exp` only, `tokenExpiryState`; unreadable ⇒ untouched) is cleared via `logout()` on any route and the user is sent to `loginPath` (module option, default `'/'`, always allowed) only if the route needs a login afterwards — logic in `utils/sessionGuard.ts`
 - Awaits `logout()` on `logoutPath` (module option, default `'/logout'`), then redirects to `logoutRedirectPath` (module option, default `'/'`)

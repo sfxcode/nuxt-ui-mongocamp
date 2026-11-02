@@ -5,7 +5,7 @@ import { useMongocampSession } from './composables/useMongocampSession'
 import { runSessionGuard } from './utils/sessionGuard'
 
 export default defineNuxtPlugin(async (_nuxtApp) => {
-  const { informationApi } = useMongocampClientApi()
+  const { systemApi } = useMongocampClientApi()
 
   const config = useRuntimeConfig()
   const useGlobalAuthMiddleware: boolean = config.public.nuxtUiMongocampOptions.useGlobalAuthMiddleware ?? false
@@ -13,7 +13,7 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
   const useServerProxy: boolean = config.public.nuxtUiMongocampOptions.useServerProxy ?? false
   const sessionGuard: boolean = config.public.nuxtUiMongocampOptions.sessionGuard ?? false
 
-  const { data: version } = await useAsyncData('version', () => informationApi.version())
+  const { data: version } = await useAsyncData('version', () => systemApi.version())
 
   // Registered before `global-auth` so an expired session is already cleared when that middleware looks at
   // it. Fresh composable calls per navigation, for the same reason as in `global-auth` below. There is no

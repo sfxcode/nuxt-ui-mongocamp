@@ -8,7 +8,7 @@ import {
   DocumentApi,
   FileApi,
   IndexApi,
-  InformationApi,
+  SystemApi,
   JobsApi,
 } from '@sfxcode/nuxt-mongocamp-server/api'
 import type { Configuration } from '@sfxcode/nuxt-mongocamp-server/api'
@@ -31,7 +31,7 @@ export function createProxyMongocampApis(configuration: Configuration) {
     documentApi: new DocumentApi(configuration),
     fileApi: new FileApi(configuration),
     indexApi: new IndexApi(configuration),
-    informationApi: new InformationApi(configuration),
+    systemApi: new SystemApi(configuration),
     jobApi: new JobsApi(configuration),
   }
 }

@@ -19,7 +19,7 @@ const API_NAMES = [
   'documentApi',
   'fileApi',
   'indexApi',
-  'informationApi',
+  'systemApi',
   'jobApi',
 ] as const
 
