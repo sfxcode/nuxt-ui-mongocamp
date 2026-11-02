@@ -56,9 +56,8 @@ function headerNumber(headers: { get: (name: string) => string | null } | undefi
 
 // Aggregation and sampling over `collectionApi.aggregate`/`distinct`. Results are plain JSON: dates
 // come back as ISO strings without milliseconds and 64-bit numbers beyond 2^53 are already rounded
-// by JSON parsing. `getSchemaAnalysis` is deliberately not used — server < 1.6.1 returned an
-// accumulation of every earlier analysis across collections (see
-// brain/project/mongocamp-aggregation-server-behavior.md).
+// by JSON parsing. `getSchemaAnalysis` is deliberately not used — the server's own analysis
+// is replaced by a client-side one over a `$sample` (see brain/project/mongocamp-aggregation-server-behavior.md).
 export function useMongocampAggregation() {
   const { collectionApi } = useMongocampClientApi()
   const { describeError } = useMongocampError()
@@ -71,7 +70,7 @@ export function useMongocampAggregation() {
     if (findings.length > 0) throw new ForbiddenPipelineError(findings)
 
     const page = paging.page ?? 1
-    // no result at all is a normal `200 []` since server 1.6.1 (older servers answered 500 "Index 0 out of bounds")
+    // no result at all is a normal `200 []`
     const response = await collectionApi.aggregateRaw({
       collectionName,
       // the generated type says string values; the server takes any JSON. allowDiskUse is required.

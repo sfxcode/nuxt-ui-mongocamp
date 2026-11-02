@@ -43,7 +43,7 @@ Login state lives in the `mongocamp-session` **cookie** (`{ token, profile }`, 3
 
 ## A stale session looks logged in
 
-The session token is a JWT valid for 6 hours on a stock MongoCamp server, and the browser refreshes it every `tokenRefreshInterval` only while a page of your app is open. If the token expires (or the server stops accepting it) while no page is open, the cookie — and therefore `isLoggedIn` — stays in place, so the app *looks* logged in while every request fails. The client library clears the session on a `401` response, but when your app and the MongoCamp server are on different origins and the server's `401` carries no CORS headers, the browser reports a plain network error instead and that safety net never runs. Without further help components show this as "The server could not be reached, or your session has expired"; logging out and in again fixes it. Adding CORS headers to authentication failures on the MongoCamp server (or serving both from one origin) lets the client see the `401` and clear the session itself. Meanwhile the module can diagnose the failure for you and, opt-in, clear an expired session — see [Session Handling](/guide/session-handling).
+The session token is a JWT valid for 6 hours on a stock MongoCamp server, and the browser refreshes it every `tokenRefreshInterval` only while a page of your app is open. If the token expires (or the server stops accepting it) while no page is open, the cookie — and therefore `isLoggedIn` — stays in place, so the app *looks* logged in while every request fails. The server answers such a request with a readable `401`, so the client library clears the session by itself and [`MongocampErrorAlert`](/components/mongocamp-error-alert) shows "session expired" with a **Log in again** button. The opt-in session guard (below) additionally clears a token that has visibly expired without any request.
 
 ### The session guard (opt-in)
 
@@ -55,7 +55,7 @@ Set `sessionGuard: true` (and `loginPath`, e.g. `'/login'`) to stop the app from
 | Unreadable (not a JWT, no `exp`, ...) or missing | Nothing — an unknown state never logs anyone out |
 | Expired (more than 30 s past `exp`, to forgive clock skew) | The session is cleared through `logout()`. If the route asked for is no longer reachable without a login, the user is sent to `loginPath`; a public page stays where it is |
 
-`loginPath` is always allowed — like `notAllowedPath` and `logoutRedirectPath` — and the guard never redirects away from it, so it cannot loop. It only looks at the token itself, so it cannot notice a token the server stopped accepting; that case is for the failed-request diagnosis in [`useMongocampSession`](/composables/use-mongocamp-session). In [server proxy mode](/guide/server-proxy-auth) there is no login, so the guard is not registered (a build-time warning fires if both options are on).
+`loginPath` is always allowed — like `notAllowedPath` and `logoutRedirectPath` — and the guard never redirects away from it, so it cannot loop. It only looks at the token itself, so it cannot notice a token the server stopped accepting; that shows up as a `401` on the next request, which [`MongocampErrorAlert`](/components/mongocamp-error-alert) turns into **Log in again**. In [server proxy mode](/guide/server-proxy-auth) there is no login, so the guard is not registered (a build-time warning fires if both options are on).
 
 ## Manager vs. admin
 

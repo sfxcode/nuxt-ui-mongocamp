@@ -489,7 +489,7 @@ function makeCell(key: string, type: string) {
 }
 
 const loadError = ref<unknown>(null)
-// true only when a retry without the search/filters succeeded, i.e. the filter itself was rejected
+// true when the server answered a filtered request with 400, i.e. it rejected the filter itself
 const filterRejected = ref(false)
 
 const { describeError } = useMongocampError()
@@ -617,8 +617,8 @@ async function fetchDocuments() {
         ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
-      // `_id` only gets the exact operators (server 1.6.1 matches `_id:"<oid>"`; before that the request failed,
-      // and wildcards on it still match nothing). Arrays/objects have no operators at all.
+      // `_id` only gets the exact operators (the server matches `_id:"<oid>"`, but
+      // wildcards on it match nothing). Arrays/objects have no operators at all.
       filterFields.value = schemaFromSamples(rows)
         .map(c => ({ key: c.columnKey, type: c.columnKey === '_id' ? 'objectId' as const : toFilterFieldType(c.columnType) }))
         .filter(f => operatorsFor(f.type).length > 0)
@@ -634,23 +634,11 @@ async function fetchDocuments() {
     loadError.value = e
     documents.value = []
     total.value = 0
-    // A server that rejects a filter looks to the browser exactly like a dead network or session, so ask
-    // the one question that tells them apart: does the collection load without the filter? (An expired
-    // session is already clear from its status, so that case is not probed.)
-    if (filter && describeError(e).kind !== 'unauthorized') filterRejected.value = await loadsWithoutFilter()
+    // The server answers a filter it cannot parse with a plain 400.
+    filterRejected.value = Boolean(filter) && (e as { response?: { status?: number } } | null)?.response?.status === 400
   }
   finally {
     loading.value = false
-  }
-}
-
-async function loadsWithoutFilter(): Promise<boolean> {
-  try {
-    await documentApi.listDocumentsRaw({ collectionName: props.collectionName, rowsPerPage: 1, page: 1 })
-    return true
-  }
-  catch {
-    return false
   }
 }
 

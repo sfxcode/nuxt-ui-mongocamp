@@ -648,10 +648,10 @@ describe('MongocampCollectionData', () => {
     describe('when the server rejects the request', () => {
       const fetchError = Object.assign(new Error('The request failed'), { name: 'FetchError' })
 
-      // the filtered request fails, the same request without a filter works — what a rejected filter looks like
+      // the server answers a filtered request with a plain 400 — what a rejected filter looks like
       function rejectFilteredRequests() {
         mockListDocumentsRaw.mockImplementation(async (args: { filter?: string }) => {
-          if (args.filter) throw fetchError
+          if (args.filter) throw { name: 'ResponseError', response: { status: 400 } }
           return mockRawResponse(rows, '2')
         })
       }
@@ -660,19 +660,18 @@ describe('MongocampCollectionData', () => {
         return component.findAll('button').filter(b => b.text() === 'Clear filters')
       }
 
-      it('tells a rejected filter apart from a dead server by retrying once without it', async () => {
+      it('recognises a rejected filter by the 400, without a second request', async () => {
         const component = await mountWithRows()
         rejectFilteredRequests()
+        const callsBefore = mockListDocumentsRaw.mock.calls.length
         await applyNameContains(component, 'ali')
 
         expect(component.text()).toContain('The filter could not be applied')
         expect(component.text()).not.toContain('could not be reached')
-        const probe = mockListDocumentsRaw.mock.calls.at(-1)![0]
-        expect(probe.rowsPerPage).toBe(1) // a one-row probe, not a second full page load
-        expect(probe.filter).toBeUndefined()
+        expect(mockListDocumentsRaw.mock.calls.length - callsBefore).toBe(1)
       })
 
-      it('keeps the generic message when the collection does not load without the filter either', async () => {
+      it('keeps the generic message for a network failure, even with a filter', async () => {
         const component = await mountWithRows()
         mockListDocumentsRaw.mockImplementation(async () => {
           throw fetchError
@@ -683,7 +682,7 @@ describe('MongocampCollectionData', () => {
         expect(component.text()).not.toContain('The filter could not be applied')
       })
 
-      it('does not probe when the session has expired (401) — that is already clear', async () => {
+      it('does not blame the filter when the session has expired (401)', async () => {
         const component = await mountWithRows()
         mockListDocumentsRaw.mockImplementation(async (args: { filter?: string }) => {
           if (args.filter) throw { name: 'ResponseError', response: { status: 401 } }
@@ -693,10 +692,9 @@ describe('MongocampCollectionData', () => {
 
         expect(component.text()).toContain('session has expired')
         expect(component.text()).not.toContain('The filter could not be applied')
-        expect(mockListDocumentsRaw.mock.calls.some(([args]) => args.rowsPerPage === 1)).toBe(false)
       })
 
-      it('does not probe, and does not blame a filter, when none was in use', async () => {
+      it('does not blame a filter when none was in use', async () => {
         mockListDocumentsRaw.mockImplementation(async () => {
           throw fetchError
         })
@@ -724,7 +722,7 @@ describe('MongocampCollectionData', () => {
         const reload = mockListDocumentsRaw.mock.calls.at(-1)![0]
         expect(reload.page).toBe(1)
         expect(reload.filter).toBeUndefined()
-        expect(reload.rowsPerPage).toBe(20) // a real reload, not the one-row probe
+        expect(reload.rowsPerPage).toBe(20)
       })
     })
 

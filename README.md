@@ -10,6 +10,10 @@ A Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.co
 
 - [✨ Release Notes](/CHANGELOG.md)
 
+## Requirements
+
+MongoCamp server **1.6.3 or later** (with `@sfxcode/nuxt-mongocamp-server` ^1.6.3). Older servers are not supported.
+
 ## Features
 
 - **Auth middleware** — global route guard that protects `/secured/**` (login required) and `/admin/**` (admin role required)

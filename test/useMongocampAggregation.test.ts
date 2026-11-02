@@ -82,22 +82,12 @@ describe('runAggregation', () => {
     expect(mockCollectionApi.aggregateRaw).not.toHaveBeenCalled()
   })
 
-  it('returns an empty page for a result with no rows (the server answers 200 with [] since 1.6.1)', async () => {
+  it('returns an empty page for a result with no rows', async () => {
     mockCollectionApi.aggregateRaw.mockResolvedValueOnce(rawResponse([], { 'x-pagination-count-rows': '0' }))
 
     const result = await useMongocampAggregation().runAggregation('people', [{ stage: '$match', value: { x: 'nothing' } }], { page: 4 })
 
     expect(result).toEqual({ rows: [], total: 0, pages: 1, page: 4 })
-  })
-
-  it('no longer treats the old "Index 0 out of bounds" 500 as an empty result', async () => {
-    const legacy = Object.assign(new Error('Response returned an error code'), {
-      name: 'ResponseError',
-      response: new Response(JSON.stringify({ code: -1, msg: 'Index 0 out of bounds for length 0' }), { status: 500 }),
-    })
-    mockCollectionApi.aggregateRaw.mockRejectedValueOnce(legacy)
-
-    await expect(useMongocampAggregation().runAggregation('people', [])).rejects.toBe(legacy)
   })
 
   it('rejects with the original error when the API fails', async () => {

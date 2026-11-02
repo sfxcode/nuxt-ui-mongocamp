@@ -1,16 +1,13 @@
 <script setup lang='ts'>
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { navigateTo, useI18n, useMongocampError, useMongocampRoles, useMongocampSession } from '#imports'
-import { classifyFailure } from '../utils/failureKind'
-import type { FailureKind } from '../utils/failureKind'
 
 const props = defineProps<{
   error: unknown
   title?: string
   // where "Log in again" goes after clearing the session; defaults to the module's `loginPath` option
   loginPath?: string
-  // set by a parent that has proven the request only fails because of the filter it sent (a retry
-  // without the filter worked) — the browser reports a rejected filter exactly like a dead network
+  // set by a parent that knows the request only fails because of the filter it sent (the server's 400)
   filterRejected?: boolean
 }>()
 
@@ -19,32 +16,16 @@ const emit = defineEmits<{ retry: [], clearFilters: [] }>()
 const { t } = useI18n()
 const { describeError } = useMongocampError()
 
-const { diagnoseFailure, invalidateSession } = useMongocampSession()
+const { invalidateSession } = useMongocampSession()
 const { loginPath: configuredLoginPath } = useMongocampRoles()
 
 const described = computed(() => describeError(props.error))
 
-// A token the server refuses is reported by the browser exactly like a dead network, so for a network
-// failure the session is asked about (a shared, rate-limited check). Until the answer arrives — and when it
-// is inconclusive — the plain network message stands.
-const failure = ref<FailureKind | null>(null)
-let diagnosisRun = 0
-
-watch(() => [props.error, props.filterRejected] as const, async ([error, filterRejected]) => {
-  const run = ++diagnosisRun
-  failure.value = null
-  if (!error || filterRejected) return
-  const kind = await classifyFailure(describeError(error).kind, diagnoseFailure)
-  if (run === diagnosisRun) failure.value = kind
-}, { immediate: true })
-
-const sessionGone = computed(() => described.value.kind === 'unauthorized' || failure.value === 'session-ended')
-const requestRefused = computed(() => failure.value === 'rejected-request')
+const sessionGone = computed(() => described.value.kind === 'unauthorized')
 
 const description = computed(() => {
   if (props.filterRejected) return t('nuxtUiMongocamp.errors.filterRejected')
   if (sessionGone.value) return t('nuxtUiMongocamp.errors.unauthorized')
-  if (requestRefused.value) return t('nuxtUiMongocamp.errors.requestRefused')
   return described.value.message
 })
 
