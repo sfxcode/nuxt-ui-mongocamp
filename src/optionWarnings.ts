@@ -5,6 +5,7 @@ interface WarnableOptions {
   useServerProxy?: boolean
   useGlobalAuthMiddleware?: boolean
   sessionGuard?: boolean
+  sessionGuardVerify?: boolean
 }
 
 export function optionWarnings(options: WarnableOptions): string[] {
@@ -21,6 +22,12 @@ export function optionWarnings(options: WarnableOptions): string[] {
     warnings.push(
       '[nuxt-ui-mongocamp] `sessionGuard` has no effect together with `useServerProxy`: '
       + 'server proxy mode has no login, token or session to guard.',
+    )
+  }
+  if (options.sessionGuardVerify && !options.sessionGuard) {
+    warnings.push(
+      '[nuxt-ui-mongocamp] `sessionGuardVerify` has no effect without `sessionGuard`: '
+      + 'the server check runs inside the session guard middleware.',
     )
   }
   return warnings

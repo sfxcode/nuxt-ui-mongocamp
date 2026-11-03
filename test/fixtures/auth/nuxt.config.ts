@@ -20,6 +20,9 @@ export default defineNuxtConfig({
     // The fake sessions seeded by the other e2e tests carry a non-JWT token, which the guard must leave alone
     // (unknown is never expired); session-guard.test.ts seeds real expired/valid JWTs.
     sessionGuard: true,
+    // Asks the (dummy, unreachable) server about locally valid tokens: no answer ⇒ unknown ⇒ nothing happens, so the
+    // other e2e tests are unaffected; session-guard.test.ts stubs the answer in the browser.
+    sessionGuardVerify: true,
     loginPath: '/login',
     managerRoles: ['support'],
     // '/login' is deliberately also listed here — notAllowedPath must stay reachable even when

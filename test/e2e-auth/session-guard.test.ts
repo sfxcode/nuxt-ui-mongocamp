@@ -71,4 +71,61 @@ describe('session guard (sessionGuard: true, loginPath: /login)', async () => {
     expect(await hasSessionToken(page)).toBe(false)
     await page.close()
   })
+
+  const AUTH_URL = 'http://localhost:9999/auth/authenticated'
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }
+
+  it('server check: a locally valid token the server rejects (readable 401) is cleared and the visit lands on loginPath', async () => {
+    const page = await createPage()
+    await page.route(AUTH_URL, route => route.fulfill({ status: 401, headers: cors, contentType: 'application/json', body: '{"code":4011,"msg":"user not authorized"}' }))
+    await seedSession(page, { token: fakeJwt(3600), profile })
+
+    await page.goto(url('/secured'))
+    await page.waitForURL('**/login')
+    // the server skips the check, so the first (server-rendered) page is checked after hydration
+    await expect.poll(() => hasSessionToken(page)).toBe(false)
+    expect(page.url()).toContain('/login')
+    await page.close()
+  })
+
+  it('server check: on a client-side navigation the rejected token is cleared and the login page is shown', async () => {
+    const page = await createPage()
+    await page.route(AUTH_URL, route => route.fulfill({ status: 401, headers: cors, contentType: 'application/json', body: '{"code":4011,"msg":"user not authorized"}' }))
+    await seedSession(page, { token: fakeJwt(3600), profile })
+
+    await page.goto(url('/login'))
+    await expect.poll(() => hasSessionToken(page)).toBe(false) // cleared on the login path itself, nothing to redirect
+    await page.click('text=secured link')
+    await page.waitForURL('**/login')
+    await page.waitForSelector('text=login page')
+
+    expect(await page.textContent('body')).not.toContain('secured tier')
+    expect(await hasSessionToken(page)).toBe(false)
+    await page.close()
+  })
+
+  it('server check: a token the server accepts keeps the session', async () => {
+    const page = await createPage()
+    await page.route(AUTH_URL, route => route.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: '{"value":true}' }))
+    await seedSession(page, { token: fakeJwt(3600), profile })
+
+    await page.goto(url('/secured'))
+
+    expect(page.url()).toContain('/secured')
+    expect(await page.textContent('body')).toContain('secured tier')
+    expect(await hasSessionToken(page)).toBe(true)
+    await page.close()
+  })
+
+  it('server check: no answer at all (network failure) never logs anyone out', async () => {
+    const page = await createPage()
+    await page.route(AUTH_URL, route => route.abort('connectionrefused'))
+    await seedSession(page, { token: fakeJwt(3600), profile })
+
+    await page.goto(url('/secured'))
+
+    expect(page.url()).toContain('/secured')
+    expect(await hasSessionToken(page)).toBe(true)
+    await page.close()
+  })
 })

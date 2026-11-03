@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 let mockOptions: Record<string, unknown> = {}
 let mockSession: { token?: string } | null = null
 const mockLogout = vi.fn()
+const mockIsAuthenticated = vi.fn()
 
 vi.mock('#app', () => ({
   useRuntimeConfig: () => ({ public: { nuxtUiMongocampOptions: mockOptions } }),
@@ -10,6 +11,7 @@ vi.mock('#app', () => ({
 
 vi.mock('#imports', () => ({
   useMongocampAuth: () => ({ logout: mockLogout }),
+  useMongocampClientApi: () => ({ authApi: { isAuthenticated: mockIsAuthenticated } }),
   useMongocampStorage: () => ({ get value() { return mockSession } }),
 }))
 
@@ -67,6 +69,50 @@ describe('currentState (no request)', () => {
     mockSession = { token: 'garbage' }
     expect((await loadComposable()).currentState()).toBe('unknown')
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('verify', () => {
+  it('is valid when the server answers true, with a timeout signal', async () => {
+    mockIsAuthenticated.mockResolvedValueOnce({ value: true })
+
+    expect(await (await loadComposable()).verify()).toBe('valid')
+    expect(mockIsAuthenticated).toHaveBeenCalledWith(expect.objectContaining({ signal: expect.any(AbortSignal) }))
+  })
+
+  it('is invalid for an explicit false and for a readable 401', async () => {
+    mockIsAuthenticated.mockResolvedValueOnce({ value: false })
+    expect(await (await loadComposable()).verify()).toBe('invalid')
+
+    mockIsAuthenticated.mockRejectedValueOnce(Object.assign(new Error('unauthorized'), { name: 'ResponseError', response: { status: 401 } }))
+    expect(await (await loadComposable()).verify()).toBe('invalid')
+  })
+
+  it.each([
+    ['a network failure', Object.assign(new Error('offline'), { name: 'FetchError' })],
+    ['a 500', Object.assign(new Error('boom'), { name: 'ResponseError', response: { status: 500 } })],
+    ['a timeout', Object.assign(new Error('timeout'), { name: 'TimeoutError' })],
+  ])('is unknown after %s — never a reason to log anyone out', async (_label, error) => {
+    mockIsAuthenticated.mockRejectedValueOnce(error)
+
+    expect(await (await loadComposable()).verify()).toBe('unknown')
+  })
+
+  it('is unknown for an unexpected answer, and asks nothing without a token', async () => {
+    mockIsAuthenticated.mockResolvedValueOnce({})
+    expect(await (await loadComposable()).verify()).toBe('unknown')
+
+    mockIsAuthenticated.mockClear()
+    mockSession = {}
+    expect(await (await loadComposable()).verify()).toBe('unknown')
+    expect(mockIsAuthenticated).not.toHaveBeenCalled()
+  })
+
+  it('is unknown without a request in server proxy mode', async () => {
+    mockOptions = { useServerProxy: true }
+
+    expect(await (await loadComposable()).verify()).toBe('unknown')
+    expect(mockIsAuthenticated).not.toHaveBeenCalled()
   })
 })
 

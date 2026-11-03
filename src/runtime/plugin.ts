@@ -1,8 +1,8 @@
 import { defineNuxtPlugin, addRouteMiddleware, navigateTo, useAsyncData, useRuntimeConfig } from '#app'
-import { useMongocampAuth, useMongocampClientApi } from '#imports'
+import { useMongocampAuth, useMongocampClientApi, useMongocampStorage } from '#imports'
 import { useMongocampRoles } from './composables/useMongocampRoles'
 import { useMongocampSession } from './composables/useMongocampSession'
-import { runSessionGuard } from './utils/sessionGuard'
+import { createVerifyCache, runSessionGuard } from './utils/sessionGuard'
 
 export default defineNuxtPlugin(async (_nuxtApp) => {
   const { systemApi } = useMongocampClientApi()
@@ -13,6 +13,11 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
   const useServerProxy: boolean = config.public.nuxtUiMongocampOptions.useServerProxy ?? false
   const sessionGuard: boolean = config.public.nuxtUiMongocampOptions.sessionGuard ?? false
 
+  // Opt-in server check on top of the `exp` check. Client only: on the server the cache would have to live in
+  // the request, and the first client navigation re-checks anyway.
+  const sessionGuardVerify: boolean = (config.public.nuxtUiMongocampOptions.sessionGuardVerify ?? false) && import.meta.client
+  const verifyCache = createVerifyCache(30_000)
+
   const { data: version } = await useAsyncData('version', () => systemApi.version())
 
   // Registered before `global-auth` so an expired session is already cleared when that middleware looks at
@@ -20,13 +25,16 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
   // login to guard in server proxy mode.
   if (sessionGuard && !useServerProxy) {
     addRouteMiddleware('session-guard', async (to) => {
-      const { checkExpiry, invalidateSession } = useMongocampSession()
+      const { checkExpiry, invalidateSession, verify } = useMongocampSession()
       const { loginPath } = useMongocampRoles()
       const outcome = await runSessionGuard({
         path: to.path,
         loginPath,
         checkExpiry,
         invalidate: invalidateSession,
+        verify: sessionGuardVerify
+          ? () => verifyCache(String(useMongocampStorage().value?.token ?? ''), verify)
+          : undefined,
         // a fresh call: it must read the session as it is after the invalidation
         isAllowed: path => useMongocampRoles().isAllowedPathForRoute(path),
       })

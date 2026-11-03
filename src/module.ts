@@ -43,6 +43,15 @@ export interface ModuleOptions {
   sessionGuard?: boolean
 
   /**
+   * Opt-in, on top of `sessionGuard`: also ask the server (`GET /auth/authenticated`) whether a token that
+   * still looks valid is accepted, so a session invalidated server-side (e.g. by a logout elsewhere) is
+   * cleared on navigation instead of on the first failing request. One extra request per navigation, at most
+   * once per 30 s per token; only a readable 401 counts, a network failure never logs anyone out. Needs
+   * `sessionGuard`; no effect in server proxy mode.
+   */
+  sessionGuardVerify?: boolean
+
+  /**
    * Path the session guard navigates to after clearing an expired session — e.g. '/login'. Always
    * treated as allowed by the middleware itself, so it can never cause a redirect loop.
    */
@@ -102,6 +111,7 @@ export default defineNuxtModule<ModuleOptions>({
     logoutRedirectPath: '/',
     logoutPath: '/logout',
     sessionGuard: false,
+    sessionGuardVerify: false,
     loginPath: '/',
     managerRoles: [],
     securedRouteParts: [],

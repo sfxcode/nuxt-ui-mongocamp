@@ -6,6 +6,7 @@ Answers "is my MongoCamp login still usable?" from the token alone. A token the 
 const {
   checkExpiry,       // () => 'expired' | 'valid' | 'unknown'   — token only, no request
   currentState,      // () => SessionState                       — token only, no request
+  verify,            // () => Promise<'valid' | 'invalid' | 'unknown'> — asks the server (one request)
   invalidateSession, // () => Promise<void>                      — awaits the dependency's logout()
 } = useMongocampSession()
 ```
@@ -25,6 +26,10 @@ type SessionState = 'active' | 'expired' | 'unknown'
 ## `checkExpiry` and `currentState`
 
 Read the `exp` claim of the stored token (decoded, **not verified**) with a 30 s leeway for clock skew. A token it cannot read — not a JWT, no numeric `exp` — and a missing token are `unknown`, not expired. `currentState()` is the same answer as a `SessionState` (`valid` → `active`). Neither sends a request, and the token value is never logged.
+
+## `verify`
+
+Asks the server whether the stored token is still accepted (`GET /auth/authenticated`, 15 s timeout). `valid` = answered `true`; `invalid` = a **readable 401** (or an explicit `false`); `unknown` = no token, server proxy mode, network failure, timeout or any other status. Only `invalid` is a reason to clear a session. This sees what `checkExpiry` cannot: a token the server stopped accepting — e.g. after a logout elsewhere (both logout routes invalidate the token server-side) — while its `exp` is still in the future. Used by the session guard's opt-in `sessionGuardVerify`.
 
 ## `invalidateSession`
 

@@ -18,7 +18,9 @@ What is left is a token that expired while no request was made. The session guar
 | **Readable 401 handling** | nothing (always on) | A `401` clears the session and the alert offers **Log in again** |
 | **Session guard** | `sessionGuard: true` | Looks at the token's own expiry on every navigation and clears a session that says it has run out |
 
-Neither does anything in [server proxy mode](/guide/server-proxy-auth): there is no login, token or session there.
+| **Server check** | `sessionGuard: true` + `sessionGuardVerify: true` | Also asks the server whether a token that looks valid is still accepted |
+
+None of these does anything in [server proxy mode](/guide/server-proxy-auth): there is no login, token or session there.
 
 ### Session guard
 
@@ -33,7 +35,18 @@ export default defineNuxtConfig({
 
 A global `session-guard` route middleware, registered ahead of the [route-protection](/guide/route-protection#the-session-guard-opt-in) middleware, reads the stored token's `exp` claim — decoded, **not verified**; the server stays the only authority — with 30 seconds of leeway for clock skew. A token that has expired is cleared through `logout()` on any route; the user is sent to `loginPath` only if the route they asked for needs a login, so a public page stays public. A token it cannot read (not a JWT, no `exp`) or no token at all does nothing: an unknown state never logs anyone out. `loginPath` is always allowed and the guard never redirects away from it, so it cannot loop.
 
-The guard only knows what the token says about itself. A token the server revoked or stopped accepting shows up as a `401` on the next request instead, which is handled as described above.
+The guard only knows what the token says about itself. A token the server revoked or stopped accepting shows up as a `401` on the next request instead, which is handled as described above — unless you turn on the [server check](#server-check-opt-in).
+
+### Server check (opt-in)
+
+```ts
+nuxtUiMongocamp: {
+  sessionGuard: true,
+  sessionGuardVerify: true,   // default: false, needs sessionGuard
+}
+```
+
+The `exp` check cannot see a token the server has stopped accepting — a logout invalidates the token on the server while its `exp` is still hours away. With `sessionGuardVerify` the guard also calls `GET /auth/authenticated` for a token that looks valid. A **readable 401** clears the session exactly like an expired token (and redirects only if the route needs a login); a network failure, timeout or any other answer changes nothing. The cost is one request per navigation, but at most once per 30 seconds for the same token, and only in the browser — so on a hard page load a server-rendered page may show briefly before the check clears the session and redirects. Without `sessionGuard` the option does nothing (build-time warning), and it has no effect in server proxy mode.
 
 ### Log in again
 

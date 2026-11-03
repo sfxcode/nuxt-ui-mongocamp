@@ -27,4 +27,12 @@ describe('optionWarnings', () => {
   it('reports both when all three are on', () => {
     expect(optionWarnings({ useServerProxy: true, useGlobalAuthMiddleware: true, sessionGuard: true })).toHaveLength(2)
   })
+
+  it('warns that sessionGuardVerify needs sessionGuard', () => {
+    const warnings = optionWarnings({ sessionGuardVerify: true })
+
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain('`sessionGuardVerify` has no effect without `sessionGuard`')
+    expect(optionWarnings({ sessionGuard: true, sessionGuardVerify: true })).toEqual([])
+  })
 })
