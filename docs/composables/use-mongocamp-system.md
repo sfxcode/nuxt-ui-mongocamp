@@ -8,6 +8,7 @@ const {
   getDatabaseInfos,          // () => Promise<DatabaseInfo[]>
   getDatabaseInfo,           // (databaseName: string) => Promise<DatabaseInfo>
   listCollectionsByDatabase, // (databaseName: string) => Promise<string[]>
+  getCluster,                // () => Promise<{ coordinator, members }>
   getSettings,               // () => Promise<{ routesPlugins, filePlugins, ignoredPlugins }>
   listConfigurations,        // () => Promise<ConfigRow[]>   — sorted by key, secrets already masked
   getConfig,                 // (configurationKey: string) => Promise<ConfigRow>  — masked
@@ -20,6 +21,7 @@ const {
 
 The server's settings and configuration payloads contain real secrets (the auth secret, database credentials and host), so the settings methods never hand them out:
 
+- `getCluster()` returns the server's cluster view (`systemApi.viewCluster`, 15 s timeout): the `coordinator` and the `members` (`name`, `coordinator`, `siteMaster`, …). `members` is optional in the API type; when absent or empty it falls back to `[coordinator]`. On a single node there is one member whose name is an opaque container id plus port.
 - `getSettings()` returns the three plugin lists only; the response's repeated configuration map is dropped.
 - `listConfigurations()` and `getConfig(key)` return `ConfigRow`s — `{ key, value, masked, configType, needsRestart, comment }` — in which a secret's `value` is already `"••••••••"` and the original was never copied. See [`MongocampSettings`](/components/mongocamp-settings) for the masking rule. `getConfig` throws if the server answers with something that is not a configuration.
 

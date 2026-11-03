@@ -1,5 +1,5 @@
 import { useMongocampClientApi } from '#imports'
-import type { DatabaseInfo } from '@sfxcode/nuxt-mongocamp-server'
+import type { ClusterMemberInformation, DatabaseInfo } from '@sfxcode/nuxt-mongocamp-server'
 import { buildConfigRows } from '../utils/configRows'
 import type { ConfigRow } from '../utils/configRows'
 
@@ -13,6 +13,11 @@ function withTimeout(): RequestInit {
   return { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }
 }
 
+export interface ServerCluster {
+  coordinator: ClusterMemberInformation
+  members: ClusterMemberInformation[]
+}
+
 export interface ServerPlugins {
   routesPlugins: string[]
   filePlugins: string[]
@@ -20,7 +25,7 @@ export interface ServerPlugins {
 }
 
 /**
- * Read-only wrapper for databaseApi and applicationApi. Deliberately read-only —
+ * Read-only wrapper for databaseApi, applicationApi and the cluster view of systemApi. Deliberately read-only —
  * deleteDatabase, shutdown and updateConfiguration are out of scope (cross-cutting, highly
  * destructive) and not exposed. The server's settings and configuration payloads contain real secrets
  * (auth secret, database credentials and host), so the settings methods never hand them out:
@@ -28,7 +33,7 @@ export interface ServerPlugins {
  * already masked (see utils/configRows.ts).
  */
 export function useMongocampSystem() {
-  const { databaseApi, applicationApi } = useMongocampClientApi()
+  const { databaseApi, applicationApi, systemApi } = useMongocampClientApi()
 
   async function listDatabases(): Promise<string[]> {
     return databaseApi.listDatabases(withTimeout())
@@ -66,5 +71,11 @@ export function useMongocampSystem() {
     return row
   }
 
-  return { listDatabases, getDatabaseInfos, getDatabaseInfo, listCollectionsByDatabase, getSettings, listConfigurations, getConfig }
+  // `members` is optional in the API type; a node that lists none is still its own (only) member.
+  async function getCluster(): Promise<ServerCluster> {
+    const cluster = await systemApi.viewCluster(withTimeout())
+    return { coordinator: cluster.coordinator, members: cluster.members?.length ? cluster.members : [cluster.coordinator] }
+  }
+
+  return { getCluster, listDatabases, getDatabaseInfos, getDatabaseInfo, listCollectionsByDatabase, getSettings, listConfigurations, getConfig }
 }

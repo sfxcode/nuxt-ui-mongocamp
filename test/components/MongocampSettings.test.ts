@@ -34,15 +34,19 @@ const rawSettings = {
   configurations: { AUTH_SECRET: SECRETS[0], CONNECTION_PASSWORD: { value: SECRETS[1] } },
 }
 
+const clusterNode = { name: 'node-1', siteMaster: false, siteAddress: false, multicast: false, coordinator: true }
+
 const state = { isAdmin: true }
 const mockSettings = vi.fn()
 const mockListConfigurations = vi.fn()
+const mockViewCluster = vi.fn()
 const mockShutdown = vi.fn()
 const mockUpdateConfiguration = vi.fn()
 
 mockNuxtImport('useMongocampStorage', () => () => ({ value: { token: 'x', profile: { user: 'alice@example.com', isAdmin: state.isAdmin, roles: [] } } }))
 mockNuxtImport('useMongocampClientApi', () => () => ({
   databaseApi: {},
+  systemApi: { viewCluster: mockViewCluster },
   applicationApi: { settings: mockSettings, listConfigurations: mockListConfigurations, shutdown: mockShutdown, updateConfiguration: mockUpdateConfiguration },
 }))
 
@@ -51,6 +55,7 @@ beforeEach(() => {
   state.isAdmin = true
   mockSettings.mockResolvedValue(rawSettings)
   mockListConfigurations.mockResolvedValue(rawConfigurations)
+  mockViewCluster.mockResolvedValue({ coordinator: clusterNode, members: [clusterNode] })
 })
 
 async function mountSettings(props: Record<string, unknown> = {}) {
@@ -94,6 +99,30 @@ describe('MongocampSettings', () => {
       expect(component.find('table').exists()).toBe(false)
       expect(component.find('input').exists()).toBe(false)
       expect(component.text()).toContain('mongocamp-routes')
+    })
+
+    it('shows the cluster members with a coordinator badge', async () => {
+      const component = await mountSettings()
+
+      expect(component.text()).toContain('Cluster')
+      expect(component.text()).toContain('node-1')
+      expect(component.text()).toContain('coordinator')
+    })
+
+    it('hideCluster hides the card and skips the cluster request', async () => {
+      const component = await mountSettings({ hideCluster: true })
+
+      expect(mockViewCluster).not.toHaveBeenCalled()
+      expect(component.text()).not.toContain('node-1')
+    })
+
+    it('a failing cluster request only hides the card, the rest still loads', async () => {
+      mockViewCluster.mockRejectedValue(new Error('boom'))
+      const component = await mountSettings()
+
+      expect(component.text()).not.toContain('node-1')
+      expect(component.text()).toContain('mongocamp-routes')
+      expect(bodyRows(component)).toHaveLength(6)
     })
 
     it('hideSearch removes only the search box', async () => {
@@ -222,6 +251,7 @@ describe('MongocampSettings', () => {
     expect(component.text()).toContain('Only administrators can view the server settings.')
     expect(mockSettings).not.toHaveBeenCalled()
     expect(mockListConfigurations).not.toHaveBeenCalled()
+    expect(mockViewCluster).not.toHaveBeenCalled()
     expect(component.find('table').exists()).toBe(false)
   })
 

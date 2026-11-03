@@ -16,8 +16,10 @@ const mockApplicationApi = {
   updateConfiguration: vi.fn(),
 }
 
+const mockSystemApi = { viewCluster: vi.fn() }
+
 vi.mock('#imports', () => ({
-  useMongocampClientApi: () => ({ databaseApi: mockDatabaseApi, applicationApi: mockApplicationApi }),
+  useMongocampClientApi: () => ({ databaseApi: mockDatabaseApi, applicationApi: mockApplicationApi, systemApi: mockSystemApi }),
 }))
 
 const { useMongocampSystem } = await import('../src/runtime/composables/useMongocampSystem')
@@ -157,8 +159,30 @@ describe('read-only server settings', () => {
     await system.getSettings()
     await system.listConfigurations()
 
-    expect(Object.keys(system).sort()).toEqual(['getConfig', 'getDatabaseInfo', 'getDatabaseInfos', 'getSettings', 'listCollectionsByDatabase', 'listConfigurations', 'listDatabases'])
+    expect(Object.keys(system).sort()).toEqual(['getCluster', 'getConfig', 'getDatabaseInfo', 'getDatabaseInfos', 'getSettings', 'listCollectionsByDatabase', 'listConfigurations', 'listDatabases'])
     expect(mockApplicationApi.shutdown).not.toHaveBeenCalled()
     expect(mockApplicationApi.updateConfiguration).not.toHaveBeenCalled()
+  })
+})
+
+describe('getCluster', () => {
+  const node = { name: 'node-1', siteMaster: false, siteAddress: false, multicast: false, coordinator: true }
+
+  it('returns coordinator and members, with a timeout signal', async () => {
+    const other = { ...node, name: 'node-2', coordinator: false }
+    mockSystemApi.viewCluster.mockResolvedValueOnce({ coordinator: node, members: [node, other] })
+
+    const { getCluster } = useMongocampSystem()
+
+    expect(await getCluster()).toEqual({ coordinator: node, members: [node, other] })
+    expect(mockSystemApi.viewCluster).toHaveBeenCalledWith(withAbortSignal())
+  })
+
+  it.each([undefined, []])('falls back to the coordinator when members is %j', async (members) => {
+    mockSystemApi.viewCluster.mockResolvedValueOnce({ coordinator: node, members })
+
+    const { getCluster } = useMongocampSystem()
+
+    expect((await getCluster()).members).toEqual([node])
   })
 })

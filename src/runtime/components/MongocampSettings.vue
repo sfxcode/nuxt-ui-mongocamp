@@ -2,7 +2,7 @@
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { useI18n, useMongocampRoles, useMongocampSystem } from '#imports'
-import type { ServerPlugins } from '../composables/useMongocampSystem'
+import type { ServerCluster, ServerPlugins } from '../composables/useMongocampSystem'
 import { MASKED_VALUE } from '../utils/configRows'
 import type { ConfigRow } from '../utils/configRows'
 
@@ -15,6 +15,8 @@ const props = withDefaults(defineProps<{
   hideRefresh?: boolean
   /** Hide the plugins card (the plugins request is skipped too). */
   hidePlugins?: boolean
+  /** Hide the cluster card (the cluster request is skipped too). */
+  hideCluster?: boolean
   /** Hide the whole configuration section — search, note and table (the configuration request is skipped too). */
   hideConfigurations?: boolean
   /** Hide the configuration search box. */
@@ -25,19 +27,21 @@ const props = withDefaults(defineProps<{
   hideHeading: false,
   hideRefresh: false,
   hidePlugins: false,
+  hideCluster: false,
   hideConfigurations: false,
   hideSearch: false,
   hideMaskedNote: false,
 })
 
 const { t } = useI18n()
-const { getSettings, listConfigurations } = useMongocampSystem()
+const { getSettings, listConfigurations, getCluster } = useMongocampSystem()
 const { isAdmin } = useMongocampRoles()
 
 // Read-only on purpose: there is no way to change a setting or stop the server from here, and secret values
 // arrive already masked (see utils/configRows.ts) — nothing here can show or search them.
 const configurations = ref<ConfigRow[]>([])
 const plugins = ref<ServerPlugins | null>(null)
+const cluster = ref<ServerCluster | null>(null)
 const loading = ref(false)
 const loadError = ref<unknown>(null)
 const search = ref('')
@@ -48,16 +52,20 @@ async function fetchSettings() {
   loading.value = true
   loadError.value = null
   try {
-    const [loadedPlugins, rows] = await Promise.all([
+    const [loadedPlugins, rows, loadedCluster] = await Promise.all([
       props.hidePlugins ? Promise.resolve(null) : getSettings(),
       props.hideConfigurations ? Promise.resolve([] as ConfigRow[]) : listConfigurations(),
+      // optional context: a failing cluster endpoint must not take the settings page down
+      props.hideCluster ? Promise.resolve(null) : getCluster().catch(() => null),
     ])
     plugins.value = loadedPlugins
+    cluster.value = loadedCluster
     configurations.value = rows
   }
   catch (e: unknown) {
     loadError.value = e
     plugins.value = null
+    cluster.value = null
     configurations.value = []
   }
   finally {
@@ -194,6 +202,35 @@ fetchSettings()
             </p>
           </section>
         </div>
+      </UCard>
+
+      <UCard v-if="cluster && !hideCluster">
+        <template #header>
+          <span class="font-semibold">{{ t('nuxtUiMongocamp.settings.clusterHeading') }}</span>
+        </template>
+        <ul class="flex flex-col gap-2">
+          <li
+            v-for="member in cluster.members"
+            :key="member.name"
+            class="flex flex-wrap items-center gap-2"
+          >
+            <span class="font-mono text-xs">{{ member.name }}</span>
+            <UBadge
+              v-if="member.coordinator"
+              :label="t('nuxtUiMongocamp.settings.clusterCoordinator')"
+              color="primary"
+              variant="subtle"
+              size="sm"
+            />
+            <UBadge
+              v-if="member.siteMaster"
+              :label="t('nuxtUiMongocamp.settings.clusterSiteMaster')"
+              color="neutral"
+              variant="subtle"
+              size="sm"
+            />
+          </li>
+        </ul>
       </UCard>
 
       <div

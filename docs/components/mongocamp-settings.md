@@ -19,6 +19,7 @@ All optional; every one defaults to `false` (show everything).
 | `hideHeading` | the "Server settings" heading |
 | `hideRefresh` | the refresh button |
 | `hidePlugins` | the plugins card — the plugins request is skipped too |
+| `hideCluster` | the cluster card — the cluster request is skipped too |
 | `hideConfigurations` | the whole configuration section (search, masked note, table, pager) — the configuration request is skipped too |
 | `hideSearch` | the configuration search box |
 | `hideMaskedNote` | the "secret values are masked" note |
@@ -32,6 +33,7 @@ Hiding never reveals anything: masked values stay masked, and non-admins still o
 ## Behavior
 
 - **Admins only** — for anyone else (`useMongocampRoles().isAdmin` is false) the component shows a short notice and asks the server nothing. Like the other role checks it is UI-level gating; the server decides what a token may read.
+- **Cluster** — the members the server reports (name, coordinator / site master badges); on a single node that is one member. Optional context: if the request fails the card is simply absent, the rest of the page is unaffected.
 - **Plugins** — the route, file and ignored plugins the server reports.
 - **Configurations** — sorted by key; the grey line under a key is the server's own comment. Search matches key, comment, type and the *visible* value, client-side. The table is paged ten rows at a time with a pager that only appears when needed.
 - **Errors** — a failed load shows [`MongocampErrorAlert`](/components/mongocamp-error-alert) with retry; the refresh button reloads both requests.
@@ -45,5 +47,5 @@ Masking happens while the rows are built, before anything is rendered: the origi
 
 ## Related composables
 
-- [`useMongocampSystem`](/composables/use-mongocamp-system) — `getSettings`, `listConfigurations`
+- [`useMongocampSystem`](/composables/use-mongocamp-system) — `getCluster`, `getSettings`, `listConfigurations`
 - [`useMongocampRoles`](/composables/use-mongocamp-roles) — the admin check
