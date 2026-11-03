@@ -98,6 +98,43 @@ describe('runAggregation', () => {
   })
 })
 
+describe('stats stages (allowStatsStages)', () => {
+  const statsRow = { name: 'n_1', accesses: { ops: 4 }, host: '2797c7a9bf90:27017', ns: 'mongocamp.c' }
+
+  it('refuses $indexStats and $collStats by default — no request is made', async () => {
+    const { runAggregation } = useMongocampAggregation()
+
+    await expect(runAggregation('c', [{ stage: '$indexStats', value: {} }])).rejects.toBeInstanceOf(ForbiddenPipelineError)
+    await expect(runAggregation('c', [{ stage: '$collStats', value: { count: {} } }])).rejects.toBeInstanceOf(ForbiddenPipelineError)
+    expect(mockCollectionApi.aggregateRaw).not.toHaveBeenCalled()
+  })
+
+  it('runs them on request and removes the database host and namespace from every row', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValueOnce(rawResponse([statsRow]))
+
+    const result = await useMongocampAggregation().runAggregation('c', [{ stage: '$indexStats', value: {} }], {}, { allowStatsStages: true })
+
+    expect(mockCollectionApi.aggregateRaw).toHaveBeenCalledTimes(1)
+    expect(result.rows).toEqual([{ name: 'n_1', accesses: { ops: 4 } }])
+    expect(JSON.stringify(result)).not.toMatch(/27017|2797c7a9bf90|mongocamp\.c/)
+  })
+
+  it('still refuses every other deny-listed operator, even with the opt-in', async () => {
+    const { runAggregation } = useMongocampAggregation()
+
+    await expect(runAggregation('c', [{ stage: '$indexStats', value: {} }, { stage: '$out', value: 'x' }], {}, { allowStatsStages: true })).rejects.toBeInstanceOf(ForbiddenPipelineError)
+    expect(mockCollectionApi.aggregateRaw).not.toHaveBeenCalled()
+  })
+
+  it('does not touch the rows of an ordinary aggregation: a document may have a field called host', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValueOnce(rawResponse([{ _id: 'a', host: 'web-1' }]))
+
+    const result = await useMongocampAggregation().runAggregation('c', [{ stage: '$match', value: {} }])
+
+    expect(result.rows).toEqual([{ _id: 'a', host: 'web-1' }])
+  })
+})
+
 describe('large integers', () => {
   // a real Response, like the generated client returns: its own value() would round the digits
   const textResponse = (text: string, headers: Record<string, string> = {}) => {

@@ -26,3 +26,16 @@ export function formatCell(value: unknown): { text: string, full: string } {
     : typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)
   return { text: full.length > MAX_CELL_LENGTH ? `${full.slice(0, MAX_CELL_LENGTH - 1)}…` : full, full }
 }
+
+// Keys the server adds to the result of a stats stage (`$collStats`, `$indexStats`) that must never reach the UI:
+// `host` is the database server's `<container>:27017` address, `ns` its `<database>.<collection>` name
+// (brain/project/mongocamp-server-1-6-3-caveat-recheck.md).
+const SERVER_ONLY_KEYS = ['host', 'ns']
+
+/**
+ * Drops the server-only keys from the top level of every row. Meant for the results of a stats stage — a user document
+ * may legitimately have a `host` field, so this is not applied to ordinary aggregation results.
+ */
+export function stripServerFields(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  return rows.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => !SERVER_ONLY_KEYS.includes(key))))
+}

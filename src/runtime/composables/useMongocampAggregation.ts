@@ -1,9 +1,10 @@
 import { useMongocampClientApi, useI18n } from '#imports'
 import type { PipelineStage } from '@sfxcode/nuxt-mongocamp-server'
 import { useMongocampError } from './useMongocampError'
-import { findForbidden } from '../utils/aggregationPipeline'
+import { findForbidden, STATS_OPERATORS } from '../utils/aggregationPipeline'
 import type { RequestStage } from '../utils/aggregationPipeline'
 import { ForbiddenPipelineError } from '../utils/aggregationErrors'
+import { stripServerFields } from '../utils/aggregationResult'
 import { readJsonKeepingLongs } from '../utils/bigIntJson'
 import { unwrapExtendedJson } from './useMongocampExtendedJson'
 import { notAllowedOperator, OPERATOR_NOT_ALLOWED_CODE, readServerError } from '../utils/serverError'
@@ -23,6 +24,15 @@ function withTimeout(ms: number): RequestInit {
 export interface AggregationPaging {
   page?: number
   rowsPerPage?: number
+}
+
+export interface AggregationOptions {
+  /**
+   * Lets the pipeline use `$collStats` / `$indexStats` (storage and index-usage numbers) — and nothing else from the
+   * deny-list. Their results carry the database server's address, so `host` and `ns` are removed from every row.
+   * For the module's own stats calls; the aggregation builder never sets it.
+   */
+  allowStatsStages?: boolean
 }
 
 export interface AggregationResult {
@@ -67,9 +77,10 @@ export function useMongocampAggregation() {
   const { t } = useI18n()
 
   // Refuses a pipeline using a deny-listed operator before anything is sent (server 1.6.3 refuses `$function`, `$out`
-  // and friends itself with 403 / 4031, but still accepts `$lookup`, `$unionWith` and `$graphLookup`) — this is the gate the visual editor and the raw JSON tab both go through.
-  async function runAggregation(collectionName: string, pipeline: RequestStage[], paging: AggregationPaging = {}): Promise<AggregationResult> {
-    const findings = findForbidden(pipeline)
+  // and friends itself with 403 / 4031, but still accepts `$lookup`, `$unionWith`, `$graphLookup`, `$collStats` and
+  // `$indexStats`) — this is the gate the visual editor and the raw JSON tab both go through.
+  async function runAggregation(collectionName: string, pipeline: RequestStage[], paging: AggregationPaging = {}, options: AggregationOptions = {}): Promise<AggregationResult> {
+    const findings = findForbidden(pipeline, options.allowStatsStages ? STATS_OPERATORS : [])
     if (findings.length > 0) throw new ForbiddenPipelineError(findings)
 
     const page = paging.page ?? 1
@@ -84,7 +95,9 @@ export function useMongocampAggregation() {
     // read from the response text so integers beyond 2^53 stay exact; they (and the decimal/int wrappers the server
     // writes) come out of unwrapExtendedJson as an exact digit string / a number
     const value = await readJsonKeepingLongs(response)
-    const rows = Array.isArray(value) ? value.filter(isPlainObject).map(row => unwrapExtendedJson(row) as Record<string, unknown>) : []
+    const unwrapped = Array.isArray(value) ? value.filter(isPlainObject).map(row => unwrapExtendedJson(row) as Record<string, unknown>) : []
+    // a stats stage's rows carry the database server's address: never hand it on
+    const rows = options.allowStatsStages ? stripServerFields(unwrapped) : unwrapped
     const headers = response.raw?.headers
     return {
       rows,

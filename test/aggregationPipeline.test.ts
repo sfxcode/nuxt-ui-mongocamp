@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   FORBIDDEN_OPERATORS,
+  STATS_OPERATORS,
   buildPipeline,
   findForbidden,
   parsePipeline,
@@ -75,6 +76,21 @@ describe('findForbidden', () => {
   it.each(FORBIDDEN_OPERATORS)('refuses %s as an operator key nested in a stage value', (operator) => {
     const found = findForbidden([{ stage: '$addFields', value: { x: { [operator]: { body: 'function(){return 1}' } } } }])
     expect(found).toEqual([{ stageIndex: 0, operator, path: `$addFields.x.${operator}` }])
+  })
+
+  it('refuses the stats stages, whose results carry the database server address', () => {
+    expect(FORBIDDEN_OPERATORS).toContain('$collStats')
+    expect(FORBIDDEN_OPERATORS).toContain('$indexStats')
+    expect(findForbidden([{ stage: '$indexStats', value: {} }]).map(f => f.operator)).toEqual(['$indexStats'])
+  })
+
+  it('lets a caller opt into exactly the stats stages — every other deny-listed operator stays refused', () => {
+    expect(STATS_OPERATORS).toEqual(['$collStats', '$indexStats'])
+    expect(findForbidden([{ stage: '$indexStats', value: {} }, { stage: '$collStats', value: { count: {} } }], STATS_OPERATORS)).toEqual([])
+    expect(findForbidden([{ stage: '$indexStats', value: {} }, { stage: '$out', value: 'x' }, { stage: '$lookup', value: {} }], STATS_OPERATORS).map(f => f.operator)).toEqual(['$out', '$lookup'])
+    // nested use is covered the same way
+    expect(findForbidden([{ stage: '$facet', value: { a: [{ $indexStats: {} }] } }], STATS_OPERATORS)).toEqual([])
+    expect(findForbidden([{ stage: '$facet', value: { a: [{ $indexStats: {} }, { $function: {} }] } }], STATS_OPERATORS).map(f => f.operator)).toEqual(['$function'])
   })
 
   it('finds them inside arrays, $expr and $facet sub-pipelines, and reports the stage index', () => {

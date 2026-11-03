@@ -11,7 +11,7 @@ const { rows, total, pages, page } = await runAggregation('customers', [
 ], { page: 1, rowsPerPage: 20 })
 ```
 
-## `runAggregation(collection, pipeline, { page, rowsPerPage })`
+## `runAggregation(collection, pipeline, { page, rowsPerPage }, { allowStatsStages })`
 
 `pipeline` is `{ stage: '$match', value: <JSON> }[]` — `value` is real JSON (a number for `$limit`, an object for most stages), not a string. Returns:
 
@@ -21,7 +21,8 @@ const { rows, total, pages, page } = await runAggregation('customers', [
 
 `total`, `pages` and `page` come from the server's `x-pagination-*` headers (falling back to the row count, `1` and the requested page); `rowsPerPage` defaults to the server's 100. Entries that are not objects are dropped. The request has a 30 s timeout and always sends `allowDiskUse: false` (the server requires the field).
 
-- **Refuses forbidden pipelines.** Before any request, a pipeline using `$out`, `$merge`, `$function`, `$accumulator`, `$where`, `$lookup`, `$unionWith` or `$graphLookup` — as a stage or nested at any depth — is rejected with a `ForbiddenPipelineError` (`.findings` lists operator, stage and path). Since 1.6.3 the server refuses `$function`, `$accumulator`, `$where`, `$out`, `$merge` and `$currentOp` itself (`403`, code `4031`), but it still runs `$lookup`, `$unionWith` and `$graphLookup` across collections (and `$collStats`, `$indexStats`), so this check stays as early feedback and as the gate for those.
+- **Refuses forbidden pipelines.** Before any request, a pipeline using `$out`, `$merge`, `$function`, `$accumulator`, `$where`, `$lookup`, `$unionWith`, `$graphLookup`, `$collStats` or `$indexStats` — as a stage or nested at any depth — is rejected with a `ForbiddenPipelineError` (`.findings` lists operator, stage and path). Since 1.6.3 the server refuses `$function`, `$accumulator`, `$where`, `$out`, `$merge` and `$currentOp` itself (`403`, code `4031`), but it still runs `$lookup`, `$unionWith` and `$graphLookup` across collections (and `$collStats`, `$indexStats`), so this check stays as early feedback and as the gate for those.
+- **Stats stages are opt-in.** `$collStats` and `$indexStats` work on the server (storage numbers, per-index usage) but every result row carries the database server's address (`host`) and its `<database>.<collection>` name (`ns`). `runAggregation(collection, pipeline, paging, { allowStatsStages: true })` lets a pipeline use exactly those two — every other denied operator stays refused — and removes `host` and `ns` from the top level of every row (`stripServerFields`). It is for the module's own storage and index-usage calls; the aggregation builder never sets it. Ordinary results are never stripped (a document may have a field called `host`).
 - **An empty result is an empty page.** Since server 1.6.1 an aggregation with no documents answers `200 []` with a count of `0`. Older servers (1.5.x) answered `500 "Index 0 out of bounds for length 0"`, which is no longer special-cased and rejects like any other error.
 
 ## `listDistinct(collection, field, limit = 100)`

@@ -7,6 +7,8 @@
 // `$where`, `$out`, `$merge` and `$currentOp` itself (403, code 4031) but still runs `$lookup`, `$unionWith`
 // and `$graphLookup` across collections (grant enforcement for non-admins is untested) — so the deny-list
 // below stays as early feedback and as the gate for those, applied to every stage name and operator key at any depth.
+// `$collStats` and `$indexStats` run too, but their results carry the database server's address (`host`), so the
+// builder never offers them; the module's own storage/index-usage calls opt in with `STATS_OPERATORS`.
 
 export const FORBIDDEN_OPERATORS = [
   '$out',
@@ -17,7 +19,13 @@ export const FORBIDDEN_OPERATORS = [
   '$lookup',
   '$unionWith',
   '$graphLookup',
+  '$collStats',
+  '$indexStats',
 ] as const
+
+// The only deny-listed operators an internal call may opt into (`runAggregation(..., { allowStatsStages: true })`);
+// everything else on the list stays refused for every caller.
+export const STATS_OPERATORS = ['$collStats', '$indexStats'] as const
 
 export const VISUAL_STAGE_TYPES = ['$match', '$group', '$sort', '$project', '$limit'] as const
 
@@ -71,32 +79,34 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function scan(value: unknown, path: string, depth: number, stageIndex: number, found: ForbiddenUse[]) {
+function scan(value: unknown, path: string, depth: number, stageIndex: number, found: ForbiddenUse[], forbidden: ReadonlySet<string>) {
   if (found.length >= MAX_FINDINGS) return
   if (depth > MAX_DEPTH) {
     found.push({ stageIndex, operator: 'too-deep', path })
     return
   }
   if (Array.isArray(value)) {
-    value.forEach((item, i) => scan(item, `${path}[${i}]`, depth + 1, stageIndex, found))
+    value.forEach((item, i) => scan(item, `${path}[${i}]`, depth + 1, stageIndex, found, forbidden))
     return
   }
   if (!isPlainObject(value)) return
   for (const [key, inner] of Object.entries(value)) {
     const keyPath = `${path}.${key}`
-    if (FORBIDDEN.has(key)) found.push({ stageIndex, operator: key, path: keyPath })
-    scan(inner, keyPath, depth + 1, stageIndex, found)
+    if (forbidden.has(key)) found.push({ stageIndex, operator: key, path: keyPath })
+    scan(inner, keyPath, depth + 1, stageIndex, found, forbidden)
   }
 }
 
 // Deep scan: a stage whose name is deny-listed, or any operator key anywhere inside a stage's value
 // (`$function` hides inside `$addFields`, `$lookup` inside a `$facet` sub-pipeline). Only keys count:
-// a string value such as "$out" is just data.
-export function findForbidden(pipeline: RequestStage[]): ForbiddenUse[] {
+// a string value such as "$out" is just data. `allowed` lifts the ban on specific operators (only ever
+// `STATS_OPERATORS`, see above); anything else on the list stays forbidden.
+export function findForbidden(pipeline: RequestStage[], allowed: readonly string[] = []): ForbiddenUse[] {
+  const forbidden: ReadonlySet<string> = allowed.length > 0 ? new Set([...FORBIDDEN].filter(operator => !allowed.includes(operator))) : FORBIDDEN
   const found: ForbiddenUse[] = []
   pipeline.forEach((stage, stageIndex) => {
-    if (FORBIDDEN.has(stage.stage)) found.push({ stageIndex, operator: stage.stage, path: stage.stage })
-    scan(stage.value, stage.stage, 0, stageIndex, found)
+    if (forbidden.has(stage.stage)) found.push({ stageIndex, operator: stage.stage, path: stage.stage })
+    scan(stage.value, stage.stage, 0, stageIndex, found, forbidden)
   })
   return found
 }

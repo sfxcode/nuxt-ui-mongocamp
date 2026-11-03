@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCell, resultColumns } from '../src/runtime/utils/aggregationResult'
+import { formatCell, resultColumns, stripServerFields } from '../src/runtime/utils/aggregationResult'
 
 describe('resultColumns', () => {
   it('collects the keys of all rows in order of appearance with _id first', () => {
@@ -42,5 +42,32 @@ describe('formatCell', () => {
     expect(cell.text).toHaveLength(80)
     expect(cell.text.endsWith('…')).toBe(true)
     expect(cell.full).toBe(long)
+  })
+})
+
+describe('stripServerFields', () => {
+  it('removes the database host and namespace from every row, keeping the numbers', () => {
+    const rows = [
+      { name: '_id_', host: '2797c7a9bf90:27017', accesses: { ops: 3, since: '2026-11-03T19:55:38Z' }, key: { _id: 1 } },
+      { ns: 'mongocamp.customers', host: 'db-1:27017', count: 12, storageStats: { size: 1000 } },
+    ]
+
+    expect(stripServerFields(rows)).toEqual([
+      { name: '_id_', accesses: { ops: 3, since: '2026-11-03T19:55:38Z' }, key: { _id: 1 } },
+      { count: 12, storageStats: { size: 1000 } },
+    ])
+  })
+
+  it('does not change its input and handles no rows', () => {
+    const rows = [{ host: 'x:1', a: 1 }]
+
+    stripServerFields(rows)
+
+    expect(rows).toEqual([{ host: 'x:1', a: 1 }])
+    expect(stripServerFields([])).toEqual([])
+  })
+
+  it('only touches the top level: a nested field called host is data', () => {
+    expect(stripServerFields([{ a: { host: 'kept' } }])).toEqual([{ a: { host: 'kept' } }])
   })
 })

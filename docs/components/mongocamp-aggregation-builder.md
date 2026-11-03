@@ -49,6 +49,7 @@ These operators are refused **anywhere in a pipeline** — as a stage or nested 
 | `$function`, `$accumulator`, `$where` | run JavaScript on the database server |
 | `$out`, `$merge` | write to collections |
 | `$lookup`, `$unionWith`, `$graphLookup` | read other collections |
+| `$collStats`, `$indexStats` | the server includes the database server's address (`host`) and namespace in every result row |
 
 Since server 1.6.3 the server also refuses `$function`, `$accumulator`, `$where`, `$out`, `$merge` and `$currentOp` itself (`403`, code `4031`), even when nested; if one ever got past the check above, the alert reads "This pipeline uses $function, which is not allowed here." instead of a permission error. `$lookup`, `$unionWith`, `$graphLookup` and `$collStats` are still accepted by the server, which is why the client check stays.
 
