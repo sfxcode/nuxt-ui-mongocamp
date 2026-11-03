@@ -53,8 +53,8 @@ beforeEach(() => {
   mockListConfigurations.mockResolvedValue(rawConfigurations)
 })
 
-async function mountSettings() {
-  const component = await mountSuspended(withUApp(MongocampSettings), { route: '/' })
+async function mountSettings(props: Record<string, unknown> = {}) {
+  const component = await mountSuspended(withUApp(MongocampSettings), { route: '/', props })
   await flushPromises()
   return component
 }
@@ -64,6 +64,56 @@ const bodyRows = (component: Mounted) => component.findAll('tbody tr')
 const keys = (component: Mounted) => bodyRows(component).map(tr => tr.find('td span.font-mono').text())
 
 describe('MongocampSettings', () => {
+  describe('hide props', () => {
+    it('hideHeading and hideRefresh remove the header row', async () => {
+      const component = await mountSettings({ hideHeading: true, hideRefresh: true })
+
+      expect(component.find('h2').exists()).toBe(false)
+      expect(component.find('button[aria-label="Refresh"]').exists()).toBe(false)
+    })
+
+    it('hideHeading alone keeps the refresh button', async () => {
+      const component = await mountSettings({ hideHeading: true })
+
+      expect(component.find('h2').exists()).toBe(false)
+      expect(component.find('button[aria-label="Refresh"]').exists()).toBe(true)
+    })
+
+    it('hidePlugins hides the plugin card and skips the plugins request', async () => {
+      const component = await mountSettings({ hidePlugins: true })
+
+      expect(mockSettings).not.toHaveBeenCalled()
+      expect(component.text()).not.toContain('mongocamp-routes')
+      expect(bodyRows(component)).toHaveLength(6)
+    })
+
+    it('hideConfigurations hides table, search and note and skips the configuration request', async () => {
+      const component = await mountSettings({ hideConfigurations: true })
+
+      expect(mockListConfigurations).not.toHaveBeenCalled()
+      expect(component.find('table').exists()).toBe(false)
+      expect(component.find('input').exists()).toBe(false)
+      expect(component.text()).toContain('mongocamp-routes')
+    })
+
+    it('hideSearch removes only the search box', async () => {
+      const component = await mountSettings({ hideSearch: true })
+
+      expect(component.find('input').exists()).toBe(false)
+      expect(component.find('table').exists()).toBe(true)
+    })
+
+    it('hideMaskedNote removes only the note', async () => {
+      const withNote = await mountSettings()
+      const note = withNote.find('p.text-xs.text-dimmed').text()
+      expect(note).not.toBe('')
+
+      const component = await mountSettings({ hideMaskedNote: true })
+      expect(component.text()).not.toContain(note)
+      expect(component.find('input').exists()).toBe(true)
+    })
+  })
+
   it('lists the configuration sorted by key, with type and restart flag, and shows the plugin lists', async () => {
     const component = await mountSettings()
 
