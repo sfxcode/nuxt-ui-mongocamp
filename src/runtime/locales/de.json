@@ -179,6 +179,13 @@
       "statsColumnPresent": "Vorhanden",
       "statsPresentTitle": "In {present} von {sampled} geprüften Dokumenten",
       "statsColumnValues": "Häufige Werte",
+      "statsAnalyzeAll": "Alle Dokumente analysieren",
+      "statsAnalyzeAllHint": "Lässt den Server jedes Dokument analysieren. Dauert etwa eine Sekunde pro 10 000 Dokumente.",
+      "statsAnalyzeAllTooLarge": "Mehr als {max} Dokumente — analysieren Sie stattdessen eine Stichprobe.",
+      "statsAnalysed": "Alle {count} Dokumente analysiert",
+      "statsNoteAll": "Vom Server über alle {count} Dokumente analysiert. Häufige Werte werden nicht aufgelistet.",
+      "statsPresentTitleAll": "In etwa {present} von {sampled} Dokumenten",
+      "statsServerTimeout": "Die Analyse hat zu lange gedauert. Versuchen Sie es erneut oder analysieren Sie eine Stichprobe.",
       "statsEmpty": "Keine Dokumente zum Analysieren",
       "statsFailed": "Die Feldstatistik konnte nicht geladen werden"
     },

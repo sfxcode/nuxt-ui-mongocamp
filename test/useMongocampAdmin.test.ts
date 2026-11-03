@@ -20,6 +20,7 @@ const mockCollectionApi = {
   clearCollection: vi.fn(),
   deleteCollection: vi.fn(),
   getJsonSchema: vi.fn(),
+  getSchemaAnalysis: vi.fn(),
 }
 
 vi.mock('#imports', () => ({
@@ -264,5 +265,43 @@ describe('getUser / getRole / regenerateUserApiKey', () => {
     mockAdminApi.gnerateNewApiKeyForUser.mockRejectedValueOnce(error)
 
     await expect(useMongocampAdmin().regenerateUserApiKey('alice')).rejects.toBe(error)
+  })
+})
+
+describe('getSchemaAnalysis', () => {
+  const withSignal = () => expect.objectContaining({ signal: expect.any(AbortSignal) })
+
+  it('asks the server for an explicit sample size (never 0) and depth 3, with an abort signal', async () => {
+    mockCollectionApi.getSchemaAnalysis.mockResolvedValueOnce({ count: 5000, sample: 5000, percentageOfAnalysed: 1, fields: [] })
+
+    const { getSchemaAnalysis } = useMongocampAdmin()
+    const result = await getSchemaAnalysis('people', 5000)
+
+    expect(mockCollectionApi.getSchemaAnalysis).toHaveBeenCalledWith({ collectionName: 'people', sampleSize: 5000, deepth: 3 }, withSignal())
+    expect(result.count).toBe(5000)
+  })
+
+  it('never sends 0 or a negative size, which the server answers with no fields / a 500', async () => {
+    mockCollectionApi.getSchemaAnalysis.mockResolvedValue({ count: 0, sample: 0, percentageOfAnalysed: 0 })
+    const { getSchemaAnalysis } = useMongocampAdmin()
+
+    await getSchemaAnalysis('people', 0)
+    await getSchemaAnalysis('people', -1)
+
+    expect(mockCollectionApi.getSchemaAnalysis.mock.calls.map(call => call[0].sampleSize)).toEqual([1, 1])
+  })
+
+  it('caps the size at 200 000 documents and passes a custom depth', async () => {
+    mockCollectionApi.getSchemaAnalysis.mockResolvedValueOnce({ count: 1, sample: 1, percentageOfAnalysed: 1 })
+
+    await useMongocampAdmin().getSchemaAnalysis('big', 5_000_000, 1)
+
+    expect(mockCollectionApi.getSchemaAnalysis).toHaveBeenCalledWith({ collectionName: 'big', sampleSize: 200_000, deepth: 1 }, withSignal())
+  })
+
+  it('lets a failure through to the caller', async () => {
+    mockCollectionApi.getSchemaAnalysis.mockRejectedValueOnce(new Error('boom'))
+
+    await expect(useMongocampAdmin().getSchemaAnalysis('people', 10)).rejects.toThrow('boom')
   })
 })

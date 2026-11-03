@@ -82,7 +82,13 @@ An **Analyze fields** button (nothing is requested until it is clicked) with a *
 
 The badge in the card header says how many of the collection's documents were sampled, and a note reminds you it is a sample, not the whole collection. A field with many distinct values or large values makes the sample heavier — pick a smaller size for a collection with big documents. Asking again always gives a fresh, equally sized answer.
 
-The statistics are computed in the browser from the sample. The server's own schema-analysis endpoint (`getSchemaAnalysis`) is deliberately **not used**: the sample needs no extra request and works the same on every server version. (On MongoCamp up to 1.5.x that endpoint returned an accumulation of every analysis made since the server started — fields of *other* collections included; it is clean since 1.6.1, re-verified on 1.6.3.) The card also drops its result when `collectionName` changes.
+The statistics are computed in the browser from the sample by default, which needs no extra request and works the same on every server version.
+
+### Analyze all documents
+
+The second button, **Analyze all documents**, asks the server for its own analysis of *every* document (`getSchemaAnalysis`, see [`useMongocampAdmin`](/composables/use-mongocamp-admin#getschemaanalysis)) and shows it in the same table: the badge reads "All N documents analyzed" and the note says the server did it. Use it when a sample of a few hundred documents could miss rare fields or skew the shares. Differences to the sample: the numbers are exact, the *Common values* column is empty (the server lists none), and the share of a field inside array elements (`items[].sku`) is the share of documents that have it. It scans about 10 000 documents per second (50 000 took 5.4 s on the dev server) and is therefore refused — the button is disabled with an explanation — for collections of more than 200 000 documents, and for an empty one; a request that outlasts its timeout (15 s plus 0.4 ms per document) says so and offers **Retry**. **Retry** repeats whichever analysis failed.
+
+(Notes on the server endpoint: (On MongoCamp up to 1.5.x that endpoint returned an accumulation of every analysis made since the server started — fields of *other* collections included; it is clean since 1.6.1, re-verified on 1.6.3.) The card also drops its result when `collectionName` changes.
 
 ## Related composables
 

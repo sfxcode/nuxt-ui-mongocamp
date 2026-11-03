@@ -17,6 +17,7 @@ const {
   clearCollection,    // (collectionName) => Promise<JsonValueBoolean>  — deletes every document
   deleteCollection,   // (collectionName) => Promise<JsonValueBoolean>  — drops the collection
   getJsonSchema,      // (collectionName) => Promise<JsonSchema>
+  getSchemaAnalysis,  // (collectionName, documents, depth = 3) => Promise<SchemaAnalysis>  — the server's field analysis
   getUser,            // (userId) => Promise<UserProfile>
   getRole,            // (roleName) => Promise<Role>
   regenerateUserApiKey, // (userId) => Promise<string>  — the new key, plain
@@ -28,6 +29,10 @@ const {
 `deleteCollection` needs MongoCamp server 1.6.3 or later: 1.6.1 and 1.6.2 answered every drop with `500 "Boxed Exception"` although the collection was dropped, and this module no longer works around that.
 
 `clearCollection` and `deleteCollection` are **irreversible** and have no guard of their own. Put them behind a type-the-name confirmation ([`MongocampConfirmByName`](/components/mongocamp-confirm-by-name)) and keep MongoCamp's `mc_*` collections and GridFS `.files`/`.chunks` members out of reach (they belong to the bucket actions — see [`useMongocampBucket`](/composables/use-mongocamp-bucket)); [`MongocampCollections`](/components/mongocamp-collections) does both. The three collection methods are bounded by a 15 s timeout, so a hung server rejects instead of hanging, and a refused call (`403`, ...) is rethrown unchanged.
+
+## `getSchemaAnalysis`
+
+The server's own field analysis: for every field the number of documents that have it and the split by value type, nested to `depth` levels (default 3). `documents` is how many documents to analyse; it is turned into an explicit sample size because the server answers `sampleSize=0` ("all") with **no fields at all** and `-1` with a `500` — so the value sent is always at least 1 and at most 200 000, and asking for more than the collection holds simply analyses everything. The server scans about 10 000 documents per second (50 000 in 5.4 s, 5 000 in 0.5 s on the dev server), so the request is not capped at 15 s like the others: the timeout is 15 s plus 0.4 ms per document, at most 2 minutes (a request that outlasts it rejects with a `TimeoutError`). Counts are exact for nested objects, arrays of objects, mixed types, nulls and sparse fields (checked against generated data). `statisticsFromSchemaAnalysis` (in `utils/schemaAnalysis.ts`) turns the answer into the rows of the field-statistics table. Used by the **Analyze all documents** button of [`MongocampCollectionInfos`](/components/mongocamp-collection-infos#analyze-all-documents).
 
 ## `getUser`, `getRole`
 

@@ -10,6 +10,7 @@ import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { analyzeSamples } from '../utils/analyzeSamples'
 import { downloadTextFile } from '../utils/exportRows'
 import type { FieldStatistic, SampleAnalysis, ValueKind } from '../utils/analyzeSamples'
+import { FULL_ANALYSIS_MAX_DOCUMENTS, statisticsFromSchemaAnalysis } from '../utils/schemaAnalysis'
 
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -23,7 +24,7 @@ const { collectionApi, documentApi } = useMongocampClientApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
 const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
 const { sampleDocuments, describeAggregationError } = useMongocampAggregation()
-const { getJsonSchema } = useMongocampAdmin()
+const { getJsonSchema, getSchemaAnalysis } = useMongocampAdmin()
 
 const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
@@ -190,6 +191,8 @@ const KIND_COLORS: Record<ValueKind, string> = {
 }
 
 const statsSampleSize = ref(500)
+// 'sample': the client-side statistics over a `$sample`; 'server': the server's own analysis of every document
+const statsMode = ref<'sample' | 'server'>('sample')
 const statsLoading = ref(false)
 const statsError = ref<DescribedAggregationError | null>(null)
 const statsAnalysis = ref<SampleAnalysis | null>(null)
@@ -199,6 +202,7 @@ async function analyzeFields() {
   const run = ++statsRun
   statsLoading.value = true
   statsError.value = null
+  statsMode.value = 'sample'
   try {
     const { rows } = await sampleDocuments(props.collectionName, statsSampleSize.value)
     if (run !== statsRun) return
@@ -215,9 +219,42 @@ async function analyzeFields() {
   }
 }
 
+// "Analyze all documents": the server's own analysis, explicit because it scans the whole collection (about 10 000
+// documents per second) — refused above FULL_ANALYSIS_MAX_DOCUMENTS, where a sample is the sensible choice.
+const canAnalyzeAll = computed(() => (info.value?.count ?? 0) > 0 && (info.value?.count ?? 0) <= FULL_ANALYSIS_MAX_DOCUMENTS)
+
+async function analyzeAllDocuments() {
+  const run = ++statsRun
+  statsLoading.value = true
+  statsError.value = null
+  statsMode.value = 'server'
+  try {
+    const analysis = await getSchemaAnalysis(props.collectionName, info.value?.count ?? 0)
+    if (run !== statsRun) return
+    statsAnalysis.value = statisticsFromSchemaAnalysis(analysis)
+  }
+  catch (error) {
+    const timedOut = (error as { name?: string } | null)?.name === 'TimeoutError'
+    const described: DescribedAggregationError = timedOut
+      ? { kind: 'retryable', message: t('nuxtUiMongocamp.collectionInfos.statsServerTimeout') }
+      : await describeAggregationError(error)
+    if (run !== statsRun) return
+    statsAnalysis.value = null
+    statsError.value = described
+  }
+  finally {
+    if (run === statsRun) statsLoading.value = false
+  }
+}
+
+function retryStats() {
+  return statsMode.value === 'server' ? analyzeAllDocuments() : analyzeFields()
+}
+
 // statistics belong to one collection
 watch(() => props.collectionName, () => {
   statsRun++
+  statsMode.value = 'sample'
   statsAnalysis.value = null
   statsError.value = null
   statsLoading.value = false
@@ -248,7 +285,7 @@ const statsColumns = computed<TableColumn<FieldStatistic>[]>(() => [
   {
     id: 'present',
     header: t('nuxtUiMongocamp.collectionInfos.statsColumnPresent'),
-    cell: ({ row }) => h('span', { title: t('nuxtUiMongocamp.collectionInfos.statsPresentTitle', { present: row.original.present, sampled: statsAnalysis.value?.sampled ?? 0 }) }, percent(row.original.share)),
+    cell: ({ row }) => h('span', { title: t(statsMode.value === 'server' ? 'nuxtUiMongocamp.collectionInfos.statsPresentTitleAll' : 'nuxtUiMongocamp.collectionInfos.statsPresentTitle', { present: row.original.present, sampled: statsAnalysis.value?.sampled ?? 0 }) }, percent(row.original.share)),
   },
   {
     id: 'values',
@@ -572,7 +609,7 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
             <span class="font-semibold">{{ t('nuxtUiMongocamp.collectionInfos.statsTitle') }}</span>
             <UBadge
               v-if="statsAnalysis"
-              :label="t('nuxtUiMongocamp.collectionInfos.statsSampled', { sampled: statsAnalysis.sampled, total: info.count })"
+              :label="statsMode === 'server' ? t('nuxtUiMongocamp.collectionInfos.statsAnalysed', { count: statsAnalysis.sampled }) : t('nuxtUiMongocamp.collectionInfos.statsSampled', { sampled: statsAnalysis.sampled, total: info.count })"
               variant="subtle"
               color="neutral"
               size="sm"
@@ -592,8 +629,20 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
               color="neutral"
               variant="subtle"
               size="sm"
-              :loading="statsLoading"
+              :loading="statsLoading && statsMode === 'sample'"
+              :disabled="statsLoading"
               @click="analyzeFields"
+            />
+            <UButton
+              icon="i-lucide-scan-search"
+              :label="t('nuxtUiMongocamp.collectionInfos.statsAnalyzeAll')"
+              :title="canAnalyzeAll || (info.count ?? 0) === 0 ? t('nuxtUiMongocamp.collectionInfos.statsAnalyzeAllHint') : t('nuxtUiMongocamp.collectionInfos.statsAnalyzeAllTooLarge', { max: FULL_ANALYSIS_MAX_DOCUMENTS })"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              :loading="statsLoading && statsMode === 'server'"
+              :disabled="!canAnalyzeAll || statsLoading"
+              @click="analyzeAllDocuments"
             />
           </div>
         </div>
@@ -628,13 +677,13 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
             color="error"
             variant="subtle"
             icon="i-lucide-refresh-cw"
-            @click="analyzeFields"
+            @click="retryStats"
           />
         </template>
       </UAlert>
       <template v-if="statsAnalysis">
         <p class="mb-2 text-xs text-dimmed">
-          {{ t('nuxtUiMongocamp.collectionInfos.statsNote') }}
+          {{ statsMode === 'server' ? t('nuxtUiMongocamp.collectionInfos.statsNoteAll', { count: statsAnalysis.sampled }) : t('nuxtUiMongocamp.collectionInfos.statsNote') }}
           <template v-if="statsAnalysis.truncated">
             {{ t('nuxtUiMongocamp.collectionInfos.statsTruncated', { count: statsAnalysis.fields.length }) }}
           </template>

@@ -179,6 +179,13 @@
       "statsColumnPresent": "Present",
       "statsPresentTitle": "In {present} of {sampled} sampled documents",
       "statsColumnValues": "Common values",
+      "statsAnalyzeAll": "Analyze all documents",
+      "statsAnalyzeAllHint": "Lets the server analyze every document. Takes about a second per 10 000 documents.",
+      "statsAnalyzeAllTooLarge": "More than {max} documents — analyze a sample instead.",
+      "statsAnalysed": "All {count} documents analyzed",
+      "statsNoteAll": "Analyzed by the server over all {count} documents. Common values are not listed.",
+      "statsPresentTitleAll": "In about {present} of {sampled} documents",
+      "statsServerTimeout": "The analysis took too long. Try again, or analyze a sample instead.",
       "statsEmpty": "No documents to analyze",
       "statsFailed": "The field statistics could not be loaded"
     },

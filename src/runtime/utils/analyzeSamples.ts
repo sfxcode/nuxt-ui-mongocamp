@@ -61,7 +61,7 @@ function shorten(text: string): string {
   return text.length > MAX_VALUE_LENGTH ? `${text.slice(0, MAX_VALUE_LENGTH - 1)}…` : text
 }
 
-function comparePaths(a: string, b: string): number {
+export function comparePaths(a: string, b: string): number {
   if (a === '_id') return b === '_id' ? 0 : -1
   if (b === '_id') return 1
   const left = a.split('.')

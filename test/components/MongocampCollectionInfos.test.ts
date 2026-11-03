@@ -25,6 +25,7 @@ const mockListDocuments = vi.fn()
 const mockListIndices = vi.fn()
 const mockAggregateRaw = vi.fn()
 const mockGetJsonSchema = vi.fn()
+const mockGetSchemaAnalysis = vi.fn()
 const mockDownload = vi.hoisted(() => vi.fn())
 
 vi.mock('../../src/runtime/utils/exportRows', async importOriginal => ({
@@ -34,7 +35,7 @@ vi.mock('../../src/runtime/utils/exportRows', async importOriginal => ({
 
 mockNuxtImport('useMongocampApi', () => {
   return () => ({
-    collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: mockAggregateRaw, getJsonSchema: mockGetJsonSchema },
+    collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: mockAggregateRaw, getJsonSchema: mockGetJsonSchema, getSchemaAnalysis: mockGetSchemaAnalysis },
     documentApi: { listDocuments: mockListDocuments },
     indexApi: { listIndices: mockListIndices },
   })
@@ -214,6 +215,114 @@ describe('MongocampCollectionInfos — field statistics', () => {
 const body = () => new DOMWrapper(document.body)
 const schemaButton = (component: Mounted) => component.findAll('button').find(b => b.text() === 'JSON schema')!
 const footerButton = (label: string) => body().findAll('button').find(b => b.text() === label)!
+
+describe('MongocampCollectionInfos — analyze all documents (server analysis)', () => {
+  const type = (fieldType: string, count: number) => ({ fieldType, count, percentageOfParent: 1 })
+  const analysis = {
+    count: 1000,
+    sample: 1000,
+    percentageOfAnalysed: 1,
+    fields: [
+      { name: '_id', fullName: '_id', count: 1000, percentageOfParent: 1, fieldTypes: [type('objectId', 1000)] },
+      { name: 'age', fullName: 'age', count: 600, percentageOfParent: 0.6, fieldTypes: [type('long', 600)] },
+      { name: 'items', fullName: 'items', count: 500, percentageOfParent: 0.5, fieldTypes: [type('array', 500)], subFields: [{ name: '[array element]', fullName: 'items.[]', count: 1000, percentageOfParent: 2, fieldTypes: [type('object', 1000)], subFields: [{ name: 'sku', fullName: 'items.[].sku', count: 1000, percentageOfParent: 1, fieldTypes: [type('string', 1000)] }] }] },
+    ],
+  }
+  const allButton = (component: Mounted) => component.findAll('button').find(b => b.text() === 'Analyze all documents')!
+
+  it('offers it next to the sample button and asks the server for nothing until clicked', async () => {
+    const component = await mountInfos()
+
+    expect(allButton(component)).toBeDefined()
+    expect(allButton(component).attributes('disabled')).toBeUndefined()
+    expect(mockGetSchemaAnalysis).not.toHaveBeenCalled()
+  })
+
+  it('analyses every document through the server and shows the same table, labelled as complete', async () => {
+    mockGetSchemaAnalysis.mockResolvedValueOnce(analysis)
+    const component = await mountInfos()
+
+    await allButton(component).trigger('click')
+    await wait()
+
+    expect(mockGetSchemaAnalysis).toHaveBeenCalledTimes(1)
+    expect(mockGetSchemaAnalysis.mock.calls[0]![0]).toEqual({ collectionName: 'people', sampleSize: 1000, deepth: 3 })
+    expect(component.text()).toContain('All 1000 documents analyzed')
+    expect(component.text()).toContain('Analyzed by the server over all 1000 documents')
+    expect(statsRows(component).map(tr => tr.findAll('td')[0]!.text())).toEqual(['_id', 'age', 'items', 'items[].sku'])
+    // the sample was not drawn
+    expect(mockAggregateRaw).not.toHaveBeenCalled()
+  })
+
+  it('shows the share of documents per field, with no common values (the server lists none)', async () => {
+    mockGetSchemaAnalysis.mockResolvedValueOnce(analysis)
+    const component = await mountInfos()
+
+    await allButton(component).trigger('click')
+    await wait()
+
+    const rows = statsRows(component)
+    expect(rows[1]!.text()).toContain('age')
+    expect(rows[1]!.text()).toContain('60%')
+    expect(rows[3]!.text()).toContain('50%') // items[].sku: half the documents, not 100% because of the element count
+    expect(rows[1]!.findAll('td')[3]!.text()).toBe('—')
+  })
+
+  it('is disabled for an empty collection and above the document limit, and says why', async () => {
+    mockGetCollectionInformation.mockResolvedValue({ count: 0, size: 0, storageSize: 0, avgObjSize: 0, nindexes: 1, totalIndexSize: 0, indexSizes: {} })
+    const empty = await mountInfos()
+    expect(allButton(empty).attributes('disabled')).toBeDefined()
+
+    mockGetCollectionInformation.mockResolvedValue({ count: 250_000, size: 1, storageSize: 1, avgObjSize: 1, nindexes: 1, totalIndexSize: 1, indexSizes: {} })
+    const huge = await mountInfos()
+    expect(allButton(huge).attributes('disabled')).toBeDefined()
+    expect(allButton(huge).attributes('title')).toContain('More than 200000 documents')
+  })
+
+  it('shows a clear message when the analysis takes too long, and Retry runs the server analysis again', async () => {
+    mockGetSchemaAnalysis.mockRejectedValueOnce(Object.assign(new Error('timed out'), { name: 'TimeoutError' }))
+    mockGetSchemaAnalysis.mockResolvedValueOnce(analysis)
+    const component = await mountInfos()
+
+    await allButton(component).trigger('click')
+    await wait()
+    expect(component.text()).toContain('The analysis took too long')
+
+    await component.findAll('button').find(b => b.text() === 'Retry')!.trigger('click')
+    await wait()
+
+    expect(mockGetSchemaAnalysis).toHaveBeenCalledTimes(2)
+    expect(mockAggregateRaw).not.toHaveBeenCalled() // Retry repeated the server analysis, not the sample
+    expect(component.text()).toContain('All 1000 documents analyzed')
+  })
+
+  it('shows another failure with the server message', async () => {
+    mockGetSchemaAnalysis.mockRejectedValueOnce(Object.assign(new Error('Response returned an error code'), { name: 'ResponseError', response: new Response(JSON.stringify({ code: -1, msg: 'analysis failed' }), { status: 500 }) }))
+    const component = await mountInfos()
+
+    await allButton(component).trigger('click')
+    await wait()
+
+    expect(component.text()).toContain('The field statistics could not be loaded')
+    expect(component.text()).toContain('analysis failed')
+  })
+
+  it('switching back to the sample replaces the server result, and the sample button stays the default', async () => {
+    mockGetSchemaAnalysis.mockResolvedValueOnce(analysis)
+    mockAggregateRaw.mockResolvedValueOnce(rawResponse(sample))
+    const component = await mountInfos()
+
+    await allButton(component).trigger('click')
+    await wait()
+    expect(component.text()).toContain('All 1000 documents analyzed')
+
+    await analyzeButton(component).trigger('click')
+    await wait()
+
+    expect(component.text()).not.toContain('All 1000 documents analyzed')
+    expect(component.text()).toContain('Computed from a random sample')
+  })
+})
 
 describe('MongocampCollectionInfos — JSON schema viewer', () => {
   it('does not load the schema until the viewer is opened', async () => {
