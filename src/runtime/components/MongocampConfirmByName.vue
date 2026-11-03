@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<{
 const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
-const { describeError } = useMongocampError()
+const { describeServerError } = useMongocampError()
 
 const typed = ref('')
 const busy = ref(false)
@@ -49,7 +49,7 @@ async function handleConfirm() {
     close()
   }
   catch (e: unknown) {
-    error.value = describeError(e).message
+    error.value = (await describeServerError(e)).message
   }
   finally {
     busy.value = false

@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const { describeError } = useMongocampError()
+const { describeServerError } = useMongocampError()
 const { listRoles, updateRole, listCollections } = useMongocampAdmin()
 
 const grants = ref<Grant[]>([])
@@ -110,7 +110,7 @@ async function saveGrants(next: Grant[]): Promise<boolean> {
     await updateRole(props.roleName, isAdmin.value, next)
   }
   catch (e: unknown) {
-    saveError.value = describeError(e, 'nuxtUiMongocamp.roleGrants.errorSave').message
+    saveError.value = (await describeServerError(e, 'nuxtUiMongocamp.roleGrants.errorSave')).message
     return false
   }
   finally {

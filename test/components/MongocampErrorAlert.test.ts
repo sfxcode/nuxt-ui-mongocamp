@@ -114,4 +114,57 @@ describe('MongocampErrorAlert', () => {
     await button(component, 'Clear filters')?.trigger('click')
     expect(component.emitted('clearFilters')).toHaveLength(1)
   })
+
+  describe('what the server said ({ code, msg } body)', () => {
+    const serverError = (status: number, body: unknown) => Object.assign(new Error('Response returned an error code'), {
+      name: 'ResponseError',
+      response: new Response(JSON.stringify(body), { status }),
+    })
+
+    it('shows the server\'s message for a failed request instead of the generic client text', async () => {
+      const component = await mountAlert({ error: serverError(404, { code: -1, msg: 'could not find document' }) })
+
+      expect(component.text()).toContain('could not find document')
+      expect(component.text()).not.toContain('Response returned an error code')
+      expect(button(component, 'Retry')).toBeDefined()
+    })
+
+    it('names a refused operator (403, code 4031) and does not call it a missing permission', async () => {
+      const component = await mountAlert({ error: serverError(403, { code: 4031, msg: 'the operator $function is not allowed in an aggregation' }) })
+
+      expect(component.text()).toContain('The server does not allow the operator $function.')
+      expect(component.text()).not.toContain('do not have permission')
+    })
+
+    it('adds the server\'s reason to the "filter could not be applied" text', async () => {
+      const component = await mountAlert({ error: serverError(400, { code: 4001, msg: 'the filter syntax is not supported' }), filterRejected: true })
+
+      expect(component.text()).toContain('The filter could not be applied')
+      expect(component.text()).toContain('Server message: the filter syntax is not supported')
+    })
+
+    it('never shows a database address', async () => {
+      const component = await mountAlert({ error: serverError(500, { code: -1, msg: 'Timed out on server 10.0.0.5:27017. Giving up' }) })
+
+      expect(component.text()).not.toMatch(/10\.0\.0\.5|27017/)
+    })
+
+    it('keeps the session message for a 401 even when the body says something else', async () => {
+      const component = await mountAlert({ error: serverError(401, { code: 4011, msg: 'user not authorized' }) })
+
+      expect(component.text()).toContain('Your session has expired')
+      expect(button(component, 'Log in again')).toBeDefined()
+    })
+
+    it('follows a changed error prop', async () => {
+      const component = await mountAlert({ error: serverError(404, { code: -1, msg: 'first message' }) })
+      expect(component.text()).toContain('first message')
+
+      await component.setProps({ error: serverError(404, { code: -1, msg: 'second message' }) })
+      await flushPromises()
+
+      expect(component.text()).toContain('second message')
+      expect(component.text()).not.toContain('first message')
+    })
+  })
 })

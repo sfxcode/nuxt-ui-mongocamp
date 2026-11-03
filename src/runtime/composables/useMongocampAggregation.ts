@@ -3,7 +3,8 @@ import type { PipelineStage } from '@sfxcode/nuxt-mongocamp-server'
 import { useMongocampError } from './useMongocampError'
 import { findForbidden } from '../utils/aggregationPipeline'
 import type { RequestStage } from '../utils/aggregationPipeline'
-import { ForbiddenPipelineError, parseServerError } from '../utils/aggregationErrors'
+import { ForbiddenPipelineError } from '../utils/aggregationErrors'
+import { notAllowedOperator, OPERATOR_NOT_ALLOWED_CODE, readServerError } from '../utils/serverError'
 
 const AGGREGATE_TIMEOUT_MS = 30000
 const REQUEST_TIMEOUT_MS = 15000
@@ -113,25 +114,22 @@ export function useMongocampAggregation() {
     if (error instanceof ForbiddenPipelineError) {
       return { kind: 'forbidden', message: t('nuxtUiMongocamp.aggregation.errors.forbidden', { operator: error.findings[0]?.operator ?? '' }) }
     }
-    const response = (error as { response?: Response } | null)?.response
-    const status = response?.status
+    // The server refuses these operators itself (403, code 4031) — shown like a deny-list hit, not as a missing permission.
+    const server = await readServerError(error)
+    if (server.code === OPERATOR_NOT_ALLOWED_CODE) {
+      const operator = notAllowedOperator(server.message)
+      return { kind: 'forbidden', message: operator ? t('nuxtUiMongocamp.aggregation.errors.forbidden', { operator }) : t('nuxtUiMongocamp.errors.notAllowed') }
+    }
+    const status = server.status
     if (status === 405) return { kind: 'retryable', message: t('nuxtUiMongocamp.aggregation.errors.retryable') }
     // the hosted server's front proxy rewrites upstream errors into a body-less 503
     if (status === 503) return { kind: 'retryable', message: t('nuxtUiMongocamp.aggregation.errors.unavailable') }
-    if (response && status !== undefined && status >= 400 && status !== 401 && status !== 403) {
-      try {
-        const body = await response.clone().json() as { msg?: unknown }
-        if (typeof body?.msg === 'string' && body.msg) {
-          const info = parseServerError(body.msg)
-          if (info.message) return { kind: info.kind, message: info.message }
-        }
-      }
-      catch {
-        // body already read or not JSON — use the generic description
-      }
+    if (status !== undefined && status >= 400 && status !== 401 && status !== 403 && server.message) {
+      return { kind: server.kind ?? 'other', message: server.message }
     }
     const described = describeError(error)
-    return { kind: described.kind === 'forbidden' ? 'forbidden-access' : described.kind, message: described.message }
+    const kind: AggregationErrorKind = described.kind === 'forbidden' ? 'forbidden-access' : (described.kind === 'notAllowed' || described.kind === 'invalid') ? 'other' : described.kind
+    return { kind, message: described.message }
   }
 
   return { runAggregation, listDistinct, sampleDocuments, describeAggregationError }

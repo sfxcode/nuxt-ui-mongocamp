@@ -1,6 +1,9 @@
 import { useI18n } from '#imports'
+import { notAllowedOperator, OPERATOR_NOT_ALLOWED_CODE, readServerError } from '../utils/serverError'
 
-export type MongocampErrorKind = 'network' | 'unauthorized' | 'forbidden' | 'other'
+// `notAllowed`: the server refused an operator (code 4031). `invalid`: the server rejected the request body or
+// filter (400) and said why.
+export type MongocampErrorKind = 'network' | 'unauthorized' | 'forbidden' | 'notAllowed' | 'invalid' | 'other'
 
 export interface DescribedError {
   kind: MongocampErrorKind
@@ -33,5 +36,23 @@ export function useMongocampError() {
     return { kind: 'other', message }
   }
 
-  return { describeError }
+  // Like `describeError`, but also reads the server's `{ code, msg }` body (async, one clone of the response) so a
+  // refused operator, an invalid filter or a 404 say what the server said instead of a generic text. The message is
+  // already stripped of database addresses. 401, 403 and network failures keep their fixed messages.
+  async function describeServerError(error: unknown, fallbackKey?: string): Promise<DescribedError> {
+    const base = describeError(error, fallbackKey)
+    if (base.kind === 'network' || base.kind === 'unauthorized') return base
+    const server = await readServerError(error)
+    if (server.code === OPERATOR_NOT_ALLOWED_CODE) {
+      const operator = notAllowedOperator(server.message)
+      return { kind: 'notAllowed', message: operator ? t('nuxtUiMongocamp.errors.notAllowedOperator', { operator }) : t('nuxtUiMongocamp.errors.notAllowed') }
+    }
+    if (base.kind === 'forbidden') return base
+    if (server.message && server.status !== undefined && server.status >= 400) {
+      return { kind: server.status === 400 ? 'invalid' : 'other', message: server.message }
+    }
+    return base
+  }
+
+  return { describeError, describeServerError }
 }

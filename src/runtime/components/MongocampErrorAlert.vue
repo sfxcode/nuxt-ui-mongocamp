@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { navigateTo, useI18n, useMongocampError, useMongocampRoles, useMongocampSession } from '#imports'
 
 const props = defineProps<{
@@ -14,17 +14,27 @@ const props = defineProps<{
 const emit = defineEmits<{ retry: [], clearFilters: [] }>()
 
 const { t } = useI18n()
-const { describeError } = useMongocampError()
+const { describeError, describeServerError } = useMongocampError()
 
 const { invalidateSession } = useMongocampSession()
 const { loginPath: configuredLoginPath } = useMongocampRoles()
 
-const described = computed(() => describeError(props.error))
+// Starts with the synchronous description and is upgraded once the server's own `{ code, msg }` body has been read
+// (a refused operator, an invalid filter, a 404 say what the server said). A newer error wins over a slow lookup.
+const described = ref(describeError(props.error))
+watch(() => props.error, async (error) => {
+  described.value = describeError(error)
+  const withServerText = await describeServerError(error)
+  if (props.error === error) described.value = withServerText
+}, { immediate: true })
 
 const sessionGone = computed(() => described.value.kind === 'unauthorized')
 
 const description = computed(() => {
-  if (props.filterRejected) return t('nuxtUiMongocamp.errors.filterRejected')
+  if (props.filterRejected) {
+    const reason = described.value.kind === 'invalid' ? ` ${t('nuxtUiMongocamp.errors.serverMessage', { message: described.value.message })}` : ''
+    return t('nuxtUiMongocamp.errors.filterRejected') + reason
+  }
   if (sessionGone.value) return t('nuxtUiMongocamp.errors.unauthorized')
   return described.value.message
 })

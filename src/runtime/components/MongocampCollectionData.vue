@@ -9,7 +9,6 @@ import { useMongocampIndex } from '../composables/useMongocampIndex'
 import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
 import { buildPartialBody, diffDocument, hasChanges } from '../utils/documentDiff'
 import { isIsoDateTimeString } from '../utils/isoDate'
-import { parseServerError } from '../utils/aggregationErrors'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { BulkMatchShortfall, BulkUnaddressableId, buildIdFilter, isEditableField, runBulkUpdate } from '../utils/bulkEdit'
@@ -288,19 +287,9 @@ function canIndexField(key: string): boolean {
 }
 
 // The server's refusal (a duplicate or conflicting index) is the useful part; its text can carry the
-// database host:port, which parseServerError strips.
+// database host:port, which readServerError strips.
 async function indexFailureMessage(error: unknown): Promise<string> {
-  try {
-    const body = await (error as { response?: Response } | null)?.response?.clone().json() as { msg?: unknown } | undefined
-    if (typeof body?.msg === 'string' && body.msg) {
-      const message = parseServerError(body.msg).message
-      if (message) return message
-    }
-  }
-  catch {
-    // no readable body — fall back to the generic description
-  }
-  return describeError(error).message
+  return (await describeServerError(error)).message
 }
 
 async function indexField(key: string, ascending: boolean) {
@@ -521,7 +510,7 @@ const loadError = ref<unknown>(null)
 // true when the server answered a filtered request with 400, i.e. it rejected the filter itself
 const filterRejected = ref(false)
 
-const { describeError } = useMongocampError()
+const { describeError, describeServerError } = useMongocampError()
 const rowSelection = ref<Record<string, boolean>>({})
 const selectedDocIds = computed(() => Object.keys(rowSelection.value).filter(id => rowSelection.value[id]))
 const bulkDeleting = ref(false)

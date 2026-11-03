@@ -184,6 +184,19 @@ describe('describeAggregationError', () => {
     expect(result.message).toContain('unavailable')
   })
 
+  it('shows an operator the server itself refuses (403, code 4031) like a deny-list hit, not as a missing permission', async () => {
+    const result = await useMongocampAggregation().describeAggregationError(responseError(403, { code: 4031, msg: 'the operator $function is not allowed in an aggregation' }))
+
+    expect(result.kind).toBe('forbidden')
+    expect(result.message).toContain('"operator":"$function"')
+  })
+
+  it('shows what the server said for an invalid request (400, code 4001)', async () => {
+    const result = await useMongocampAggregation().describeAggregationError(responseError(400, { code: 4001, msg: 'Expected a number at stage 2' }))
+
+    expect(result).toEqual({ kind: 'other', message: 'Expected a number at stage 2' })
+  })
+
   it('names the refused operator for a forbidden pipeline', async () => {
     const error = new ForbiddenPipelineError([{ stageIndex: 0, operator: '$out', path: '$out' }])
 

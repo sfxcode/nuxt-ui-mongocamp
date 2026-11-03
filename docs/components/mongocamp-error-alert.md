@@ -34,10 +34,10 @@ async function load() {
 |---|---|---|
 | `401` — the session has ended | "Your session has expired. Please log in again." | **Log in again** |
 | Network failure (offline, server down) | "The server could not be reached…" | **Retry** |
-| `403`, or any other error | the matching message | **Retry** |
-| `filterRejected` | "The filter could not be applied" | **Clear filters** |
+| `403`, or any other error | the matching message — for a failure the server explained (`{ code, msg }` body: a refused operator, an invalid filter, a 404) the server's own message | **Retry** |
+| `filterRejected` | "The filter could not be applied", followed by "Server message: …" when the server said why (a `400` body) | **Clear filters** |
 
-No request is made to work this out: since server 1.6.1 a refused token is a readable `401`.
+The server's text is read from the failed response itself (see [`useMongocampError`](/composables/use-mongocamp-error#describeservererror)); the message is shown a moment after the alert appears and never contains a database address. No extra request is made to work this out: since server 1.6.1 a refused token is a readable `401`.
 
 **Log in again** first clears the stored session (through the dependency's `logout()`) and only then navigates to `loginPath`. The order matters: while the cookie still holds the dead token the app believes it is logged in, and a login page that redirects logged-in users would bounce straight back.
 

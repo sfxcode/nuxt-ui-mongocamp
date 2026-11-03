@@ -6,7 +6,7 @@ import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useMongocampJobs, useToast } from '#imports'
 
 const { t } = useI18n()
-const { describeError } = useMongocampError()
+const { describeServerError } = useMongocampError()
 const { listJobs, listPossibleJobs, registerJob, updateJob, executeJob, deleteJob } = useMongocampJobs()
 const toast = useToast()
 
@@ -195,7 +195,7 @@ async function handleDeleteJob() {
     await fetchJobs()
   }
   catch (e: unknown) {
-    deleteError.value = describeError(e, 'nuxtUiMongocamp.jobs.errorDelete').message
+    deleteError.value = (await describeServerError(e, 'nuxtUiMongocamp.jobs.errorDelete')).message
   }
   finally {
     deleting.value = false

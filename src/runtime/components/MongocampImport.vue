@@ -31,7 +31,7 @@ interface FailedRange {
 }
 
 const { t } = useI18n()
-const { describeError } = useMongocampError()
+const { describeServerError } = useMongocampError()
 const { importRows } = useMongocampImport()
 
 const isOpen = ref(false)
@@ -185,20 +185,10 @@ function setColumnType(column: string, type: string) {
   userColumnTypes.value = { ...columnTypes.value, [column]: type as ImportColumnType }
 }
 
-// The server explains a rejected batch in the response body ({ msg }); the generated client only
-// keeps the Response, so read it best-effort and fall back to the generic description.
+// The server explains a rejected batch in the response body ({ code, msg }); describeServerError reads it (without the
+// database address) and falls back to the generic description.
 async function failureReason(error: unknown): Promise<string> {
-  const response = (error as { response?: Response } | null)?.response
-  if (response) {
-    try {
-      const body = await response.clone().json() as { msg?: unknown }
-      if (typeof body?.msg === 'string' && body.msg) return body.msg
-    }
-    catch {
-      // body already consumed or not JSON — use the generic message
-    }
-  }
-  return describeError(error).message
+  return (await describeServerError(error)).message
 }
 
 async function runImport(rows: Record<string, unknown>[], sources: number[]) {

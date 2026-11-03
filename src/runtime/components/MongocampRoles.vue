@@ -74,7 +74,7 @@ const cloneRoleSchema = reactive([
 
 const loadError = ref<unknown>(null)
 
-const { describeError } = useMongocampError()
+const { describeError, describeServerError } = useMongocampError()
 const rowSelection = ref<Record<string, boolean>>({})
 const selectedRoleNames = computed(() => Object.keys(rowSelection.value).filter(name => rowSelection.value[name]))
 const bulkDeleting = ref(false)
@@ -169,7 +169,7 @@ async function handleCloneRole() {
     await fetchRoles()
   }
   catch (e: unknown) {
-    cloneError.value = describeError(e, 'nuxtUiMongocamp.roles.errorClone').message
+    cloneError.value = (await describeServerError(e, 'nuxtUiMongocamp.roles.errorClone')).message
   }
   finally {
     cloning.value = false
@@ -195,7 +195,7 @@ async function handleDeleteRole() {
     await fetchRoles()
   }
   catch (e: unknown) {
-    deleteError.value = describeError(e, 'nuxtUiMongocamp.roles.errorDelete').message
+    deleteError.value = (await describeServerError(e, 'nuxtUiMongocamp.roles.errorDelete')).message
   }
   finally {
     deleting.value = false

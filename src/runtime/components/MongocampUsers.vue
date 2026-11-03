@@ -95,7 +95,7 @@ const editUserSchema = reactive([
 
 const loadError = ref<unknown>(null)
 
-const { describeError } = useMongocampError()
+const { describeError, describeServerError } = useMongocampError()
 const storage = useMongocampStorage()
 const rowSelection = ref<Record<string, boolean>>({})
 const selectedUserIds = computed(() => Object.keys(rowSelection.value).filter(id => rowSelection.value[id]))
@@ -218,7 +218,7 @@ async function handleDeleteUser() {
     await fetchUsers()
   }
   catch (e: unknown) {
-    deleteError.value = describeError(e, 'nuxtUiMongocamp.users.errorDelete').message
+    deleteError.value = (await describeServerError(e, 'nuxtUiMongocamp.users.errorDelete')).message
   }
   finally {
     deleting.value = false
@@ -252,7 +252,7 @@ async function handleRegenerateKey() {
     await fetchUsers()
   }
   catch (e: unknown) {
-    keyError.value = describeError(e).message
+    keyError.value = (await describeServerError(e)).message
   }
   finally {
     keyBusy.value = false
