@@ -514,7 +514,7 @@ describe('MongocampCollectionData', () => {
       return component
     }
 
-    async function applyNameContains(component: Awaited<ReturnType<typeof mountWithRows>>, value: string) {
+    async function applyNameContains(component: Awaited<ReturnType<typeof mountWithRows>>, value: string, negate = false) {
       await component.find('[aria-label="Filters"]').trigger('click')
       await wait()
       await component.findAll('button').find(b => b.text() === 'Add condition')?.trigger('click')
@@ -526,6 +526,10 @@ describe('MongocampCollectionData', () => {
       selectByLabel('Operator').vm.$emit('update:modelValue', 'contains')
       await wait()
       await component.find('input[aria-label="Value"]').setValue(value)
+      if (negate) {
+        await component.find('[role="checkbox"]').trigger('click')
+        await wait()
+      }
       await component.findAll('button').find(b => b.text() === 'Apply filters')?.trigger('click')
       await wait()
     }
@@ -672,6 +676,20 @@ describe('MongocampCollectionData', () => {
       expect(lastCall.filter).toBe('name:*ali*')
       expect(lastCall.page).toBe(1)
       expect(component.text()).toContain('name contains ali')
+    })
+
+    it('an excluded filter is sent negated, marked above the table, and combined with the quick search', async () => {
+      const component = await mountWithRows()
+      await applyNameContains(component, 'ali', true)
+
+      expect(mockListDocumentsRaw.mock.calls.at(-1)![0].filter).toBe('-name:*ali*')
+      expect(component.text()).toContain('Excluding documents that match')
+      expect(component.text()).toContain('name contains ali')
+
+      await component.find('input[placeholder="Filter rows..."]').setValue('bo')
+      await wait(400) // the quick filter is debounced
+
+      expect(mockListDocumentsRaw.mock.calls.at(-1)![0].filter).toBe('(name:*bo* AND (-name:*ali*))')
     })
 
     it('combines the builder filter with the quick search using AND', async () => {

@@ -422,3 +422,64 @@ describe('combined query examples', () => {
     )
   })
 })
+
+describe('not / notAnd / notOr (De Morgan — the server evaluates -(A AND B) wrongly)', () => {
+  it('negates a single clause, and un-negates a negated one', () => {
+    expect(h.not('a:1')).toBe('-a:1')
+    expect(h.not('-a:1')).toBe('a:1')
+    expect(h.not('role:("admin" OR "user")')).toBe('-role:("admin" OR "user")')
+    expect(h.not(h.like('name', 'x'))).toBe('-name:*x*')
+  })
+
+  it('returns an empty string for empty input', () => {
+    expect(h.not('')).toBe('')
+    expect(h.not(null)).toBe('')
+    expect(h.not(undefined)).toBe('')
+    expect(h.notAnd('', null)).toBe('')
+    expect(h.notOr()).toBe('')
+  })
+
+  it('rewrites a negated AND group as an OR of parenthesised negations — never -(A AND B)', () => {
+    expect(h.notAnd('a:1', 'b:2')).toBe('((-a:1) OR (-b:2))')
+    expect(h.not(h.and('a:1', 'b:2'))).toBe('((-a:1) OR (-b:2))')
+    expect(h.notAnd('a:1', 'b:2', 'c:3')).toBe('((-a:1) OR (-b:2) OR (-c:3))')
+    expect(h.notAnd('a:1', 'b:2')).not.toContain('-(')
+  })
+
+  it('rewrites a negated OR group as an AND of parenthesised negations', () => {
+    expect(h.notOr('a:1', 'b:2')).toBe('((-a:1) AND (-b:2))')
+    expect(h.not(h.or('a:1', 'b:2'))).toBe('((-a:1) AND (-b:2))')
+  })
+
+  it('ignores empty parts, and a single remaining part is a plain negation', () => {
+    expect(h.notAnd('a:1', '', null)).toBe('-a:1')
+    expect(h.notOr(undefined, 'b:2')).toBe('-b:2')
+  })
+
+  it('recurses into nested groups', () => {
+    // not(a AND (b OR c)) = (not a) OR ((not b) AND (not c))
+    expect(h.not(h.and('a:1', h.or('b:2', 'c:3')))).toBe('((-a:1) OR ((-b:2) AND (-c:3)))')
+    // not(a OR (b AND c)) = (not a) AND ((not b) OR (not c))
+    expect(h.not(h.or('a:1', h.and('b:2', 'c:3')))).toBe('((-a:1) AND ((-b:2) OR (-c:3)))')
+  })
+
+  it('double negation gives the original back', () => {
+    const original = h.and('a:1', h.or('b:2', 'c:3'))
+    expect(h.not(h.not(original))).toBe(original)
+  })
+
+  it('negates the compound helpers: exists is an OR of three clauses, notExists an AND of three negations', () => {
+    expect(h.not(h.exists('f'))).toBe(`((-f:*) AND (-f:${NUM}) AND (-f:${DATE}))`)
+    expect(h.not(h.notExists('f'))).toBe(`(f:* OR f:${NUM} OR f:${DATE})`)
+  })
+
+  it('keeps operators and parentheses inside quotes and values intact', () => {
+    expect(h.not('s:"a AND b"')).toBe('-s:"a AND b"')
+    expect(h.notAnd('s:"a AND b"', 'n:[1 TO 3]')).toBe('((-s:"a AND b") OR (-n:[1 TO 3]))')
+  })
+
+  it('refuses what it cannot read instead of guessing', () => {
+    expect(() => h.not('NOT (a:1 AND b:2)')).toThrow('Cannot negate')
+    expect(() => h.not('a:1 AND b:2 OR c:3')).toThrow('Cannot negate')
+  })
+})

@@ -1,5 +1,7 @@
 import { escapeFieldName } from '../utils/escapeFieldName'
 import { isIsoDateTimeString } from '../utils/isoDate'
+import { parseLuceneExpression } from '../utils/luceneExpression'
+import type { LuceneNode } from '../utils/luceneExpression'
 import { useMongocampQueryBuilder } from './useMongocampQueryBuilder'
 
 /** Scalar value accepted by all query helpers. `null` and `undefined` produce an empty (no-op) expression. */
@@ -108,6 +110,19 @@ export interface MongocampQueryHelper {
    * A single surviving part is returned unwrapped (no outer parens).
    */
   or: (...queryParts: (string | null | undefined)[]) => string
+  /**
+   * The negation of any expression these helpers produced, written so the server evaluates it correctly.
+   * MongoCamp (still, as of 1.6.3) evaluates `-(A AND B)` as `-A AND -B`, so a negated `AND` group is rewritten with
+   * De Morgan's law as `((-A) OR (-B))` — each negated clause in its own parentheses, which the server needs — and a
+   * negated `OR` group as `((-A) AND (-B))`, recursively. A single clause becomes `-clause` (and `-clause` becomes
+   * `clause`). Returns `''` for an empty expression. Throws `UnsupportedExpressionError` for text it cannot read
+   * (`NOT …`, `AND`/`OR` mixed without parentheses) rather than guessing.
+   */
+  not: (queryPart: string | null | undefined) => string
+  /** The negation of "all of these": `notAnd(a, b)` = `not(and(a, b))` = `((-a) OR (-b))`. Empty parts are ignored. */
+  notAnd: (...queryParts: (string | null | undefined)[]) => string
+  /** The negation of "any of these": `notOr(a, b)` = `not(or(a, b))` = `((-a) AND (-b))`. Empty parts are ignored. */
+  notOr: (...queryParts: (string | null | undefined)[]) => string
 }
 
 /**
@@ -294,6 +309,34 @@ export function useMongocampQuery(): MongocampQueryHelper {
     return logicalOperators('OR', queryParts)
   }
 
+  function render(node: LuceneNode): string {
+    if (node.kind === 'clause') return node.text
+    if (node.kind === 'not') return negate(node.node)
+    const parts = node.parts.map(render)
+    return node.kind === 'and' ? and(...parts) : or(...parts)
+  }
+
+  function negate(node: LuceneNode): string {
+    if (node.kind === 'clause') return node.text.startsWith('-') ? node.text.slice(1) : `-${node.text}`
+    if (node.kind === 'not') return render(node.node)
+    const negated = node.parts.map(negate)
+    // De Morgan: not(A and B) = (not A) or (not B), not(A or B) = (not A) and (not B)
+    return node.kind === 'and' ? or(...negated) : and(...negated)
+  }
+
+  function not(queryPart: string | null | undefined): string {
+    const node = parseLuceneExpression(queryPart ?? '')
+    return node === null ? '' : negate(node)
+  }
+
+  function notAnd(...queryParts: (string | null | undefined)[]): string {
+    return not(and(...queryParts))
+  }
+
+  function notOr(...queryParts: (string | null | undefined)[]): string {
+    return not(or(...queryParts))
+  }
+
   return {
     exists,
     notExists,
@@ -315,5 +358,8 @@ export function useMongocampQuery(): MongocampQueryHelper {
     containsAll,
     and,
     or,
+    not,
+    notAnd,
+    notOr,
   }
 }

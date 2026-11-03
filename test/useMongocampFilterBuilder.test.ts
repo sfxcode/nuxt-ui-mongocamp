@@ -272,3 +272,38 @@ describe('helpers for the UI', () => {
     expect(conditionValueText(row('isNotEmpty', 'ignored'))).toBe('')
   })
 })
+
+describe('buildFilterQuery with negate', () => {
+  const types: Record<string, FilterFieldType> = { name: 'string', age: 'number' }
+  const rows = [row('contains', 'a'), row('equals', '30', undefined, 'age')]
+
+  it('negates an AND group with De Morgan, never as -(…)', () => {
+    const query = buildFilterQuery({ match: 'all', negate: true, conditions: rows }, types)
+
+    expect(query).toBe('((-name:*a*) OR (-age:30))')
+    expect(query).not.toContain('-(')
+  })
+
+  it('negates an OR group', () => {
+    expect(buildFilterQuery({ match: 'any', negate: true, conditions: rows }, types)).toBe('((-name:*a*) AND (-age:30))')
+  })
+
+  it('negates a single condition', () => {
+    expect(buildFilterQuery({ match: 'all', negate: true, conditions: [rows[0]!] }, types)).toBe('-name:*a*')
+  })
+
+  it('negating "does not exist" gives "exists" again (typed to the field, so a single clause)', () => {
+    expect(buildFilterQuery({ match: 'all', negate: true, conditions: [row('isEmpty', undefined, undefined, 'name')] }, types)).toBe('name:*')
+    expect(buildFilterQuery({ match: 'any', negate: true, conditions: [row('isEmpty', undefined, undefined, 'name'), row('contains', 'x')] }, types)).toBe('(name:* AND (-name:*x*))')
+  })
+
+  it('is "no filter", not "match nothing", when no row is valid', () => {
+    expect(buildFilterQuery({ match: 'all', negate: true, conditions: [row('contains', '')] }, types)).toBe('')
+    expect(buildFilterQuery({ match: 'all', negate: true, conditions: [] }, types)).toBe('')
+  })
+
+  it('leaves the query unchanged when negate is false or absent', () => {
+    expect(buildFilterQuery({ match: 'all', negate: false, conditions: rows }, types)).toBe('(name:*a* AND age:30)')
+    expect(buildFilterQuery({ match: 'all', conditions: rows }, types)).toBe('(name:*a* AND age:30)')
+  })
+})

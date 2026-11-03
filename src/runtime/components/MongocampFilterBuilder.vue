@@ -111,6 +111,10 @@ function setMatch(match: 'all' | 'any') {
   model.value = { ...model.value, match }
 }
 
+function setNegate(negate: boolean) {
+  model.value = { ...model.value, negate }
+}
+
 function apply() {
   emit('apply', query.value)
 }
@@ -145,6 +149,14 @@ function clearAll() {
           @update:model-value="(value: string) => setMatch(value as 'all' | 'any')"
         />
       </div>
+
+      <UCheckbox
+        v-if="model.conditions.length > 0"
+        :model-value="model.negate ?? false"
+        :label="t('nuxtUiMongocamp.filterBuilder.negate')"
+        :description="t('nuxtUiMongocamp.filterBuilder.negateHint')"
+        @update:model-value="(value: boolean | 'indeterminate') => setNegate(value === true)"
+      />
 
       <p
         v-if="model.conditions.length === 0"

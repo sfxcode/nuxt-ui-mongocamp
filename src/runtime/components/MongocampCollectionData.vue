@@ -678,7 +678,7 @@ function clearAllFilters() {
 }
 
 function onFilterApply(query: string) {
-  appliedFilterGroup.value = { match: filterDraft.value.match, conditions: filterDraft.value.conditions.map(c => ({ ...c })) }
+  appliedFilterGroup.value = { match: filterDraft.value.match, negate: filterDraft.value.negate, conditions: filterDraft.value.conditions.map(c => ({ ...c })) }
   appliedFilterQuery.value = query
   pagination.value.pageIndex = 1
   fetchDocuments()
@@ -910,6 +910,12 @@ watch(() => props.collectionName, init, { immediate: true })
       v-if="filterChips.length > 0"
       class="flex flex-wrap items-center gap-2"
     >
+      <UBadge
+        v-if="appliedFilterGroup.negate"
+        color="warning"
+        variant="subtle"
+        :label="t('nuxtUiMongocamp.collectionData.filterExcluding')"
+      />
       <UBadge
         v-for="chip in filterChips"
         :key="chip.id"

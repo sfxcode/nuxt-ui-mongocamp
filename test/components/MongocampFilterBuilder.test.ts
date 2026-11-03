@@ -116,6 +116,32 @@ describe('MongocampFilterBuilder', () => {
     expect(wrapper.emitted('apply')).toEqual([['(name:*a* AND age:30)'], ['(name:*a* OR age:30)']])
   })
 
+  it('offers "exclude matching documents" only with at least one row, and applies the De Morgan form', async () => {
+    const empty = await mountBuilder({ match: 'all', conditions: [] })
+    expect(empty.wrapper.find('[role="checkbox"]').exists()).toBe(false)
+
+    const { wrapper, latest } = await mountBuilder({
+      match: 'all',
+      conditions: [
+        condition({ id: 'a', field: 'name', operator: 'contains', value: 'a' }),
+        condition({ id: 'b', field: 'age', operator: 'equals', value: '30' }),
+      ],
+    })
+    expect(wrapper.text()).toContain('Exclude matching documents (NOT)')
+
+    await wrapper.find('[role="checkbox"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(latest().negate).toBe(true)
+    expect(wrapper.text()).toContain('((-name:*a*) OR (-age:30))') // the query preview
+
+    await button(wrapper, 'Apply filters')!.trigger('click')
+    expect(wrapper.emitted('apply')).toEqual([['((-name:*a*) OR (-age:30))']])
+
+    await wrapper.find('[role="checkbox"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(latest().negate).toBe(false)
+  })
+
   it('tells the user incomplete rows are ignored, and does not apply them', async () => {
     const { wrapper } = await mountBuilder({
       match: 'all',

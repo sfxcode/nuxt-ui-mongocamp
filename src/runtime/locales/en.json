@@ -220,6 +220,7 @@
       "pageSizeLabel": "Rows per page",
       "filtersTooltip": "Filters",
       "removeFilter": "Remove filter {filter}",
+      "filterExcluding": "Excluding documents that match",
       "clearFilters": "Clear filters"
     },
     "bucketFiles": {
@@ -426,6 +427,8 @@
       "query": "Query",
       "noFields": "No fields to filter on yet",
       "noConditions": "No conditions yet — add one to start filtering",
+      "negate": "Exclude matching documents (NOT)",
+      "negateHint": "Shows the documents that do not match these conditions.",
       "ignoredRows": "{count} incomplete condition is ignored | {count} incomplete conditions are ignored",
       "operators": {
         "contains": "contains",

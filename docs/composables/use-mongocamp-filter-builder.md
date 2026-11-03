@@ -8,6 +8,7 @@ const { buildFilterQuery } = useMongocampFilterBuilder()
 const query = buildFilterQuery(
   {
     match: 'all', // 'all' = AND, 'any' = OR
+    negate: false, // optional: true = exclude what the conditions match (NOT)
     conditions: [
       { id: '1', field: 'name', operator: 'contains', value: 'ali' },
       { id: '2', field: 'age', operator: 'between', value: '18', value2: '65' },
@@ -43,6 +44,7 @@ const query = buildFilterQuery(
 
 ## Behaviour worth knowing
 
+- **`negate: true`** excludes what the combined conditions match. It is written with De Morgan (`((-a) OR (-b))`, see [`useMongocampQuery`](/composables/use-mongocamp-query#negating-groups)) because the server evaluates `-(a AND b)` wrongly. A negated group with no valid row is "no filter", not "match nothing".
 - **Incomplete or invalid rows are skipped**, never turned into "match everything": empty values, non-numeric numbers, non-ISO dates, an operator that doesn't fit the field type. A `oneOf` list with a single bad number is rejected as a whole.
 - **Safe against query injection:** values and field names are escaped by the query helpers (a field called `first name` works); range bounds are additionally accepted here only as plain numbers or ISO dates.
 - **`contains` keeps `*` and `?` as wildcards**, so `a*b` matches "a…b". A leading wildcard (`contains`, `endsWith`) cannot use an index and is slow on large collections.
@@ -60,7 +62,7 @@ These behaviours were verified against a MongoCamp server (1.5.x, re-checked on 
 | `n:12345` (unquoted number, exact digits), `n:[a TO b]` (closed range) | `n:>=x`, `n:>x` — silently match nothing |
 | `d:[2018-01-01T00:00:00Z TO 2018-12-31T23:59:59.999Z]` | `d:[2018-09-22 TO 2018-09-22]` (a bare date as upper bound ends at midnight, so a one-day range matches nothing) |
 | `name:*` / `-name:*` on a text field; a closed full-range for numbers and dates (as "exists") | `_exists_:field` — matches nothing; `-_exists_:field` matches everything |
-| `(a OR b OR c)` of the above; each clause negated and ANDed; since 1.6.1 also `_id:"<oid>"`, `_id:("a" OR "b")`, `-_id:"<oid>"` (case-insensitive) and `-(x)` / `NOT (x)` around a *single* clause | `-( a AND b )` is evaluated like `-( a OR b )` (the inner `AND` is ignored; [MongoCamp/mongocamp-server#69](https://github.com/MongoCamp/mongocamp-server/issues/69)); `field:*` on a number or date — matches nothing |
+| `(a OR b OR c)` of the above; each clause negated and ANDed; since 1.6.1 also `_id:"<oid>"`, `_id:("a" OR "b")`, `-_id:"<oid>"` (case-insensitive) and `-(x)` / `NOT (x)` around a *single* clause | `-( a AND b )` and `NOT ( a AND b )` are evaluated like `-a AND -b` (written as `((-a) OR (-b))` instead, which works; [MongoCamp/mongocamp-server#69](https://github.com/MongoCamp/mongocamp-server/issues/69)); `field:*` on a number or date — matches nothing |
 
 Boolean terms (`active:true`) and `oneOf` on numbers are written the obvious way but were not exercised against the server.
 

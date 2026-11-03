@@ -45,6 +45,9 @@ type QueryValue = string | number | boolean | null | undefined
 | `containsAll(field, values)` | `(field:"v1" AND field:"v2" ...)` | `''` for an empty array |
 | `and(...parts)` | parts joined with `AND`, wrapped in `()` | filters out empty parts; single survivor returned unwrapped |
 | `or(...parts)` | parts joined with `OR`, wrapped in `()` | same filtering behavior |
+| `not(part)` | the negation of any expression these helpers built | a clause becomes `-clause` (and back); a group is rewritten with De Morgan — see [Negating groups](#negating-groups) |
+| `notAnd(...parts)` | `((-a) OR (-b))` | "not all of these"; same as `not(and(...))` |
+| `notOr(...parts)` | `((-a) AND (-b))` | "none of these"; same as `not(or(...))` |
 
 ## Existence
 
@@ -59,6 +62,20 @@ h.exists('name', 'text')         // name:*
 
 `notExists` negates each clause and ANDs them — negating the whole group (`-( … )` / `NOT ( … )`) is silently ignored by the server and would return the positive result. Both compose with `and` / `or`. Booleans, arrays and objects are not covered (nothing was verified for them).
 
+## Negating groups
+
+MongoCamp (still, on 1.6.3) evaluates `-(A AND B)` and `NOT (A AND B)` as `-A AND -B`, which is wrong; a single negated clause and `-(A OR B)` are fine. `not`, `notAnd` and `notOr` therefore never write a negated group: by De Morgan's law "not (A and B)" is `(not A) or (not B)`, and "not (A or B)" is `(not A) and (not B)`, applied recursively. Each negated clause gets its own parentheses — **they are required**, `-A OR -B` without them returns the wrong documents.
+
+```ts
+h.notAnd('active:true', 'role:"admin"')   // ((-active:true) OR (-role:"admin"))
+h.notOr('a:1', 'b:2')                     // ((-a:1) AND (-b:2))
+h.not(h.and('a:1', h.or('b:2', 'c:3')))   // ((-a:1) OR ((-b:2) AND (-c:3)))
+h.not('-a:1')                             // a:1
+h.not(h.exists('f'))                      // ((-f:*) AND (-f:[…number range]) AND (-f:[…date range]))
+```
+
+`not` reads the expression it is given, so it understands what the helpers above produce (clauses, parenthesised groups joined by one operator, `-( … )`); text it cannot read — `NOT …`, `AND` and `OR` mixed without parentheses, unbalanced parentheses — throws `UnsupportedExpressionError` instead of guessing, because a wrong negation would silently return the wrong documents. An empty expression stays empty (no filter, never "match nothing"). Verified on server 1.6.3 by comparing counts for 68 random nested expressions against a brute-force evaluation (0 differences).
+
 ## Ranges
 
 - **Open ends:** MongoCamp 1.5 rejects `[x TO *]` (the request fails). An open end is therefore closed with the far bound of the *other* bound's type: the 64-bit integer limits for numbers, year 0001 / 9999 for dates. `inRange('age', 20, null)` → `age:[20 TO 9223372036854775807]`. Both ends open means "has a value" and returns `exists(field)`. An open end next to a *text* bound can't be expressed and stays `*`, which the server rejects.
@@ -68,7 +85,7 @@ h.exists('name', 'text')         // name:*
 
 ## Known server limits
 
-Re-verified on MongoCamp server 1.6.1 (2026-11-01): `_id:"<oid>"`, `_id:<oid>` and lists of ids work with `equals`, `notEquals` and `inClause` (1.5 failed the request), but wildcards on `_id` (`like`, `startsWith`, `endsWith`, `_id:*`) match nothing, open ranges `[x TO *]` still fail the request, and `>=` / `>` range syntax still silently matches nothing. Negating a group whose inner operator is `AND` (`-(a AND b)`) is evaluated like `-(a OR b)` (reported in [MongoCamp/mongocamp-server#69](https://github.com/MongoCamp/mongocamp-server/issues/69)), which is why `notExists` negates clause by clause. These helpers can't work around that. A bare date as the upper bound ends at midnight, which is why dates are widened to the whole day.
+Re-verified on MongoCamp server 1.6.1 (2026-11-01): `_id:"<oid>"`, `_id:<oid>` and lists of ids work with `equals`, `notEquals` and `inClause` (1.5 failed the request), but wildcards on `_id` (`like`, `startsWith`, `endsWith`, `_id:*`) match nothing, open ranges `[x TO *]` still fail the request, and `>=` / `>` range syntax still silently matches nothing. Negating a group whose inner operator is `AND` (`-(a AND b)`) is evaluated like `-(a OR b)` (reported in [MongoCamp/mongocamp-server#69](https://github.com/MongoCamp/mongocamp-server/issues/69)), which is why `notExists` negates clause by clause; negating a whole `AND` group is done with `notAnd` / `not`, see [Negating groups](#negating-groups). A bare date as the upper bound ends at midnight, which is why dates are widened to the whole day.
 
 ## Building a filter from form state
 

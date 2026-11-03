@@ -30,6 +30,8 @@ export interface FilterCondition {
 export interface FilterGroup {
   match: 'all' | 'any'
   conditions: FilterCondition[]
+  /** Exclude what the combined conditions match (NOT). Written with De Morgan, see `useMongocampQuery().not`. */
+  negate?: boolean
 }
 
 // Only what was checked against a real MongoCamp server is offered (see useMongocampQuery for how the
@@ -180,11 +182,15 @@ export function buildCondition(condition: FilterCondition, type: FilterFieldType
   return ''
 }
 
-/** Combines every valid row with AND (`match: 'all'`) or OR (`'any'`). `''` means "no filter". */
+/**
+ * Combines every valid row with AND (`match: 'all'`) or OR (`'any'`), negated when `negate` is set. `''` means "no
+ * filter" — a negated group with no valid row is also no filter, never "match nothing".
+ */
 export function buildFilterQuery(group: FilterGroup, fieldTypes: Record<string, FilterFieldType>): string {
   const h = useMongocampQuery()
   const parts = group.conditions.map(c => buildCondition(c, fieldTypes[c.field] ?? 'string'))
-  return group.match === 'any' ? h.or(...parts) : h.and(...parts)
+  const combined = group.match === 'any' ? h.or(...parts) : h.and(...parts)
+  return group.negate ? h.not(combined) : combined
 }
 
 /** Rows that actually contribute to the query — what a "Filters (n)" badge should show. */
