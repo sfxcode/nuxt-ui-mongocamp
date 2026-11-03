@@ -202,6 +202,7 @@
       "confirmDeleteDocument": "Möchten Sie dieses Dokument wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "invalidJson": "Ungültiges JSON",
       "errorSave": "Fehler beim Speichern des Dokuments",
+      "documentGone": "Das Dokument existiert nicht mehr.",
       "errorDelete": "Fehler beim Löschen des Dokuments",
       "insert": "Einfügen",
       "downloadFileTooltip": "Datei herunterladen",

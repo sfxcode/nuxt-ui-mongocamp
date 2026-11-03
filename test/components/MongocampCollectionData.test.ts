@@ -38,6 +38,7 @@ function findInputByLabel(scope: DOMWrapper<Element>, labelText: string) {
 const mockListDocumentsRaw = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
+const mockUpdatePartial = vi.fn()
 const mockUpdateMany = vi.fn()
 const mockDistinctRaw = vi.fn()
 const mockDeleteMany = vi.fn()
@@ -66,6 +67,7 @@ mockNuxtImport('useMongocampApi', () => {
       listDocumentsRaw: mockListDocumentsRaw,
       insert: mockInsert,
       update: mockUpdate,
+      updateDocumentPartial: mockUpdatePartial,
       updateMany: mockUpdateMany,
       deleteMany: mockDeleteMany,
       _delete: mockDelete,
@@ -88,6 +90,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   session.isAdmin = false
   mockListDocumentsRaw.mockResolvedValue(mockRawResponse([], '0'))
+  mockUpdatePartial.mockResolvedValue({ wasAcknowledged: true, matchedCount: 1, modifiedCount: 1 })
 })
 
 describe('MongocampCollectionData', () => {
@@ -247,39 +250,86 @@ describe('MongocampCollectionData', () => {
       expect(requestBody.name).toBe('Charlie')
       expect(requestBody.metaData.createdBy).toBeDefined()
       expect(requestBody.metaData.updatedBy).toBeDefined()
+      // FormKit's internal `slots` entry must not leak into the stored document
+      expect(requestBody).not.toHaveProperty('slots')
     })
   })
 
   describe('edit', () => {
-    it('pre-fills the form from the row, strips _id, and preserves fields the form never touched', async () => {
-      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([
-        { _id: { $oid: 'doc-1' }, name: 'Alice', age: 30, legacyFlag: true },
-      ], '1'))
+    async function openEdit(rows: unknown[]) {
+      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse(rows, String(rows.length)))
       const component = await mountSuspended(withUApp(MongocampCollectionData), {
         route: '/',
         props: { collectionName: 'customers' },
       })
       await wait()
-
       await component.find('[aria-label="Edit document"]').trigger('click')
       await wait()
+      return component
+    }
+    const submit = async () => {
+      await modal().find('button[type="submit"]').trigger('click')
+      await wait()
+    }
+
+    it('pre-fills the form from the row and sends only the changed field as a partial update', async () => {
+      await openEdit([{ _id: { $oid: 'doc-1' }, name: 'Alice', age: 30, legacyFlag: true, metaData: { createdBy: 'bob', updatedBy: 'bob', created: '2024-01-01T00:00:00.000Z', updated: '2024-01-01T00:00:00.000Z' } }])
 
       expect((findInputByLabel(modal(), 'Name').element as HTMLInputElement).value).toBe('Alice')
 
       await findInputByLabel(modal(), 'Name').setValue('Alice Updated')
       await wait()
-      await modal().find('button[type="submit"]').trigger('click')
-      await wait()
+      await submit()
 
-      expect(mockUpdate).toHaveBeenCalledTimes(1)
-      const { documentId, requestBody } = mockUpdate.mock.calls[0]![0]
+      expect(mockUpdate).not.toHaveBeenCalled()
+      expect(mockUpdatePartial).toHaveBeenCalledTimes(1)
+      const { collectionName, documentId, requestBody } = mockUpdatePartial.mock.calls[0]![0]
+      expect(collectionName).toBe('customers')
       expect(documentId).toBe('doc-1')
-      expect(requestBody._id).toBeUndefined()
+      // fields the user did not touch (age, legacyFlag, _id) are not part of the request at all
       expect(requestBody.name).toBe('Alice Updated')
-      // full-replace safety (brain/patterns/document-crud.md): a field the sampled schema
-      // still saw (legacyFlag is present on the only loaded row) survives untouched
-      expect(requestBody.legacyFlag).toBe(true)
-      expect(requestBody.metaData.updatedBy).toBeDefined()
+      expect(requestBody).not.toHaveProperty('age')
+      expect(requestBody).not.toHaveProperty('legacyFlag')
+      expect(requestBody).not.toHaveProperty('_id')
+      expect(requestBody).not.toHaveProperty('slots')
+      // the stamp goes in as dotted leaves, so createdBy/created are left alone
+      expect(requestBody['metaData.updatedBy']).toBe('alice@example.com')
+      expect(requestBody['metaData.updated']).toBeDefined()
+      expect(requestBody).not.toHaveProperty('metaData')
+      expect(requestBody).not.toHaveProperty('metaData.createdBy')
+    })
+
+    it('closes without any request when nothing was changed', async () => {
+      await openEdit([{ _id: { $oid: 'doc-1' }, name: 'Alice' }])
+
+      await submit()
+
+      expect(mockUpdatePartial).not.toHaveBeenCalled()
+      expect(mockUpdate).not.toHaveBeenCalled()
+      // (the dialog's close transition keeps it in the DOM for a moment, so only the absence of an error is checked)
+      expect(modal().text()).not.toContain('Error saving document')
+    })
+
+    it('shows an error and keeps the dialog open when the document no longer exists (matchedCount 0)', async () => {
+      mockUpdatePartial.mockResolvedValueOnce({ wasAcknowledged: true, matchedCount: 0, modifiedCount: 0 })
+      await openEdit([{ _id: { $oid: 'doc-1' }, name: 'Alice' }])
+
+      await findInputByLabel(modal(), 'Name').setValue('Alice Updated')
+      await wait()
+      await submit()
+
+      expect(modal().text()).toContain('The document no longer exists.')
+    })
+
+    it('shows the server error and keeps the dialog open when the request fails', async () => {
+      mockUpdatePartial.mockRejectedValueOnce(new Error('boom'))
+      await openEdit([{ _id: { $oid: 'doc-1' }, name: 'Alice' }])
+
+      await findInputByLabel(modal(), 'Name').setValue('Alice Updated')
+      await wait()
+      await submit()
+
+      expect(modal().text()).toContain('boom')
     })
   })
 

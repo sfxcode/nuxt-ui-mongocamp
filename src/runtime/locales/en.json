@@ -202,6 +202,7 @@
       "confirmDeleteDocument": "Are you sure you want to delete this document? This action cannot be undone.",
       "invalidJson": "Invalid JSON",
       "errorSave": "Error saving document",
+      "documentGone": "The document no longer exists.",
       "errorDelete": "Error deleting document",
       "insert": "Insert",
       "downloadFileTooltip": "Download file",

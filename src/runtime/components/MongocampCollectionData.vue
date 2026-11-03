@@ -7,6 +7,7 @@ import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { useMongocampIndex } from '../composables/useMongocampIndex'
 import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
+import { buildPartialBody, diffDocument, hasChanges } from '../utils/documentDiff'
 import { isIsoDateTimeString } from '../utils/isoDate'
 import { parseServerError } from '../utils/aggregationErrors'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
@@ -146,7 +147,11 @@ async function handleSave() {
   editError.value = ''
   let payload: Record<string, unknown> & { metaData?: Partial<{ createdBy: string, updatedBy: string, created: string | Date, updated: string | Date }> }
   if (editSamples.value.length > 0) {
-    payload = wrapExtendedJson(editFormData.value, editMode.value === 'update' ? originalRow.value : undefined)
+    // FormKit adds an internal `slots` entry to the form value; FUDataEdit strips it from what it emits, but we read
+    // the v-model, so it is dropped here — otherwise every saved document would get a stray `slots: {}`. On an edit
+    // the result starts as a clone of the row, so a real `slots` field of the document survives untouched.
+    const { slots: _slots, ...formValues } = editFormData.value
+    payload = wrapExtendedJson(formValues, editMode.value === 'update' ? originalRow.value : undefined)
   }
   else {
     try {
@@ -157,6 +162,17 @@ async function handleSave() {
       return
     }
   }
+  // Edit: only what the user actually changed is sent (a partial update), so a concurrent change to another field
+  // is not overwritten. Nothing changed ⇒ no request. A change a partial update cannot express falls back to the
+  // full replace below.
+  const original = editMode.value === 'update' ? originalRow.value : undefined
+  if (original && editDocId.value) {
+    const unchanged = diffDocument(original, payload)
+    if (unchanged && !hasChanges(unchanged)) {
+      isEditModalOpen.value = false
+      return
+    }
+  }
   ensureMetaData(payload)
   try {
     if (editMode.value === 'insert') {
@@ -164,6 +180,19 @@ async function handleSave() {
     }
     else {
       if (!editDocId.value) return
+      const changes = original ? diffDocument(original, payload) : null
+      if (changes && hasChanges(changes)) {
+        const result = await documentApi.updateDocumentPartial({
+          collectionName: props.collectionName,
+          documentId: editDocId.value,
+          requestBody: buildPartialBody(changes),
+        })
+        // the server answers 200 with matchedCount 0 for a document that is gone
+        if (result.matchedCount === 0) throw new Error(t('nuxtUiMongocamp.collectionData.documentGone'))
+        isEditModalOpen.value = false
+        await fetchDocuments()
+        return
+      }
       const body: Record<string, unknown> = { ...payload }
       delete body._id
       // UpdateRequest name collides with a models type in the generated client — cast through unknown
