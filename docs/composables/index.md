@@ -24,6 +24,7 @@ All composables are auto-imported.
 | [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) | Converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to |
 | [`useMongocampSession`](/composables/use-mongocamp-session) | Is the login still usable? Token-expiry check (no request), optional server check (`verify`), `invalidateSession` |
 | [`useMongocampRoles`](/composables/use-mongocamp-roles) | Role/route-pattern access checks (`isAdmin`, `isManager`, `isAllowedPathForRoute`); powers the global nav guard |
+| [`useMongocampPermissions`](/composables/use-mongocamp-permissions) | May the user read / write / administer a collection? From the grants in the session profile; UI-level gating that fails open |
 | [`useMongocampClientApi`](/composables/use-mongocamp-client-api) | Mode-switching drop-in for `useMongocampApi()` — session or [server proxy](/guide/server-proxy-auth) mode |
 | [`useMongocampProxyApi`](/composables/use-mongocamp-proxy-api) | The server-proxy-mode branch `useMongocampClientApi` switches to |
 

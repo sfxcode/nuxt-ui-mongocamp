@@ -2,7 +2,7 @@
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampError, useMongocampRoles, useMongocampSchema, useToast } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampError, useMongocampPermissions, useMongocampRoles, useMongocampSchema, useToast } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { useMongocampIndex } from '../composables/useMongocampIndex'
@@ -48,6 +48,10 @@ const { schemaFromSamples } = useMongocampSchema()
 const { listDistinct } = useMongocampAggregation()
 const { createIndexForField } = useMongocampIndex()
 const { isManager } = useMongocampRoles()
+// Without a write grant the table is read-only: no insert, import, edit, delete or selection. UI-level only (the server
+// refuses a write without a grant anyway); it shows everything when the grants are unknown (utils/grantMatching.ts).
+const { canWrite } = useMongocampPermissions()
+const writable = computed(() => canWrite(props.collectionName))
 const toast = useToast()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -239,6 +243,7 @@ function makeActionsColumn(): TableColumn<Row> {
           })))
         }
       }
+      if (!writable.value) return h('div', { class: 'flex gap-1 justify-end' }, buttons)
       buttons.push(
         withTooltip(t('nuxtUiMongocamp.collectionData.editDocumentTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',
@@ -648,7 +653,7 @@ async function fetchDocuments() {
         .filter(f => operatorsFor(f.type).length > 0)
       // GridFS files/chunks documents are managed through the bucket (deleting them one by one would
       // orphan the other half of a file), so bucket collections get no bulk selection
-      if (!isBucketCollection(props.collectionName)) {
+      if (!isBucketCollection(props.collectionName) && writable.value) {
         columns.value.unshift(createSelectColumn<Row>(UCheckbox, { selectAll: t('nuxtUiMongocamp.bulk.selectAll'), selectRow: t('nuxtUiMongocamp.bulk.selectRow') }))
       }
       columns.value.push(makeActionsColumn())
@@ -794,7 +799,7 @@ watch(() => props.collectionName, init, { immediate: true })
           {{ t('nuxtUiMongocamp.collectionData.documentsCount', { count: total }) }}
         </span>
         <UTooltip
-          v-if="isBucketCollection(collectionName)"
+          v-if="writable && isBucketCollection(collectionName)"
           :text="t('nuxtUiMongocamp.collectionData.uploadFileTooltip')"
         >
           <UButton
@@ -808,7 +813,7 @@ watch(() => props.collectionName, init, { immediate: true })
           />
         </UTooltip>
         <UTooltip
-          v-else
+          v-else-if="writable"
           :text="t('nuxtUiMongocamp.collectionData.insertDocumentTooltip')"
         >
           <UButton
@@ -827,7 +832,7 @@ watch(() => props.collectionName, init, { immediate: true })
           @change="handleFileSelected"
         >
         <MongocampImport
-          v-if="!isBucketCollection(collectionName)"
+          v-if="writable && !isBucketCollection(collectionName)"
           :collection-name="collectionName"
           @imported="init"
         />

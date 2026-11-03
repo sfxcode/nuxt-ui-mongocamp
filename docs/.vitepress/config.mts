@@ -90,6 +90,7 @@ export default defineConfig({
             { text: 'useMongocampQueryBuilder', link: '/composables/use-mongocamp-query-builder' },
             { text: 'useMongocampExtendedJson', link: '/composables/use-mongocamp-extended-json' },
             { text: 'useMongocampRoles', link: '/composables/use-mongocamp-roles' },
+            { text: 'useMongocampPermissions', link: '/composables/use-mongocamp-permissions' },
             { text: 'useMongocampSession', link: '/composables/use-mongocamp-session' },
             { text: 'useMongocampClientApi', link: '/composables/use-mongocamp-client-api' },
             { text: 'useMongocampProxyApi', link: '/composables/use-mongocamp-proxy-api' },

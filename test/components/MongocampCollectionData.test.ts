@@ -47,7 +47,7 @@ const mockGetFileInformation = vi.fn()
 const mockGetFile = vi.fn()
 const mockInsertFile = vi.fn()
 const mockCreateIndexForField = vi.fn()
-const session = { isAdmin: false }
+const session: { isAdmin: boolean, grants?: unknown } = { isAdmin: false }
 
 function mockRawResponse<T>(value: T, totalHeader?: string) {
   return {
@@ -84,11 +84,12 @@ mockNuxtImport('useMongocampApi', () => {
 })
 
 // who is signed in decides whether the header index menu is offered
-mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: session.isAdmin, roles: [] } } }))
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: session.isAdmin, roles: [], grants: session.grants } } }))
 
 beforeEach(() => {
   vi.clearAllMocks()
   session.isAdmin = false
+  session.grants = undefined
   mockListDocumentsRaw.mockResolvedValue(mockRawResponse([], '0'))
   mockUpdatePartial.mockResolvedValue({ wasAcknowledged: true, matchedCount: 1, modifiedCount: 1 })
 })
@@ -330,6 +331,62 @@ describe('MongocampCollectionData', () => {
       await submit()
 
       expect(modal().text()).toContain('boom')
+    })
+  })
+
+  describe('without a write grant (UI-level, from the grants of the profile)', () => {
+    const grant = (name: string, write: boolean) => ({ name, read: true, write, administrate: false, grantType: 'COLLECTION' })
+
+    async function mountCustomers() {
+      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice' }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      return component
+    }
+    const writeControls = (component: Awaited<ReturnType<typeof mountCustomers>>) => ({
+      insert: component.find('[aria-label="Insert document"]').exists(),
+      import: component.find('[aria-label="Import documents"]').exists() || component.text().includes('Import documents'),
+      edit: component.find('[aria-label="Edit document"]').exists(),
+      remove: component.find('[aria-label="Delete document"]').exists(),
+      select: component.find('[aria-label="Select row"]').exists(),
+    })
+
+    it('a read-only grant: rows are shown, but no insert, import, edit, delete or selection', async () => {
+      session.grants = [grant('customers', false)]
+      const component = await mountCustomers()
+
+      expect(component.text()).toContain('Alice')
+      expect(writeControls(component)).toEqual({ insert: false, import: false, edit: false, remove: false, select: false })
+    })
+
+    it('a write grant: every write control is there', async () => {
+      session.grants = [grant('customers', true)]
+      const component = await mountCustomers()
+
+      expect(writeControls(component)).toEqual({ insert: true, import: true, edit: true, remove: true, select: true })
+    })
+
+    it('the grant name is matched like the server does: ignoring case, exact otherwise', async () => {
+      session.grants = [grant('CUSTOMERS', true)]
+      expect(writeControls(await mountCustomers()).insert).toBe(true)
+
+      session.grants = [grant('cust*', true), grant('customers_archive', true)]
+      expect(writeControls(await mountCustomers()).insert).toBe(false)
+    })
+
+    it('an administrator keeps every control, whatever the grants say', async () => {
+      session.isAdmin = true
+      session.grants = []
+      const component = await mountCustomers()
+
+      expect(writeControls(component)).toEqual({ insert: true, import: true, edit: true, remove: true, select: true })
+    })
+
+    it('shows everything when the profile has no grant list — fail open, the server decides', async () => {
+      session.grants = undefined
+      const component = await mountCustomers()
+
+      expect(writeControls(component)).toEqual({ insert: true, import: true, edit: true, remove: true, select: true })
     })
   })
 
