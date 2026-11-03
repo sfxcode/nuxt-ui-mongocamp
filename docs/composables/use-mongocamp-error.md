@@ -11,7 +11,7 @@ const { kind, message } = describeError(error, 'nuxtUiMongocamp.databases.errorL
 |---|---|
 | `network` | The generated client threw a `FetchError` — the server is unreachable, or the browser hid a rejected response (this is what an expired session looks like) |
 | `unauthorized` | HTTP 401 |
-| `forbidden` | HTTP 403 |
+| `forbidden` | HTTP 403 — including a request the user has no grant for: the server answers that with a 401, which this module turns into a 403 before it reaches the error mapping (see [`useMongocampClientApi`](/composables/use-mongocamp-client-api#a-missing-grant-is-not-a-dead-session)) |
 | `other` | Anything else; uses the error's own message, then the optional fallback i18n key, then `nuxtUiMongocamp.errors.generic` |
 
 `describeError` is synchronous and only looks at the error object. The `notAllowed` and `invalid` kinds below come from `describeServerError`.

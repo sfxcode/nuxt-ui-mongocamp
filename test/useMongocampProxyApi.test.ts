@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { permissionDeniedMiddleware } from '../src/runtime/utils/permissionDenied'
 
 let mockOptions: Record<string, unknown> = {}
 
@@ -43,6 +44,15 @@ describe('useMongocampProxyApi', () => {
       expect(api.configuration?.basePath).toBe('/api/_mongocamp-test')
       expect(api.configuration?.accessToken).toBeUndefined()
       expect(api.configuration?.apiKey).toBeUndefined()
+    }
+  })
+
+  it('turns a missing-grant 401 into a 403 on every instance (the api key may have limited grants too)', () => {
+    const apis = useMongocampProxyApi()
+
+    for (const name of API_NAMES) {
+      const api = apis[name] as unknown as { middleware: unknown[] }
+      expect(api.middleware).toContain(permissionDeniedMiddleware)
     }
   })
 

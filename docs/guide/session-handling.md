@@ -15,7 +15,7 @@ What is left is a token that expired while no request was made. The session guar
 
 | Mechanism | Needs | What it does |
 |---|---|---|
-| **Readable 401 handling** | nothing (always on) | A `401` clears the session and the alert offers **Log in again** |
+| **Readable 401 handling** | nothing (always on) | A `401` clears the session and the alert offers **Log in again** — except a `401` that only means "no grant for this" (`user not authorized for …`), which is turned into a `403`: the user stays logged in and sees "you do not have permission" |
 | **Session guard** | `sessionGuard: true` | Looks at the token's own expiry on every navigation and clears a session that says it has run out |
 
 | **Server check** | `sessionGuard: true` + `sessionGuardVerify: true` | Also asks the server whether a token that looks valid is still accepted |
