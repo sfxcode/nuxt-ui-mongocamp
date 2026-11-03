@@ -330,6 +330,7 @@
       "unavailable": "MongoCamp unavailable"
     },
     "bucket": {
+      "filterTooLong": "The filter is too long for the server (more than {max} characters once encoded). Please shorten it.",
       "downloadFailedTitle": "Download failed",
       "downloadFailedFallback": "Could not download the file.",
       "uploadedTitle": "File uploaded",

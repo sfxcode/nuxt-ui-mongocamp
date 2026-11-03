@@ -211,6 +211,22 @@ describe('listFiles', () => {
     expect(result).toEqual({ files, total: 7 })
   })
 
+  it('refuses a filter too long for the server URI with a clear error and makes no request', async () => {
+    const { listFiles } = useMongocampBucket()
+
+    await expect(listFiles('test_images', { filter: `filename:${'a'.repeat(2000)}` })).rejects.toThrow('nuxtUiMongocamp.bucket.filterTooLong')
+    expect(mockFileApi.listFilesRaw).not.toHaveBeenCalled()
+  })
+
+  it('counts the URL-encoded length: characters that expand when encoded can tip a filter over the limit', async () => {
+    const { listFiles } = useMongocampBucket()
+    // 700 x '"' is 700 characters raw but 2100 encoded (%22)
+    await expect(listFiles('test_images', { filter: '"'.repeat(700) })).rejects.toThrow('filterTooLong')
+
+    mockFileApi.listFilesRaw.mockResolvedValueOnce(mockRawResponse([], '0'))
+    await expect(listFiles('test_images', { filter: 'a'.repeat(1800) })).resolves.toEqual({ files: [], total: 0 })
+  })
+
   it('defaults every option to undefined when omitted', async () => {
     mockFileApi.listFilesRaw.mockResolvedValueOnce(mockRawResponse([], '0'))
 

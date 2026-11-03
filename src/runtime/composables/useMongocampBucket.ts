@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { useI18n, useMongocampClientApi, useToast } from '#imports'
 import type { BucketInformation, FileInformation } from '@sfxcode/nuxt-mongocamp-server'
 import { BUCKET_COLLECTION_SUFFIX } from '../utils/collectionProtection'
+import { isFilterTooLong, MAX_ENCODED_FILTER_LENGTH } from '../utils/requestLimits'
 
 export interface ListFilesOptions {
   filter?: string
@@ -96,6 +97,10 @@ export function useMongocampBucket() {
   }
 
   async function listFiles(bucketName: string, options: ListFilesOptions = {}): Promise<ListFilesResult> {
+    // a too-long query string would only come back as an opaque network failure (the server's 414 has no CORS headers)
+    if (isFilterTooLong(options.filter)) {
+      throw new Error(t('nuxtUiMongocamp.bucket.filterTooLong', { max: MAX_ENCODED_FILTER_LENGTH }))
+    }
     const res = await fileApi.listFilesRaw({
       bucketName,
       filter: options.filter,

@@ -108,7 +108,7 @@ Kept in sync with `docs/composables/index.md` (the canonical, per-composable-doc
 - **`useMongocampCollection`** — reactive state for paginated collection queries: `filter`, `sort`, `projection`, `pagination` (pageIndex + pageSize), `total`
 - **`useMongocampDocument`** — helpers for document-level operations: `ensureMetaData` (stamps `createdBy`/`updatedBy`/timestamps from the logged-in user) and `updateFromPartial`
 - **`useMongocampSchema`** — exports `useJsonSchema()` with `schemaToColumnDefinition(definition, fields)` for mapping a `JsonSchemaDefinition` to UTable column configs; sorts `_id` first, then id-containing fields, then others; detects `date-time` and `number` types
-- **`useMongocampBucket`** — GridFS bucket detection, file-id resolution, upload/download/delete/rename
+- **`useMongocampBucket`** — GridFS bucket detection, file-id resolution, upload/download/delete/rename; `listFiles` refuses a filter over 1800 URL-encoded characters (the server's 414 has no CORS headers — `utils/requestLimits.ts`)
 - **`useMongocampIndex`** — create/list/delete MongoDB indexes (standard, unique, text, expiring) plus `createIndexForField(collection, field, ascending = true)` (plain single-field index, 15 s timeout)
 - **`useMongocampJobs`** — list/register/update/execute/delete scheduled background jobs
 - **`useMongocampAccount`** — account self-service: profile, password change, API key regeneration

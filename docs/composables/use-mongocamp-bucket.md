@@ -85,7 +85,7 @@ const deleted = await deleteFile('images', fileId)
 const renamed = await updateFileInformation('images', fileId, { filename: 'new-name.png', metadata: { owner: 'alice' } })
 ```
 
-`listFiles` reads the total row count from the `x-pagination-count-rows` response header (same convention `MongocampCollectionData` uses for documents), returning `0` if the header is absent. `deleteFile`/`updateFileInformation` follow the same loading-state/toast/boolean-return convention as every other mutation here — both track in-flight file ids via `fileActionInFlight` (bind `:loading="fileActionInFlight.has(fileId)"`), show a success/error toast, and return a boolean so the caller knows whether to refresh.
+`listFiles` sends the filter in the query string, and the server refuses a URI over 2048 characters with a `414` that has no CORS headers (a browser only sees a network failure). So a filter longer than 1800 characters once URL-encoded is rejected up front with a clear error (`nuxtUiMongocamp.bucket.filterTooLong`) and no request is made. `listFiles` reads the total row count from the `x-pagination-count-rows` response header (same convention `MongocampCollectionData` uses for documents), returning `0` if the header is absent. `deleteFile`/`updateFileInformation` follow the same loading-state/toast/boolean-return convention as every other mutation here — both track in-flight file ids via `fileActionInFlight` (bind `:loading="fileActionInFlight.has(fileId)"`), show a success/error toast, and return a boolean so the caller knows whether to refresh.
 
 ## Bucket-level operations
 
