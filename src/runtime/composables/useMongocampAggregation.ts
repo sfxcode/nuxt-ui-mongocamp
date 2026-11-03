@@ -6,6 +6,7 @@ import type { RequestStage } from '../utils/aggregationPipeline'
 import { ForbiddenPipelineError } from '../utils/aggregationErrors'
 import { stripServerFields } from '../utils/aggregationResult'
 import { readJsonKeepingLongs } from '../utils/bigIntJson'
+import { headerNumber } from '../utils/paginationHeaders'
 import { unwrapExtendedJson } from './useMongocampExtendedJson'
 import { notAllowedOperator, OPERATOR_NOT_ALLOWED_CODE, readServerError } from '../utils/serverError'
 
@@ -62,15 +63,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function headerNumber(headers: { get: (name: string) => string | null } | undefined, name: string): number | undefined {
-  const parsed = Number.parseInt(headers?.get(name) ?? '', 10)
-  return Number.isNaN(parsed) ? undefined : parsed
-}
-
-// Aggregation and sampling over `collectionApi.aggregate`/`distinct`. Results are plain JSON: dates
-// come back as ISO strings without milliseconds and 64-bit numbers beyond 2^53 are already rounded
-// by JSON parsing. `getSchemaAnalysis` is deliberately not used — the server's own analysis
-// is replaced by a client-side one over a `$sample` (see brain/project/mongocamp-aggregation-server-behavior.md).
+// Aggregation and sampling over `collectionApi.aggregate`/`distinct`. Results are plain JSON: dates come back as ISO
+// strings (without milliseconds when they are zero) and 64-bit integers beyond 2^53 are read from the response text, so
+// they stay exact (see utils/bigIntJson.ts). The field statistics use a client-side analysis over a `$sample`; the
+// server's own `getSchemaAnalysis` is only behind an explicit button (see MongocampCollectionInfos).
 export function useMongocampAggregation() {
   const { collectionApi } = useMongocampClientApi()
   const { describeError } = useMongocampError()
