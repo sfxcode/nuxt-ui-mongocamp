@@ -535,7 +535,7 @@
       "exportJson": "Seite als JSON exportieren",
       "exportCsv": "Seite als CSV exportieren",
       "noResults": "Die Pipeline hat keine Ergebnisse geliefert",
-      "precisionNote": "Die Ergebnisse sind reines JSON: Datumswerte erscheinen als ISO-Text, ganze Zahlen über 2^53 können gerundet sein.",
+      "precisionNote": "Die Ergebnisse sind reines JSON: Datumswerte erscheinen als ISO-Text, ganze Zahlen über 2^53 erscheinen als Text mit allen Stellen.",
       "runFailedTitle": "Die Pipeline konnte nicht ausgeführt werden",
       "fixStages": "Bitte zuerst die unten markierten Stufen korrigieren.",
       "fixStagesFirst": "Bitte zuerst die fehlerhaften Stufen korrigieren, bevor zu JSON gewechselt wird.",

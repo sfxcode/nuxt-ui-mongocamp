@@ -13,33 +13,48 @@ function unwrapDateTime(raw: Record<string, unknown>): unknown {
   return raw
 }
 
-function unwrapNumber(raw: Record<string, unknown>): number | undefined {
+const INTEGER_TEXT = /^-?\d+$/
+
+// `$numberLong` beyond ±(2^53 − 1) cannot be a JS number without changing digits, so it stays the exact digit string
+// (`exactLongs`, the default). `$numberDecimal` still becomes a JS number: past ~15 significant digits it is rounded.
+function unwrapNumber(raw: Record<string, unknown>, exactLongs: boolean): number | string | undefined {
   for (const key of NUMBER_WRAPPER_KEYS) {
     const wrapped = raw[key]
     if (typeof wrapped === 'string' || typeof wrapped === 'number') {
       const parsed = Number(wrapped)
-      if (!Number.isNaN(parsed)) return parsed
+      if (Number.isNaN(parsed)) continue
+      if (key === '$numberLong' && exactLongs && typeof wrapped === 'string' && INTEGER_TEXT.test(wrapped) && !Number.isSafeInteger(parsed)) return wrapped
+      return parsed
     }
   }
   return undefined
 }
 
+export interface UnwrapOptions {
+  /** Keep a `$numberLong` outside the safe-integer range as its exact digit string (default `true`). `false` gives the rounded number, e.g. for type inference. */
+  exactLongs?: boolean
+}
+
 // Converts a raw MongoDB document (possibly containing extended-JSON wrappers) into plain JS
 // values — both a usable live form value and valid schema-inference input for
 // useFormKitAutoForm's inferFormSchemaFromSamples, which has no notion of $oid/$date/$number*.
-export function unwrapExtendedJson(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(unwrapExtendedJson)
+export function unwrapExtendedJson(value: unknown, options: UnwrapOptions = {}): unknown {
+  if (Array.isArray(value)) return value.map(item => unwrapExtendedJson(item, options))
   if (!isPlainObject(value)) return value
   if (typeof value.$oid === 'string') return value.$oid
   if ('$date' in value) return unwrapDateTime(value)
-  const number = unwrapNumber(value)
+  const number = unwrapNumber(value, options.exactLongs ?? true)
   if (number !== undefined) return number
   const result: Record<string, unknown> = {}
-  for (const [key, v] of Object.entries(value)) result[key] = unwrapExtendedJson(v)
+  for (const [key, v] of Object.entries(value)) result[key] = unwrapExtendedJson(v, options)
   return result
 }
 
 function rewrapValue(value: unknown, originalValue: unknown): unknown {
+  // an exact long (kept as its digit string by unwrapExtendedJson) goes back as the wrapper, so it stays a 64-bit integer
+  if (typeof value === 'string' && INTEGER_TEXT.test(value) && isPlainObject(originalValue) && typeof originalValue.$numberLong === 'string') {
+    return { $numberLong: value }
+  }
   if (typeof value === 'string' && isIsoDateTimeString(value)) {
     return { $date: value }
   }

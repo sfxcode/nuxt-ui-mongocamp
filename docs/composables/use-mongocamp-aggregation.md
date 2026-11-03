@@ -49,7 +49,7 @@ The server's raw error contains the address of the database server (`… on serv
 
 Verified against MongoCamp 1.5.10 and unchanged on 1.6.3 (2026-11-03):
 
-- results are plain JSON: dates as ISO strings without milliseconds, `_id` as a hex string, 64-bit integers as bare numbers (rounded beyond 2^53);
+- results are plain JSON: dates as ISO strings without milliseconds, `_id` as a hex string, 64-bit integers as bare numbers with every digit — `runAggregation` and `listDistinct` read the response text themselves and return an integer beyond ±(2^53 − 1) as its exact digit string, because the generated client's `JSON.parse` would round it (`$numberInt` / `$numberDecimal` wrappers in a result become numbers);
 - `distinct` answers with native values although the generated client types it as `string[]`;
 - the generated client types a stage's `value` as `string`; the server wants JSON (the composable casts).
 

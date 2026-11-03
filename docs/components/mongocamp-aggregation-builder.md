@@ -62,7 +62,7 @@ The refusal names the operator (and the stage in the JSON view). It exists becau
 - The table has one column per key found in the first rows, `_id` first (a `$group`'s key). Objects and arrays show as compact JSON with the full text as a tooltip; very long values are shortened.
 - The header shows the total number of results. **Export** (download icon) saves the **current page** as JSON or CSV — raise the page size first for more.
 - A pipeline with no results shows an empty state, not an error.
-- Results are plain JSON: dates arrive as ISO text (without milliseconds) and whole numbers beyond 2^53 may already be rounded — a note under the table says so.
+- Results are plain JSON: dates arrive as ISO text (without milliseconds) and whole numbers beyond 2^53 are shown as text with every digit (the response is read from its text, because the generated client's `JSON.parse` would round them) — a note under the table says so.
 
 ## When it fails
 

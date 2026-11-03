@@ -18,7 +18,7 @@ Recursively converts extended-JSON wrappers into plain values:
 
 - `{ $oid: '...' }` → the plain string
 - `{ $date: ... }` (string, epoch millis, or `{ $numberLong: '...' }`) → an ISO string
-- `{ $numberInt/$numberLong/$numberDouble/$numberDecimal: '...' }` → a JS number
+- `{ $numberInt/$numberLong/$numberDouble/$numberDecimal: '...' }` → a JS number — except a `$numberLong` beyond ±(2^53 − 1), which stays its **exact digit string** (`unwrapExtendedJson(value, { exactLongs: false })` gives the rounded number instead, used only for type inference). A `$numberDecimal` still becomes a JS number, so more than ~15 significant digits are rounded
 - Nested objects and arrays recurse
 - Any other value passes through untouched
 
@@ -34,6 +34,7 @@ The inverse conversion, safe to hand to `documentApi.insert`/`documentApi.update
 
 - A string shaped like an ISO date/date-time → rewrapped to `{ $date: isoString }` — this mirrors the exact ISO-detection regex `useFormKitAutoForm` uses to infer a date field in the first place, and `nuxtUIInputDate` (with `valueType: 'iso'`) always emits a full ISO string back, so this is symmetric with inference
 - A string whose matching field in `originalDoc` was `$oid`-wrapped → rewrapped to `{ $oid: value }`
+- A string of digits whose matching field in `originalDoc` was a `$numberLong` wrapper → rewrapped to `{ $numberLong: value }`, so an exact long stays a 64-bit integer (and an untouched one compares equal to the original, so it is never sent)
 - Nested objects and arrays of objects recurse, matched positionally/by-key against `originalDoc` so oid detection still works inside them
 - `{ $date }` is what the server wants on write: since MongoCamp 1.6.3 it is converted into a real date by insert, full update, partial update and `updateMany` (1.5.x and 1.6.1 stored it as a literal sub-document, so the date could not be filtered). A bare date string such as `2024-03-01` stays plain text.
 - Everything else (numbers, booleans, plain strings, unmatched values) passes through as a plain JS value — the server accepts plain shapes on write, only reads return the extended-JSON wrapped form

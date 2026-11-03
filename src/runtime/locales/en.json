@@ -535,7 +535,7 @@
       "exportJson": "Export page as JSON",
       "exportCsv": "Export page as CSV",
       "noResults": "The pipeline returned no results",
-      "precisionNote": "Results are plain JSON: dates appear as ISO text and whole numbers beyond 2^53 may be rounded.",
+      "precisionNote": "Results are plain JSON: dates appear as ISO text and whole numbers beyond 2^53 are shown as text with all their digits.",
       "runFailedTitle": "The pipeline could not be run",
       "fixStages": "Fix the stages marked below first.",
       "fixStagesFirst": "Fix the stages with errors before switching to JSON.",

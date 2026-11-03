@@ -252,7 +252,7 @@ describe('MongocampAggregationBuilder — results', () => {
     expect(component.text()).toContain('["x","y"]')
     expect(component.text()).toContain('null')
     expect(component.text()).toContain('2 results')
-    expect(component.text()).toContain('whole numbers beyond 2^53 may be rounded')
+    expect(component.text()).toContain('whole numbers beyond 2^53 are shown as text with all their digits')
   })
 
   it('shows an empty state when the pipeline returns nothing, and disables the export', async () => {

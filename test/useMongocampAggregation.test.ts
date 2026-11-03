@@ -98,6 +98,42 @@ describe('runAggregation', () => {
   })
 })
 
+describe('large integers', () => {
+  // a real Response, like the generated client returns: its own value() would round the digits
+  const textResponse = (text: string, headers: Record<string, string> = {}) => {
+    const raw = new Response(text, { headers })
+    return { raw, value: () => raw.json() }
+  }
+
+  it('keeps a 64-bit integer in an aggregation result exact (as its digit string)', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValueOnce(textResponse('[{"_id":"a","total":9007199254740993,"small":5,"avg":2.5}]'))
+
+    const result = await useMongocampAggregation().runAggregation('c', [])
+
+    expect(result.rows).toEqual([{ _id: 'a', total: '9007199254740993', small: 5, avg: 2.5 }])
+  })
+
+  it('unwraps the decimal and int wrappers the server writes in a result', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValueOnce(textResponse('[{"d":{"$numberDecimal":"1.50"},"i":{"$numberInt":"7"}}]'))
+
+    expect((await useMongocampAggregation().runAggregation('c', [])).rows).toEqual([{ d: 1.5, i: 7 }])
+  })
+
+  it('keeps the pagination headers when reading the body itself', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValueOnce(textResponse('[{"a":1}]', { 'x-pagination-count-rows': '9', 'x-pagination-count-pages': '3' }))
+
+    const result = await useMongocampAggregation().runAggregation('c', [])
+
+    expect(result).toMatchObject({ total: 9, pages: 3 })
+  })
+
+  it('keeps a distinct value beyond 2^53 exact as text', async () => {
+    mockCollectionApi.distinctRaw.mockResolvedValueOnce(textResponse('[9007199254740993,7,"x"]'))
+
+    expect((await useMongocampAggregation().listDistinct('c', 'f')).values).toEqual(['9007199254740993', 7, 'x'])
+  })
+})
+
 describe('listDistinct', () => {
   it('asks for the first page of the field with the limit as page size and a timeout signal', async () => {
     mockCollectionApi.distinctRaw.mockResolvedValueOnce(rawResponse(['A', 'B'], { 'x-pagination-count-rows': '2' }))

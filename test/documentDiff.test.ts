@@ -74,6 +74,16 @@ describe('diffDocument', () => {
     expect(diff({ s: 'abc' }, { s: 'abd' }).set).toEqual({ s: 'abd' })
   })
 
+  it('does not send an untouched exact long, and sends a changed one as the wrapper', () => {
+    const big = { $numberLong: '9007199254740993' }
+
+    expect(hasChanges(diff({ n: big, name: 'a' }, { n: big, name: 'a' }))).toBe(false)
+    expect(diff({ n: big, name: 'a' }, { n: big, name: 'b' }).set).toEqual({ name: 'b' })
+    expect(diff({ n: big }, { n: { $numberLong: '9007199254740995' } }).set).toEqual({ n: { $numberLong: '9007199254740995' } })
+    // two longs that differ only beyond double precision are still different
+    expect(hasChanges(diff({ n: big }, { n: { $numberLong: '9007199254740992' } }))).toBe(true)
+  })
+
   it('sends a changed extended-JSON value whole, never descending into the wrapper', () => {
     const changes = diff({ when: { $date: '2024-01-01T00:00:00.000Z' } }, { when: { $date: '2025-01-01T00:00:00.000Z' } })
 

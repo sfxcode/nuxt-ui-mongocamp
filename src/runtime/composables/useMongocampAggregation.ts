@@ -4,6 +4,8 @@ import { useMongocampError } from './useMongocampError'
 import { findForbidden } from '../utils/aggregationPipeline'
 import type { RequestStage } from '../utils/aggregationPipeline'
 import { ForbiddenPipelineError } from '../utils/aggregationErrors'
+import { readJsonKeepingLongs } from '../utils/bigIntJson'
+import { unwrapExtendedJson } from './useMongocampExtendedJson'
 import { notAllowedOperator, OPERATOR_NOT_ALLOWED_CODE, readServerError } from '../utils/serverError'
 
 const AGGREGATE_TIMEOUT_MS = 30000
@@ -79,8 +81,10 @@ export function useMongocampAggregation() {
       rowsPerPage: paging.rowsPerPage,
       page,
     }, withTimeout(AGGREGATE_TIMEOUT_MS))
-    const value: unknown = await response.value()
-    const rows = Array.isArray(value) ? value.filter(isPlainObject) : []
+    // read from the response text so integers beyond 2^53 stay exact; they (and the decimal/int wrappers the server
+    // writes) come out of unwrapExtendedJson as an exact digit string / a number
+    const value = await readJsonKeepingLongs(response)
+    const rows = Array.isArray(value) ? value.filter(isPlainObject).map(row => unwrapExtendedJson(row) as Record<string, unknown>) : []
     const headers = response.raw?.headers
     return {
       rows,
@@ -95,7 +99,7 @@ export function useMongocampAggregation() {
   // something to suggest.
   async function listDistinct(collectionName: string, field: string, limit = DEFAULT_DISTINCT_LIMIT): Promise<DistinctResult> {
     const response = await collectionApi.distinctRaw({ collectionName, field, rowsPerPage: limit, page: 1 }, withTimeout(REQUEST_TIMEOUT_MS))
-    const value: unknown = await response.value()
+    const value = unwrapExtendedJson(await readJsonKeepingLongs(response))
     const values = (Array.isArray(value) ? value : [])
       .filter((v): v is DistinctValue => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
     const total = headerNumber(response.raw?.headers, 'x-pagination-count-rows') ?? values.length

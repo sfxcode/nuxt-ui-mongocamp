@@ -333,6 +333,60 @@ describe('MongocampCollectionData', () => {
     })
   })
 
+  describe('64-bit integers beyond 2^53', () => {
+    // a real Response: the generated client's own value() would round the digits, the component reads the text instead
+    function longResponse(text: string) {
+      const raw = new Response(text, { headers: { 'x-pagination-count-rows': '1' } })
+      return { raw, value: () => raw.json() }
+    }
+
+    async function mountWithLong() {
+      mockListDocumentsRaw.mockResolvedValueOnce(longResponse('[{"_id":"doc-1","name":"Alice","big":9007199254740993}]'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      return component
+    }
+
+    it('shows the exact digits in the table', async () => {
+      const component = await mountWithLong()
+
+      expect(component.text()).toContain('9007199254740993')
+      expect(component.text()).not.toContain('9007199254740992')
+    })
+
+    it('shows the exact digits in the edit form and leaves the long out of the request when another field is edited', async () => {
+      const component = await mountWithLong()
+      await component.find('[aria-label="Edit document"]').trigger('click')
+      await wait()
+
+      expect((findInputByLabel(modal(), 'Big').element as HTMLInputElement).value).toBe('9007199254740993')
+
+      await findInputByLabel(modal(), 'Name').setValue('Alice Updated')
+      await wait()
+      await modal().find('button[type="submit"]').trigger('click')
+      await wait()
+
+      const { requestBody } = mockUpdatePartial.mock.calls[0]![0]
+      expect(requestBody.name).toBe('Alice Updated')
+      expect(requestBody).not.toHaveProperty('big')
+    })
+
+    it('sends an edited long as a $numberLong wrapper, so it stays a 64-bit integer', async () => {
+      const component = await mountWithLong()
+      await component.find('[aria-label="Edit document"]').trigger('click')
+      await wait()
+
+      await findInputByLabel(modal(), 'Big').setValue('9007199254740995')
+      await wait()
+      await modal().find('button[type="submit"]').trigger('click')
+      await wait()
+
+      const { requestBody } = mockUpdatePartial.mock.calls[0]![0]
+      expect(requestBody.big).toEqual({ $numberLong: '9007199254740995' })
+      expect(requestBody).not.toHaveProperty('name')
+    })
+  })
+
   describe('empty collection fallback', () => {
     it('falls back to a raw-JSON textarea when no rows are loaded, and inserts the parsed JSON', async () => {
       // beforeEach already defaults listDocumentsRaw to an empty page

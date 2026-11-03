@@ -113,3 +113,45 @@ describe('wrapExtendedJson', () => {
     expect(doc.items).toEqual([{ ownerId: { $oid: 'a1' } }, { ownerId: 'b2' }])
   })
 })
+
+describe('64-bit integers beyond 2^53', () => {
+  const big = { $numberLong: '9007199254740993' }
+
+  it('unwrap keeps an unsafe $numberLong as its exact digit string', () => {
+    expect(unwrapExtendedJson(big)).toBe('9007199254740993')
+    expect(unwrapExtendedJson({ n: { $numberLong: '-9223372036854775808' } })).toEqual({ n: '-9223372036854775808' })
+    expect(unwrapExtendedJson([big, { x: big }])).toEqual(['9007199254740993', { x: '9007199254740993' }])
+  })
+
+  it('unwrap turns a safe $numberLong, $numberInt and $numberDouble into numbers as before', () => {
+    expect(unwrapExtendedJson({ $numberLong: '9007199254740991' })).toBe(9007199254740991)
+    expect(unwrapExtendedJson({ $numberLong: '5' })).toBe(5)
+    expect(unwrapExtendedJson({ $numberInt: '7' })).toBe(7)
+    expect(unwrapExtendedJson({ $numberDouble: '2.5' })).toBe(2.5)
+    expect(unwrapExtendedJson({ $numberDecimal: '1.50' })).toBe(1.5)
+  })
+
+  it('unwrap with exactLongs: false gives the rounded number (for type inference)', () => {
+    expect(typeof unwrapExtendedJson(big, { exactLongs: false })).toBe('number')
+    expect(unwrapExtendedJson({ rows: [big] }, { exactLongs: false })).toEqual({ rows: [Number('9007199254740993')] })
+  })
+
+  it('wrap puts the exact digits back as the wrapper when the original was a $numberLong wrapper', () => {
+    expect(wrapExtendedJson({ n: '9007199254740993' }, { n: big })).toEqual({ n: big })
+    expect(wrapExtendedJson({ n: '9007199254740995' }, { n: big })).toEqual({ n: { $numberLong: '9007199254740995' } })
+    expect(wrapExtendedJson({ list: [{ n: '9007199254740995' }] }, { list: [{ n: big }] })).toEqual({ list: [{ n: { $numberLong: '9007199254740995' } }] })
+  })
+
+  it('wrap leaves a non-digit text, or a field that was not a long, as plain text', () => {
+    expect(wrapExtendedJson({ n: 'abc' }, { n: big })).toEqual({ n: 'abc' })
+    expect(wrapExtendedJson({ n: '9007199254740993' }, { n: 'x' })).toEqual({ n: '9007199254740993' })
+    expect(wrapExtendedJson({ n: '9007199254740993' })).toEqual({ n: '9007199254740993' })
+  })
+
+  it('a form round trip of an untouched long is exactly the original', () => {
+    const row = { _id: { $oid: 'a' }, n: big, name: 'x' }
+    const form = unwrapExtendedJson(row) as Record<string, unknown>
+
+    expect(wrapExtendedJson(form, row)).toEqual({ n: big, name: 'x' })
+  })
+})

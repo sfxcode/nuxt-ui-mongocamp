@@ -7,6 +7,7 @@ import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { useMongocampIndex } from '../composables/useMongocampIndex'
 import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocampExtendedJson'
+import { readJsonKeepingLongs } from '../utils/bigIntJson'
 import { buildPartialBody, diffDocument, hasChanges } from '../utils/documentDiff'
 import { isIsoDateTimeString } from '../utils/isoDate'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
@@ -461,6 +462,9 @@ function makeCell(key: string, type: string) {
       if (!Array.isArray(raw)) {
         const obj = raw as Record<string, unknown>
         if ('$oid' in obj) return h('span', { class: 'font-mono text-xs' }, String(obj.$oid))
+        // exact 64-bit integers and decimals arrive as wrappers (see utils/bigIntJson.ts)
+        const numberKey = Object.keys(obj).find(k => k === '$numberLong' || k === '$numberDecimal' || k === '$numberInt' || k === '$numberDouble')
+        if (numberKey && Object.keys(obj).length === 1) return h('span', { class: 'font-mono text-xs' }, String(obj[numberKey]))
         if ('$date' in obj) return h('span', toDateDisplay(obj))
         if (isMetaData(obj)) {
           const rows: ReturnType<typeof h>[] = []
@@ -616,7 +620,8 @@ async function fetchDocuments() {
       filter,
     })
     total.value = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
-    const rows = (await res.value()) as Row[]
+    // read from the response text: the generated client's JSON.parse would round integers beyond 2^53
+    const rows = await readJsonKeepingLongs<Row[]>(res)
     documents.value = rows
     // fallback: derive columns from first row if schema produced nothing
     const firstRow = rows[0]
@@ -637,7 +642,8 @@ async function fetchDocuments() {
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
       // `_id` only gets the exact operators (the server matches `_id:"<oid>"`, but
       // wildcards on it match nothing). Arrays/objects have no operators at all.
-      filterFields.value = schemaFromSamples(rows)
+      // `exactLongs: false`: a huge integer is still a number field for the filter, whatever its exact text
+      filterFields.value = schemaFromSamples(rows.map(row => unwrapExtendedJson(row, { exactLongs: false }) as Row))
         .map(c => ({ key: c.columnKey, type: c.columnKey === '_id' ? 'objectId' as const : toFilterFieldType(c.columnType) }))
         .filter(f => operatorsFor(f.type).length > 0)
       // GridFS files/chunks documents are managed through the bucket (deleting them one by one would
