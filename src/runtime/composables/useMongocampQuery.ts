@@ -1,5 +1,6 @@
 import { escapeFieldName } from '../utils/escapeFieldName'
 import { isIsoDateTimeString } from '../utils/isoDate'
+import { isObjectIdHex } from '../utils/objectId'
 import { parseLuceneExpression } from '../utils/luceneExpression'
 import type { LuceneNode } from '../utils/luceneExpression'
 import { useMongocampQueryBuilder } from './useMongocampQueryBuilder'
@@ -110,6 +111,41 @@ export interface MongocampQueryHelper {
    * A single surviving part is returned unwrapped (no outer parens).
    */
   or: (...queryParts: (string | null | undefined)[]) => string
+  /**
+   * `_id:"<hex>"` — the document with this id. The id must be a 24-character hex ObjectId (any case); anything else
+   * **throws** a `TypeError` instead of returning `''`, because "no filter" would match every document. (A wildcard on
+   * `_id` matches nothing on the server, so there is no `like` for ids.)
+   */
+  byId: (id: string) => string
+  /**
+   * `_id:("a" OR "b")` — any of these documents. Every id must be a 24-character hex ObjectId or it throws, like `byId`.
+   * An empty array returns `''` (no clause), as `inClause` does.
+   */
+  byIds: (ids: string[]) => string
+  /** `field:true` — a boolean field that is true. A document without the field does not match. */
+  isTrue: (fieldName: string) => string
+  /** `field:false` — a boolean field that is false. A document without the field does not match. */
+  isFalse: (fieldName: string) => string
+  /**
+   * `field:"x"` / `field:5` — the array contains this element (text quoted, numbers not). Any one array element
+   * matching is enough, so `arrayContains('tags', 'a')` finds `["a","b"]`.
+   */
+  arrayContains: (fieldName: string, value: QueryValue) => string
+  /**
+   * The field is an array with at least one element (an empty array and a missing field do not match). Written like
+   * `exists` — a text wildcard ORed with a full number and a full date range — because `field:*` alone only finds
+   * arrays of *text* (verified: `nums:*` matched no array of numbers). Pass `type` when you know the element type for the
+   * shorter clause. Arrays of booleans and of objects are not covered (nothing matches them).
+   */
+  hasItems: (fieldName: string, type?: ExistsFieldType) => string
+  /**
+   * The whole UTC day `YYYY-MM-DD`: `field:[YYYY-MM-DDT00:00:00Z TO YYYY-MM-DDT23:59:59.999Z]`. The server matches nothing
+   * for a bare one-day range, so the bounds are widened to the full day. Throws a `TypeError` for anything that is not a
+   * real calendar date.
+   */
+  onDay: (fieldName: string, day: string) => string
+  /** `-field:[the whole UTC day]` — everything except that day (documents without the field included). */
+  notOnDay: (fieldName: string, day: string) => string
   /**
    * The negation of any expression these helpers produced, written so the server evaluates it correctly.
    * MongoCamp (still, as of 1.6.3) evaluates `-(A AND B)` as `-A AND -B`, so a negated `AND` group is rewritten with
@@ -309,6 +345,53 @@ export function useMongocampQuery(): MongocampQueryHelper {
     return logicalOperators('OR', queryParts)
   }
 
+  function requireObjectId(id: unknown, helper: string): string {
+    if (!isObjectIdHex(id)) throw new TypeError(`${helper} needs a 24-character hex ObjectId, got ${typeof id === 'string' ? `"${id}"` : String(id)}`)
+    return id
+  }
+
+  function byId(id: string): string {
+    return equals('_id', requireObjectId(id, 'byId'))
+  }
+
+  function byIds(ids: string[]): string {
+    return inClause('_id', ids.map(id => requireObjectId(id, 'byIds')))
+  }
+
+  function isTrue(fieldName: string): string {
+    return fieldTerm(fieldName, 'true')
+  }
+
+  function isFalse(fieldName: string): string {
+    return fieldTerm(fieldName, 'false')
+  }
+
+  function arrayContains(fieldName: string, value: QueryValue): string {
+    if (value == null || value.toString().length === 0) return ''
+    return inClause(fieldName, [value])
+  }
+
+  function hasItems(fieldName: string, type?: ExistsFieldType): string {
+    return exists(fieldName, type)
+  }
+
+  function requireDay(day: string, helper: string): string {
+    // a regex alone lets 2024-13-01 through, and Date rolls 2024-04-31 over to May 1 — so compare the round trip
+    const parsed = DATE_ONLY_REGEX.test(day) ? new Date(`${day}T00:00:00Z`) : null
+    const valid = parsed !== null && !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(day)
+    if (!valid) throw new TypeError(`${helper} needs a calendar date like 2024-03-01, got "${day}"`)
+    return day
+  }
+
+  function onDay(fieldName: string, day: string): string {
+    const checked = requireDay(day, 'onDay')
+    return inRange(fieldName, checked, checked)
+  }
+
+  function notOnDay(fieldName: string, day: string): string {
+    return `-${onDay(fieldName, requireDay(day, 'notOnDay'))}`
+  }
+
   function render(node: LuceneNode): string {
     if (node.kind === 'clause') return node.text
     if (node.kind === 'not') return negate(node.node)
@@ -356,6 +439,14 @@ export function useMongocampQuery(): MongocampQueryHelper {
     inClause,
     notInClause,
     containsAll,
+    byId,
+    byIds,
+    isTrue,
+    isFalse,
+    arrayContains,
+    hasItems,
+    onDay,
+    notOnDay,
     and,
     or,
     not,

@@ -45,6 +45,13 @@ type QueryValue = string | number | boolean | null | undefined
 | `containsAll(field, values)` | `(field:"v1" AND field:"v2" ...)` | `''` for an empty array |
 | `and(...parts)` | parts joined with `AND`, wrapped in `()` | filters out empty parts; single survivor returned unwrapped |
 | `or(...parts)` | parts joined with `OR`, wrapped in `()` | same filtering behavior |
+| `byId(id)` | `_id:"<hex>"` | one document by id; a 24-character hex ObjectId (any case), otherwise it **throws** a `TypeError` — `''` would mean "no filter", every document |
+| `byIds(ids)` | `_id:("a" OR "b" ...)` | any of these documents; every id validated like `byId`; `''` for an empty array |
+| `isTrue(field)` / `isFalse(field)` | `field:true` / `field:false` | a boolean field; a document without the field matches neither |
+| `arrayContains(field, value)` | `field:"x"` / `field:5` | the array has this element (text quoted, numbers not); `''` for an empty value |
+| `hasItems(field, type?)` | same as `exists` | an array with at least one element — see [Arrays](#arrays) |
+| `onDay(field, 'YYYY-MM-DD')` | `field:[…T00:00:00Z TO …T23:59:59.999Z]` | the whole UTC day; throws for anything that is not a real calendar date |
+| `notOnDay(field, 'YYYY-MM-DD')` | `-field:[the whole day]` | everything except that day, documents without the field included |
 | `not(part)` | the negation of any expression these helpers built | a clause becomes `-clause` (and back); a group is rewritten with De Morgan — see [Negating groups](#negating-groups) |
 | `notAnd(...parts)` | `((-a) OR (-b))` | "not all of these"; same as `not(and(...))` |
 | `notOr(...parts)` | `((-a) AND (-b))` | "none of these"; same as `not(or(...))` |
@@ -61,6 +68,18 @@ h.exists('name', 'text')         // name:*
 ```
 
 `notExists` negates each clause and ANDs them (a negated `AND` group is evaluated wrongly by the server, see [Negating groups](#negating-groups)). Both compose with `and` / `or`. Existence of booleans and objects is not covered (nothing was verified for them); `field:*` on an array does match documents whose array has elements (verified on 1.6.3).
+
+## Arrays
+
+All checked against server 1.6.3 on a scratch collection (2026-11-03, counts compared with the expected ones):
+
+- `arrayContains` matches when **any element** matches: `tags:"a"` finds `["a","b"]`, `nums:7` finds `[5, 7]` (a number element is written unquoted), a value with a space is escaped, `containsAll('tags', ['x','y'])` finds arrays holding both.
+- `hasItems` is `exists`: a text wildcard ORed with a full number and a full date range. **`field:*` alone only matches arrays of text** — `nums:*` matched no array of numbers — which is why it is not just a wildcard. An empty array and a missing field do not match. Arrays of dates work. **Arrays of booleans and of objects are not matched by anything** (a known limit). Pass `'text'`, `'number'` or `'date'` when you know the element type for the shorter clause.
+- Nested paths work as written: `equals('obj.k', 'v')` → `obj.k:"v"` (the dots are left alone); a field name with a space is escaped (`first\ name:"Ann"`).
+
+## Ids and days
+
+`_id:"<hex>"` and `_id:("a" OR "b")` match case-insensitively; an id that does not exist simply matches nothing. `onDay` matters because the server matches **nothing** for a bare one-day range (`[2024-02-15 TO 2024-02-15]` is midnight to midnight): the helper writes the whole UTC day, and the boundary milliseconds were checked — a timestamp at `23:59:59.999` is inside the day, `00:00:00.000` of the next day and `23:59:59.999` of the day before are not.
 
 ## Negating groups
 

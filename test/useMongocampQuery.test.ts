@@ -483,3 +483,97 @@ describe('not / notAnd / notOr (De Morgan — the server evaluates -(A AND B) wr
     expect(() => h.not('a:1 AND b:2 OR c:3')).toThrow('Cannot negate')
   })
 })
+
+describe('byId / byIds', () => {
+  const a = '6aea4c030f35d7fd9728feba'
+  const b = '6AEA4C030F35D7FD9728FEBB'
+
+  it('writes an exact quoted _id clause', () => {
+    expect(h.byId(a)).toBe(`_id:"${a}"`)
+    expect(h.byIds([a, b])).toBe(`_id:("${a}" OR "${b}")`)
+    expect(h.byIds([a])).toBe(`_id:"${a}"`)
+  })
+
+  it('throws for anything that is not a 24-character hex id — "" would mean no filter, i.e. every document', () => {
+    expect(() => h.byId('abc')).toThrow(TypeError)
+    expect(() => h.byId('')).toThrow('byId needs a 24-character hex ObjectId')
+    expect(() => h.byId('g'.repeat(24))).toThrow(TypeError)
+    expect(() => h.byId(`${a}0`)).toThrow(TypeError)
+    expect(() => h.byId(undefined as unknown as string)).toThrow('got undefined')
+    expect(() => h.byIds([a, 'nope'])).toThrow('byIds needs a 24-character hex ObjectId, got "nope"')
+  })
+
+  it('returns an empty string for an empty list, like inClause', () => {
+    expect(h.byIds([])).toBe('')
+  })
+
+  it('composes with notEquals and and/or', () => {
+    expect(h.notEquals('_id', a)).toBe(`-_id:"${a}"`)
+    expect(h.and(h.byId(a), h.isTrue('active'))).toBe(`(_id:"${a}" AND active:true)`)
+  })
+})
+
+describe('isTrue / isFalse', () => {
+  it('writes the plain boolean term and escapes the field name', () => {
+    expect(h.isTrue('active')).toBe('active:true')
+    expect(h.isFalse('active')).toBe('active:false')
+    expect(h.isTrue('is active')).toBe('is\\ active:true')
+    expect(h.isFalse('a.b')).toBe('a.b:false')
+  })
+
+  it('negates to a single negated clause', () => {
+    expect(h.not(h.isTrue('active'))).toBe('-active:true')
+  })
+})
+
+describe('arrayContains / hasItems', () => {
+  it('quotes a text element and leaves a number unquoted', () => {
+    expect(h.arrayContains('tags', 'a')).toBe('tags:"a"')
+    expect(h.arrayContains('tags', 'x y')).toBe('tags:"x\\ y"')
+    expect(h.arrayContains('nums', 7)).toBe('nums:7')
+    expect(h.arrayContains('nums', -3)).toBe('nums:-3')
+  })
+
+  it('returns an empty string for an empty or nullish value', () => {
+    expect(h.arrayContains('tags', '')).toBe('')
+    expect(h.arrayContains('tags', null)).toBe('')
+    expect(h.arrayContains('tags', undefined)).toBe('')
+  })
+
+  it('hasItems is exists: a text wildcard ORed with the full number and date ranges, or the one typed clause', () => {
+    expect(h.hasItems('tags')).toBe(h.exists('tags'))
+    expect(h.hasItems('tags')).toBe(`(tags:* OR tags:${NUM} OR tags:${DATE})`)
+    expect(h.hasItems('tags', 'text')).toBe('tags:*')
+    expect(h.hasItems('nums', 'number')).toBe(`nums:${NUM}`)
+  })
+})
+
+describe('onDay / notOnDay', () => {
+  it('is the whole UTC day, because the server matches nothing for a bare one-day range', () => {
+    expect(h.onDay('createdAt', '2024-03-01')).toBe('createdAt:[2024-03-01T00:00:00Z TO 2024-03-01T23:59:59.999Z]')
+    expect(h.notOnDay('createdAt', '2024-03-01')).toBe('-createdAt:[2024-03-01T00:00:00Z TO 2024-03-01T23:59:59.999Z]')
+  })
+
+  it('accepts a leap day and rejects dates that are not on the calendar', () => {
+    expect(h.onDay('d', '2024-02-29')).toContain('2024-02-29T00:00:00Z')
+    expect(() => h.onDay('d', '2023-02-29')).toThrow(TypeError)
+    expect(() => h.onDay('d', '2024-13-01')).toThrow('onDay needs a calendar date like 2024-03-01')
+    expect(() => h.onDay('d', '2024-04-31')).toThrow(TypeError)
+  })
+
+  it('rejects anything that is not exactly YYYY-MM-DD, including full timestamps and injected syntax', () => {
+    expect(() => h.onDay('d', '2024-03-01T10:00:00Z')).toThrow(TypeError)
+    expect(() => h.onDay('d', '03/01/2024')).toThrow(TypeError)
+    expect(() => h.onDay('d', '')).toThrow(TypeError)
+    expect(() => h.onDay('d', '2024-03-01] OR x:[1')).toThrow(TypeError)
+    expect(() => h.notOnDay('d', 'nope')).toThrow('notOnDay needs a calendar date')
+  })
+})
+
+describe('nested paths and awkward field names', () => {
+  it('leaves the dots of a nested path alone and escapes spaces', () => {
+    expect(h.equals('obj.k', 'v')).toBe('obj.k:"v"')
+    expect(h.equals('first name', 'Ann')).toBe('first\\ name:"Ann"')
+    expect(h.arrayContains('items.sku', 'a')).toBe('items.sku:"a"')
+  })
+})

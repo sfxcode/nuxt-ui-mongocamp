@@ -128,15 +128,15 @@ export function buildCondition(condition: FilterCondition, type: FilterFieldType
   if (type === 'objectId') {
     const ids = condition.operator === 'oneOf' ? splitList(value) : [value]
     if (ids.length === 0 || !ids.every(isObjectIdHex)) return ''
-    if (condition.operator === 'oneOf') return h.inClause(field, ids)
-    return condition.operator === 'notEquals' ? h.notEquals(field, value) : h.equals(field, value)
+    if (condition.operator === 'oneOf') return h.byIds(ids)
+    return condition.operator === 'notEquals' ? h.notEquals(field, value) : h.byId(value)
   }
 
   switch (condition.operator) {
     case 'isEmpty': return h.notExists(field, existsType(type))
     case 'isNotEmpty': return h.exists(field, existsType(type))
-    case 'isTrue': return `${escapedField}:true`
-    case 'isFalse': return `${escapedField}:false`
+    case 'isTrue': return h.isTrue(field)
+    case 'isFalse': return h.isFalse(field)
 
     case 'gte': {
       const from = parseRangeBound(type, value)
