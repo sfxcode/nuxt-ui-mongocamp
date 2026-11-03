@@ -12,7 +12,22 @@ Read-only viewer for the MongoCamp server's settings: the loaded plugins and a s
 
 ## Props
 
-None.
+All optional; every one defaults to `false` (show everything).
+
+| Prop | Hides |
+|---|---|
+| `hideHeading` | the "Server settings" heading |
+| `hideRefresh` | the refresh button |
+| `hidePlugins` | the plugins card — the plugins request is skipped too |
+| `hideConfigurations` | the whole configuration section (search, masked note, table, pager) — the configuration request is skipped too |
+| `hideSearch` | the configuration search box |
+| `hideMaskedNote` | the "secret values are masked" note |
+
+```vue
+<MongocampSettings hide-heading hide-plugins hide-search />
+```
+
+Hiding never reveals anything: masked values stay masked, and non-admins still only see the notice.
 
 ## Behavior
 

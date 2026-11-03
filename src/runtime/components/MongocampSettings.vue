@@ -8,6 +8,28 @@ import type { ConfigRow } from '../utils/configRows'
 
 const PAGE_SIZE = 10
 
+const props = withDefaults(defineProps<{
+  /** Hide the "Server settings" heading. */
+  hideHeading?: boolean
+  /** Hide the refresh button. */
+  hideRefresh?: boolean
+  /** Hide the plugins card (the plugins request is skipped too). */
+  hidePlugins?: boolean
+  /** Hide the whole configuration section — search, note and table (the configuration request is skipped too). */
+  hideConfigurations?: boolean
+  /** Hide the configuration search box. */
+  hideSearch?: boolean
+  /** Hide the note that secret values are masked. */
+  hideMaskedNote?: boolean
+}>(), {
+  hideHeading: false,
+  hideRefresh: false,
+  hidePlugins: false,
+  hideConfigurations: false,
+  hideSearch: false,
+  hideMaskedNote: false,
+})
+
 const { t } = useI18n()
 const { getSettings, listConfigurations } = useMongocampSystem()
 const { isAdmin } = useMongocampRoles()
@@ -26,7 +48,10 @@ async function fetchSettings() {
   loading.value = true
   loadError.value = null
   try {
-    const [loadedPlugins, rows] = await Promise.all([getSettings(), listConfigurations()])
+    const [loadedPlugins, rows] = await Promise.all([
+      props.hidePlugins ? Promise.resolve(null) : getSettings(),
+      props.hideConfigurations ? Promise.resolve([] as ConfigRow[]) : listConfigurations(),
+    ])
     plugins.value = loadedPlugins
     configurations.value = rows
   }
@@ -94,12 +119,19 @@ fetchSettings()
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between gap-4">
-      <h2 class="text-xl font-semibold">
+    <div
+      v-if="!hideHeading || (isAdmin && !hideRefresh)"
+      class="flex items-center justify-between gap-4"
+    >
+      <h2
+        v-if="!hideHeading"
+        class="text-xl font-semibold"
+      >
         {{ t('nuxtUiMongocamp.settings.heading') }}
       </h2>
       <UTooltip
-        v-if="isAdmin"
+        v-if="isAdmin && !hideRefresh"
+        class="ml-auto"
         :text="t('nuxtUiMongocamp.common.refresh')"
       >
         <UButton
@@ -128,7 +160,7 @@ fetchSettings()
         @retry="fetchSettings"
       />
 
-      <UCard v-if="plugins">
+      <UCard v-if="plugins && !hidePlugins">
         <template #header>
           <span class="font-semibold">{{ t('nuxtUiMongocamp.settings.pluginsHeading') }}</span>
         </template>
@@ -164,20 +196,28 @@ fetchSettings()
         </div>
       </UCard>
 
-      <div class="flex flex-wrap items-center justify-between gap-2">
+      <div
+        v-if="!hideConfigurations && (!hideSearch || !hideMaskedNote)"
+        class="flex flex-wrap items-center justify-between gap-2"
+      >
         <UInput
+          v-if="!hideSearch"
           v-model="search"
           icon="i-lucide-search"
           :placeholder="t('nuxtUiMongocamp.settings.searchPlaceholder')"
           size="sm"
           class="w-full max-w-xs"
         />
-        <p class="text-xs text-dimmed">
+        <p
+          v-if="!hideMaskedNote"
+          class="text-xs text-dimmed"
+        >
           {{ t('nuxtUiMongocamp.settings.maskedNote') }}
         </p>
       </div>
 
       <UTable
+        v-if="!hideConfigurations"
         :data="pageRows"
         :columns="columns"
         :loading="loading"
@@ -188,7 +228,7 @@ fetchSettings()
       </UTable>
 
       <div
-        v-if="filteredRows.length > PAGE_SIZE"
+        v-if="!hideConfigurations && filteredRows.length > PAGE_SIZE"
         class="flex justify-end"
       >
         <UPagination
