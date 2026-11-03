@@ -12,7 +12,7 @@ All composables are auto-imported.
 | [`useMongocampIndex`](/composables/use-mongocamp-index) | Create/list/delete MongoDB indexes (standard, unique, text, expiring) |
 | [`useMongocampJobs`](/composables/use-mongocamp-jobs) | List/register/update/execute/delete scheduled background jobs |
 | [`useMongocampAccount`](/composables/use-mongocamp-account) | Account self-service: profile, password change, API key regeneration |
-| [`useMongocampSystem`](/composables/use-mongocamp-system) | Read-only database viewer (list, per-database info, collections) |
+| [`useMongocampSystem`](/composables/use-mongocamp-system) | Read-only database viewer (list, per-database info, collections), cluster members and masked server settings |
 | [`useMongocampExport`](/composables/use-mongocamp-export) | `rowsToCsv` and `downloadTextFile` for exporting rows already on screen |
 | [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder) | Turns filter rows (field, operator, value) into one Lucene query; type-aware operators, injection-safe |
 | [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) | `runBulkDelete`: delete many items with limited concurrency (or one request per chunk) and a per-item failure report |
@@ -22,7 +22,7 @@ All composables are auto-imported.
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
 | [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) | Converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to |
-| [`useMongocampSession`](/composables/use-mongocamp-session) | Is the login still usable? Token-expiry check, rate-limited server probe after a network failure, `invalidateSession` |
+| [`useMongocampSession`](/composables/use-mongocamp-session) | Is the login still usable? Token-expiry check (no request), optional server check (`verify`), `invalidateSession` |
 | [`useMongocampRoles`](/composables/use-mongocamp-roles) | Role/route-pattern access checks (`isAdmin`, `isManager`, `isAllowedPathForRoute`); powers the global nav guard |
 | [`useMongocampClientApi`](/composables/use-mongocamp-client-api) | Mode-switching drop-in for `useMongocampApi()` — session or [server proxy](/guide/server-proxy-auth) mode |
 | [`useMongocampProxyApi`](/composables/use-mongocamp-proxy-api) | The server-proxy-mode branch `useMongocampClientApi` switches to |

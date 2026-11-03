@@ -37,7 +37,7 @@ Typically reached via [`MongocampCollections`](/components/mongocamp-collections
 
 ## Filtering, sorting, pagination
 
-The filter input searches `filename` via a Lucene `like` expression (debounced, same convention as [`MongocampCollectionData`](/components/mongocamp-collection-data)). Sorting and pagination both refetch through [`useMongocampBucket`](/composables/use-mongocamp-bucket)'s `listFiles`, which reads the total row count from the `x-pagination-count-rows` response header.
+The filter input searches `filename` via a Lucene `like` expression (debounced, same convention as [`MongocampCollectionData`](/components/mongocamp-collection-data)). Sorting and pagination both refetch through [`useMongocampBucket`](/composables/use-mongocamp-bucket)'s `listFiles`, which reads the total row count from the `x-pagination-count-rows` response header. A search term that would make the URL too long for the server (over 1800 characters once URL-encoded) is refused with a clear error instead of an opaque network failure.
 
 ## Actions
 

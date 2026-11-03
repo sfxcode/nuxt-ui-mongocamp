@@ -10,7 +10,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampRoleGrants`](/components/mongocamp-role-grants) | Per-role collection grant management |
 | [`MongocampCollections`](/components/mongocamp-collections) | Table of all collections, with links to info/data pages |
 | [`MongocampCollectionInfos`](/components/mongocamp-collection-infos) | Stat cards + inferred schema (and the server's JSON schema) for one collection |
-| [`MongocampCollectionData`](/components/mongocamp-collection-data) | Paginated, filterable, sortable document table |
+| [`MongocampCollectionData`](/components/mongocamp-collection-data) | Paginated, filterable, sortable document table; edit sends only the changed fields |
 | [`MongocampBucketFiles`](/components/mongocamp-bucket-files) | Paginated, filterable GridFS bucket file browser with upload/download/delete/rename |
 | [`MongocampJobs`](/components/mongocamp-jobs) | Full CRUD table for scheduled background jobs |
 | [`MongocampAccount`](/components/mongocamp-account) | Current-user account page: profile, password change, API key |

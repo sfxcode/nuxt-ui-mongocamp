@@ -66,7 +66,7 @@ The first column is a checkbox column (with select-all for the current page). Wh
 
 ## When loading fails
 
-A failed load shows a [`MongocampErrorAlert`](/components/mongocamp-error-alert) above the table (retry, or "log in again" when the session has expired) instead of an empty table, and an empty result shows an empty state. A search or filter the server rejects looks to the browser exactly like a dead network or session, so when a load fails while a search or filter is active the component makes one extra request for a single row **without** them. If that works the alert says **"The filter could not be applied"** and offers **Clear filters** (which drops the search and every condition); if it fails too, the generic message stays, because then it really is the server or the session. A 401 is shown as an expired session and is not probed.
+A failed load shows a [`MongocampErrorAlert`](/components/mongocamp-error-alert) above the table (retry, or "log in again" when the session has expired) instead of an empty table, and an empty result shows an empty state. A search or filter the server rejects answers `400` (MongoCamp server 1.6.3+ sends CORS headers on errors, so the status is readable); when that happens while a search or filter is active the alert says **"The filter could not be applied"** and offers **Clear filters** (which drops the search and every condition). A 401 is shown as an expired session; any other failure keeps the generic message. No extra request is made.
 
 ## Insert / Edit / Delete
 
