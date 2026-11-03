@@ -21,7 +21,7 @@ const { rows, total, pages, page } = await runAggregation('customers', [
 
 `total`, `pages` and `page` come from the server's `x-pagination-*` headers (falling back to the row count, `1` and the requested page); `rowsPerPage` defaults to the server's 100. Entries that are not objects are dropped. The request has a 30 s timeout and always sends `allowDiskUse: false` (the server requires the field).
 
-- **Refuses forbidden pipelines.** Before any request, a pipeline using `$out`, `$merge`, `$function`, `$accumulator`, `$where`, `$lookup`, `$unionWith` or `$graphLookup` — as a stage or nested at any depth — is rejected with a `ForbiddenPipelineError` (`.findings` lists operator, stage and path). The server does not restrict stages itself.
+- **Refuses forbidden pipelines.** Before any request, a pipeline using `$out`, `$merge`, `$function`, `$accumulator`, `$where`, `$lookup`, `$unionWith` or `$graphLookup` — as a stage or nested at any depth — is rejected with a `ForbiddenPipelineError` (`.findings` lists operator, stage and path). Since 1.6.3 the server refuses `$function`, `$accumulator`, `$where`, `$out`, `$merge` and `$currentOp` itself (`403`, code `4031`), but it still runs `$lookup`, `$unionWith` and `$graphLookup` across collections (and `$collStats`, `$indexStats`), so this check stays as early feedback and as the gate for those.
 - **An empty result is an empty page.** Since server 1.6.1 an aggregation with no documents answers `200 []` with a count of `0`. Older servers (1.5.x) answered `500 "Index 0 out of bounds for length 0"`, which is no longer special-cased and rejects like any other error.
 
 ## `listDistinct(collection, field, limit = 100)`
@@ -30,7 +30,7 @@ Distinct values of a field: `{ values, total, truncated }`. Only strings, number
 
 ## `sampleDocuments(collection, size = 500)`
 
-A random sample in one page — an aggregation with `$sample`, `size` clamped to 1–1 000. Same result shape as `runAggregation`. This is how the field statistics are computed: the server's own `getSchemaAnalysis` is **not used** because (1.5.10) it returns an accumulation of every analysis since the server started, across collections — a cross-collection information leak that also grows with every call.
+A random sample in one page — an aggregation with `$sample`, `size` clamped to 1–1 000. Same result shape as `runAggregation`. This is how the field statistics are computed: the server's own `getSchemaAnalysis` is **not used**: the client-side sample needs no extra request and behaves the same on every server version. (Up to 1.5.x that endpoint returned an accumulation of every analysis since the server started, across collections — an information leak; it is clean since 1.6.1, re-verified on 1.6.3, so it could be offered for whole-collection scans.)
 
 ## `describeAggregationError(error)`
 
@@ -47,7 +47,7 @@ The server's raw error contains the address of the database server (`… on serv
 
 ## What the server does that you might not expect
 
-Verified against MongoCamp 1.5.10:
+Verified against MongoCamp 1.5.10 and unchanged on 1.6.3 (2026-11-03):
 
 - results are plain JSON: dates as ISO strings without milliseconds, `_id` as a hex string, 64-bit integers as bare numbers (rounded beyond 2^53);
 - `distinct` answers with native values although the generated client types it as `string[]`;

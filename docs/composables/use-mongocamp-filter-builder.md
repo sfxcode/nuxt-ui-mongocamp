@@ -54,7 +54,7 @@ const query = buildFilterQuery(
 
 ## Checked against a real server
 
-These behaviours were verified against a MongoCamp server (1.5.x, re-checked on 1.6.1 on 2026-11-01) and are why the operator tables look the way they do — see also [`useMongocampQuery`](/composables/use-mongocamp-query#existence):
+These behaviours were verified against a MongoCamp server (1.5.x, re-checked on 1.6.1 and again on 1.6.3, 2026-11-03) and are why the operator tables look the way they do — see also [`useMongocampQuery`](/composables/use-mongocamp-query#existence):
 
 | Works | Does not work |
 |---|---|
@@ -64,6 +64,6 @@ These behaviours were verified against a MongoCamp server (1.5.x, re-checked on 
 | `name:*` / `-name:*` on a text field; a closed full-range for numbers and dates (as "exists") | `_exists_:field` — matches nothing; `-_exists_:field` matches everything |
 | `(a OR b OR c)` of the above; each clause negated and ANDed; since 1.6.1 also `_id:"<oid>"`, `_id:("a" OR "b")`, `-_id:"<oid>"` (case-insensitive) and `-(x)` / `NOT (x)` around a *single* clause | `-( a AND b )` and `NOT ( a AND b )` are evaluated like `-a AND -b` (written as `((-a) OR (-b))` instead, which works; [MongoCamp/mongocamp-server#69](https://github.com/MongoCamp/mongocamp-server/issues/69)); `field:*` on a number or date — matches nothing |
 
-Boolean terms (`active:true`) and `oneOf` on numbers are written the obvious way but were not exercised against the server.
+Boolean terms (`active:true`, `active:false`, `-active:true`), `oneOf` on numbers (`n:(1 OR 2 OR 3)`), array elements (`arr:x`), array existence (`arr:*`) and nested paths (`obj.k:v`) were checked against server 1.6.3 (2026-11-03) and return the right counts.
 
 See also [`useMongocampQuery`](/composables/use-mongocamp-query).

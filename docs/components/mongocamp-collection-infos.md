@@ -82,7 +82,7 @@ An **Analyze fields** button (nothing is requested until it is clicked) with a *
 
 The badge in the card header says how many of the collection's documents were sampled, and a note reminds you it is a sample, not the whole collection. A field with many distinct values or large values makes the sample heavier — pick a smaller size for a collection with big documents. Asking again always gives a fresh, equally sized answer.
 
-The statistics are computed in the browser from the sample. The server's own schema-analysis endpoint (`getSchemaAnalysis`) is deliberately **not used**: on MongoCamp 1.5.10 it returns an accumulation of every analysis made since the server started — fields of *other* collections included — and its answer grows with every call. The card also drops its result when `collectionName` changes.
+The statistics are computed in the browser from the sample. The server's own schema-analysis endpoint (`getSchemaAnalysis`) is deliberately **not used**: the sample needs no extra request and works the same on every server version. (On MongoCamp up to 1.5.x that endpoint returned an accumulation of every analysis made since the server started — fields of *other* collections included; it is clean since 1.6.1, re-verified on 1.6.3.) The card also drops its result when `collectionName` changes.
 
 ## Related composables
 

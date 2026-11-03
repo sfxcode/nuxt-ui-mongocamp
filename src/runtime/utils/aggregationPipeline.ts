@@ -3,9 +3,10 @@
 // DOM, so they behave the same in session and server-proxy mode and run in plain Node.
 //
 // The request pipeline is `{ stage: "$match", value: <JSON> }[]`; `value` is real JSON (a number
-// for `$limit`), whatever the generated client type claims. The server does not allow-list stages —
-// `$function` ran JavaScript and `$lookup`/`$unionWith` read other collections when tried — so the
-// deny-list below is the only gate, applied to every stage name and operator key at any depth.
+// for `$limit`), whatever the generated client type claims. Server 1.6.3 refuses `$function`, `$accumulator`,
+// `$where`, `$out`, `$merge` and `$currentOp` itself (403, code 4031) but still runs `$lookup`, `$unionWith`
+// and `$graphLookup` across collections (grant enforcement for non-admins is untested) — so the deny-list
+// below stays as early feedback and as the gate for those, applied to every stage name and operator key at any depth.
 
 export const FORBIDDEN_OPERATORS = [
   '$out',

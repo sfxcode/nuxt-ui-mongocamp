@@ -35,7 +35,7 @@ export interface FilterGroup {
 }
 
 // Only what was checked against a real MongoCamp server is offered (see useMongocampQuery for how the
-// existence and open-ended range cases are written). Booleans have no existence test: none was verified.
+// existence and open-ended range cases are written). Booleans have no existence test: none was verified (`b:true` / `b:false` themselves are, on 1.6.3).
 // Arrays and objects have no operators at all.
 export const FILTER_OPERATORS_BY_TYPE: Record<FilterFieldType, FilterOperator[]> = {
   'string': ['contains', 'equals', 'notEquals', 'startsWith', 'endsWith', 'oneOf', 'isEmpty', 'isNotEmpty'],

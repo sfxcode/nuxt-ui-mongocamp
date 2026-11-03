@@ -57,6 +57,23 @@ describe('diffDocument', () => {
     expect(hasChanges(diff({ when: { $date: ms } }, { when: { $date: '2024-01-01T00:00:00.000Z' } }))).toBe(false)
   })
 
+  it('treats the same instant as unchanged whether or not the zero milliseconds are written (the server reads `…:00Z`, the form rewraps `…:00.000Z`)', () => {
+    expect(hasChanges(diff({ when: '2025-05-05T12:00:00Z' }, { when: { $date: '2025-05-05T12:00:00Z' } }))).toBe(false)
+    expect(hasChanges(diff({ when: '2025-05-05T12:00:00Z' }, { when: { $date: '2025-05-05T12:00:00.000Z' } }))).toBe(false)
+    expect(hasChanges(diff({ when: '2025-05-05T12:00:00.123Z' }, { when: { $date: '2025-05-05T12:00:00.123Z' } }))).toBe(false)
+    expect(hasChanges(diff({ nested: { at: '2025-05-05T12:00:00Z' } }, { nested: { at: '2025-05-05T12:00:00.000Z' } }))).toBe(false)
+  })
+
+  it('still sends a date whose instant changed, even by a millisecond', () => {
+    expect(diff({ when: '2025-05-05T12:00:00Z' }, { when: { $date: '2025-05-05T12:00:00.001Z' } }).set).toEqual({ when: { $date: '2025-05-05T12:00:00.001Z' } })
+  })
+
+  it('does not treat other strings as dates', () => {
+    expect(diff({ s: '2025-05-05' }, { s: '2025-05-05T00:00:00Z' }).set).toEqual({ s: '2025-05-05T00:00:00Z' })
+    expect(diff({ s: '2025-05-05T00:00:00' }, { s: '2025-05-05T00:00:00Z' }).set).toEqual({ s: '2025-05-05T00:00:00Z' }) // no zone: not comparable
+    expect(diff({ s: 'abc' }, { s: 'abd' }).set).toEqual({ s: 'abd' })
+  })
+
   it('sends a changed extended-JSON value whole, never descending into the wrapper', () => {
     const changes = diff({ when: { $date: '2024-01-01T00:00:00.000Z' } }, { when: { $date: '2025-01-01T00:00:00.000Z' } })
 

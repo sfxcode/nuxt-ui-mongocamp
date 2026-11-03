@@ -35,12 +35,13 @@ The inverse conversion, safe to hand to `documentApi.insert`/`documentApi.update
 - A string shaped like an ISO date/date-time → rewrapped to `{ $date: isoString }` — this mirrors the exact ISO-detection regex `useFormKitAutoForm` uses to infer a date field in the first place, and `nuxtUIInputDate` (with `valueType: 'iso'`) always emits a full ISO string back, so this is symmetric with inference
 - A string whose matching field in `originalDoc` was `$oid`-wrapped → rewrapped to `{ $oid: value }`
 - Nested objects and arrays of objects recurse, matched positionally/by-key against `originalDoc` so oid detection still works inside them
+- `{ $date }` is what the server wants on write: since MongoCamp 1.6.3 it is converted into a real date by insert, full update, partial update and `updateMany` (1.5.x and 1.6.1 stored it as a literal sub-document, so the date could not be filtered). A bare date string such as `2024-03-01` stays plain text.
 - Everything else (numbers, booleans, plain strings, unmatched values) passes through as a plain JS value — the server accepts plain shapes on write, only reads return the extended-JSON wrapped form
 - `_id` is always stripped from the output, even if present in `formData` or `originalDoc`
 
 ### Full-replace safety
 
-`documentApi.update` replaces the **entire** document — there is no partial-patch semantics. Because `FUAutoForm`'s inferred schema only covers fields the *sampled* page happened to see, a document might have a field the sample never observed. To avoid silently deleting that field on save:
+`MongocampCollectionData` no longer sends the result of an edit as a full replace: it compares it with the original row and sends only the differences (`documentApi.updateDocumentPartial`, see [`MongocampCollectionData`](/components/mongocamp-collection-data#insert-edit-delete)). That makes this property *more* important, not less — a field missing from the result would be read as "removed" and unset. The full `documentApi.update` replaces the **entire** document and is only the fallback. Because `FUAutoForm`'s inferred schema only covers fields the *sampled* page happened to see, a document might have a field the sample never observed. To avoid silently deleting that field on save:
 
 - When `originalDoc` is given (the edit case), the result starts as `{ ...originalDoc }`, then only the keys present in `formData` are overlaid on top — any other field on the real document survives untouched.
 - When `originalDoc` is omitted (the insert case), there's nothing to preserve — the result is just the rewrapped form fields.

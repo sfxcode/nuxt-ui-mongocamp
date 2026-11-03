@@ -64,8 +64,8 @@ export function useMongocampAggregation() {
   const { describeError } = useMongocampError()
   const { t } = useI18n()
 
-  // Refuses a pipeline using a deny-listed operator (`$function` ran JavaScript on the real server)
-  // before anything is sent — this is the gate the visual editor and the raw JSON tab both go through.
+  // Refuses a pipeline using a deny-listed operator before anything is sent (server 1.6.3 refuses `$function`, `$out`
+  // and friends itself with 403 / 4031, but still accepts `$lookup`, `$unionWith` and `$graphLookup`) — this is the gate the visual editor and the raw JSON tab both go through.
   async function runAggregation(collectionName: string, pipeline: RequestStage[], paging: AggregationPaging = {}): Promise<AggregationResult> {
     const findings = findForbidden(pipeline)
     if (findings.length > 0) throw new ForbiddenPipelineError(findings)

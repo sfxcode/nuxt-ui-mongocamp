@@ -207,9 +207,10 @@ function forbiddenKeyPath(value: unknown, path: string, depth: number): { path: 
 
 // Caps the row count, drops empty rows, rows carrying operator-like keys and rows with an `_id` the
 // server would reject (it must be a 24-hex string). Any key starting with "$" (and "__proto__")
-// is refused at every level — an import must only ever add plain data, and the server stores
-// extended-JSON wrappers as literal sub-documents. Run JSON rows through `unwrapExtendedJson`
-// first so `{ $date }` / `{ $oid }` become plain values.
+// is refused at every level — an import must only ever add plain data. (Server 1.6.3 converts
+// extended-JSON wrappers, older ones stored them as literal sub-documents; an operator-like key is
+// not wanted in an import either way.) Run JSON rows through `unwrapExtendedJson` first so
+// `{ $date }` / `{ $oid }` become plain values.
 export function validateRows<T extends Record<string, unknown>>(rows: T[], limits: ImportLimits = DEFAULT_IMPORT_LIMITS): ImportReport<T> {
   const report: ImportReport<T> = { rows: [], errors: [], truncated: false, sourceIndexes: [] }
   rows.forEach((row, rowIndex) => {
@@ -244,8 +245,9 @@ const FALSE_VALUES = ['false', '0', 'no']
 const NUMBER_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
 const INTEGER_PATTERN = /^[+-]?\d+$/
 
-// Dates are stored as ISO-8601 strings: the server keeps `{ $date }` wrappers as literal
-// sub-documents, so a string is the only form that displays and filters sanely. Dates without an
+// Dates are written as ISO-8601 strings with milliseconds: server 1.6.3 turns that form (and a `{ $date }`
+// wrapper) into a real date, while a bare `2024-03-01` string would stay text, so the importer always
+// writes a full timestamp — and it reads the same on every server version. Dates without an
 // offset are read as UTC (a bare date is midnight UTC), so the same file imports identically
 // wherever the browser runs.
 function coerceDate(text: string): string {

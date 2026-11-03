@@ -31,8 +31,19 @@ function normalize(value: unknown): unknown {
   return unwrapExtendedJson(value)
 }
 
+// The server reads a date back as an ISO string and drops a zero millisecond part (`…12:00:00Z`), while the form
+// rewraps it as `{ $date: '…' }` which normalises to `…12:00:00.000Z` — the same instant, so not a change.
+// Only full timestamps with an explicit zone count: a bare date (`2025-05-05`) is stored as plain text by the server while
+// a timestamp becomes a real date, and a timestamp without a zone is read in the browser's time zone — neither is "the same".
+const FULL_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/
+
+function sameInstant(a: string, b: string): boolean {
+  return FULL_TIMESTAMP.test(a) && FULL_TIMESTAMP.test(b) && Date.parse(a) === Date.parse(b)
+}
+
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true
+  if (typeof a === 'string' && typeof b === 'string') return sameInstant(a, b)
   if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((item, i) => deepEqual(item, b[i]))
   if (isPlainObject(a) && isPlainObject(b)) {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)])

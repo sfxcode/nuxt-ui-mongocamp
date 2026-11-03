@@ -38,14 +38,14 @@ interface BatchInsertResult {
 
 - Batches are sent **in order, one at a time**, and a failed batch does not stop the next one. `start`/`count` locate the failed rows in the input array.
 - `mayBePartial` is `false` only for an HTTP 400: the server validates a batch before writing, so nothing from it was inserted. For any other error part of the batch may have been written — retrying it can create duplicates.
-- An empty `rows` array sends nothing (the server answers 500 for an empty batch).
+- An empty `rows` array sends nothing (the server answers 500 — 400 since 1.6.3 — for an empty batch).
 
 ## Preparing the rows
 
 The composable sends exactly what it is given. Turning a file into rows is done by pure helpers (not auto-imported, they live in `src/runtime/utils/`): `prepareImport` parses a JSON/CSV text, converts CSV cells by column type, unwraps extended JSON, drops and reports invalid rows (every error carries its file row), and enforces the 10 000-row / 5 MB limits. What the server stores differently from what you might expect:
 
-- `{ "$date": … }` / `{ "$numberLong": … }` wrappers are stored as **literal sub-documents** — send dates as ISO strings **with milliseconds** (`2024-03-01T10:30:00.000Z`), which the server stores as real dates;
+- dates: the importer unwraps `{ "$date": … }` and writes ISO strings **with milliseconds** (`2024-03-01T10:30:00.000Z`). Server 1.6.3 stores these — and `{ "$date" }` / `{ "$numberLong" }` wrappers and ISO strings without milliseconds — as real dates (1.5.x stored the wrappers as literal sub-documents); a bare `2024-03-01` string stays plain text, so a full timestamp is always written;
 - `_id`, if present, must be a 24-character hex string;
 - an integer beyond ±(2^53 − 1) cannot be sent as a JSON number without losing digits.
 
-These were verified against a real MongoCamp server (1.5.x).
+These were verified against a real MongoCamp server (1.5.x; the date handling and the empty-batch answer re-verified on 1.6.3 — an empty `insertMany` is a `400` there).

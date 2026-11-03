@@ -1,8 +1,8 @@
 import { isIsoDateTimeString } from './isoDate'
 
-// Field statistics computed from sample documents already in memory — what the real server's
-// schema-analysis endpoint would give, without its state leak (it accumulates every earlier analysis
-// across collections). Input is plain JSON as an aggregation returns it: dates are ISO strings,
+// Field statistics computed from sample documents already in memory — what the server's schema-analysis
+// endpoint gives, without another request and the same on every server version (that endpoint accumulated
+// every earlier analysis across collections up to 1.5.x and is clean since 1.6.1). Input is plain JSON as an aggregation returns it: dates are ISO strings,
 // there are no extended-JSON wrappers.
 
 export type ValueKind = 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array' | 'null'
