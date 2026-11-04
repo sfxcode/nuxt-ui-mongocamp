@@ -67,15 +67,17 @@ describe('MongocampDocumentView', () => {
     expect(row(c, 'address.city').exists()).toBe(false)
   })
 
+  // Expanding renders every row, the heaviest thing in this file; CI runs many workers at once, so it gets a generous
+  // limit (it failed the 5 s default there while taking well under 1 s locally) and only as many rows as the rule needs.
   it('starts a large document collapsed, with a note', async () => {
-    const big = { name: 'n', items: Array.from({ length: 300 }, (_, i) => ({ i })) }
+    const big = { name: 'n', items: Array.from({ length: 210 }, (_, i) => i) } // 212 nodes: just above the 200 that collapse
     const c = await mountView({ document: big })
     expect(row(c, 'items').exists()).toBe(true)
     expect(row(c, 'items.0').exists()).toBe(false)
     expect(c.text()).toContain('Large document')
     await c.findAll('button').find(b => b.text() === 'Expand all')!.trigger('click')
     expect(row(c, 'items.0').exists()).toBe(true)
-  })
+  }, 30_000)
 
   it('switches to JSON, written plainly with every digit of a long', async () => {
     const c = await mountView()

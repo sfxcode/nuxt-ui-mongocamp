@@ -156,16 +156,18 @@ const modeItems = computed(() => [
           :aria-expanded="node.children ? expanded.has(node.path) : undefined"
           :data-path="node.path"
         >
-          <UButton
+          <button
             v-if="node.children"
-            :icon="expanded.has(node.path) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-            size="xs"
-            color="neutral"
-            variant="ghost"
-            class="-my-0.5"
+            type="button"
+            class="inline-flex size-6 shrink-0 items-center justify-center rounded text-muted hover:bg-accented focus-visible:outline-2 focus-visible:outline-primary"
             :aria-label="expanded.has(node.path) ? t('nuxtUiMongocamp.documentView.collapse') : t('nuxtUiMongocamp.documentView.expand')"
             @click="toggle(node)"
-          />
+          >
+            <UIcon
+              :name="expanded.has(node.path) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+              class="size-4"
+            />
+          </button>
           <span
             v-else
             class="inline-block size-6 shrink-0"
@@ -184,24 +186,30 @@ const modeItems = computed(() => [
             :title="nodeDisplay(node).title"
           >{{ nodeDisplay(node).text }}</span>
           <span class="ml-auto flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-            <UButton
-              icon="i-lucide-route"
-              size="xs"
-              color="neutral"
-              variant="ghost"
+            <button
+              type="button"
+              class="inline-flex size-6 items-center justify-center rounded text-muted hover:bg-accented focus-visible:outline-2 focus-visible:outline-primary"
               :aria-label="t('nuxtUiMongocamp.documentView.copyPath')"
               :title="t('nuxtUiMongocamp.documentView.copyPath')"
               @click="copy('path', node.path)"
-            />
-            <UButton
-              icon="i-lucide-copy"
-              size="xs"
-              color="neutral"
-              variant="ghost"
+            >
+              <UIcon
+                name="i-lucide-route"
+                class="size-4"
+              />
+            </button>
+            <button
+              type="button"
+              class="inline-flex size-6 items-center justify-center rounded text-muted hover:bg-accented focus-visible:outline-2 focus-visible:outline-primary"
               :aria-label="t('nuxtUiMongocamp.documentView.copyValue')"
               :title="t('nuxtUiMongocamp.documentView.copyValue')"
               @click="copy('value', valueText(node))"
-            />
+            >
+              <UIcon
+                name="i-lucide-copy"
+                class="size-4"
+              />
+            </button>
           </span>
         </li>
       </ul>
