@@ -104,3 +104,9 @@ This logic is provided by [`useMongocampBucket`](/composables/use-mongocamp-buck
 ## Viewing documents
 
 Every row has a **View** button (also without a write grant) that opens the document in a drawer with [`MongocampDocumentView`](/components/mongocamp-document-view): typed values, copy of path and value, tree or JSON. A **Table | JSON** switch in the toolbar shows the page as JSON text.
+
+## Query bar
+
+Below the toolbar sits a [`MongocampQueryBar`](/components/mongocamp-query-bar): the visual filter (button, count and chips), a **sort** (it follows clicks on the column headers), the **fields to load** and the recent/saved queries of the collection. The quick search stays as the simple mode and is ANDed with the bar's filter.
+
+With fields chosen, only those are requested (`projection`); the other columns are hidden and **Edit** loads the complete document first, so a partial row is never written back. A failed load shows a toast and the form stays closed.

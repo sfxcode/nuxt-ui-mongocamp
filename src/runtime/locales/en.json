@@ -233,7 +233,9 @@
       "viewDocumentTitle": "Document",
       "viewTable": "Table",
       "viewJson": "JSON",
-      "viewModeLabel": "Page view"
+      "viewModeLabel": "Page view",
+      "editLoadFailed": "The full document could not be loaded for editing",
+      "projectedNote": "Only some fields are loaded"
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",
@@ -595,6 +597,44 @@
       "collapsedNote": "Large document — expand the parts you need",
       "empty": "No document",
       "typeLabel": "Type: {type}"
+    },
+    "queryBar": {
+      "sortButton": "Sort",
+      "sortTitle": "Sort by",
+      "sortNone": "Not sorted",
+      "addSort": "Add sort",
+      "removeSort": "Remove sort on {field}",
+      "sortField": "Sort field {position}",
+      "sortAscending": "Ascending",
+      "sortDescending": "Descending",
+      "toggleSortDirection": "Change direction of {field}",
+      "fieldsButton": "Fields",
+      "fieldsAll": "All fields are loaded",
+      "fieldsSome": "{count} of {total} fields are loaded",
+      "fieldsNote": "Fields that are not ticked are not loaded at all. The id always comes with a document.",
+      "fieldsReset": "Load all fields",
+      "historyButton": "History and saved queries",
+      "recent": "Recent",
+      "saved": "Saved",
+      "noRecent": "Nothing yet — queries you run appear here",
+      "noSaved": "No saved queries",
+      "clearHistory": "Clear history",
+      "saveCurrent": "Save current query",
+      "saveName": "Name",
+      "saveNamePlaceholder": "Name of the query",
+      "save": "Save",
+      "apply": "Apply",
+      "deleteSaved": "Delete saved query {name}",
+      "nothingToSave": "Set a filter, sort or fields first",
+      "saveFailedName": "Give the query a name of up to 80 characters",
+      "saveFailedLimit": "At most 50 queries can be saved — delete one first",
+      "saveFailedSize": "The saved queries are too large — delete one first",
+      "saveFailedQuery": "This query cannot be saved",
+      "saved_ok": "Saved",
+      "wordFilter": "Filter",
+      "wordSort": "Sort",
+      "wordFields": "Fields",
+      "customFilter": "Filter text: {query}"
     }
   }
 }

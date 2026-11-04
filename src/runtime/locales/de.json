@@ -233,7 +233,9 @@
       "viewDocumentTitle": "Dokument",
       "viewTable": "Tabelle",
       "viewJson": "JSON",
-      "viewModeLabel": "Seitenansicht"
+      "viewModeLabel": "Seitenansicht",
+      "editLoadFailed": "Das vollständige Dokument konnte zum Bearbeiten nicht geladen werden",
+      "projectedNote": "Es werden nur einige Felder geladen"
     },
     "bucketFiles": {
       "filterPlaceholder": "Nach Dateiname filtern...",
@@ -595,6 +597,44 @@
       "collapsedNote": "Großes Dokument — klappen Sie auf, was Sie brauchen",
       "empty": "Kein Dokument",
       "typeLabel": "Typ: {type}"
+    },
+    "queryBar": {
+      "sortButton": "Sortierung",
+      "sortTitle": "Sortieren nach",
+      "sortNone": "Nicht sortiert",
+      "addSort": "Sortierung hinzufügen",
+      "removeSort": "Sortierung nach {field} entfernen",
+      "sortField": "Sortierfeld {position}",
+      "sortAscending": "Aufsteigend",
+      "sortDescending": "Absteigend",
+      "toggleSortDirection": "Richtung von {field} ändern",
+      "fieldsButton": "Felder",
+      "fieldsAll": "Alle Felder werden geladen",
+      "fieldsSome": "{count} von {total} Feldern werden geladen",
+      "fieldsNote": "Felder ohne Haken werden gar nicht geladen. Die ID kommt immer mit.",
+      "fieldsReset": "Alle Felder laden",
+      "historyButton": "Verlauf und gespeicherte Abfragen",
+      "recent": "Zuletzt",
+      "saved": "Gespeichert",
+      "noRecent": "Noch nichts — ausgeführte Abfragen erscheinen hier",
+      "noSaved": "Keine gespeicherten Abfragen",
+      "clearHistory": "Verlauf löschen",
+      "saveCurrent": "Aktuelle Abfrage speichern",
+      "saveName": "Name",
+      "saveNamePlaceholder": "Name der Abfrage",
+      "save": "Speichern",
+      "apply": "Anwenden",
+      "deleteSaved": "Gespeicherte Abfrage {name} löschen",
+      "nothingToSave": "Setzen Sie zuerst einen Filter, eine Sortierung oder Felder",
+      "saveFailedName": "Geben Sie der Abfrage einen Namen mit höchstens 80 Zeichen",
+      "saveFailedLimit": "Es können höchstens 50 Abfragen gespeichert werden — löschen Sie zuerst eine",
+      "saveFailedSize": "Die gespeicherten Abfragen sind zu groß — löschen Sie zuerst eine",
+      "saveFailedQuery": "Diese Abfrage kann nicht gespeichert werden",
+      "saved_ok": "Gespeichert",
+      "wordFilter": "Filter",
+      "wordSort": "Sortierung",
+      "wordFields": "Felder",
+      "customFilter": "Filtertext: {query}"
     }
   }
 }

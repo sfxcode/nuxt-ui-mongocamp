@@ -17,21 +17,16 @@ import { BulkMatchShortfall, BulkUnaddressableId, buildIdFilter, isEditableField
 import type { ImportColumnType } from '../utils/importRows'
 import { isObjectIdHex } from '../utils/objectId'
 import { createSelectColumn } from '../utils/createSelectColumn'
-import {
-  buildCondition,
-  buildFilterQuery,
-  conditionValueText,
-  countActiveConditions,
-  operatorLabelKey,
-  operatorsFor,
-  toFilterFieldType,
-} from '../utils/filterBuilder'
-import type { FilterFieldType, FilterGroup } from '../utils/filterBuilder'
+import { operatorsFor, toFilterFieldType } from '../utils/filterBuilder'
+import type { FilterFieldType } from '../utils/filterBuilder'
+import { emptyGroup, emptyQueryState, parseSortEntry, usableProjection } from '../utils/queryState'
+import type { QueryState } from '../utils/queryState'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
 import MongocampDocumentView from './MongocampDocumentView.vue'
+import MongocampQueryBar from './MongocampQueryBar.vue'
 
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -140,17 +135,41 @@ function openInsert() {
   isEditModalOpen.value = true
 }
 
-function openEdit(row: Row) {
+// A row loaded with a projection lacks fields, and the full-replace fallback of an edit would write it back as the whole
+// document — so editing a projected row starts from the complete document (one request by id).
+async function loadFullRow(row: Row): Promise<Row | undefined> {
+  const id = getDocId(row)
+  if (!id) return undefined
+  const res = await documentApi.getDocumentRaw({ collectionName: props.collectionName, documentId: id })
+  return await readJsonKeepingLongs<Row>(res)
+}
+
+async function openEdit(row: Row) {
+  const projected = activeProjection.value.length > 0
+  let source = row
+  if (projected) {
+    try {
+      const full = await loadFullRow(row)
+      if (!full) throw new Error('no id')
+      source = full
+    }
+    catch {
+      toast.add({ title: t('nuxtUiMongocamp.collectionData.editLoadFailed'), color: 'error' })
+      return
+    }
+  }
   editMode.value = 'update'
-  editDocId.value = getDocId(row)
+  editDocId.value = getDocId(source)
   editError.value = ''
-  originalRow.value = row
-  editSamples.value = documents.value.map(r => omitId(unwrapExtendedJson(r) as Record<string, unknown>))
+  originalRow.value = source
+  editSamples.value = projected
+    ? [omitId(unwrapExtendedJson(source) as Record<string, unknown>)]
+    : documents.value.map(r => omitId(unwrapExtendedJson(r) as Record<string, unknown>))
   if (editSamples.value.length > 0) {
-    editFormData.value = omitId(unwrapExtendedJson(row) as Record<string, unknown>)
+    editFormData.value = omitId(unwrapExtendedJson(source) as Record<string, unknown>)
   }
   else {
-    editJson.value = JSON.stringify(row, null, 2)
+    editJson.value = JSON.stringify(source, null, 2)
   }
   isEditModalOpen.value = true
 }
@@ -372,23 +391,10 @@ const loading = ref(false)
 const filterText = ref('')
 const filterableColumns = ref<string[]>([])
 
-const emptyFilterGroup = (): FilterGroup => ({ match: 'all', conditions: [] })
-const filtersOpen = ref(false)
-// the draft is what the panel edits; the applied group is what the table is actually filtered by
-const filterDraft = ref<FilterGroup>(emptyFilterGroup())
-const appliedFilterGroup = ref<FilterGroup>(emptyFilterGroup())
-const appliedFilterQuery = ref('')
+// the applied query: what MongocampQueryBar edits (filter group + the Lucene string it builds, sort, fields to load)
+const query = ref<QueryState>(emptyQueryState())
+const queryBar = ref<InstanceType<typeof MongocampQueryBar> | null>(null)
 const filterFields = ref<{ key: string, type: FilterFieldType }[]>([])
-const filterFieldTypes = computed<Record<string, FilterFieldType>>(() => Object.fromEntries(filterFields.value.map(f => [f.key, f.type])))
-const activeFilterCount = computed(() => countActiveConditions(appliedFilterGroup.value, filterFieldTypes.value))
-const filterChips = computed(() =>
-  appliedFilterGroup.value.conditions
-    .filter(c => buildCondition(c, filterFieldTypes.value[c.field] ?? 'string') !== '')
-    .map(c => ({
-      id: c.id,
-      label: [c.field, t(operatorLabelKey(c.operator, filterFieldTypes.value[c.field] ?? 'string')), conditionValueText(c)].filter(Boolean).join(' '),
-    })),
-)
 const sorting = ref<SortEntry[]>([])
 const columnVisibility = ref<Record<string, boolean>>({})
 const PAGE_SIZES = [10, 20, 50, 100]
@@ -418,7 +424,7 @@ function buildLuceneFilter(term: string): string | undefined {
   const quick = trimmed && filterableColumns.value.length > 0
     ? or(...filterableColumns.value.map(col => like(col, trimmed)))
     : ''
-  return and(quick, appliedFilterQuery.value) || undefined
+  return and(quick, query.value.lucene) || undefined
 }
 
 function onFilterInput() {
@@ -433,8 +439,9 @@ function sortingToMongoSort(s: SortEntry[]): string[] {
   return s.map(col => (col.desc ? `-${col.id}` : col.id))
 }
 
-watch(sorting, () => {
+watch(sorting, (sort) => {
   if (isInitializing.value) return
+  query.value = { ...query.value, sort: sortingToMongoSort(sort) }
   pagination.value.pageIndex = 1
   fetchDocuments()
 })
@@ -641,6 +648,10 @@ async function handleBulkEdit(edit: { field: string, value: unknown }) {
   }
 }
 
+// a restored query may name fields this collection lacks; before the columns are known nothing is projected
+const projectableKeys = computed(() => dataColumnKeys.value.filter(k => k !== '_id'))
+const activeProjection = computed(() => (columns.value.length === 0 ? [] : usableProjection(query.value.projection, projectableKeys.value)))
+
 async function fetchDocuments() {
   loading.value = true
   loadError.value = null
@@ -654,6 +665,8 @@ async function fetchDocuments() {
       rowsPerPage: pagination.value.pageSize,
       page: pagination.value.pageIndex,
       sort: sorting.value.length ? sortingToMongoSort(sorting.value) : undefined,
+      // only the fields asked for are loaded (the server always adds `_id`); never an empty list, which is a 500
+      projection: activeProjection.value.length > 0 ? activeProjection.value : undefined,
       filter,
     })
     total.value = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
@@ -705,28 +718,26 @@ async function fetchDocuments() {
 
 function clearAllFilters() {
   filterText.value = ''
-  filterDraft.value = emptyFilterGroup()
-  onFilterApply('')
-}
-
-function onFilterApply(query: string) {
-  appliedFilterGroup.value = { match: filterDraft.value.match, negate: filterDraft.value.negate, conditions: filterDraft.value.conditions.map(c => ({ ...c })) }
-  appliedFilterQuery.value = query
+  query.value = { ...query.value, filterGroup: emptyGroup(), lucene: '' }
   pagination.value.pageIndex = 1
   fetchDocuments()
 }
 
-function removeFilterChip(id: string) {
-  filterDraft.value = { ...filterDraft.value, conditions: filterDraft.value.conditions.filter(c => c.id !== id) }
-  appliedFilterGroup.value = { ...appliedFilterGroup.value, conditions: appliedFilterGroup.value.conditions.filter(c => c.id !== id) }
-  appliedFilterQuery.value = buildFilterQuery(appliedFilterGroup.value, filterFieldTypes.value)
-  pagination.value.pageIndex = 1
-  fetchDocuments()
-}
-
-function clearFilterChips() {
-  filterDraft.value = emptyFilterGroup()
-  onFilterApply('')
+// The bar applied a new query (filter, sort or fields). A changed sort goes through `sorting`, whose watcher fetches.
+function onQueryApply(next: QueryState) {
+  query.value = next
+  const wanted = next.sort.map((entry) => {
+    const { field, desc } = parseSortEntry(entry)
+    return { id: field, desc }
+  })
+  const same = wanted.length === sorting.value.length && wanted.every((w, i) => w.id === sorting.value[i]!.id && w.desc === sorting.value[i]!.desc)
+  if (same) {
+    pagination.value.pageIndex = 1
+    fetchDocuments()
+  }
+  else {
+    sorting.value = wanted
+  }
 }
 
 function onPageSizeChange() {
@@ -738,11 +749,16 @@ const dataColumnKeys = computed(() =>
   columns.value.flatMap(column => ('accessorKey' in column && typeof column.accessorKey === 'string' ? [column.accessorKey] : [])),
 )
 
+// columns the projection does not load are hidden whatever the visibility toggles say (and are not remembered as hidden)
+const projectedOut = computed(() => new Set(activeProjection.value.length > 0 ? dataColumnKeys.value.filter(k => k !== '_id' && !activeProjection.value.includes(k)) : []))
+const effectiveVisibility = computed(() => ({ ...columnVisibility.value, ...Object.fromEntries([...projectedOut.value].map(k => [k, false])) }))
+
 const columnMenuItems = computed(() =>
   dataColumnKeys.value.map(key => ({
     label: key,
     type: 'checkbox' as const,
-    checked: columnVisibility.value[key] !== false,
+    disabled: projectedOut.value.has(key),
+    checked: columnVisibility.value[key] !== false && !projectedOut.value.has(key),
     onUpdateChecked: (checked: boolean) => {
       columnVisibility.value = { ...columnVisibility.value, [key]: checked }
     },
@@ -759,7 +775,7 @@ function exportPage(format: 'json' | 'csv') {
     downloadTextFile(`${props.collectionName}.json`, formatDocuments(rows, 'json', { pretty: true }), 'application/json')
     return
   }
-  const keys = dataColumnKeys.value.filter(key => columnVisibility.value[key] !== false)
+  const keys = dataColumnKeys.value.filter(key => effectiveVisibility.value[key] !== false)
   downloadTextFile(`${props.collectionName}.csv`, rowsToCsv(rows, keys), 'text/csv')
 }
 
@@ -805,10 +821,8 @@ async function init() {
   filterText.value = ''
   filterableColumns.value = []
   filterFields.value = []
-  filterDraft.value = emptyFilterGroup()
-  appliedFilterGroup.value = emptyFilterGroup()
-  appliedFilterQuery.value = ''
-  filtersOpen.value = false
+  query.value = { ...emptyQueryState(), sort: sorting.value.map(e => (e.desc ? `-${e.id}` : e.id)) }
+  queryBar.value?.closePanel()
   columnVisibility.value = Object.fromEntries(
     (Array.isArray(persisted.value.hidden) ? persisted.value.hidden : []).filter(k => typeof k === 'string').map(k => [k, false]),
   )
@@ -896,22 +910,6 @@ watch(() => props.collectionName, init, { immediate: true })
             @click="init"
           />
         </UTooltip>
-        <UChip
-          :text="activeFilterCount"
-          :show="activeFilterCount > 0"
-          size="sm"
-        >
-          <UButton
-            icon="i-lucide-list-filter"
-            color="neutral"
-            :variant="filtersOpen ? 'subtle' : 'ghost'"
-            size="sm"
-            :disabled="filterFields.length === 0"
-            :aria-pressed="filtersOpen"
-            :aria-label="t('nuxtUiMongocamp.collectionData.filtersTooltip')"
-            @click="filtersOpen = !filtersOpen"
-          />
-        </UChip>
         <div
           class="inline-flex rounded-md border border-default p-0.5"
           role="group"
@@ -965,50 +963,15 @@ watch(() => props.collectionName, init, { immediate: true })
         />
       </div>
     </div>
-    <MongocampFilterBuilder
-      v-if="filtersOpen"
-      v-model="filterDraft"
+    <MongocampQueryBar
+      ref="queryBar"
+      v-model="query"
       :fields="filterFields"
+      :columns="dataColumnKeys"
+      :collection="collectionName"
       :load-distinct="loadDistinctSuggestions"
-      @apply="onFilterApply"
+      @apply="onQueryApply"
     />
-
-    <div
-      v-if="filterChips.length > 0"
-      class="flex flex-wrap items-center gap-2"
-    >
-      <UBadge
-        v-if="appliedFilterGroup.negate"
-        color="warning"
-        variant="subtle"
-        :label="t('nuxtUiMongocamp.collectionData.filterExcluding')"
-      />
-      <UBadge
-        v-for="chip in filterChips"
-        :key="chip.id"
-        color="neutral"
-        variant="subtle"
-        class="gap-1"
-      >
-        {{ chip.label }}
-        <UButton
-          icon="i-lucide-x"
-          color="neutral"
-          variant="link"
-          size="xs"
-          class="p-0"
-          :aria-label="t('nuxtUiMongocamp.collectionData.removeFilter', { filter: chip.label })"
-          @click="removeFilterChip(chip.id)"
-        />
-      </UBadge>
-      <UButton
-        color="neutral"
-        variant="link"
-        size="xs"
-        :label="t('nuxtUiMongocamp.collectionData.clearFilters')"
-        @click="clearFilterChips"
-      />
-    </div>
 
     <MongocampErrorAlert
       :error="loadError"
@@ -1055,8 +1018,8 @@ watch(() => props.collectionName, init, { immediate: true })
     <UTable
       v-else
       v-model:sorting="sorting"
-      v-model:column-visibility="columnVisibility"
       v-model:row-selection="rowSelection"
+      :column-visibility="effectiveVisibility"
       :get-row-id="rowId"
       :sorting-options="{ manualSorting: true }"
       :data="documents"

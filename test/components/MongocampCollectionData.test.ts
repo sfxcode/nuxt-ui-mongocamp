@@ -4,6 +4,7 @@ import { DOMWrapper, enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp, USelect } from '#components'
 import MongocampCollectionData from '../../src/runtime/components/MongocampCollectionData.vue'
+import MongocampQueryBar from '../../src/runtime/components/MongocampQueryBar.vue'
 
 // UModal's close transition is timer-based, so a stale modal from a previous test can still
 // be in document.body (which modal() queries globally) when the next test starts — force an
@@ -43,6 +44,7 @@ vi.mock('../../src/runtime/utils/exportRows', async importOriginal => ({
 }))
 
 const mockListDocumentsRaw = vi.fn()
+const mockGetDocumentRaw = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
 const mockUpdatePartial = vi.fn()
@@ -72,6 +74,7 @@ mockNuxtImport('useMongocampApi', () => {
   return () => ({
     documentApi: {
       listDocumentsRaw: mockListDocumentsRaw,
+      getDocumentRaw: mockGetDocumentRaw,
       insert: mockInsert,
       update: mockUpdate,
       updateDocumentPartial: mockUpdatePartial,
@@ -103,6 +106,99 @@ beforeEach(() => {
 })
 
 describe('MongocampCollectionData', () => {
+  describe('query bar: sort and fields to load', () => {
+    const rows = [
+      { _id: { $oid: 'a'.repeat(24) }, name: 'Alice', age: 30, city: 'X' },
+      { _id: { $oid: 'b'.repeat(24) }, name: 'Bob', age: 25, city: 'Y' },
+    ]
+    const stateWith = (patch: Record<string, unknown>) => ({ filterGroup: { match: 'all', conditions: [] }, lucene: '', sort: [], projection: [], ...patch })
+
+    async function mountRows() {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '2'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      return component
+    }
+    const apply = async (component: Awaited<ReturnType<typeof mountRows>>, patch: Record<string, unknown>) => {
+      component.findComponent(MongocampQueryBar).vm.$emit('apply', stateWith(patch))
+      await wait()
+    }
+
+    it('sends the sort the bar applied and goes back to page 1', async () => {
+      const component = await mountRows()
+      mockListDocumentsRaw.mockClear()
+      await apply(component, { sort: ['-age'] })
+      expect(mockListDocumentsRaw).toHaveBeenCalledTimes(1)
+      expect(mockListDocumentsRaw.mock.calls[0]![0]).toMatchObject({ sort: ['-age'], page: 1 })
+    })
+
+    it('loads only the chosen fields and hides the others, but never sends an empty projection', async () => {
+      const component = await mountRows()
+      expect(mockListDocumentsRaw.mock.calls[0]![0].projection).toBeUndefined()
+      mockListDocumentsRaw.mockClear()
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows.map(r => ({ _id: r._id, name: r.name })), '2'))
+      await apply(component, { projection: ['name'] })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].projection).toEqual(['name'])
+      const headers = component.findAll('th').map(th => th.text())
+      expect(headers).toContain('name')
+      expect(headers).toContain('_id')
+      expect(headers).not.toContain('age')
+      expect(headers).not.toContain('city')
+
+      mockListDocumentsRaw.mockClear()
+      await apply(component, { projection: [] })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].projection).toBeUndefined()
+      expect(component.findAll('th').map(th => th.text())).toContain('age')
+    })
+
+    it('ignores fields of a restored query that the collection does not have', async () => {
+      const component = await mountRows()
+      mockListDocumentsRaw.mockClear()
+      await apply(component, { projection: ['name', 'ghost'] })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].projection).toEqual(['name'])
+      mockListDocumentsRaw.mockClear()
+      await apply(component, { projection: ['ghost'] })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].projection).toBeUndefined()
+    })
+
+    it('does not remember projected-out columns as hidden', async () => {
+      const component = await mountRows()
+      await apply(component, { projection: ['name'] })
+      expect(localStorage.getItem('nuxt-ui-mongocamp:collectionData:customers') ?? '').not.toContain('city')
+    })
+
+    it('edits a projected row from the full document, not from the partial one', async () => {
+      const component = await mountRows()
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: rows[0]!._id, name: 'Alice' }], '1'))
+      await apply(component, { projection: ['name'] })
+      mockGetDocumentRaw.mockResolvedValue({ raw: new Response(JSON.stringify({ _id: 'a'.repeat(24), name: 'Alice', age: 30, city: 'X' })), value: () => Promise.resolve({}) })
+
+      await component.find('[aria-label="Edit document"]').trigger('click')
+      await wait()
+
+      expect(mockGetDocumentRaw).toHaveBeenCalledWith({ collectionName: 'customers', documentId: 'a'.repeat(24) })
+      expect((findInputByLabel(modal(), 'Age').element as HTMLInputElement).value).toBe('30')
+      expect((findInputByLabel(modal(), 'City').element as HTMLInputElement).value).toBe('X')
+    })
+
+    it('does not open the edit form when the full document cannot be loaded', async () => {
+      const component = await mountRows()
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: rows[0]!._id, name: 'Alice' }], '1'))
+      await apply(component, { projection: ['name'] })
+      mockGetDocumentRaw.mockRejectedValue(new Error('boom'))
+      await component.find('[aria-label="Edit document"]').trigger('click')
+      await wait()
+      expect(modal().find('button[type="submit"]').exists()).toBe(false)
+    })
+
+    it('edits an ordinary row without an extra request', async () => {
+      const component = await mountRows()
+      await component.find('[aria-label="Edit document"]').trigger('click')
+      await wait()
+      expect(mockGetDocumentRaw).not.toHaveBeenCalled()
+    })
+  })
+
   describe('document view', () => {
     const rows = [
       { _id: { $oid: 'a'.repeat(24) }, name: 'Alice', big: { $numberLong: '9007199254740993' }, nested: { city: 'X' } },
