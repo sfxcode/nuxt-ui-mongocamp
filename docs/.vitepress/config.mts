@@ -61,6 +61,7 @@ export default defineConfig({
             { text: 'MongocampFilterBuilder', link: '/components/mongocamp-filter-builder' },
             { text: 'MongocampGrantList', link: '/components/mongocamp-grant-list' },
             { text: 'MongocampConfirmByName', link: '/components/mongocamp-confirm-by-name' },
+            { text: 'MongocampDocumentView', link: '/components/mongocamp-document-view' },
             { text: 'MongocampErrorAlert', link: '/components/mongocamp-error-alert' },
             { text: 'MongocampEmptyState', link: '/components/mongocamp-empty-state' },
           ],

@@ -228,7 +228,12 @@
       "filtersTooltip": "Filters",
       "removeFilter": "Remove filter {filter}",
       "filterExcluding": "Excluding documents that match",
-      "clearFilters": "Clear filters"
+      "clearFilters": "Clear filters",
+      "viewDocumentTooltip": "View document",
+      "viewDocumentTitle": "Document",
+      "viewTable": "Table",
+      "viewJson": "JSON",
+      "viewModeLabel": "Page view"
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",
@@ -571,6 +576,25 @@
         "forbidden-operator": "{operator} is not allowed (stage {n})",
         "too-deep": "Stage {n} is nested too deeply"
       }
+    },
+    "documentView": {
+      "heading": "Document",
+      "modeTree": "Tree",
+      "modeJson": "JSON",
+      "modeLabel": "View mode",
+      "expandAll": "Expand all",
+      "collapseAll": "Collapse all",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "copyPath": "Copy path",
+      "copyValue": "Copy value",
+      "copyDocument": "Copy document",
+      "copied": "Copied",
+      "copyFailed": "Copying failed — the browser refused clipboard access",
+      "truncated": "Only the first {count} nodes are shown.",
+      "collapsedNote": "Large document — expand the parts you need",
+      "empty": "No document",
+      "typeLabel": "Type: {type}"
     }
   }
 }

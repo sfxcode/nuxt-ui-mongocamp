@@ -103,6 +103,45 @@ beforeEach(() => {
 })
 
 describe('MongocampCollectionData', () => {
+  describe('document view', () => {
+    const rows = [
+      { _id: { $oid: 'a'.repeat(24) }, name: 'Alice', big: { $numberLong: '9007199254740993' }, nested: { city: 'X' } },
+      { _id: { $oid: 'b'.repeat(24) }, name: 'Bob', big: 1, nested: { city: 'Y' } },
+    ]
+
+    async function mountRows() {
+      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse(rows, '2'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      return component
+    }
+
+    it('offers View on a row, also without a write grant, and opens the typed document in a drawer', async () => {
+      session.grants = [{ collection: 'customers', read: true, write: false }]
+      const component = await mountRows()
+      expect(component.findAll('[aria-label="Edit document"]')).toHaveLength(0)
+
+      await component.findAll('[aria-label="View document"]')[0]!.trigger('click')
+      await wait()
+      const drawer = modal().text()
+      expect(drawer).toContain('objectId')
+      expect(drawer).toContain('9007199254740993')
+    })
+
+    it('shows the page as JSON with exact longs and back as a table', async () => {
+      const component = await mountRows()
+      await component.findAll('button').find(b => b.text() === 'JSON')!.trigger('click')
+      const json = component.find('[data-test="page-json"]').text()
+      expect(json).toContain('"big": 9007199254740993')
+      expect(json).toContain('"name": "Bob"')
+      expect(component.find('table').exists()).toBe(false)
+
+      await component.findAll('button').find(b => b.text() === 'Table')!.trigger('click')
+      expect(component.find('table').exists()).toBe(true)
+      expect(component.find('[data-test="page-json"]').exists()).toBe(false)
+    })
+  })
+
   describe('remembered table state', () => {
     async function mountData(props: Record<string, unknown> = {}) {
       const component = await mountSuspended(withUApp(MongocampCollectionData), {

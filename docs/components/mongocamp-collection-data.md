@@ -100,3 +100,7 @@ This logic is provided by [`useMongocampBucket`](/composables/use-mongocamp-buck
 - [`useMongocampDocument`](/composables/use-mongocamp-document) — `ensureMetaData` stamps `metaData` on insert/update
 - [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder), [`useMongocampExport`](/composables/use-mongocamp-export), [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) — the logic behind the filter panel, page export and bulk delete
 - [`useMongocampImport`](/composables/use-mongocamp-import) — the batched insert behind the import dialog
+
+## Viewing documents
+
+Every row has a **View** button (also without a write grant) that opens the document in a drawer with [`MongocampDocumentView`](/components/mongocamp-document-view): typed values, copy of path and value, tree or JSON. A **Table | JSON** switch in the toolbar shows the page as JSON text.

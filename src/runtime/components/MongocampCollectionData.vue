@@ -10,7 +10,7 @@ import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocam
 import { readJsonKeepingLongs } from '../utils/bigIntJson'
 import { buildPartialBody, diffDocument, hasChanges } from '../utils/documentDiff'
 import { isIsoDateTimeString } from '../utils/isoDate'
-import { formatDocuments, toExportRow } from '../utils/exportDocuments'
+import { formatDocuments, toExportRow, valueToJson } from '../utils/exportDocuments'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { BulkMatchShortfall, BulkUnaddressableId, buildIdFilter, isEditableField, runBulkUpdate } from '../utils/bulkEdit'
@@ -31,6 +31,7 @@ import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
+import MongocampDocumentView from './MongocampDocumentView.vue'
 
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -256,6 +257,14 @@ function makeActionsColumn(): TableColumn<Row> {
           })))
         }
       }
+      buttons.push(withTooltip(t('nuxtUiMongocamp.collectionData.viewDocumentTooltip'), h(UButton, {
+        'icon': 'i-lucide-eye',
+        'color': 'neutral',
+        'variant': 'ghost',
+        'size': 'sm',
+        'aria-label': t('nuxtUiMongocamp.collectionData.viewDocumentTooltip'),
+        'onClick': () => openView(row.original),
+      })))
       if (!writable.value) return h('div', { class: 'flex gap-1 justify-end' }, buttons)
       buttons.push(
         withTooltip(t('nuxtUiMongocamp.collectionData.editDocumentTooltip'), h(UButton, {
@@ -385,8 +394,18 @@ const columnVisibility = ref<Record<string, boolean>>({})
 const PAGE_SIZES = [10, 20, 50, 100]
 const isInitializing = ref(false)
 const detailOpen = ref(false)
+const viewDoc = ref<Row | null>(null)
+const viewOpen = ref(false)
+const viewMode = ref<'table' | 'json'>('table')
 const detailContent = ref('')
 let filterTimer: ReturnType<typeof setTimeout> | undefined
+
+function openView(row: Row) {
+  viewDoc.value = row
+  viewOpen.value = true
+}
+
+const pageJson = computed(() => valueToJson(documents.value, true))
 
 function openDetail(value: unknown) {
   detailContent.value = JSON.stringify(value, null, 2)
@@ -893,6 +912,23 @@ watch(() => props.collectionName, init, { immediate: true })
             @click="filtersOpen = !filtersOpen"
           />
         </UChip>
+        <div
+          class="inline-flex rounded-md border border-default p-0.5"
+          role="group"
+          :aria-label="t('nuxtUiMongocamp.collectionData.viewModeLabel')"
+        >
+          <UButton
+            v-for="m in (['table', 'json'] as const)"
+            :key="m"
+            :label="m === 'table' ? t('nuxtUiMongocamp.collectionData.viewTable') : t('nuxtUiMongocamp.collectionData.viewJson')"
+            :icon="m === 'table' ? 'i-lucide-table' : 'i-lucide-braces'"
+            size="xs"
+            color="neutral"
+            :variant="viewMode === m ? 'subtle' : 'ghost'"
+            :aria-pressed="viewMode === m"
+            @click="viewMode = m"
+          />
+        </div>
         <UDropdownMenu :items="columnMenuItems">
           <UButton
             icon="i-lucide-columns-3"
@@ -1010,7 +1046,14 @@ watch(() => props.collectionName, init, { immediate: true })
       @apply="handleBulkEdit"
     />
 
+    <pre
+      v-if="viewMode === 'json'"
+      class="max-h-[70vh] overflow-auto rounded-md bg-elevated p-3 text-xs whitespace-pre-wrap break-all"
+      data-test="page-json"
+    >{{ pageJson }}</pre>
+
     <UTable
+      v-else
       v-model:sorting="sorting"
       v-model:column-visibility="columnVisibility"
       v-model:row-selection="rowSelection"
@@ -1024,6 +1067,16 @@ watch(() => props.collectionName, init, { immediate: true })
         <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.documents')" />
       </template>
     </UTable>
+
+    <USlideover
+      v-model:open="viewOpen"
+      :title="t('nuxtUiMongocamp.collectionData.viewDocumentTitle')"
+      :ui="{ content: 'sm:max-w-xl' }"
+    >
+      <template #body>
+        <MongocampDocumentView :document="viewDoc" />
+      </template>
+    </USlideover>
 
     <UModal
       v-model:open="detailOpen"

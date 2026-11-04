@@ -228,7 +228,12 @@
       "filtersTooltip": "Filter",
       "removeFilter": "Filter {filter} entfernen",
       "filterExcluding": "Ohne Dokumente, die passen:",
-      "clearFilters": "Filter zurücksetzen"
+      "clearFilters": "Filter zurücksetzen",
+      "viewDocumentTooltip": "Dokument ansehen",
+      "viewDocumentTitle": "Dokument",
+      "viewTable": "Tabelle",
+      "viewJson": "JSON",
+      "viewModeLabel": "Seitenansicht"
     },
     "bucketFiles": {
       "filterPlaceholder": "Nach Dateiname filtern...",
@@ -571,6 +576,25 @@
         "forbidden-operator": "{operator} ist nicht erlaubt (Stufe {n})",
         "too-deep": "Stufe {n} ist zu tief verschachtelt"
       }
+    },
+    "documentView": {
+      "heading": "Dokument",
+      "modeTree": "Baum",
+      "modeJson": "JSON",
+      "modeLabel": "Ansicht",
+      "expandAll": "Alle aufklappen",
+      "collapseAll": "Alle zuklappen",
+      "expand": "Aufklappen",
+      "collapse": "Zuklappen",
+      "copyPath": "Pfad kopieren",
+      "copyValue": "Wert kopieren",
+      "copyDocument": "Dokument kopieren",
+      "copied": "Kopiert",
+      "copyFailed": "Kopieren fehlgeschlagen — der Browser hat den Zugriff auf die Zwischenablage verweigert",
+      "truncated": "Nur die ersten {count} Knoten werden angezeigt.",
+      "collapsedNote": "Großes Dokument — klappen Sie auf, was Sie brauchen",
+      "empty": "Kein Dokument",
+      "typeLabel": "Typ: {type}"
     }
   }
 }

@@ -49,6 +49,14 @@ function jsonText(value: unknown, space?: number): string {
 }
 
 /**
+ * Any value of a document (the whole document, a nested object, an array or a scalar) as JSON text the way an export
+ * writes it: wrappers become plain values and an integer beyond 2^53 stays exact as a bare number.
+ */
+export function valueToJson(value: unknown, pretty = true): string {
+  return jsonText(unwrapExtendedJson(longsToBigInt(value)), pretty ? 2 : undefined)
+}
+
+/**
  * The columns of a CSV export: the keys of **all** rows in order of first appearance (a later row with a new key is not
  * lost), `_id` first. Nested objects and arrays become one cell of JSON text.
  */
