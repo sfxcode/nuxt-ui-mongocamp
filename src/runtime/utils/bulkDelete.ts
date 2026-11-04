@@ -1,6 +1,15 @@
 export interface BulkDeleteResult<T> {
   deleted: T[]
   failed: { item: T, error: unknown }[]
+  /** Only present after an abort: items that were never tried, so they are known to be untouched. */
+  notAttempted?: T[]
+}
+
+export interface BulkRunOptions {
+  /** Aborting stops before the next request; what already ran stays done and is reported. */
+  signal?: AbortSignal
+  /** Called after every chunk / item with how many items have been dealt with so far. */
+  onProgress?: (done: number, total: number) => void
 }
 
 // Optional one-request-per-chunk deletion. `run` returns how many documents it deleted; anything
@@ -26,8 +35,15 @@ export async function runBulkDelete<T>(
   remove: (item: T) => Promise<unknown>,
   concurrency = 5,
   removeMany?: BulkRemoveMany<T>,
+  options: BulkRunOptions = {},
 ): Promise<BulkDeleteResult<T>> {
-  const outcomes: ({ ok: true } | { ok: false, error: unknown })[] = Array.from({ length: items.length })
+  const outcomes: ({ ok: true } | { ok: false, error: unknown } | undefined)[] = Array.from({ length: items.length })
+  const { signal, onProgress } = options
+  let done = 0
+  const advance = (count: number) => {
+    done += count
+    onProgress?.(done, items.length)
+  }
   const individually: number[] = []
 
   if (removeMany) {
@@ -38,11 +54,13 @@ export async function runBulkDelete<T>(
       else individually.push(index)
     })
     for (let start = 0; start < batched.length; start += chunkSize) {
+      if (signal?.aborted) break
       const indexes = batched.slice(start, start + chunkSize)
       try {
         const deletedCount = await removeMany.run(indexes.map(i => items[i]!))
         if (typeof deletedCount === 'number' && deletedCount >= indexes.length) {
           for (const i of indexes) outcomes[i] = { ok: true }
+          advance(indexes.length)
           continue
         }
       }
@@ -58,7 +76,7 @@ export async function runBulkDelete<T>(
 
   let next = 0
   async function worker() {
-    while (next < individually.length) {
+    while (next < individually.length && !signal?.aborted) {
       const index = individually[next++]!
       try {
         await remove(items[index]!)
@@ -67,16 +85,20 @@ export async function runBulkDelete<T>(
       catch (error) {
         outcomes[index] = { ok: false, error }
       }
+      advance(1)
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(concurrency, individually.length) }, worker))
 
   const result: BulkDeleteResult<T> = { deleted: [], failed: [] }
+  const notAttempted: T[] = []
   items.forEach((item, index) => {
-    const outcome = outcomes[index]!
-    if (outcome.ok) result.deleted.push(item)
+    const outcome = outcomes[index]
+    if (!outcome) notAttempted.push(item) // only after an abort: every item otherwise has an outcome
+    else if (outcome.ok) result.deleted.push(item)
     else result.failed.push({ item, error: outcome.error })
   })
+  if (notAttempted.length > 0) result.notAttempted = notAttempted
   return result
 }

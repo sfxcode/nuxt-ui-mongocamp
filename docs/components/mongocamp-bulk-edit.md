@@ -13,12 +13,14 @@ You normally don't use it directly. It is documented for apps that build their o
 | `fields` | `{ key: string, type: 'string' \| 'number' \| 'boolean' \| 'date-time' \| 'json' }[]` | Fields the user can choose from; each field's `type` is the starting value type |
 | `saving` | `boolean` | The parent is running the update — disables the buttons and shows a spinner |
 | `error` | `string` | Shown in the dialog, which then stays open |
+| `progress` | `{ done, total } \| null` | A running update that goes in chunks: the dialog shows a progress bar and **Stop** instead of Cancel |
 
 ## Events
 
 | Event | Payload | Description |
 |---|---|---|
 | `apply` | `{ field: string, value: unknown }` | The user confirmed — run the update now |
+| `stop` | The user pressed **Stop** during a chunked update |
 
 The dialog closes by itself when `saving` goes back to `false` and there is no `error`.
 

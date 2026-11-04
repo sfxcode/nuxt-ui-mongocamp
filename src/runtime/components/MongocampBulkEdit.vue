@@ -10,10 +10,13 @@ const props = defineProps<{
   fields: { key: string, type: ImportColumnType }[]
   saving?: boolean
   error?: string
+  // how far a running update is (a large selection runs in chunks); then the dialog shows it and a Stop button
+  progress?: { done: number, total: number } | null
 }>()
 
 const emit = defineEmits<{
   apply: [edit: { field: string, value: unknown }]
+  stop: []
 }>()
 
 // The parent owns the trigger (it lives in the selection bar, which disappears while the table
@@ -140,9 +143,29 @@ watch(() => props.saving, (now, before) => {
           :description="error"
         />
       </div>
+      <div
+        v-if="saving && progress"
+        class="mt-3 flex flex-col gap-1"
+        role="status"
+        data-test="edit-progress"
+      >
+        <UProgress
+          :model-value="progress.done"
+          :max="progress.total"
+        />
+        <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.bulk.progressEdit', progress) }}</span>
+      </div>
     </template>
     <template #footer>
       <UButton
+        v-if="saving && progress"
+        :label="t('nuxtUiMongocamp.bulk.stop')"
+        color="neutral"
+        variant="soft"
+        @click="emit('stop')"
+      />
+      <UButton
+        v-else
         :label="t('nuxtUiMongocamp.common.cancel')"
         color="neutral"
         variant="ghost"

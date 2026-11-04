@@ -11,6 +11,13 @@ You normally don't use it directly. It is documented for apps that build their o
 | `selected` | `string[]` | Display names of the selected rows; the parent owns the selection |
 | `deleting` | `boolean` | Parent is running the deletion — disables Cancel and shows a spinner on confirm |
 | `error` | `string` | Shown in the modal, which then stays open (e.g. a partial-failure message) |
+| `pageCount` | `number` | Optional. Rows that can be selected on this page — with `total` it switches on "select all matching" |
+| `total` | `number` | Optional. How many documents match in all |
+| `allMatching` | `boolean` | The selection is every matching document (collected by the parent), not the rows on screen |
+| `collecting` | `{ loaded, target? } \| null` | Ids are being collected: the bar shows how far and a **Cancel** |
+| `note` | `string` | An honest remark shown under the bar: a refusal, or a count that differs from the list's |
+| `confirmName` | `string` | When set, the delete must be confirmed by typing this text (`MongocampCollectionData` uses the collection name for "all matching") |
+| `progress` | `{ done, total } \| null` | A running deletion: the modal shows a progress bar and **Stop** instead of Cancel |
 
 ## Slots
 
@@ -27,6 +34,9 @@ Keep any dialog an extra action opens *outside* this component: the bar is only 
 | `confirm` | User confirmed the deletion — run it now |
 | `clear` | User asked to clear the selection |
 | `open` | The confirmation modal is about to open — a good moment to reset a stale `error` |
+| `selectAll` | The user chose **Select all N matching documents** (offered when the whole page is selected and `total > pageCount`) |
+| `cancelCollect` | Cancel while ids are collected |
+| `stop` | Stop a running deletion |
 
 The modal closes by itself when `deleting` goes back to `false` and there is no `error`.
 
@@ -37,3 +47,7 @@ The modal closes by itself when `deleting` goes back to `false` and there is no 
 - `MongocampCollectionData` offers no selection on GridFS bucket collections (`*.files` / `*.chunks`) — manage those through [`MongocampBucketFiles`](/components/mongocamp-bucket-files).
 - Failures don't stop the run: everything that could be deleted is deleted, the rest stays selected and the modal reports how many failed and why.
 - In `MongocampCollectionData` the selected documents are deleted with one `deleteMany` request (`{ $or: [{ _id: … }, …] }`) instead of one request each; a request that fails or deletes fewer documents than selected falls back to deleting them one by one, so a short count is never reported as success. An empty filter would delete the whole collection, so it is never sent.
+
+## Select all matching
+
+When every row of the page is selected and more documents match, the bar offers **Select all N matching documents** (like a mail client). The parent then collects the ids and passes them as `selected` with `allMatching`; the delete confirmation additionally needs the **collection name typed**. See [`MongocampCollectionData`](/components/mongocamp-collection-data#select-all-matching).

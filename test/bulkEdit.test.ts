@@ -97,4 +97,26 @@ describe('runBulkUpdate', () => {
       { ids: ['doc-2'], error: expect.any(BulkUnaddressableId) },
     ])
   })
+
+  it('reports progress per chunk', async () => {
+    const progress: Array<[number, number]> = []
+    await runBulkUpdate(ids(5), vi.fn().mockResolvedValue({}), { chunkSize: 2, onProgress: (done, total) => progress.push([done, total]) })
+    expect(progress).toEqual([[2, 5], [4, 5], [5, 5]])
+  })
+
+  it('stops before the next chunk after an abort and lists the ids never tried', async () => {
+    const controller = new AbortController()
+    const updateMany = vi.fn(async () => {
+      controller.abort()
+      return {}
+    })
+    const result = await runBulkUpdate(ids(5), updateMany, { chunkSize: 2, signal: controller.signal })
+    expect(updateMany).toHaveBeenCalledTimes(1)
+    expect(result.updated).toEqual(ids(5).slice(0, 2))
+    expect(result.notAttempted).toEqual(ids(5).slice(2))
+  })
+
+  it('has no notAttempted without an abort', async () => {
+    expect('notAttempted' in await runBulkUpdate(ids(2), vi.fn().mockResolvedValue({}))).toBe(false)
+  })
 })

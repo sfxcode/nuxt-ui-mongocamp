@@ -1,6 +1,6 @@
 # useMongocampBulkDelete
 
-`runBulkDelete(items, remove, concurrency = 5, removeMany?)` runs `remove` for every item, a few at a time, and returns what happened instead of stopping at the first error.
+`runBulkDelete(items, remove, concurrency = 5, removeMany?, { signal?, onProgress? }?)` runs `remove` for every item, a few at a time, and returns what happened instead of stopping at the first error.
 
 ```ts
 const { runBulkDelete } = useMongocampBulkDelete()
@@ -25,3 +25,7 @@ await runBulkDelete(ids, id => documentApi._delete({ collectionName, documentId:
 - The result keeps the input order, exactly as without `removeMany`.
 
 Used by `MongocampUsers`, `MongocampRoles` and `MongocampCollectionData`; the UI side is [`MongocampBulkDelete`](/components/mongocamp-bulk-delete).
+
+## Progress and stopping
+
+The fifth argument takes `onProgress(done, total)` (after every chunk and every single deletion) and an `AbortSignal`. Aborting stops **before the next request**; what already ran stays done. The result then has `notAttempted` — the items that were never tried and are known to be untouched (the property is absent when nothing was aborted). `runBulkUpdate` in `utils/bulkEdit.ts` takes the same two options and reports `notAttempted` ids.

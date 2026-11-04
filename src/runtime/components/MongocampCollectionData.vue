@@ -25,6 +25,7 @@ import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
+import { useMongocampFetchAll } from '../composables/useMongocampFetchAll'
 import MongocampDocumentView from './MongocampDocumentView.vue'
 import MongocampQueryBar from './MongocampQueryBar.vue'
 
@@ -567,6 +568,88 @@ const bulkEditing = ref(false)
 const bulkEditError = ref('')
 const bulkEditOpen = ref(false)
 
+// ---- "select all matching": the ids of every document the current filter matches, collected page by page. Never more than
+// MAX_MATCHING at once; the ids are a snapshot, so documents added or removed meanwhile are reported, not hidden.
+const MAX_MATCHING = 10_000
+const { fetchAllDocuments } = useMongocampFetchAll()
+const matching = ref<{ ids: string[], reported: number } | null>(null)
+const collecting = ref<{ loaded: number, target?: number } | null>(null)
+const bulkNote = ref('')
+const bulkProgress = ref<{ done: number, total: number } | null>(null)
+let collectController: AbortController | undefined
+let bulkController: AbortController | undefined
+// what a bulk action works on: every matching document once they were collected, else the ticked rows
+const bulkIds = computed(() => matching.value?.ids ?? selectedDocIds.value)
+const selectablePageCount = computed(() => (writable.value && !isBucketCollection(props.collectionName) ? documents.value.length : 0))
+
+function clearMatching() {
+  matching.value = null
+  bulkNote.value = ''
+}
+
+function isAbort(error: unknown): boolean {
+  return (error as { name?: string } | null)?.name === 'AbortError'
+}
+
+async function collectMatching() {
+  clearMatching()
+  const target = total.value
+  if (target > MAX_MATCHING) {
+    bulkNote.value = t('nuxtUiMongocamp.bulk.matchingTooMany', { total: target, cap: MAX_MATCHING })
+    return
+  }
+  const controller = new AbortController()
+  collectController = controller
+  collecting.value = { loaded: 0, target }
+  try {
+    const result = await fetchAllDocuments<Row>(props.collectionName, {
+      filter: buildLuceneFilter(filterText.value),
+      projection: ['_id'],
+      pageSize: 1000,
+      maxRows: MAX_MATCHING,
+      signal: controller.signal,
+      keyOf: row => String(getDocId(row) ?? ''),
+      onProgress: p => (collecting.value = { loaded: p.loaded, target: p.target }),
+    })
+    // more than the cap now: the collection grew while the ids were read, and a partial list must never look complete
+    if (result.truncated) {
+      bulkNote.value = t('nuxtUiMongocamp.bulk.matchingChanged')
+      return
+    }
+    const ids = result.rows.flatMap((row) => {
+      const id = getDocId(row)
+      return id ? [id] : []
+    })
+    const reported = result.total ?? ids.length
+    matching.value = { ids, reported }
+    rowSelection.value = {}
+    if (ids.length !== reported || result.totalChanged) {
+      bulkNote.value = t('nuxtUiMongocamp.bulk.matchingDrift', { collected: ids.length, reported })
+    }
+  }
+  catch (e: unknown) {
+    if (!isAbort(e)) bulkNote.value = (await describeServerError(e)).message
+  }
+  finally {
+    collecting.value = null
+    if (collectController === controller) collectController = undefined
+  }
+}
+
+function cancelCollect() {
+  collectController?.abort()
+}
+
+function stopBulk() {
+  bulkController?.abort()
+}
+
+function clearBulkSelection() {
+  collectController?.abort()
+  rowSelection.value = {}
+  clearMatching()
+}
+
 function openBulkEdit() {
   bulkEditError.value = ''
   bulkEditOpen.value = true
@@ -579,9 +662,13 @@ function rowId(row: Row, index: number): string {
 async function handleBulkDelete() {
   bulkDeleting.value = true
   bulkError.value = ''
-  const ids = [...selectedDocIds.value]
+  const ids = [...bulkIds.value]
+  const all = matching.value !== null
+  const controller = new AbortController()
+  bulkController = controller
+  bulkProgress.value = all ? { done: 0, total: ids.length } : null
   try {
-    const { failed } = await runBulkDelete(
+    const { deleted, failed, notAttempted } = await runBulkDelete(
       ids,
       documentId => documentApi._delete({ collectionName: props.collectionName, documentId }),
       undefined,
@@ -594,9 +681,18 @@ async function handleBulkDelete() {
           requestBody: buildIdFilter(chunk) as unknown as { [key: string]: string },
         })).deletedCount,
       },
+      { signal: controller.signal, onProgress: (done, totalIds) => (bulkProgress.value = all ? { done, total: totalIds } : null) },
     )
     await fetchDocuments()
-    if (failed.length > 0) {
+    const left = [...failed.map(f => f.item), ...(notAttempted ?? [])]
+    if (all) {
+      // what is left stays selected, so a retry or a look at the rest is one click
+      if (left.length > 0) matching.value = { ids: left, reported: left.length }
+      if (notAttempted?.length) bulkError.value = t('nuxtUiMongocamp.bulk.stoppedDelete', { done: deleted.length, total: ids.length, left: notAttempted.length })
+      else if (failed.length > 0) bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: ids.length, reason: describeError(failed[0]!.error).message })
+      else toast.add({ title: t('nuxtUiMongocamp.bulk.matchingDeleted', { deleted: deleted.length, total: ids.length }), color: 'success' })
+    }
+    else if (failed.length > 0) {
       // keep only what is still there selected, and say why
       rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
       bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: ids.length, reason: describeError(failed[0]!.error).message })
@@ -604,6 +700,8 @@ async function handleBulkDelete() {
   }
   finally {
     bulkDeleting.value = false
+    bulkProgress.value = null
+    if (bulkController === controller) bulkController = undefined
   }
 }
 
@@ -623,28 +721,42 @@ function bulkEditFailureReason(error: unknown): string {
 async function handleBulkEdit(edit: { field: string, value: unknown }) {
   bulkEditing.value = true
   bulkEditError.value = ''
-  const ids = [...selectedDocIds.value]
+  const ids = [...bulkIds.value]
+  const all = matching.value !== null
+  const controller = new AbortController()
+  bulkController = controller
+  bulkProgress.value = all ? { done: 0, total: ids.length } : null
   // the generated types say string values only; the server takes any JSON value
   const document = { [edit.field]: edit.value } as unknown as { [key: string]: string }
   try {
-    const { failed } = await runBulkUpdate(
+    const { updated, failed, notAttempted } = await runBulkUpdate(
       ids,
       chunk => documentApi.updateMany({
         collectionName: props.collectionName,
         updateRequest: { filter: buildIdFilter(chunk) as unknown as { [key: string]: string }, document },
       }),
+      { signal: controller.signal, onProgress: (done, totalIds) => (bulkProgress.value = all ? { done, total: totalIds } : null) },
     )
     await fetchDocuments()
-    if (failed.length > 0) {
+    const failedIds = failed.flatMap(f => f.ids)
+    if (all) {
+      const left = [...failedIds, ...(notAttempted ?? [])]
+      if (left.length > 0) matching.value = { ids: left, reported: left.length }
+      if (notAttempted?.length) bulkEditError.value = t('nuxtUiMongocamp.bulk.stoppedEdit', { done: updated.length, total: ids.length, left: notAttempted.length })
+      else if (failedIds.length > 0) bulkEditError.value = t('nuxtUiMongocamp.bulk.editPartialFailure', { failed: failedIds.length, total: ids.length, reason: bulkEditFailureReason(failed[0]!.error) })
+      else toast.add({ title: t('nuxtUiMongocamp.bulk.matchingUpdated', { updated: updated.length, total: ids.length }), color: 'success' })
+    }
+    else if (failed.length > 0) {
       // keep selected only what is still on screen and was not updated, and say why
       const onScreen = new Set(documents.value.map(row => getDocId(row)))
-      const failedIds = failed.flatMap(f => f.ids)
       rowSelection.value = Object.fromEntries(failedIds.filter(id => onScreen.has(id)).map(id => [id, true]))
       bulkEditError.value = t('nuxtUiMongocamp.bulk.editPartialFailure', { failed: failedIds.length, total: ids.length, reason: bulkEditFailureReason(failed[0]!.error) })
     }
   }
   finally {
     bulkEditing.value = false
+    bulkProgress.value = null
+    if (bulkController === controller) bulkController = undefined
   }
 }
 
@@ -657,6 +769,8 @@ async function fetchDocuments() {
   loadError.value = null
   // paging, filtering and sorting all fetch — a selection from rows no longer on screen must not survive
   rowSelection.value = {}
+  collectController?.abort()
+  clearMatching()
   filterRejected.value = false
   const filter = buildLuceneFilter(filterText.value)
   try {
@@ -981,11 +1095,21 @@ watch(() => props.collectionName, init, { immediate: true })
     />
 
     <MongocampBulkDelete
-      :selected="selectedDocIds"
+      :selected="bulkIds"
+      :page-count="selectablePageCount"
+      :total="total"
+      :all-matching="matching !== null"
+      :collecting="collecting"
+      :note="bulkNote"
+      :confirm-name="matching ? collectionName : undefined"
       :deleting="bulkDeleting"
+      :progress="bulkProgress"
       :error="bulkError"
       @open="bulkError = ''"
-      @clear="rowSelection = {}"
+      @clear="clearBulkSelection"
+      @select-all="collectMatching"
+      @cancel-collect="cancelCollect"
+      @stop="stopBulk"
       @confirm="handleBulkDelete"
     >
       <template #actions>
@@ -1002,11 +1126,13 @@ watch(() => props.collectionName, init, { immediate: true })
     </MongocampBulkDelete>
     <MongocampBulkEdit
       v-model:open="bulkEditOpen"
-      :selected="selectedDocIds.length"
+      :selected="bulkIds.length"
       :fields="editableFields"
       :saving="bulkEditing"
+      :progress="bulkProgress"
       :error="bulkEditError"
       @apply="handleBulkEdit"
+      @stop="stopBulk"
     />
 
     <pre

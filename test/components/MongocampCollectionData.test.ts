@@ -106,6 +106,222 @@ beforeEach(() => {
 })
 
 describe('MongocampCollectionData', () => {
+  describe('select all matching', () => {
+    const hex = (n: number) => n.toString(16).padStart(24, '0')
+    const pageRows = [1, 2, 3].map(n => ({ _id: hex(n), name: `n${n}` }))
+    const isIdCall = (request: { projection?: string[] }) => request.projection?.[0] === '_id'
+
+    // the table shows 3 rows of `total` matches; a projection-by-_id request is the id collection, answered by `ids`
+    function serve(total: number, ids: () => string[] | Promise<string[]> = () => Array.from({ length: total }, (_, i) => hex(i + 1)), idTotal = total) {
+      mockListDocumentsRaw.mockImplementation(async (request: { projection?: string[], page?: number }, init?: { signal?: AbortSignal }) => {
+        if (!isIdCall(request)) return mockRawResponse(pageRows, String(total))
+        const all = await ids()
+        if (init?.signal?.aborted) throw Object.assign(new Error('aborted'), { name: 'AbortError' })
+        const pageSize = 1000
+        const page = request.page ?? 1
+        return mockRawResponse(all.slice((page - 1) * pageSize, page * pageSize).map(_id => ({ _id })), String(idTotal))
+      })
+    }
+
+    async function mountAndSelectPage() {
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await component.find('[aria-label="Select all rows on this page"]').trigger('click')
+      return component
+    }
+    const idCalls = () => mockListDocumentsRaw.mock.calls.filter(c => isIdCall(c[0]))
+    const button = (c: Awaited<ReturnType<typeof mountAndSelectPage>>, label: string) => c.findAll('button').find(b => b.text() === label)
+
+    it('offers it only when the whole page is selected and more documents match', async () => {
+      serve(45)
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await component.findAll('[aria-label="Select row"]')[0]!.trigger('click')
+      expect(component.find('[data-test="select-all-banner"]').exists()).toBe(false)
+
+      await component.find('[aria-label="Select all rows on this page"]').trigger('click')
+      expect(component.find('[data-test="select-all-banner"]').text()).toContain('All 3 documents on this page are selected.')
+      expect(component.text()).toContain('Select all 45 matching documents')
+    })
+
+    it('does not offer it when the page already holds everything', async () => {
+      serve(3)
+      const component = await mountAndSelectPage()
+      expect(component.text()).toContain('3 selected')
+      expect(component.find('[data-test="select-all-banner"]').exists()).toBe(false)
+    })
+
+    it('collects the ids of the current filter in pages of 1000 — ids only — and selects them all', async () => {
+      serve(45)
+      const component = await mountAndSelectPage()
+      await button(component, 'Select all 45 matching documents')!.trigger('click')
+      await wait()
+
+      expect(idCalls()).toHaveLength(1)
+      expect(idCalls()[0]![0]).toMatchObject({ collectionName: 'customers', projection: ['_id'], rowsPerPage: 1000, page: 1 })
+      expect(component.text()).toContain('All 45 matching documents are selected.')
+      expect(component.find('[data-test="select-all-banner"]').exists()).toBe(false)
+    })
+
+    it('collects with the filter the table is showing', async () => {
+      serve(45)
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await component.find('input[placeholder="Filter rows..."]').setValue('ali')
+      await wait(450)
+      await component.find('[aria-label="Select all rows on this page"]').trigger('click')
+      await button(component as never, 'Select all 45 matching documents')!.trigger('click')
+      await wait()
+      expect(idCalls()[0]![0].filter).toBe(mockListDocumentsRaw.mock.calls.filter(c => !isIdCall(c[0])).at(-1)![0].filter)
+      expect(idCalls()[0]![0].filter).toContain('ali')
+    })
+
+    it('refuses above the cap without reading anything', async () => {
+      serve(10_001)
+      const component = await mountAndSelectPage()
+      await button(component, 'Select all 10001 matching documents')!.trigger('click')
+      await wait()
+      expect(idCalls()).toHaveLength(0)
+      expect(component.find('[data-test="bulk-note"]').text()).toContain('10001 documents match, more than the 10000')
+      expect(component.text()).not.toContain('matching documents are selected')
+    })
+
+    it('can be cancelled while collecting, and then nothing is selected', async () => {
+      let release!: () => void
+      serve(45, () => new Promise<string[]>((resolve) => {
+        release = () => resolve([])
+      }))
+      const component = await mountAndSelectPage()
+      await button(component, 'Select all 45 matching documents')!.trigger('click')
+      await wait()
+      expect(component.find('[data-test="collecting"]').text()).toContain('Collecting ids')
+
+      await component.find('[data-test="collecting"] button').trigger('click')
+      release()
+      await wait()
+      expect(component.find('[data-test="collecting"]').exists()).toBe(false)
+      expect(component.text()).not.toContain('matching documents are selected')
+      expect(component.find('[data-test="bulk-note"]').exists()).toBe(false)
+    })
+
+    it('says so when fewer ids were found than the list reported', async () => {
+      serve(45, () => Array.from({ length: 40 }, (_, i) => hex(i + 1)), 45)
+      const component = await mountAndSelectPage()
+      await button(component, 'Select all 45 matching documents')!.trigger('click')
+      await wait()
+      expect(component.text()).toContain('All 40 matching documents are selected.')
+      expect(component.find('[data-test="bulk-note"]').text()).toContain('40 documents were found; the list reported 45')
+    })
+
+    it('does not keep the selection when the list is reloaded', async () => {
+      serve(45)
+      const component = await mountAndSelectPage()
+      await button(component, 'Select all 45 matching documents')!.trigger('click')
+      await wait()
+      await component.find('[aria-label="Reload"]').trigger('click')
+      await wait()
+      expect(component.text()).not.toContain('matching documents are selected')
+    })
+
+    describe('deleting', () => {
+      async function selectAll(total: number) {
+        serve(total)
+        mockDeleteMany.mockImplementation(async (request: { requestBody: { $or: unknown[] } }) => ({ deletedCount: request.requestBody.$or.length }))
+        const component = await mountAndSelectPage()
+        await button(component, `Select all ${total} matching documents`)!.trigger('click')
+        await wait()
+        await button(component, 'Delete selected')!.trigger('click')
+        await wait()
+        return component
+      }
+      const confirm = (total: number) => modal().findAll('button').find(b => b.text() === `Delete ${total}`)!
+
+      it('needs the collection name typed, then deletes every id in chunks of 100 and reports the count', async () => {
+        const component = await selectAll(250)
+        expect(modal().text()).toContain('type the collection name customers')
+        expect(confirm(250).attributes('disabled')).toBeDefined()
+        await confirm(250).trigger('click')
+        expect(mockDeleteMany).not.toHaveBeenCalled()
+
+        await modal().find('input[aria-label="Collection name"]').setValue('wrong')
+        expect(confirm(250).attributes('disabled')).toBeDefined()
+        await modal().find('input[aria-label="Collection name"]').setValue('customers')
+        await wait()
+        expect(confirm(250).attributes('disabled')).toBeUndefined()
+        await confirm(250).trigger('click')
+        await wait(150)
+
+        expect(mockDeleteMany).toHaveBeenCalledTimes(3)
+        expect(mockDeleteMany.mock.calls.map(c => c[0].requestBody.$or.length)).toEqual([100, 100, 50])
+        expect(mockDeleteMany.mock.calls[0]![0].requestBody.$or[0]).toEqual({ _id: hex(1) })
+        expect(component.text()).not.toContain('matching documents are selected')
+      })
+
+      it('does not ask for the name when only the rows on screen are selected', async () => {
+        serve(45)
+        mockDeleteMany.mockResolvedValue({ deletedCount: 3 })
+        const component = await mountAndSelectPage()
+        await button(component, 'Delete selected')!.trigger('click')
+        await wait()
+        expect(modal().find('input[aria-label="Collection name"]').exists()).toBe(false)
+        expect(modal().findAll('button').find(b => b.text() === 'Delete 3')!.attributes('disabled')).toBeUndefined()
+      })
+
+      it('can be stopped between chunks; what was not touched stays selected and is reported', async () => {
+        const component = await selectAll(250)
+        let release!: () => void
+        mockDeleteMany.mockImplementationOnce(() => new Promise((resolve) => {
+          release = () => resolve({ deletedCount: 100 })
+        }))
+        await modal().find('input[aria-label="Collection name"]').setValue('customers')
+        await wait()
+        await confirm(250).trigger('click')
+        await wait()
+        expect(modal().find('[data-test="delete-progress"]').text()).toContain('Deleted 0 of 250')
+
+        await modal().findAll('button').find(b => b.text() === 'Stop')!.trigger('click')
+        release()
+        await wait(150)
+
+        expect(mockDeleteMany).toHaveBeenCalledTimes(1)
+        expect(modal().text()).toContain('Stopped: 100 of 250 deleted. The other 150 were not touched.')
+        expect(component.text()).toContain('All 150 matching documents are selected.')
+      })
+
+      it('keeps the ids that could not be deleted selected and says why', async () => {
+        const component = await selectAll(150)
+        mockDeleteMany.mockReset()
+        mockDeleteMany.mockResolvedValueOnce({ deletedCount: 100 }).mockRejectedValue(new Error('forbidden'))
+        mockDelete.mockRejectedValue(new Error('forbidden'))
+        await modal().find('input[aria-label="Collection name"]').setValue('customers')
+        await wait()
+        await confirm(150).trigger('click')
+        await wait(200)
+        expect(modal().text()).toContain('50 of 150 could not be deleted')
+        expect(component.text()).toContain('All 50 matching documents are selected.')
+      })
+    })
+
+    describe('editing', () => {
+      it('updates every collected id in chunks and shows progress', async () => {
+        serve(250)
+        mockUpdateMany.mockImplementation(async () => ({ matchedCount: 100 }))
+        const component = await mountAndSelectPage()
+        await button(component, 'Select all 250 matching documents')!.trigger('click')
+        await wait()
+        await button(component, 'Edit selected')!.trigger('click')
+        await wait()
+        await modal().find('input[aria-label="Value"]').setValue('X')
+        await wait()
+        await modal().findAll('button').find(b => b.text() === 'Update 250')!.trigger('click')
+        await wait(150)
+        expect(mockUpdateMany).toHaveBeenCalledTimes(3)
+        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.filter.$or).toHaveLength(100)
+        expect(mockUpdateMany.mock.calls.map(c => c[0].updateRequest.filter.$or.length)).toEqual([100, 100, 50])
+      })
+    })
+  })
+
   describe('query bar: sort and fields to load', () => {
     const rows = [
       { _id: { $oid: 'a'.repeat(24) }, name: 'Alice', age: 30, city: 'X' },

@@ -110,3 +110,13 @@ Every row has a **View** button (also without a write grant) that opens the docu
 Below the toolbar sits a [`MongocampQueryBar`](/components/mongocamp-query-bar): the visual filter (button, count and chips), a **sort** (it follows clicks on the column headers), the **fields to load** and the recent/saved queries of the collection. The quick search stays as the simple mode and is ANDed with the bar's filter.
 
 With fields chosen, only those are requested (`projection`); the other columns are hidden and **Edit** loads the complete document first, so a partial row is never written back. A failed load shows a toast and the form stays closed.
+
+## Select all matching
+
+Tick the header checkbox to select the page. When more documents match the current filter, the selection bar offers **Select all N matching documents**. The table then reads the ids of every match (`useMongocampFetchAll`, `_id` only, pages of 1 000, with progress and **Cancel**) and **Delete selected** / **Edit selected** work on all of them, in chunks of 100 ids with progress and **Stop**.
+
+- **Cap:** at most 10 000 documents at once. Above that nothing is read and the bar says how many match; narrow the filter first.
+- **Confirmation:** deleting every match needs the **collection name typed**; the count is on the button.
+- **Snapshot, not atomic:** the ids are the documents that matched when they were read. A document added meanwhile is not touched; if fewer ids than the list reported were found, the bar says so. After the action the result is reported (`Deleted 500 of 500 documents`).
+- **Stop or failure:** what was not touched stays selected (`All 150 matching documents are selected.`) with a message, so a retry is one click.
+- Reloading, paging, filtering or sorting drops the selection.

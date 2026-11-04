@@ -124,4 +124,48 @@ describe('runBulkDelete with removeMany', () => {
     await runBulkDelete(items(5), vi.fn(), 5, { run, chunkSize: 2 })
     expect(run.mock.calls.map(c => c[0].length)).toEqual([2, 2, 1])
   })
+
+  describe('progress and abort', () => {
+    it('reports progress after every chunk and every single deletion', async () => {
+      const progress: Array<[number, number]> = []
+      await runBulkDelete(items(5), vi.fn(), 5, { run: async chunk => chunk.length, chunkSize: 2 }, { onProgress: (done, total) => progress.push([done, total]) })
+      expect(progress).toEqual([[2, 5], [4, 5], [5, 5]])
+
+      const singles: number[] = []
+      await runBulkDelete(items(3), vi.fn().mockResolvedValue(undefined), 1, undefined, { onProgress: done => singles.push(done) })
+      expect(singles).toEqual([1, 2, 3])
+    })
+
+    it('stops before the next chunk after an abort and says which items were never tried', async () => {
+      const controller = new AbortController()
+      const run = vi.fn(async (chunk: string[]) => {
+        controller.abort()
+        return chunk.length
+      })
+      const result = await runBulkDelete(items(5), vi.fn(), 5, { run, chunkSize: 2 }, { signal: controller.signal })
+      expect(run).toHaveBeenCalledTimes(1)
+      expect(result.deleted).toEqual(['id0', 'id1'])
+      expect(result.failed).toEqual([])
+      expect(result.notAttempted).toEqual(['id2', 'id3', 'id4'])
+    })
+
+    it('stops the per-item path too', async () => {
+      const controller = new AbortController()
+      const remove = vi.fn(async () => controller.abort())
+      const result = await runBulkDelete(items(4), remove, 1, undefined, { signal: controller.signal })
+      expect(remove).toHaveBeenCalledTimes(1)
+      expect(result.deleted).toEqual(['id0'])
+      expect(result.notAttempted).toEqual(['id1', 'id2', 'id3'])
+    })
+
+    it('does not delete anything when already aborted, and has no notAttempted otherwise', async () => {
+      const controller = new AbortController()
+      controller.abort()
+      const run = vi.fn()
+      const result = await runBulkDelete(items(3), vi.fn(), 5, { run }, { signal: controller.signal })
+      expect(run).not.toHaveBeenCalled()
+      expect(result.notAttempted).toEqual(items(3))
+      expect('notAttempted' in await runBulkDelete(items(2), vi.fn())).toBe(false)
+    })
+  })
 })

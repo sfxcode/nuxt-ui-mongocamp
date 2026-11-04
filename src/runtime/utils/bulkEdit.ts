@@ -26,10 +26,16 @@ export interface BulkUpdateFailure {
 export interface BulkUpdateResult {
   updated: string[]
   failed: BulkUpdateFailure[]
+  /** Only present after an abort: ids that were never tried, so they are known to be untouched. */
+  notAttempted?: string[]
 }
 
 export interface BulkUpdateOptions {
   chunkSize?: number
+  /** Aborting stops before the next chunk; what already ran stays done and is reported. */
+  signal?: AbortSignal
+  /** Called after every chunk with how many ids have been dealt with so far. */
+  onProgress?: (done: number, total: number) => void
 }
 
 const DEFAULT_CHUNK_SIZE = 100
@@ -62,7 +68,12 @@ export async function runBulkUpdate(
   const addressable = ids.filter(id => isObjectIdHex(id))
   const others = ids.filter(id => !isObjectIdHex(id))
 
+  let done = 0
   for (let start = 0; start < addressable.length; start += chunkSize) {
+    if (options.signal?.aborted) {
+      result.notAttempted = addressable.slice(start)
+      break
+    }
     const chunk = addressable.slice(start, start + chunkSize)
     try {
       const response = await updateMany(chunk)
@@ -73,6 +84,8 @@ export async function runBulkUpdate(
     catch (error) {
       result.failed.push({ ids: chunk, error })
     }
+    done += chunk.length
+    options.onProgress?.(done, ids.length)
   }
 
   // reported without a request: the server would only answer 500
