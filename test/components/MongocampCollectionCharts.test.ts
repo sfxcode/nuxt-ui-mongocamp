@@ -54,7 +54,7 @@ describe('values chart (text and true/false)', () => {
     // always visible, also where the Tailwind-only `in-data-measured` variant does not exist (the UnoCSS preset)
     expect((chart(c).props() as { ui: unknown }).ui).toEqual({ base: 'opacity-100' })
     // falls back to the primary colour when the theme has no chart colours
-    expect((chart(c).props() as { colors: string[] }).colors).toEqual(['var(--ui-chart-1, var(--ui-primary, #16a34a))'])
+    expect((chart(c).props() as { colors: string[] }).colors[0]).toBe('var(--ui-chart-1, var(--ui-primary, #16a34a))')
     expect(c.text()).toContain('Most common values')
     expect(c.find('[data-test="chart-note"]').text()).toBe('The 3 most common of 14 values.')
   })

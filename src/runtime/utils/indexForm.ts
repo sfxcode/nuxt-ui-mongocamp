@@ -56,18 +56,7 @@ export function describeKey(key: IndexKey): string {
   return `${key.field}: ${key.direction === 1 ? '↑' : key.direction === -1 ? '↓' : '?'}`
 }
 
-/** `1.5 KB` style size; `0 B` for nothing. */
-export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  let value = bytes
-  let unit = 0
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024
-    unit++
-  }
-  return `${unit === 0 ? value : value.toFixed(value >= 10 ? 0 : 1)} ${units[unit]}`
-}
+export { formatBytes } from './formatBytes'
 
 // seconds, minutes, hours, days — `3600s` and `1d` are verified on the server, the others are the same duration syntax
 const DURATION = /^[1-9]\d{0,8}[smhd]$/

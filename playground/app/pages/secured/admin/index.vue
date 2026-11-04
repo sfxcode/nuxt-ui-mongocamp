@@ -22,6 +22,13 @@
         size="lg"
       />
       <UButton
+        label="Overview"
+        icon="i-lucide-gauge"
+        to="/secured/admin/overview"
+        variant="outline"
+        size="lg"
+      />
+      <UButton
         label="Collections"
         icon="i-lucide-database"
         to="/secured/admin/collections"

@@ -28,15 +28,6 @@ const props = withDefaults(defineProps<{
   buckets: DEFAULT_BUCKETS,
 })
 
-// Nuxt UI's stylesheet defines `--ui-chart-1…6`; an app that gets the theme another way (the UnoCSS preset, for one) may not
-// have them, and the bars would be drawn without a colour. The theme's primary colour is the fallback.
-const SERIES_COLORS = ['var(--ui-chart-1, var(--ui-primary, #16a34a))']
-
-// UChart hides itself until it has measured its width (`opacity-0 in-data-measured:opacity-100`). That variant is Tailwind v4
-// only; with the UnoCSS preset this module also supports it is never generated and the chart would stay invisible. `opacity-100`
-// wins over `opacity-0` when the classes are merged, so the chart is always shown (without the short fade-in).
-const CHART_UI = { base: 'opacity-100' }
-
 const { t } = useI18n()
 const { runAggregation, sampleDocuments, describeAggregationError } = useMongocampAggregation()
 
@@ -212,18 +203,15 @@ const unsupportedType = computed(() => t(`nuxtUiMongocamp.charts.type${(detected
     </p>
 
     <template v-else>
-      <UChart
+      <MongocampChart
         :type="chartType"
         :data="points"
         index="label"
         :categories="categories"
-        :colors="SERIES_COLORS"
-        :ui="CHART_UI"
-        :aria-label="ariaLabel"
-        :aria-description="ariaDescription"
+        :chart-label="ariaLabel"
+        :chart-description="ariaDescription"
         :legend="false"
         :height="260"
-        :points="false"
       />
       <p
         v-if="note"
@@ -232,37 +220,6 @@ const unsupportedType = computed(() => t(`nuxtUiMongocamp.charts.type${(detected
       >
         {{ note }}
       </p>
-      <details class="text-sm">
-        <summary class="cursor-pointer text-dimmed">
-          {{ t('nuxtUiMongocamp.charts.showData') }}
-        </summary>
-        <table
-          class="mt-2 w-full text-left text-xs"
-          data-test="chart-table"
-        >
-          <thead>
-            <tr>
-              <th class="pr-3 font-medium">
-                {{ t('nuxtUiMongocamp.charts.columnValue') }}
-              </th>
-              <th class="font-medium">
-                {{ t('nuxtUiMongocamp.charts.columnCount') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(point, index) in points"
-              :key="index"
-            >
-              <td class="pr-3 font-mono">
-                {{ point.label }}
-              </td>
-              <td>{{ point.count }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </details>
     </template>
   </div>
 </template>

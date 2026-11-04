@@ -1,6 +1,6 @@
 # MongocampCollectionCharts
 
-How the values of **one field** are distributed, drawn with Nuxt UI's [`UChart`](https://ui.nuxt.com/docs/components/chart). The chart kind follows the field's type; the numbers come from one aggregation on the server. [`MongocampCollectionInfos`](/components/mongocamp-collection-infos) shows it in its **Distribution** card.
+How the values of **one field** are distributed, drawn with Nuxt UI's [`UChart`](https://ui.nuxt.com/docs/components/chart) through [`MongocampChart`](/components/mongocamp-chart). The chart kind follows the field's type; the numbers come from one aggregation on the server. [`MongocampCollectionInfos`](/components/mongocamp-collection-infos) shows it in its **Distribution** card.
 
 ## Usage
 
@@ -39,6 +39,5 @@ Arrays, objects and fields that are only ever empty get a message instead of a c
 ## Requirements and styling
 
 - `UChart` needs the package [`@tanstack/charts`](https://tanstack.com/charts) — this module depends on it, so it is installed with the module.
-- Nuxt UI's stylesheet defines the series colours `--ui-chart-1…6`; where they are missing (the UnoCSS preset), the bars use `--ui-primary`.
-- `UChart` fades in with a Tailwind v4-only variant (`in-data-measured:`) that the UnoCSS preset never generates, which would leave the chart invisible; the component overrides that one class, so it shows in both setups (without the fade).
+- The series colours, the UnoCSS visibility fix and the text/table alternative come from [`MongocampChart`](/components/mongocamp-chart).
 - Loading, an error with **Try again**, and a request that is cancelled when the field changes or the component goes away are handled for you.

@@ -29,6 +29,8 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampQueryBar`](/components/mongocamp-query-bar) | Filter + sort + fields to load + history and saved queries in one bar (used by the data table) |
 | [`MongocampIndexes`](/components/mongocamp-indexes) | Indexes of a collection with size and usage, compound/unique/text/expiring create, typed drop (the info page's index card) |
 | [`MongocampCollectionCharts`](/components/mongocamp-collection-charts) | Distribution of one field as a chart (top values, documents over time, number ranges) with Nuxt UI's `UChart` |
+| [`MongocampChart`](/components/mongocamp-chart) | `UChart` with series-colour fallbacks, the UnoCSS visibility fix and a text/table alternative (the base of the module's charts) |
+| [`MongocampServerOverview`](/components/mongocamp-server-overview) | Admin overview: totals, biggest collections (chart + ranked links), share of storage, databases, cluster, next jobs |
 | [`MongocampCollectionCopy`](/components/mongocamp-collection-copy) | Copy a collection into a new one, or a one-click timestamped backup (dialog; opened from the collection list) |
 | [`MongocampExportAll`](/components/mongocamp-export-all) | Export every matching document as JSON/NDJSON/CSV with progress and cancel (dialog; opened from the data table's export menu) |
 | [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |
