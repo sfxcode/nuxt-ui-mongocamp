@@ -103,6 +103,7 @@ export default defineConfig({
             { text: 'useMongocampAutoRefresh', link: '/composables/use-mongocamp-auto-refresh' },
             { text: 'useMongocampCollectionStats', link: '/composables/use-mongocamp-collection-stats' },
             { text: 'useMongocampCollectionCopy', link: '/composables/use-mongocamp-collection-copy' },
+            { text: 'useMongocampSavedPipelines', link: '/composables/use-mongocamp-saved-pipelines' },
             { text: 'useMongocampSession', link: '/composables/use-mongocamp-session' },
             { text: 'useMongocampClientApi', link: '/composables/use-mongocamp-client-api' },
             { text: 'useMongocampProxyApi', link: '/composables/use-mongocamp-proxy-api' },

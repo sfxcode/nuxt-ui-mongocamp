@@ -27,7 +27,9 @@ export const FORBIDDEN_OPERATORS = [
 // everything else on the list stays refused for every caller.
 export const STATS_OPERATORS = ['$collStats', '$indexStats'] as const
 
-export const VISUAL_STAGE_TYPES = ['$match', '$group', '$sort', '$project', '$limit'] as const
+// Verified on server 1.6.3 (live, 2026-11-04): `$unwind` as a `$path` string or `{ path, preserveNullAndEmptyArrays, includeArrayIndex }`,
+// `$addFields` with expressions, `$count` with the output field name as a string, `$bucketAuto` with `groupBy`/`buckets`/`output`.
+export const VISUAL_STAGE_TYPES = ['$match', '$group', '$sort', '$project', '$limit', '$unwind', '$addFields', '$count', '$bucketAuto'] as const
 
 export type AggregationStageType = typeof VISUAL_STAGE_TYPES[number]
 
@@ -61,7 +63,7 @@ export interface PipelineError {
 
 export type ParsedPipeline = { ok: true, pipeline: RequestStage[] } | { ok: false, error: PipelineError }
 
-export type StageIssueCode = 'not-object' | 'invalid-limit' | 'invalid-sort' | 'group-needs-id'
+export type StageIssueCode = 'not-object' | 'invalid-limit' | 'invalid-sort' | 'group-needs-id' | 'invalid-unwind' | 'invalid-count' | 'bucket-needs-fields'
 
 export interface StageIssue {
   // index in the stage list that was validated
@@ -142,12 +144,24 @@ export function validateStages(stages: AggregationStage[]): StageIssue[] {
       if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) issues.push({ stageIndex, code: 'invalid-limit' })
       return
     }
+    if (type === '$unwind') {
+      // a field path (`"$tags"`) or an object with one
+      const path = typeof value === 'string' ? value : isPlainObject(value) ? value.path : undefined
+      if (typeof path !== 'string' || !path.startsWith('$') || path.length < 2) issues.push({ stageIndex, code: 'invalid-unwind' })
+      return
+    }
+    if (type === '$count') {
+      // the name of the output field: not a path, no dot
+      if (typeof value !== 'string' || value.startsWith('$') || value.includes('.')) issues.push({ stageIndex, code: 'invalid-count' })
+      return
+    }
     if (!isPlainObject(value)) {
       issues.push({ stageIndex, code: 'not-object' })
       return
     }
     if (type === '$group' && !('_id' in value)) issues.push({ stageIndex, code: 'group-needs-id' })
     if (type === '$sort' && !Object.values(value).every(direction => direction === 1 || direction === -1)) issues.push({ stageIndex, code: 'invalid-sort' })
+    if (type === '$bucketAuto' && (!('groupBy' in value) || typeof value.buckets !== 'number' || !Number.isInteger(value.buckets) || value.buckets < 1)) issues.push({ stageIndex, code: 'bucket-needs-fields' })
   })
   return issues
 }

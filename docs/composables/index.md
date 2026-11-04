@@ -32,6 +32,7 @@ All composables are auto-imported.
 | [`useMongocampAutoRefresh`](/composables/use-mongocamp-auto-refresh) | Interval loads for live views: no overlap, backoff, pauses in a hidden tab, stops on unmount |
 | [`useMongocampCollectionStats`](/composables/use-mongocamp-collection-stats) | Typed storage sizes and per-index usage (`$indexStats`, host stripped) of one collection |
 | [`useMongocampCollectionCopy`](/composables/use-mongocamp-collection-copy) | Copy a collection into a new one (`copyCollection`) and a timestamped quick backup (`backupCollection`) |
+| [`useMongocampSavedPipelines`](/composables/use-mongocamp-saved-pipelines) | Saved aggregation pipelines per collection, browser-only, re-checked against the deny-list on every read |
 | [`useMongocampClientApi`](/composables/use-mongocamp-client-api) | Mode-switching drop-in for `useMongocampApi()` — session or [server proxy](/guide/server-proxy-auth) mode |
 | [`useMongocampProxyApi`](/composables/use-mongocamp-proxy-api) | The server-proxy-mode branch `useMongocampClientApi` switches to |
 

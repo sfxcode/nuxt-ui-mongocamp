@@ -3,7 +3,7 @@
 Aggregation, distinct values and sampling over `collectionApi.aggregate` / `distinct`, with timeouts, defensive result handling and readable errors. It is the engine behind [`MongocampAggregationBuilder`](/components/mongocamp-aggregation-builder), the value suggestions in [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) and the field statistics in [`MongocampCollectionInfos`](/components/mongocamp-collection-infos), and works in session and [server proxy](/guide/server-proxy-auth) mode alike (it calls [`useMongocampClientApi`](/composables/use-mongocamp-client-api)).
 
 ```ts
-const { runAggregation, listDistinct, sampleDocuments, describeAggregationError } = useMongocampAggregation()
+const { runAggregation, listDistinct, listFieldNames, sampleDocuments, describeAggregationError } = useMongocampAggregation()
 
 const { rows, total, pages, page } = await runAggregation('customers', [
   { stage: '$group', value: { _id: '$country', n: { $sum: 1 } } },
@@ -24,6 +24,12 @@ const { rows, total, pages, page } = await runAggregation('customers', [
 - **Refuses forbidden pipelines.** Before any request, a pipeline using `$out`, `$merge`, `$function`, `$accumulator`, `$where`, `$lookup`, `$unionWith`, `$graphLookup`, `$collStats` or `$indexStats` — as a stage or nested at any depth — is rejected with a `ForbiddenPipelineError` (`.findings` lists operator, stage and path). Since 1.6.3 the server refuses `$function`, `$accumulator`, `$where`, `$out`, `$merge` and `$currentOp` itself (`403`, code `4031`), but it still runs `$lookup`, `$unionWith` and `$graphLookup` across collections (and `$collStats`, `$indexStats`), so this check stays as early feedback and as the gate for those.
 - **Stats stages are opt-in.** `$collStats` and `$indexStats` work on the server (storage numbers, per-index usage) but every result row carries the database server's address (`host`) and its `<database>.<collection>` name (`ns`). `runAggregation(collection, pipeline, paging, { allowStatsStages: true })` lets a pipeline use exactly those two — every other denied operator stays refused — and removes `host` and `ns` from the top level of every row (`stripServerFields`). It is for the module's own storage and index-usage calls; the aggregation builder never sets it. Ordinary results are never stripped (a document may have a field called `host`).
 - **An empty result is an empty page.** Since server 1.6.1 an aggregation with no documents answers `200 []` with a count of `0`. Older servers (1.5.x) answered `500 "Index 0 out of bounds for length 0"`, which is no longer special-cased and rejects like any other error.
+
+`runAggregation`'s fourth argument also takes `signal`: aborting rejects the call (an `AbortError`) on top of the 30 s timeout — the builder's stage previews use it to drop a run that is out of date.
+
+## `listFieldNames(collection)`
+
+The top-level field names the server knows for a collection, sorted (the server lists them unordered; nested paths are not included). 15 s timeout. For suggestions only — the builder's templates offer them while you type.
 
 ## `listDistinct(collection, field, limit = 100)`
 

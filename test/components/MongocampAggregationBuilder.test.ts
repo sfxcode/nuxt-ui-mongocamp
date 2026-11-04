@@ -207,7 +207,7 @@ describe('MongocampAggregationBuilder — JSON view', () => {
     const component = await mountBuilder()
     const text = await toJson(component)
 
-    await text.setValue('[{"$unwind":"$tags"}]')
+    await text.setValue('[{"$facet":{"a":[{"$count":"n"}]}}]')
     await wait()
     await button(component, 'Stages')?.trigger('click')
     await wait()

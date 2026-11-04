@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   FORBIDDEN_OPERATORS,
   STATS_OPERATORS,
+  VISUAL_STAGE_TYPES,
   buildPipeline,
   findForbidden,
   parsePipeline,
@@ -9,7 +10,7 @@ import {
   toVisualStages,
   validateStages,
 } from '../src/runtime/utils/aggregationPipeline'
-import type { AggregationStage, RequestStage } from '../src/runtime/utils/aggregationPipeline'
+import type { AggregationStage, AggregationStageType, RequestStage } from '../src/runtime/utils/aggregationPipeline'
 
 const stage = (type: AggregationStage['type'], value: unknown, id = 'x'): AggregationStage => ({ id, type, value })
 
@@ -193,6 +194,49 @@ describe('round trip', () => {
     const pipeline = buildPipeline(stages)
     expect(toVisualStages(pipeline)?.map(s => [s.type, s.value])).toEqual(stages.map(s => [s.type, s.value]))
     expect(toVisualStages(pipeline, i => `id-${i}`)?.map(s => s.id)).toEqual(['id-0', 'id-1', 'id-2', 'id-3'])
-    expect(toVisualStages([...pipeline, { stage: '$unwind', value: '$tags' }])).toBeNull()
+    expect(toVisualStages([...pipeline, { stage: '$facet', value: { a: [{ $count: 'n' }] } }])).toBeNull()
+  })
+})
+
+describe('stages added in the builder v2', () => {
+  const stage = (type: AggregationStageType, value: unknown) => ({ id: 's', type, value })
+  const issues = (type: AggregationStageType, value: unknown) => validateStages([stage(type, value)]).map(i => i.code)
+
+  it('knows the four new stage types', () => {
+    for (const type of ['$unwind', '$addFields', '$count', '$bucketAuto']) expect(VISUAL_STAGE_TYPES).toContain(type)
+  })
+
+  it('$unwind takes a field path or an object with one', () => {
+    expect(issues('$unwind', '$tags')).toEqual([])
+    expect(issues('$unwind', { path: '$tags', preserveNullAndEmptyArrays: true })).toEqual([])
+    for (const bad of ['tags', '$', 5, { path: 'tags' }, { preserveNullAndEmptyArrays: true }, ['$tags']]) expect(issues('$unwind', bad)).toEqual(['invalid-unwind'])
+  })
+
+  it('$count takes the name of the output field', () => {
+    expect(issues('$count', 'total')).toEqual([])
+    for (const bad of ['$total', 'a.b', 5, { n: 1 }]) expect(issues('$count', bad)).toEqual(['invalid-count'])
+  })
+
+  it('$addFields needs an object', () => {
+    expect(issues('$addFields', { double: { $multiply: ['$price', 2] } })).toEqual([])
+    expect(issues('$addFields', 'x')).toEqual(['not-object'])
+  })
+
+  it('$bucketAuto needs groupBy and a whole number of buckets', () => {
+    expect(issues('$bucketAuto', { groupBy: '$price', buckets: 3 })).toEqual([])
+    expect(issues('$bucketAuto', { groupBy: '$price', buckets: 3, output: { n: { $sum: 1 } } })).toEqual([])
+    for (const bad of [{ buckets: 3 }, { groupBy: '$p' }, { groupBy: '$p', buckets: 0 }, { groupBy: '$p', buckets: 2.5 }, { groupBy: '$p', buckets: '3' }]) expect(issues('$bucketAuto', bad)).toEqual(['bucket-needs-fields'])
+  })
+
+  it('builds, round-trips and still refuses a denied operator inside the new stages', () => {
+    const pipeline = buildPipeline([stage('$unwind', '$tags'), stage('$count', 'n'), stage('$bucketAuto', { groupBy: '$p', buckets: 2 }), stage('$addFields', { a: 1 })])
+    expect(pipeline.map(s => s.stage)).toEqual(['$unwind', '$count', '$bucketAuto', '$addFields'])
+    expect(toVisualStages(pipeline)!.map(s => s.type)).toEqual(['$unwind', '$count', '$bucketAuto', '$addFields'])
+    const hidden = buildPipeline([stage('$addFields', { x: { $function: { body: 'x', args: [], lang: 'js' } } })])
+    expect(findForbidden(hidden).map(f => f.operator)).toEqual(['$function'])
+  })
+
+  it('leaves an empty $count or $unwind out, like any empty stage', () => {
+    expect(buildPipeline([stage('$count', ''), stage('$unwind', '')])).toEqual([])
   })
 })

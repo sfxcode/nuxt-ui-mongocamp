@@ -2,6 +2,7 @@
 import { computed, h, ref, watch } from 'vue'
 import { useI18n } from '#imports'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
+import { useMongocampSavedPipelines } from '../composables/useMongocampSavedPipelines'
 import type { AggregationResult, DescribedAggregationError } from '../composables/useMongocampAggregation'
 import {
   VISUAL_STAGE_TYPES,
@@ -13,6 +14,10 @@ import {
   validateStages,
 } from '../utils/aggregationPipeline'
 import type { AggregationStage, AggregationStageType, PipelineError, RequestStage } from '../utils/aggregationPipeline'
+import { previewPipeline } from '../utils/aggregationPreview'
+import { DEFAULT_TOP, MAX_TOP, templateStages, TEMPLATES, validateTemplateInput } from '../utils/aggregationTemplates'
+import type { DateUnit, TemplateKey } from '../utils/aggregationTemplates'
+import type { SavedPipelineEntry } from '../utils/savedPipelines'
 import { formatCell, resultColumns } from '../utils/aggregationResult'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 
@@ -37,10 +42,15 @@ const DEFAULT_TEXT: Record<AggregationStageType, string> = {
   $sort: '{ "count": -1 }',
   $project: '{}',
   $limit: '10',
+  $unwind: '"$field"',
+  $addFields: '{ "newField": "$field" }',
+  $count: '"count"',
+  $bucketAuto: '{ "groupBy": "$field", "buckets": 5 }',
 }
 
 const { t } = useI18n()
-const { runAggregation, describeAggregationError } = useMongocampAggregation()
+const { runAggregation, describeAggregationError, listFieldNames } = useMongocampAggregation()
+const { saved: savedPipelines, save: savePipeline, remove: removeSavedPipeline } = useMongocampSavedPipelines(() => props.collectionName)
 
 let idCounter = 0
 function newId(): string {
@@ -105,6 +115,106 @@ function moveStage(index: number, offset: -1 | 1) {
   const next = [...drafts.value]
   ;[next[index], next[target]] = [next[target]!, next[index]!]
   drafts.value = next
+}
+
+// ---- previews: the first documents after one stage -----------------------------------------------------------------
+
+const openPreviews = ref<Set<string>>(new Set())
+
+function togglePreview(id: string) {
+  const next = new Set(openPreviews.value)
+  if (!next.delete(id)) next.add(id)
+  openPreviews.value = next
+}
+
+// the stages up to this one, cut by a small limit; `undefined` while one of them has an error
+function previewFor(index: number): RequestStage[] | undefined {
+  if (draftStates.value.slice(0, index + 1).some(state => state.error)) return undefined
+  return previewPipeline(draftStates.value.map(state => state.stage), index)
+}
+
+// ---- field names for the templates ------------------------------------------------------------------
+
+const fieldNames = ref<string[]>([])
+watch(() => props.collectionName, async (name) => {
+  fieldNames.value = []
+  try {
+    const names = await listFieldNames(name)
+    if (name === props.collectionName) fieldNames.value = names
+  }
+  catch {
+    // suggestions only: the field can be typed
+  }
+}, { immediate: true })
+
+// ---- templates ------------------------------------------------------------------------------------------
+
+const templateKey = ref<TemplateKey>('count-by-field')
+const templateField = ref('')
+const templateValueField = ref('')
+const templateTop = ref(DEFAULT_TOP)
+const templateUnit = ref<DateUnit>('month')
+const templateProblem = ref('')
+const TEMPLATE_LABEL_KEYS: Record<TemplateKey, string> = {
+  'count-by-field': 'templateCountByField',
+  'top-values': 'templateTopValues',
+  'date-histogram': 'templateDateHistogram',
+  'sum-avg-by-group': 'templateSumAvg',
+}
+const templateItems = computed(() => TEMPLATES.map(info => ({ value: info.key, label: t(`nuxtUiMongocamp.aggregation.${TEMPLATE_LABEL_KEYS[info.key]}`) })))
+const templateInfo = computed(() => TEMPLATES.find(info => info.key === templateKey.value)!)
+const unitItems = computed(() => [{ value: 'month', label: t('nuxtUiMongocamp.aggregation.unitMonth') }, { value: 'day', label: t('nuxtUiMongocamp.aggregation.unitDay') }])
+const templateFieldLabel = computed(() => t(templateKey.value === 'date-histogram' ? 'nuxtUiMongocamp.aggregation.templateFieldDate' : templateInfo.value.needsValueField ? 'nuxtUiMongocamp.aggregation.templateFieldGroup' : 'nuxtUiMongocamp.aggregation.templateField'))
+
+// A template's stages go after the stages already there; an editor that still holds only the untouched first stage is replaced.
+function isUntouched(): boolean {
+  return drafts.value.length === 1 && drafts.value[0]!.type === '$match' && drafts.value[0]!.text.trim() === DEFAULT_TEXT.$match
+}
+
+function addTemplate() {
+  const input = { field: templateField.value, valueField: templateValueField.value, top: templateInfo.value.needsTop ? Number(templateTop.value) : undefined, unit: templateUnit.value }
+  const problem = validateTemplateInput(templateKey.value, input)
+  if (problem) {
+    templateProblem.value = t({ 'field': 'nuxtUiMongocamp.aggregation.templateProblemField', 'value-field': 'nuxtUiMongocamp.aggregation.templateProblemValue', 'top': 'nuxtUiMongocamp.aggregation.templateProblemTop' }[problem])
+    return
+  }
+  templateProblem.value = ''
+  const added: StageDraft[] = templateStages(templateKey.value, input).map(stage => ({ id: newId(), type: stage.type, text: JSON.stringify(stage.value, null, 2) }))
+  drafts.value = [...(isUntouched() ? [] : drafts.value), ...added]
+}
+
+// ---- saved pipelines --------------------------------------------------------------------------------------
+
+const saveName = ref('')
+const saveError = ref('')
+
+function saveCurrent() {
+  saveError.value = ''
+  const pipeline = pipelineState.value.pipeline
+  if (!pipeline || pipeline.length === 0) {
+    saveError.value = t('nuxtUiMongocamp.aggregation.saveFailedPipeline')
+    return
+  }
+  const result = savePipeline(saveName.value, pipeline)
+  if (result.ok) {
+    saveName.value = ''
+    return
+  }
+  saveError.value = t({ 'invalid-name': 'nuxtUiMongocamp.aggregation.saveFailedName', 'invalid-pipeline': 'nuxtUiMongocamp.aggregation.saveFailedPipeline', 'limit': 'nuxtUiMongocamp.aggregation.saveFailedLimit', 'too-large': 'nuxtUiMongocamp.aggregation.saveFailedSize' }[result.reason])
+}
+
+function applySaved(entry: SavedPipelineEntry) {
+  modeError.value = ''
+  openPreviews.value = new Set()
+  const stages = toVisualStages(entry.pipeline, () => newId())
+  if (stages) {
+    drafts.value = stages.map(stage => ({ id: stage.id, type: stage.type, text: JSON.stringify(stage.value, null, 2) }))
+    mode.value = 'visual'
+    return
+  }
+  // a stage the editor has no form for: the JSON tab shows it
+  rawText.value = pipelineToText(entry.pipeline)
+  mode.value = 'json'
 }
 
 // ---- the pipeline that would run ---------------------------------------------------------------
@@ -262,6 +372,174 @@ const exportMenuItems = computed(() => [
       />
     </div>
 
+    <div class="flex flex-wrap items-center gap-2">
+      <UPopover v-if="mode === 'visual'">
+        <UButton
+          icon="i-lucide-wand-sparkles"
+          color="neutral"
+          variant="soft"
+          size="sm"
+          :label="t('nuxtUiMongocamp.aggregation.templatesButton')"
+        />
+        <template #content>
+          <form
+            class="flex w-80 flex-col gap-3 p-3"
+            data-test="templates-panel"
+            @submit.prevent="addTemplate"
+          >
+            <USelect
+              v-model="templateKey"
+              :items="templateItems"
+              :aria-label="t('nuxtUiMongocamp.aggregation.templateLabel')"
+            />
+            <UFormField :label="templateFieldLabel">
+              <UInput
+                v-model="templateField"
+                class="w-full"
+                list="aggregation-fields"
+                :aria-label="templateFieldLabel"
+              />
+            </UFormField>
+            <UFormField
+              v-if="templateInfo.needsValueField"
+              :label="t('nuxtUiMongocamp.aggregation.templateValueField')"
+            >
+              <UInput
+                v-model="templateValueField"
+                class="w-full"
+                list="aggregation-fields"
+                :aria-label="t('nuxtUiMongocamp.aggregation.templateValueField')"
+              />
+            </UFormField>
+            <UFormField
+              v-if="templateInfo.needsTop"
+              :label="t('nuxtUiMongocamp.aggregation.templateTop')"
+            >
+              <UInput
+                v-model.number="templateTop"
+                type="number"
+                :min="1"
+                :max="MAX_TOP"
+                class="w-full"
+                :aria-label="t('nuxtUiMongocamp.aggregation.templateTop')"
+              />
+            </UFormField>
+            <UFormField
+              v-if="templateInfo.needsUnit"
+              :label="t('nuxtUiMongocamp.aggregation.templateUnit')"
+            >
+              <USelect
+                v-model="templateUnit"
+                :items="unitItems"
+                class="w-full"
+                :aria-label="t('nuxtUiMongocamp.aggregation.templateUnit')"
+              />
+            </UFormField>
+            <datalist id="aggregation-fields">
+              <option
+                v-for="name in fieldNames"
+                :key="name"
+                :value="name"
+              />
+            </datalist>
+            <p
+              v-if="templateProblem"
+              class="text-sm text-error"
+              role="alert"
+            >
+              {{ templateProblem }}
+            </p>
+            <p class="text-xs text-dimmed">
+              {{ t('nuxtUiMongocamp.aggregation.templatesHelp') }}
+            </p>
+            <UButton
+              type="submit"
+              icon="i-lucide-plus"
+              :label="t('nuxtUiMongocamp.aggregation.addTemplate')"
+            />
+          </form>
+        </template>
+      </UPopover>
+
+      <UPopover>
+        <UButton
+          icon="i-lucide-bookmark"
+          color="neutral"
+          variant="soft"
+          size="sm"
+          :label="t('nuxtUiMongocamp.aggregation.savedButton')"
+        />
+        <template #content>
+          <div
+            class="flex w-96 max-w-[90vw] flex-col gap-2 p-3"
+            data-test="saved-panel"
+          >
+            <h3 class="text-sm font-semibold">
+              {{ t('nuxtUiMongocamp.aggregation.savedTitle') }}
+            </h3>
+            <p
+              v-if="savedPipelines.length === 0"
+              class="text-sm text-dimmed"
+            >
+              {{ t('nuxtUiMongocamp.aggregation.savedEmpty') }}
+            </p>
+            <div
+              v-for="entry in savedPipelines"
+              :key="entry.name"
+              class="flex items-center gap-1"
+            >
+              <UButton
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="min-w-0 flex-1 justify-start"
+                :label="entry.name"
+                @click="applySaved(entry)"
+              />
+              <UButton
+                icon="i-lucide-trash-2"
+                color="error"
+                variant="ghost"
+                size="sm"
+                :aria-label="t('nuxtUiMongocamp.aggregation.deleteSaved', { name: entry.name })"
+                @click="removeSavedPipeline(entry.name)"
+              />
+            </div>
+            <form
+              class="mt-1 flex items-center gap-1"
+              @submit.prevent="saveCurrent"
+            >
+              <UInput
+                v-model="saveName"
+                size="sm"
+                class="min-w-0 flex-1"
+                maxlength="80"
+                :placeholder="t('nuxtUiMongocamp.aggregation.saveNamePlaceholder')"
+                :aria-label="t('nuxtUiMongocamp.aggregation.saveName')"
+              />
+              <UButton
+                type="submit"
+                icon="i-lucide-save"
+                size="sm"
+                :label="t('nuxtUiMongocamp.aggregation.save')"
+                :disabled="saveName.trim() === ''"
+              />
+            </form>
+            <p
+              v-if="saveError"
+              class="text-xs text-error"
+              role="alert"
+            >
+              {{ saveError }}
+            </p>
+            <p class="text-xs text-dimmed">
+              {{ t('nuxtUiMongocamp.aggregation.savedNote') }}
+            </p>
+          </div>
+        </template>
+      </UPopover>
+    </div>
+
     <UAlert
       v-if="modeError"
       color="warning"
@@ -315,7 +593,7 @@ const exportMenuItems = computed(() => [
         </div>
         <UTextarea
           v-model="draft.text"
-          :rows="draft.type === '$limit' ? 1 : 3"
+          :rows="['$limit', '$count', '$unwind'].includes(draft.type) ? 1 : 3"
           :color="draftStates[index]?.error ? 'error' : undefined"
           class="w-full font-mono"
           :aria-label="t('nuxtUiMongocamp.aggregation.stageValue', { type: draft.type })"
@@ -326,6 +604,24 @@ const exportMenuItems = computed(() => [
         >
           {{ draftStates[index]?.error }}
         </p>
+        <div class="flex flex-col gap-2">
+          <UButton
+            :icon="openPreviews.has(draft.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            class="self-start"
+            :aria-pressed="openPreviews.has(draft.id)"
+            :label="openPreviews.has(draft.id) ? t('nuxtUiMongocamp.aggregation.previewHide') : t('nuxtUiMongocamp.aggregation.previewShow')"
+            @click="togglePreview(draft.id)"
+          />
+          <MongocampAggregationStagePreview
+            v-if="openPreviews.has(draft.id)"
+            :collection-name="collectionName"
+            :pipeline="previewFor(index)"
+            :stage-number="index + 1"
+          />
+        </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <USelect

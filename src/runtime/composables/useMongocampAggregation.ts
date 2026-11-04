@@ -22,6 +22,12 @@ function withTimeout(ms: number): RequestInit {
   return { signal: AbortSignal.timeout(ms) }
 }
 
+// the timeout, and the caller's signal as well when there is one (an older browser without AbortSignal.any keeps the timeout)
+function requestInit(ms: number, signal?: AbortSignal): RequestInit {
+  const timeout = AbortSignal.timeout(ms)
+  return { signal: signal && typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeout]) : timeout }
+}
+
 export interface AggregationPaging {
   page?: number
   rowsPerPage?: number
@@ -34,6 +40,8 @@ export interface AggregationOptions {
    * For the module's own stats calls; the aggregation builder never sets it.
    */
   allowStatsStages?: boolean
+  /** Aborting rejects the call (an `AbortError`); the 30 s timeout still applies. */
+  signal?: AbortSignal
 }
 
 export interface AggregationResult {
@@ -87,7 +95,7 @@ export function useMongocampAggregation() {
       mongoAggregateRequest: { pipeline: pipeline as unknown as PipelineStage[], allowDiskUse: false },
       rowsPerPage: paging.rowsPerPage,
       page,
-    }, withTimeout(AGGREGATE_TIMEOUT_MS))
+    }, requestInit(AGGREGATE_TIMEOUT_MS, options.signal))
     // read from the response text so integers beyond 2^53 stay exact; they (and the decimal/int wrappers the server
     // writes) come out of unwrapExtendedJson as an exact digit string / a number
     const value = await readJsonKeepingLongs(response)
@@ -101,6 +109,12 @@ export function useMongocampAggregation() {
       pages: headerNumber(headers, 'x-pagination-count-pages') ?? 1,
       page: headerNumber(headers, 'x-pagination-current-page') ?? page,
     }
+  }
+
+  /** The top-level field names the server knows for a collection (unordered by the server, sorted here); for suggestions only. */
+  async function listFieldNames(collectionName: string): Promise<string[]> {
+    const names = await collectionApi.getCollectionFields({ collectionName }, withTimeout(REQUEST_TIMEOUT_MS))
+    return [...new Set(names as string[])].sort((a, b) => a.localeCompare(b))
   }
 
   // The values arrive as native JSON, unordered, one page of them. Only strings, numbers and booleans
@@ -145,5 +159,5 @@ export function useMongocampAggregation() {
     return { kind, message: described.message }
   }
 
-  return { runAggregation, listDistinct, sampleDocuments, describeAggregationError }
+  return { runAggregation, listDistinct, listFieldNames, sampleDocuments, describeAggregationError }
 }
