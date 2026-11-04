@@ -3,7 +3,8 @@
 
 function csvCell(value: unknown): string {
   if (value === null || value === undefined) return ''
-  const text = typeof value === 'object' ? JSON.stringify(value) : String(value)
+  // a BigInt (an exact integer beyond 2^53) has no JSON form of its own: inside an object or array it is written as text
+  const text = typeof value === 'object' ? JSON.stringify(value, (_key, inner) => (typeof inner === 'bigint' ? inner.toString() : inner)) : String(value)
   // RFC 4180: quote when the cell holds a delimiter, quote or line break, doubling inner quotes
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }

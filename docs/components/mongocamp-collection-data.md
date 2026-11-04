@@ -49,7 +49,7 @@ On success a toast names the index and offers **View indexes** (the info page, s
 - **Filters** — see above.
 - **Import documents** — opens [`MongocampImport`](/components/mongocamp-import): load a JSON or CSV file, check the preview and insert it in batches. Not shown for GridFS bucket collections; the table reloads when rows were imported.
 - **Columns** — a checklist of every data column; unchecked columns are hidden (and left out of the CSV export). Resets when you reload or switch collection.
-- **Export** — downloads the rows **on the current page**, as JSON (full documents, extended JSON unwrapped to plain values) or CSV (visible columns; nested values as JSON; RFC 4180 quoting). No extra request is made, so export what you need page by page, or raise the page size first.
+- **Export** — downloads the rows **on the current page**, as JSON (full documents, extended JSON unwrapped to plain values) or CSV (visible columns; nested values as JSON; RFC 4180 quoting). No extra request is made, so export what you need page by page, or raise the page size first. An integer beyond 2^53 is written with every digit (a bare number in JSON). To export the whole collection or everything a filter matches, use [`useMongocampExportAll`](/composables/use-mongocamp-export-all).
 - **Rows per page** — 10, 20 (default), 50 or 100; changing it reloads from page 1.
 - **Reload** — refetches and resets sorting, search, filters and column choices.
 

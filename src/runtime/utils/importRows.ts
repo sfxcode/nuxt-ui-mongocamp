@@ -2,6 +2,7 @@
 // coercion and validation. No API calls and no DOM, so they behave the same in session and
 // server-proxy mode and run in plain Node. `rowIndex` is always the 0-based index of the data row
 // in the list the function was given (CSV: header excluded); -1 means the whole file.
+import { parseJsonKeepingLongs } from './bigIntJson'
 import { isIsoDateTimeString } from './isoDate'
 import { isObjectIdHex } from './objectId'
 
@@ -75,11 +76,22 @@ function fileError(code: ImportErrorCode, message: string): ImportReport {
   return { rows: [], errors: [{ rowIndex: -1, code, message }], truncated: false }
 }
 
+// `parseJsonKeepingLongs` writes an integer a JS number cannot hold as `{ $numberLong: 'digits' }` instead of rounding it
+// (a plain JSON.parse would turn 9007199254740993 into …992 without a word). Such a value cannot be imported as a number
+// from a JSON file — the importer sends plain JSON — so the row is refused, like a CSV number beyond 2^53.
+function containsUnsafeLong(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsUnsafeLong)
+  if (!isPlainObject(value)) return false
+  const keys = Object.keys(value)
+  if (keys.length === 1 && keys[0] === '$numberLong' && typeof value.$numberLong === 'string' && /^-?\d+$/.test(value.$numberLong) && !Number.isSafeInteger(Number(value.$numberLong))) return true
+  return Object.values(value).some(containsUnsafeLong)
+}
+
 export function parseJsonRows(text: string, limits: ImportLimits = DEFAULT_IMPORT_LIMITS): ImportReport {
   if (text.length > limits.maxBytes) return fileError('file-too-large', `File is larger than ${limits.maxBytes} bytes`)
   let parsed: unknown
   try {
-    parsed = JSON.parse(stripBom(text))
+    parsed = parseJsonKeepingLongs(stripBom(text))
   }
   catch (e) {
     return fileError('invalid-json', `Invalid JSON: ${e instanceof Error ? e.message : String(e)}`)
@@ -87,7 +99,10 @@ export function parseJsonRows(text: string, limits: ImportLimits = DEFAULT_IMPOR
   if (!Array.isArray(parsed)) return fileError('not-array', 'Expected a JSON array of objects')
   const report: ImportReport = { rows: [], errors: [], truncated: false, sourceIndexes: [] }
   parsed.forEach((item, rowIndex) => {
-    if (isPlainObject(item)) {
+    if (isPlainObject(item) && containsUnsafeLong(item)) {
+      report.errors.push({ rowIndex, code: 'unsafe-integer', message: 'Integer is beyond ±(2^53 − 1) and would lose precision; import it as text' })
+    }
+    else if (isPlainObject(item)) {
       report.rows.push(item)
       report.sourceIndexes!.push(rowIndex)
     }

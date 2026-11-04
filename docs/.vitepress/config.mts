@@ -92,6 +92,7 @@ export default defineConfig({
             { text: 'useMongocampRoles', link: '/composables/use-mongocamp-roles' },
             { text: 'useMongocampPermissions', link: '/composables/use-mongocamp-permissions' },
             { text: 'useMongocampFetchAll', link: '/composables/use-mongocamp-fetch-all' },
+            { text: 'useMongocampExportAll', link: '/composables/use-mongocamp-export-all' },
             { text: 'useMongocampSession', link: '/composables/use-mongocamp-session' },
             { text: 'useMongocampClientApi', link: '/composables/use-mongocamp-client-api' },
             { text: 'useMongocampProxyApi', link: '/composables/use-mongocamp-proxy-api' },

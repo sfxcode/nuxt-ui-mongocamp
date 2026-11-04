@@ -9,6 +9,19 @@ describe('parseJsonRows', () => {
     expect(report.errors).toEqual([])
   })
 
+  it('refuses a row with an integer beyond 2^53 instead of silently rounding it — JSON.parse would turn …993 into …992', () => {
+    const report = parseJsonRows('[{"a":1},{"id":9007199254740993},{"b":2}]')
+
+    expect(report.rows).toEqual([{ a: 1 }, { b: 2 }])
+    expect(report.sourceIndexes).toEqual([0, 2])
+    expect(report.errors).toEqual([{ rowIndex: 1, code: 'unsafe-integer', message: expect.stringContaining('2^53') }])
+  })
+
+  it('finds the unsafe integer wherever it sits, and accepts everything that is exact', () => {
+    expect(parseJsonRows('[{"a":{"b":[1,{"c":-9223372036854775808}]}}]').errors).toHaveLength(1)
+    expect(parseJsonRows('[{"a":9007199254740991,"b":-9007199254740991,"c":1234567890123456,"d":12345678901234567.5,"e":1e20,"f":"9007199254740993"}]').errors).toEqual([])
+  })
+
   it('ignores a byte order mark', () => {
     expect(parseJsonRows('﻿[{"a":1}]').rows).toEqual([{ a: 1 }])
   })

@@ -35,6 +35,13 @@ function findInputByLabel(scope: DOMWrapper<Element>, labelText: string) {
   return scope.find(`#${id}`)
 }
 
+const mockDownload = vi.hoisted(() => vi.fn())
+
+vi.mock('../../src/runtime/utils/exportRows', async importOriginal => ({
+  ...await importOriginal<typeof import('../../src/runtime/utils/exportRows')>(),
+  downloadTextFile: mockDownload,
+}))
+
 const mockListDocumentsRaw = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
@@ -387,6 +394,46 @@ describe('MongocampCollectionData', () => {
       const component = await mountCustomers()
 
       expect(writeControls(component)).toEqual({ insert: true, import: true, edit: true, remove: true, select: true })
+    })
+  })
+
+  describe('export of the page on screen', () => {
+    async function openExportMenu(rows: string) {
+      const raw = new Response(rows, { headers: { 'x-pagination-count-rows': '2' } })
+      mockListDocumentsRaw.mockResolvedValueOnce({ raw, value: () => raw.json() })
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await component.find('[aria-label="Export this page"]').trigger('click')
+      await wait()
+      return component
+    }
+    const menuItem = (label: string) => Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(el => el.textContent?.includes(label)) as HTMLElement | undefined
+
+    it('JSON: the documents as the table shows them, indented, with an exact long written as a bare number', async () => {
+      await openExportMenu('[{"_id":"a","name":"Alice","big":9007199254740993},{"_id":"b","name":"Bob","big":5}]')
+
+      menuItem('Export page as JSON')!.click()
+      await wait()
+
+      expect(mockDownload).toHaveBeenCalledTimes(1)
+      const [filename, content, mime] = mockDownload.mock.calls[0]!
+      expect(filename).toBe('customers.json')
+      expect(mime).toBe('application/json')
+      expect(content).toContain('"big": 9007199254740993')
+      expect(content).toBe('[\n  {\n    "_id": "a",\n    "name": "Alice",\n    "big": 9007199254740993\n  },\n  {\n    "_id": "b",\n    "name": "Bob",\n    "big": 5\n  }\n]')
+    })
+
+    it('CSV: a header, the visible columns and the digits of an exact long', async () => {
+      await openExportMenu('[{"_id":"a","name":"Alice","big":9007199254740993}]')
+
+      menuItem('Export page as CSV')!.click()
+      await wait()
+
+      const [filename, content, mime] = mockDownload.mock.calls[0]!
+      expect(filename).toBe('customers.csv')
+      expect(mime).toBe('text/csv')
+      expect(content).toContain('9007199254740993')
+      expect(content).toContain('Alice')
     })
   })
 

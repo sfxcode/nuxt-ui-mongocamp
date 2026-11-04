@@ -10,6 +10,7 @@ import { unwrapExtendedJson, wrapExtendedJson } from '../composables/useMongocam
 import { readJsonKeepingLongs } from '../utils/bigIntJson'
 import { buildPartialBody, diffDocument, hasChanges } from '../utils/documentDiff'
 import { isIsoDateTimeString } from '../utils/isoDate'
+import { formatDocuments, toExportRow } from '../utils/exportDocuments'
 import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { BulkMatchShortfall, BulkUnaddressableId, buildIdFilter, isEditableField, runBulkUpdate } from '../utils/bulkEdit'
@@ -721,9 +722,10 @@ const columnMenuItems = computed(() =>
 // Exports the rows on the current page (not the whole collection) so no extra requests are made;
 // CSV honours the column-visibility toggles, JSON always carries the full documents.
 function exportPage(format: 'json' | 'csv') {
-  const rows = documents.value.map(row => unwrapExtendedJson(row) as Row)
+  // an integer beyond 2^53 keeps every digit (a bare number in JSON), see utils/exportDocuments.ts
+  const rows = documents.value.map(row => toExportRow(row) as Row)
   if (format === 'json') {
-    downloadTextFile(`${props.collectionName}.json`, JSON.stringify(rows, null, 2), 'application/json')
+    downloadTextFile(`${props.collectionName}.json`, formatDocuments(rows, 'json', { pretty: true }), 'application/json')
     return
   }
   const keys = dataColumnKeys.value.filter(key => columnVisibility.value[key] !== false)

@@ -46,6 +46,6 @@ The composable sends exactly what it is given. Turning a file into rows is done 
 
 - dates: the importer unwraps `{ "$date": … }` and writes ISO strings **with milliseconds** (`2024-03-01T10:30:00.000Z`). Server 1.6.3 stores these — and `{ "$date" }` / `{ "$numberLong" }` wrappers and ISO strings without milliseconds — as real dates (1.5.x stored the wrappers as literal sub-documents); a bare `2024-03-01` string stays plain text, so a full timestamp is always written;
 - `_id`, if present, must be a 24-character hex string;
-- an integer beyond ±(2^53 − 1) cannot be sent as a JSON number without losing digits.
+- an integer beyond ±(2^53 − 1) cannot be sent as a JSON number without losing digits: in a **CSV** column chosen as Number and in a **JSON file** the row is refused ("Integer too large to store exactly — import it as text"). The JSON parser reads such a value from the file text for exactly this reason — a plain `JSON.parse` would have rounded `9007199254740993` to `…992` and imported it without a word.
 
 These were verified against a real MongoCamp server (1.5.x; the date handling and the empty-batch answer re-verified on 1.6.3 — an empty `insertMany` is a `400` there).
