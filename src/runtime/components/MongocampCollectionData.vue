@@ -28,6 +28,7 @@ import { useMongocampPersistedState } from '../composables/useMongocampPersisted
 import { useMongocampFetchAll } from '../composables/useMongocampFetchAll'
 import MongocampDocumentView from './MongocampDocumentView.vue'
 import MongocampQueryBar from './MongocampQueryBar.vue'
+import MongocampExportAll from './MongocampExportAll.vue'
 
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -893,9 +894,11 @@ function exportPage(format: 'json' | 'csv') {
   downloadTextFile(`${props.collectionName}.csv`, rowsToCsv(rows, keys), 'text/csv')
 }
 
+const exportAllOpen = ref(false)
 const exportMenuItems = computed(() => [
   { label: t('nuxtUiMongocamp.collectionData.exportJson'), icon: 'i-lucide-file-json', onSelect: () => exportPage('json') },
   { label: t('nuxtUiMongocamp.collectionData.exportCsv'), icon: 'i-lucide-file-spreadsheet', onSelect: () => exportPage('csv') },
+  { label: t('nuxtUiMongocamp.exportAll.menuItem'), icon: 'i-lucide-download-cloud', onSelect: () => (exportAllOpen.value = true) },
 ])
 
 // Values a text field really has, for the filter builder's suggestions. Only offered when the whole
@@ -1156,6 +1159,15 @@ watch(() => props.collectionName, init, { immediate: true })
         <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.documents')" />
       </template>
     </UTable>
+
+    <MongocampExportAll
+      v-model:open="exportAllOpen"
+      :collection="collectionName"
+      :filter="buildLuceneFilter(filterText)"
+      :sort="sortingToMongoSort(sorting)"
+      :projection="activeProjection"
+      :total="total"
+    />
 
     <USlideover
       v-model:open="viewOpen"

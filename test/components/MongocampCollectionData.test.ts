@@ -5,6 +5,7 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp, USelect } from '#components'
 import MongocampCollectionData from '../../src/runtime/components/MongocampCollectionData.vue'
 import MongocampQueryBar from '../../src/runtime/components/MongocampQueryBar.vue'
+import MongocampExportAll from '../../src/runtime/components/MongocampExportAll.vue'
 
 // UModal's close transition is timer-based, so a stale modal from a previous test can still
 // be in document.body (which modal() queries globally) when the next test starts — force an
@@ -106,6 +107,20 @@ beforeEach(() => {
 })
 
 describe('MongocampCollectionData', () => {
+  describe('export all matching', () => {
+    it('hands the list\'s filter, sort, fields and match count to the export dialog', async () => {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: 'a'.repeat(24), name: 'Alice', age: 30 }], '45'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      component.findComponent(MongocampQueryBar).vm.$emit('apply', { filterGroup: { match: 'all', conditions: [] }, lucene: 'name:"Alice"', sort: ['-age'], projection: ['name'] })
+      await wait()
+
+      const dialog = component.findComponent(MongocampExportAll)
+      expect(dialog.exists()).toBe(true)
+      expect(dialog.props()).toMatchObject({ collection: 'customers', filter: 'name:"Alice"', sort: ['-age'], projection: ['name'], total: 45, open: false })
+    })
+  })
+
   describe('select all matching', () => {
     const hex = (n: number) => n.toString(16).padStart(24, '0')
     const pageRows = [1, 2, 3].map(n => ({ _id: hex(n), name: `n${n}` }))

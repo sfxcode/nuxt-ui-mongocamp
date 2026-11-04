@@ -232,6 +232,14 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
       else if (canClearOrDrop.value && !isProtectedCollection(row.original.name)) {
         const name = row.original.name
         buttons.push(
+          withTooltip(t('nuxtUiMongocamp.collections.copyTooltip'), h(UButton, {
+            'icon': 'i-lucide-copy',
+            'color': 'neutral',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': t('nuxtUiMongocamp.collections.copyTooltip'),
+            'onClick': () => openCopy(name),
+          })),
           withTooltip(t('nuxtUiMongocamp.collections.clearTooltip'), h(UButton, {
             'icon': 'i-lucide-eraser',
             'color': 'warning',
@@ -254,6 +262,15 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
     },
   },
 ])
+
+// Copy writes a whole new collection, so it is offered to the same people as clear/drop
+const copySource = ref('')
+const isCopyOpen = ref(false)
+
+function openCopy(name: string) {
+  copySource.value = name
+  isCopyOpen.value = true
+}
 
 fetchCollections()
 </script>
@@ -301,6 +318,13 @@ fetchCollections()
         <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.collections')" />
       </template>
     </UTable>
+
+    <MongocampCollectionCopy
+      v-if="copySource"
+      v-model:open="isCopyOpen"
+      :source="copySource"
+      @done="fetchCollections"
+    />
 
     <MongocampConfirmByName
       v-if="pending"

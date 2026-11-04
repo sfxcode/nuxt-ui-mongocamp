@@ -71,3 +71,7 @@ Rows for a `.files` or `.chunks` collection (detected via [`useMongocampBucket`]
 The bucket actions are shown to every user (the server enforces permissions); a failed action keeps the modal open with a message.
 
 The `.files`/`.chunks` pair is **not** collapsed into a single row — each stays independently browsable via [`MongocampCollectionData`](/components/mongocamp-collection-data); the badge and bucket actions are just added to both rows.
+
+## Copy and backup
+
+Administrators get a **Copy collection** button on ordinary collections (never `mc_*` or GridFS halves). It opens [`MongocampCollectionCopy`](/components/mongocamp-collection-copy): copy into a named new collection, or a **Quick backup** into `<name>_backup_<date>_<time>`. The list reloads when a copy finished. `canManage` hides it together with clear and drop.

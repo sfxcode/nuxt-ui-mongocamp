@@ -29,6 +29,7 @@ function withUApp(component: unknown) {
 const state = { isAdmin: true }
 const mockListCollections = vi.fn()
 const mockGetInfo = vi.fn()
+const mockListDocumentsRaw = vi.fn()
 const mockClearCollection = vi.fn()
 const mockDeleteCollection = vi.fn()
 const mockClearBucket = vi.fn()
@@ -42,6 +43,7 @@ vi.mock('../../src/runtime/composables/useMongocampAdmin', () => ({
 mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: state.isAdmin } } }))
 mockNuxtImport('useMongocampClientApi', () => () => ({
   collectionApi: { listCollections: mockListCollections, getCollectionInformation: mockGetInfo },
+  documentApi: { listDocumentsRaw: mockListDocumentsRaw, insertMany: vi.fn() },
   bucketApi: { clearBucket: mockClearBucket, deleteBucket: mockDeleteBucket },
 }))
 
@@ -52,6 +54,7 @@ beforeEach(() => {
   state.isAdmin = true
   mockListCollections.mockResolvedValue(['orders', 'mc_users', 'photos.files', 'photos.chunks'])
   mockGetInfo.mockResolvedValue(INFO)
+  mockListDocumentsRaw.mockResolvedValue({ raw: { headers: { get: () => '3' } }, value: () => Promise.resolve([]) })
   mockClearCollection.mockResolvedValue({ value: true })
   mockDeleteCollection.mockResolvedValue({ value: true })
   mockClearBucket.mockResolvedValue({ value: true })
@@ -81,6 +84,30 @@ async function typeName(value: string) {
   await page().find('input[aria-label^="Type"]').setValue(value)
   await flushPromises()
 }
+
+describe('MongocampCollections — copy', () => {
+  it('offers Copy to an admin on an ordinary collection only', async () => {
+    const wrapper = await mountCollections()
+    expect(labels(row(wrapper, 'orders'))).toContain('Copy collection')
+    expect(labels(row(wrapper, 'photos.files'))).not.toContain('Copy collection')
+    expect(labels(row(wrapper, 'photos.chunks'))).not.toContain('Copy collection')
+  })
+
+  it('offers it to nobody else', async () => {
+    state.isAdmin = false
+    expect(labels(row(await mountCollections(), 'orders'))).not.toContain('Copy collection')
+    state.isAdmin = true
+    expect(labels(row(await mountCollections({ canManage: false }), 'orders'))).not.toContain('Copy collection')
+  })
+
+  it('opens the copy dialog for that collection', async () => {
+    const wrapper = await mountCollections()
+    await row(wrapper, 'orders').find('button[aria-label="Copy collection"]').trigger('click')
+    await wait()
+    expect(page().text()).toContain('Copy collection orders')
+    expect(page().find('input[aria-label="Name of the new collection"]').exists()).toBe(true)
+  })
+})
 
 describe('MongocampCollections — clear and drop', () => {
   it('offers clear and drop to an admin on an ordinary collection', async () => {

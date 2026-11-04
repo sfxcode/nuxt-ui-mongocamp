@@ -27,18 +27,28 @@ export const MAX_INDEX_FIELDS = 8
  * is not reliable, so the standard name (`a_1_b_-1`) is used when it spells out exactly these keys; else the listed order.
  */
 export function indexKeys(index: IndexLike): IndexKey[] {
+  return indexKeysWithOrder(index).keys
+}
+
+/**
+ * `indexKeys` plus whether the order is **known**: always for one key or a text index, for a compound index only when its
+ * standard name spells out the keys. A custom-named compound index is listed in an arbitrary order, so the order is not
+ * known and must not be copied onto another collection.
+ */
+export function indexKeysWithOrder(index: IndexLike): { keys: IndexKey[], orderKnown: boolean } {
   if (index.text && index.weights && Object.keys(index.weights).length > 0) {
-    return Object.keys(index.weights).map(field => ({ field, direction: 'text' as const }))
+    return { keys: Object.keys(index.weights).map(field => ({ field, direction: 'text' as const })), orderKnown: true }
   }
   const entries = Object.entries(index.keys ?? {}).map(([field, value]) => ({ field, direction: (value === 1 || value === -1 ? value : 'other') as IndexKey['direction'], value }))
+  if (entries.length <= 1) return { keys: entries.map(e => ({ field: e.field, direction: e.direction })), orderKnown: true }
   const positions = entries.map(e => ({ e, at: index.name.indexOf(`${e.field}_${String(e.value)}`) }))
-  if (positions.length > 1 && positions.every(p => p.at >= 0)) {
+  if (positions.every(p => p.at >= 0)) {
     const sorted = [...positions].sort((a, b) => a.at - b.at)
     if (sorted.map(p => `${p.e.field}_${String(p.e.value)}`).join('_') === index.name) {
-      return sorted.map(p => ({ field: p.e.field, direction: p.e.direction }))
+      return { keys: sorted.map(p => ({ field: p.e.field, direction: p.e.direction })), orderKnown: true }
     }
   }
-  return entries.map(e => ({ field: e.field, direction: e.direction }))
+  return { keys: entries.map(e => ({ field: e.field, direction: e.direction })), orderKnown: false }
 }
 
 export function describeKey(key: IndexKey): string {

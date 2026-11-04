@@ -120,3 +120,7 @@ Tick the header checkbox to select the page. When more documents match the curre
 - **Snapshot, not atomic:** the ids are the documents that matched when they were read. A document added meanwhile is not touched; if fewer ids than the list reported were found, the bar says so. After the action the result is reported (`Deleted 500 of 500 documents`).
 - **Stop or failure:** what was not touched stays selected (`All 150 matching documents are selected.`) with a message, so a retry is one click.
 - Reloading, paging, filtering or sorting drops the selection.
+
+## Export all matching
+
+The export menu has **Export all matching…** next to the page exports: it opens [`MongocampExportAll`](/components/mongocamp-export-all) with the current filter, sort and fields and the match count, and exports every matching document (cap 50 000, progress, cancel) as JSON, NDJSON or CSV.
