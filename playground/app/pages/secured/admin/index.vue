@@ -22,6 +22,13 @@
         size="lg"
       />
       <UButton
+        label="Permissions"
+        icon="i-lucide-key-round"
+        to="/secured/admin/permissions"
+        variant="outline"
+        size="lg"
+      />
+      <UButton
         label="Overview"
         icon="i-lucide-gauge"
         to="/secured/admin/overview"

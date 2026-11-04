@@ -67,6 +67,7 @@ export default defineConfig({
             { text: 'MongocampCollectionCharts', link: '/components/mongocamp-collection-charts' },
             { text: 'MongocampChart', link: '/components/mongocamp-chart' },
             { text: 'MongocampServerOverview', link: '/components/mongocamp-server-overview' },
+            { text: 'MongocampPermissionMatrix', link: '/components/mongocamp-permission-matrix' },
             { text: 'MongocampCollectionCopy', link: '/components/mongocamp-collection-copy' },
             { text: 'MongocampExportAll', link: '/components/mongocamp-export-all' },
             { text: 'MongocampErrorAlert', link: '/components/mongocamp-error-alert' },
