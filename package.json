@@ -61,6 +61,7 @@
     "@nuxtjs/i18n": "^10.6.0",
     "@sfxcode/nuxt-mongocamp-server": "^1.6.3",
     "@sfxcode/nuxt-ui-formkit": "^1.4.1",
+    "@tanstack/charts": "^1.2.1",
     "consola": "^3.4.2",
     "defu": "^6.1.7",
     "minimatch": "^11.0.3",

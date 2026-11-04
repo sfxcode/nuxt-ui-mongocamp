@@ -188,7 +188,10 @@
       "statsPresentTitleAll": "In etwa {present} von {sampled} Dokumenten",
       "statsServerTimeout": "Die Analyse hat zu lange gedauert. Versuchen Sie es erneut oder analysieren Sie eine Stichprobe.",
       "statsEmpty": "Keine Dokumente zum Analysieren",
-      "statsFailed": "Die Feldstatistik konnte nicht geladen werden"
+      "statsFailed": "Die Feldstatistik konnte nicht geladen werden",
+      "chartsTitle": "Verteilung",
+      "chartsField": "Feld",
+      "chartsPick": "Wählen Sie ein Feld, um seine Verteilung zu sehen"
     },
     "collectionData": {
       "filterPlaceholder": "Zeilen filtern...",
@@ -641,7 +644,8 @@
       "saveFailedPipeline": "Beheben Sie zuerst die Pipeline — sie muss gültig und nicht leer sein",
       "saveFailedLimit": "Es können höchstens 50 Pipelines gespeichert werden — löschen Sie zuerst eine",
       "saveFailedSize": "Die gespeicherten Pipelines sind zu groß — löschen Sie zuerst eine",
-      "savedNote": "Nur in diesem Browser gespeichert."
+      "savedNote": "Nur in diesem Browser gespeichert.",
+      "unitYear": "Jahr"
     },
     "documentView": {
       "heading": "Dokument",
@@ -815,6 +819,43 @@
       "cancelled": "Abgebrochen — nichts wurde heruntergeladen.",
       "failed": "Der Export ist fehlgeschlagen",
       "menuItem": "Alle passenden exportieren…"
+    },
+    "charts": {
+      "titleValues": "Häufigste Werte",
+      "titleDates": "Dokumente im Zeitverlauf",
+      "titleNumbers": "Verteilung der Zahlen",
+      "seriesLabel": "Dokumente",
+      "noneLabel": "(leer)",
+      "unitLabel": "Pro",
+      "unitYear": "Jahr",
+      "unitMonth": "Monat",
+      "unitDay": "Tag",
+      "noteValues": "Die {shown} häufigsten von {total} Werten.",
+      "noteValuesAll": "Alle {total} Werte.",
+      "notePeriods": "Die ersten {shown} von {total} Zeiträumen werden gezeigt.",
+      "noteNumbers": "Jeder Bereich enthält etwa gleich viele Dokumente. Dokumente ohne Zahl in diesem Feld werden nicht gezählt.",
+      "empty": "Kein Dokument hat in {field} einen Wert dieser Art.",
+      "unsupported": "Für ein Feld vom Typ {type} gibt es kein Diagramm. Diagramme brauchen Text, Wahr/Falsch, Datumswerte oder Zahlen.",
+      "unknownField": "{field} wurde in einer Stichprobe der Dokumente nicht gefunden.",
+      "invalidField": "Dieser Feldname kann nicht dargestellt werden.",
+      "loading": "Diagramm wird geladen…",
+      "failedTitle": "Das Diagramm konnte nicht geladen werden",
+      "retry": "Erneut versuchen",
+      "showData": "Daten als Tabelle anzeigen",
+      "columnValue": "Wert",
+      "columnCount": "Dokumente",
+      "ariaLabel": "{title}: {field}",
+      "ariaDescriptionValues": "{shown} Balken; am höchsten ist {label} mit {count} Dokumenten.",
+      "ariaDescriptionDates": "{shown} Zeiträume von {first} bis {last}; am höchsten ist {label} mit {count} Dokumenten.",
+      "ariaDescriptionNumbers": "{shown} Bereiche; am vollsten ist {label} mit {count} Dokumenten.",
+      "kindValues": "Text oder Wahr/Falsch",
+      "typeString": "Text",
+      "typeBoolean": "Wahr/Falsch",
+      "typeDate": "Datum",
+      "typeNumber": "Zahl",
+      "typeObject": "Objekt",
+      "typeArray": "Liste",
+      "typeNull": "leer"
     }
   }
 }

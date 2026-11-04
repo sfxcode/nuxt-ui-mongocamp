@@ -25,6 +25,10 @@ Documents, Data Size, Storage Size, Avg Doc Size, Indexes, Index Size — from `
 
 The card is [`MongocampIndexes`](/components/mongocamp-indexes): every index with its keys in order, type flags, size and usage (a *never used since …* hint), **Create Index** (standard, unique, text, expiring — compound for standard and unique) and a drop button behind a typed confirmation, never for `_id_`. After an index was created or dropped the stat cards above are refreshed.
 
+## Distribution card
+
+Choose a field (text, true/false, date or number) and [`MongocampCollectionCharts`](/components/mongocamp-collection-charts) draws its distribution. Nothing is requested until a field is chosen.
+
 ## Schema card
 
 The table below is **not** built from `collectionApi.getJsonSchema()` — it's inferred client-side by sampling up to `sampleSize` real documents (`documentApi.listDocuments`) and running them through [`useMongocampSchema().schemaFromSamples()`](/composables/use-mongocamp-schema). This means:

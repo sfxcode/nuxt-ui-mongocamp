@@ -9,7 +9,7 @@ export interface TemplateStage {
   value: unknown
 }
 
-export type DateUnit = 'month' | 'day'
+export type DateUnit = 'year' | 'month' | 'day'
 
 export interface TemplateInput {
   field: string
@@ -38,7 +38,7 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 
 export const DEFAULT_TOP = 10
 export const MAX_TOP = 1000
-const DATE_FORMATS: Record<DateUnit, string> = { month: '%Y-%m', day: '%Y-%m-%d' }
+export const DATE_FORMATS: Record<DateUnit, string> = { year: '%Y', month: '%Y-%m', day: '%Y-%m-%d' }
 
 /** A field name that can be written as `$name` in a pipeline: not empty, no `$`, no NUL, no leading/trailing/double dot. */
 export function isTemplateField(field: string): boolean {

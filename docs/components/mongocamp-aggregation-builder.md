@@ -71,7 +71,7 @@ Each stage has **Preview after this stage**: it runs the stages up to and includ
 |---|---|
 | Count by field | `$group` by the field with a count, `$sort` by the count |
 | Most common values | the same, then `$limit` (10 by default, 1–1000) |
-| Documents per month or day | `$group` by `$dateToString` of a date field (`%Y-%m` or `%Y-%m-%d`), `$sort` by the period |
+| Documents per year, month or day | `$group` by `$dateToString` of a date field (`%Y`, `%Y-%m` or `%Y-%m-%d`), `$sort` by the period |
 | Sum and average by group | `$group` by a field with `total`, `avg` and `count` of a number field, `$sort` by the group |
 
 The field names of the collection are offered while typing (the server's field list; if it cannot be read you can still type). The stages go **after** the stages that are already there; an editor that still holds only the untouched first stage is replaced. Field names must not contain `$`.

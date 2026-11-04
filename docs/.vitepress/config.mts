@@ -64,6 +64,7 @@ export default defineConfig({
             { text: 'MongocampDocumentView', link: '/components/mongocamp-document-view' },
             { text: 'MongocampQueryBar', link: '/components/mongocamp-query-bar' },
             { text: 'MongocampIndexes', link: '/components/mongocamp-indexes' },
+            { text: 'MongocampCollectionCharts', link: '/components/mongocamp-collection-charts' },
             { text: 'MongocampCollectionCopy', link: '/components/mongocamp-collection-copy' },
             { text: 'MongocampExportAll', link: '/components/mongocamp-export-all' },
             { text: 'MongocampErrorAlert', link: '/components/mongocamp-error-alert' },

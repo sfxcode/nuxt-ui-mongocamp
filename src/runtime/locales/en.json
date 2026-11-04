@@ -188,7 +188,10 @@
       "statsPresentTitleAll": "In about {present} of {sampled} documents",
       "statsServerTimeout": "The analysis took too long. Try again, or analyze a sample instead.",
       "statsEmpty": "No documents to analyze",
-      "statsFailed": "The field statistics could not be loaded"
+      "statsFailed": "The field statistics could not be loaded",
+      "chartsTitle": "Distribution",
+      "chartsField": "Field",
+      "chartsPick": "Choose a field to see its distribution"
     },
     "collectionData": {
       "filterPlaceholder": "Filter rows...",
@@ -641,7 +644,8 @@
       "saveFailedPipeline": "Fix the pipeline first — it must be valid and not empty",
       "saveFailedLimit": "At most 50 pipelines can be saved — delete one first",
       "saveFailedSize": "The saved pipelines are too large — delete one first",
-      "savedNote": "Saved in this browser only."
+      "savedNote": "Saved in this browser only.",
+      "unitYear": "Year"
     },
     "documentView": {
       "heading": "Document",
@@ -815,6 +819,43 @@
       "cancelled": "Cancelled — nothing was downloaded.",
       "failed": "The export failed",
       "menuItem": "Export all matching…"
+    },
+    "charts": {
+      "titleValues": "Most common values",
+      "titleDates": "Documents over time",
+      "titleNumbers": "Distribution of numbers",
+      "seriesLabel": "Documents",
+      "noneLabel": "(none)",
+      "unitLabel": "Per",
+      "unitYear": "Year",
+      "unitMonth": "Month",
+      "unitDay": "Day",
+      "noteValues": "The {shown} most common of {total} values.",
+      "noteValuesAll": "All {total} values.",
+      "notePeriods": "The first {shown} of {total} periods are shown.",
+      "noteNumbers": "Each range holds about the same number of documents. Documents without a number in this field are not counted.",
+      "empty": "No documents have a value of this kind in {field}.",
+      "unsupported": "There is no chart for a field of type {type}. Charts need text, true/false, dates or numbers.",
+      "unknownField": "{field} was not found in a sample of the documents.",
+      "invalidField": "This field name cannot be charted.",
+      "loading": "Loading chart…",
+      "failedTitle": "The chart could not be loaded",
+      "retry": "Try again",
+      "showData": "Show the data as a table",
+      "columnValue": "Value",
+      "columnCount": "Documents",
+      "ariaLabel": "{title}: {field}",
+      "ariaDescriptionValues": "{shown} bars; the highest is {label} with {count} documents.",
+      "ariaDescriptionDates": "{shown} periods from {first} to {last}; the highest is {label} with {count} documents.",
+      "ariaDescriptionNumbers": "{shown} ranges; the fullest is {label} with {count} documents.",
+      "kindValues": "text or true/false",
+      "typeString": "text",
+      "typeBoolean": "true/false",
+      "typeDate": "date",
+      "typeNumber": "number",
+      "typeObject": "object",
+      "typeArray": "array",
+      "typeNull": "empty"
     }
   }
 }

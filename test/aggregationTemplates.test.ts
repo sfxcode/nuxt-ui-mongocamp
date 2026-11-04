@@ -21,6 +21,10 @@ describe('templates', () => {
     expect(templateStages('date-histogram', { field: 'when' })[1]).toEqual({ type: '$sort', value: { _id: 1 } })
   })
 
+  it('date histogram also groups by year', () => {
+    expect(templateStages('date-histogram', { field: 'when', unit: 'year' })[0]!.value).toMatchObject({ _id: { $dateToString: { format: '%Y' } } })
+  })
+
   it('sum and average by group', () => {
     expect(templateStages('sum-avg-by-group', { field: 'grp', valueField: 'price' })).toEqual([
       { type: '$group', value: { _id: '$grp', total: { $sum: '$price' }, avg: { $avg: '$price' }, count: { $sum: 1 } } },

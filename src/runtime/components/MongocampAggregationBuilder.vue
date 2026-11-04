@@ -163,7 +163,7 @@ const TEMPLATE_LABEL_KEYS: Record<TemplateKey, string> = {
 }
 const templateItems = computed(() => TEMPLATES.map(info => ({ value: info.key, label: t(`nuxtUiMongocamp.aggregation.${TEMPLATE_LABEL_KEYS[info.key]}`) })))
 const templateInfo = computed(() => TEMPLATES.find(info => info.key === templateKey.value)!)
-const unitItems = computed(() => [{ value: 'month', label: t('nuxtUiMongocamp.aggregation.unitMonth') }, { value: 'day', label: t('nuxtUiMongocamp.aggregation.unitDay') }])
+const unitItems = computed(() => [{ value: 'year', label: t('nuxtUiMongocamp.aggregation.unitYear') }, { value: 'month', label: t('nuxtUiMongocamp.aggregation.unitMonth') }, { value: 'day', label: t('nuxtUiMongocamp.aggregation.unitDay') }])
 const templateFieldLabel = computed(() => t(templateKey.value === 'date-histogram' ? 'nuxtUiMongocamp.aggregation.templateFieldDate' : templateInfo.value.needsValueField ? 'nuxtUiMongocamp.aggregation.templateFieldGroup' : 'nuxtUiMongocamp.aggregation.templateField'))
 
 // A template's stages go after the stages already there; an editor that still holds only the untouched first stage is replaced.

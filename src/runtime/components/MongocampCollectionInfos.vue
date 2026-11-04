@@ -30,6 +30,8 @@ const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
 
 const info = ref<CollectionStatus | null>(null)
+// the field whose distribution is drawn; nothing is asked until one is chosen
+const chartField = ref('')
 const columnDefinitions = ref<ColumnDefinition[]>([])
 const loading = ref(false)
 
@@ -50,6 +52,7 @@ async function fetchInfo() {
   }
 }
 
+watch(() => props.collectionName, () => (chartField.value = ''))
 watch(() => [props.collectionName, props.sampleSize], fetchInfo, { immediate: true })
 
 const TYPE_COLORS: Record<string, string> = {
@@ -283,6 +286,11 @@ const statsColumns = computed<TableColumn<FieldStatistic>[]>(() => [
   },
 ])
 
+// fields that can be charted: scalars (arrays and objects have no distribution chart)
+const chartFieldItems = computed(() => columnDefinitions.value
+  .filter(c => c.columnType !== 'object' && c.columnType !== 'array')
+  .map(c => ({ label: c.columnKey, value: c.columnKey })))
+
 // the index panel is its own component; after an index was created or dropped only the numbers above are refreshed
 async function refreshInfo() {
   info.value = await collectionApi.getCollectionInformation({ collectionName: props.collectionName })
@@ -395,6 +403,32 @@ async function refreshInfo() {
         :data="schemaRows"
         :columns="schemaTableColumns"
       />
+    </UCard>
+
+    <UCard v-if="chartFieldItems.length > 0">
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon
+            name="i-lucide-chart-column"
+            class="size-4 text-(--ui-primary)"
+          />
+          <span class="font-semibold">{{ t('nuxtUiMongocamp.collectionInfos.chartsTitle') }}</span>
+        </div>
+      </template>
+      <div class="flex flex-col gap-4">
+        <USelect
+          v-model="chartField"
+          :items="chartFieldItems"
+          :placeholder="t('nuxtUiMongocamp.collectionInfos.chartsPick')"
+          class="w-72"
+          :aria-label="t('nuxtUiMongocamp.collectionInfos.chartsField')"
+        />
+        <MongocampCollectionCharts
+          v-if="chartField"
+          :collection-name="collectionName"
+          :field="chartField"
+        />
+      </div>
     </UCard>
 
     <UCard v-if="info && !loading">
