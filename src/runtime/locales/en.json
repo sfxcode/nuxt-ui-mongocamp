@@ -262,7 +262,14 @@
       "renameTooltip": "Rename / edit metadata",
       "deleteFileTooltip": "Delete file",
       "metadataKey": "Key",
-      "metadataValue": "Value"
+      "metadataValue": "Value",
+      "previewTooltip": "Preview file",
+      "dropHere": "Drop files to upload",
+      "uploadProgress": "Uploading {done} of {total}…",
+      "uploadSummary": "{uploaded} uploaded, {failed} failed",
+      "metadataInvalidJson": "Not valid JSON",
+      "metadataNotObject": "Metadata must be a JSON object",
+      "metadataHelp": "A JSON object; leave empty for no metadata"
     },
     "jobs": {
       "heading": "Jobs",
@@ -946,6 +953,15 @@
       "unknownRoleNote": "A role of this user does not exist any more; its grants do not count.",
       "bucketNote": "The grants of a GridFS bucket's .files and .chunks parts were not verified, so they show as ? for users that are not administrators.",
       "retry": "Try again"
+    },
+    "filePreview": {
+      "title": "File preview",
+      "loading": "Loading preview…",
+      "failed": "The file could not be loaded",
+      "noPreview": "No preview for this file type — download it to open it.",
+      "tooLarge": "Too large to preview (limit {max}) — download it instead.",
+      "clipped": "Only the beginning of the file is shown.",
+      "download": "Download"
     }
   }
 }

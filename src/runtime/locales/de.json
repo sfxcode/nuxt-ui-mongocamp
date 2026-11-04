@@ -262,7 +262,14 @@
       "renameTooltip": "Umbenennen / Metadaten bearbeiten",
       "deleteFileTooltip": "Datei löschen",
       "metadataKey": "Schlüssel",
-      "metadataValue": "Wert"
+      "metadataValue": "Wert",
+      "previewTooltip": "Datei ansehen",
+      "dropHere": "Dateien zum Hochladen ablegen",
+      "uploadProgress": "Lade {done} von {total} hoch…",
+      "uploadSummary": "{uploaded} hochgeladen, {failed} fehlgeschlagen",
+      "metadataInvalidJson": "Kein gültiges JSON",
+      "metadataNotObject": "Metadaten müssen ein JSON-Objekt sein",
+      "metadataHelp": "Ein JSON-Objekt; leer lassen für keine Metadaten"
     },
     "jobs": {
       "heading": "Jobs",
@@ -946,6 +953,15 @@
       "unknownRoleNote": "Eine Rolle dieses Benutzers existiert nicht mehr; ihre Berechtigungen zählen nicht.",
       "bucketNote": "Die Berechtigungen für die Teile .files und .chunks eines GridFS-Buckets wurden nicht geprüft und erscheinen für Nicht-Administratoren als ?.",
       "retry": "Erneut versuchen"
+    },
+    "filePreview": {
+      "title": "Dateivorschau",
+      "loading": "Vorschau wird geladen…",
+      "failed": "Die Datei konnte nicht geladen werden",
+      "noPreview": "Keine Vorschau für diesen Dateityp — zum Öffnen herunterladen.",
+      "tooLarge": "Zu groß für die Vorschau (Limit {max}) — bitte herunterladen.",
+      "clipped": "Es wird nur der Anfang der Datei gezeigt.",
+      "download": "Herunterladen"
     }
   }
 }

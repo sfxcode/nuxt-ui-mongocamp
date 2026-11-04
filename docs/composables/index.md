@@ -8,7 +8,7 @@ All composables are auto-imported.
 | [`useMongocampCollection`](/composables/use-mongocamp-collection) | Reactive state for paginated collection queries |
 | [`useMongocampDocument`](/composables/use-mongocamp-document) | Document-level helpers (metadata stamping, partial updates) |
 | [`useMongocampSchema`](/composables/use-mongocamp-schema) | Infers a schema from sampled documents; generates a matching TS interface |
-| [`useMongocampBucket`](/composables/use-mongocamp-bucket) | GridFS bucket detection, file-id resolution, upload/download |
+| [`useMongocampBucket`](/composables/use-mongocamp-bucket) | GridFS bucket detection, file-id resolution, upload (also `uploadFiles`)/download/`fetchFileBlob` |
 | [`useMongocampIndex`](/composables/use-mongocamp-index) | Create/list/delete MongoDB indexes (standard, unique, text, expiring) |
 | [`useMongocampJobs`](/composables/use-mongocamp-jobs) | List/register/update/execute/delete scheduled background jobs |
 | [`useMongocampAccount`](/composables/use-mongocamp-account) | Account self-service: profile, password change, API key regeneration |

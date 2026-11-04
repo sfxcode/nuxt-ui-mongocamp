@@ -389,3 +389,44 @@ describe('deleteBucket', () => {
     expect(bucketActionInFlight.value.has('test_images')).toBe(false)
   })
 })
+
+describe('uploadFiles', () => {
+  it('uploads every file, reports failures per file and keeps going', async () => {
+    mockFileApi.insertFile.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('too big')).mockResolvedValueOnce({})
+    const files = ['a.txt', 'b.txt', 'c.txt'].map(n => new File(['x'], n))
+    const progress: number[] = []
+
+    const { uploadFiles, uploading } = useMongocampBucket()
+    const result = await uploadFiles('pics', files, { onProgress: done => progress.push(done) })
+
+    expect(result).toEqual({ uploaded: ['a.txt', 'c.txt'], failed: [{ name: 'b.txt', message: 'too big' }], aborted: false })
+    expect(mockFileApi.insertFile).toHaveBeenCalledWith(expect.objectContaining({ bucketName: 'pics', fileName: 'c.txt' }))
+    expect(progress).toEqual([0, 1, 2, 3])
+    expect(uploading.value).toBe(false)
+    expect(mockToastAdd).not.toHaveBeenCalled()
+  })
+
+  it('stops before the next file when aborted', async () => {
+    const controller = new AbortController()
+    mockFileApi.insertFile.mockImplementation(async () => {
+      controller.abort()
+    })
+    const files = ['a.txt', 'b.txt'].map(n => new File(['x'], n))
+
+    const { uploadFiles } = useMongocampBucket()
+    const result = await uploadFiles('pics', files, { signal: controller.signal })
+
+    expect(result).toEqual({ uploaded: ['a.txt'], failed: [], aborted: true })
+    expect(mockFileApi.insertFile).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('fetchFileBlob', () => {
+  it('returns the blob without downloading', async () => {
+    const blob = new Blob(['x'])
+    mockFileApi.getFile.mockResolvedValueOnce(blob)
+    const { fetchFileBlob } = useMongocampBucket()
+    expect(await fetchFileBlob('pics', 'f1')).toBe(blob)
+    expect(mockFileApi.getFile).toHaveBeenCalledWith({ bucketName: 'pics', fileId: 'f1' })
+  })
+})

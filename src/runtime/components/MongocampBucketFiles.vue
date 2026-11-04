@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
+import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { FileInformation } from '@sfxcode/nuxt-mongocamp-server'
@@ -7,6 +7,7 @@ import { useI18n } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
+import { parseMetadataJson } from '../utils/filePreview'
 
 const props = defineProps<{
   bucketName: string
@@ -20,7 +21,7 @@ const {
   updateFileInformation,
   downloadFile,
   downloadingFileIds,
-  uploadFile,
+  uploadFiles,
   uploading,
   fileActionInFlight,
 } = useMongocampBucket()
@@ -32,13 +33,63 @@ function openFilePicker() {
   fileInputRef.value?.click()
 }
 
-async function handleFileSelected(event: Event) {
+const uploadProgress = ref<{ done: number, total: number, current?: string } | null>(null)
+const uploadResult = ref<{ uploaded: number, failed: { name: string, message: string }[] } | null>(null)
+const dragging = ref(false)
+let dragDepth = 0
+
+async function handleFiles(list: File[]) {
+  if (!list.length || uploading.value) return
+  uploadResult.value = null
+  uploadProgress.value = { done: 0, total: list.length }
+  try {
+    const result = await uploadFiles(props.bucketName, list, {
+      onProgress: (done, total, current) => {
+        uploadProgress.value = { done, total, current }
+      },
+    })
+    uploadResult.value = { uploaded: result.uploaded.length, failed: result.failed }
+    if (result.uploaded.length) await fetchFiles()
+  }
+  finally {
+    uploadProgress.value = null
+  }
+}
+
+function handleFileSelected(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
+  const list = Array.from(input.files ?? [])
   input.value = ''
-  if (!file) return
-  const success = await uploadFile(props.bucketName, file)
-  if (success) await fetchFiles()
+  return handleFiles(list)
+}
+
+function hasFiles(event: DragEvent): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).includes('Files')
+}
+
+function onDragEnter(event: DragEvent) {
+  if (!hasFiles(event)) return
+  dragDepth++
+  dragging.value = true
+}
+
+function onDragLeave() {
+  dragDepth = Math.max(0, dragDepth - 1)
+  if (!dragDepth) dragging.value = false
+}
+
+function onDrop(event: DragEvent) {
+  dragDepth = 0
+  dragging.value = false
+  return handleFiles(Array.from(event.dataTransfer?.files ?? []))
+}
+
+const previewOpen = ref(false)
+const fileToPreview = ref<FileInformation | undefined>(undefined)
+
+function openPreview(file: FileInformation) {
+  fileToPreview.value = file
+  previewOpen.value = true
 }
 
 const UButton = resolveComponent('UButton')
@@ -113,51 +164,45 @@ function makeMetadataCell() {
   }
 }
 
-type MetadataEntry = { key: string, value: string }
-
 const isRenameModalOpen = ref(false)
 const fileToRename = ref<FileInformation | undefined>(undefined)
-const renameData = ref<{ filename: string, metadata: MetadataEntry[] }>({ filename: '', metadata: [] })
-const renameSchema = reactive([
-  {
-    $formkit: 'nuxtUIInput',
-    name: 'filename',
-    label: t('nuxtUiMongocamp.bucketFiles.filename'),
-    validation: 'required',
-  },
-  {
-    $formkit: 'nuxtUIRepeater',
-    name: 'metadata',
-    label: t('nuxtUiMongocamp.bucketFiles.columnMetadata'),
-    children: [
-      { $formkit: 'nuxtUIInput', name: 'key', label: t('nuxtUiMongocamp.bucketFiles.metadataKey') },
-      { $formkit: 'nuxtUIInput', name: 'value', label: t('nuxtUiMongocamp.bucketFiles.metadataValue') },
-    ],
-  },
-])
+const renameFilename = ref('')
+const renameMetadata = ref('')
+const renameSaving = ref(false)
+
+const metadataParse = computed(() => parseMetadataJson(renameMetadata.value))
+const metadataError = computed(() => {
+  const parsed = metadataParse.value
+  if (parsed.ok) return ''
+  return parsed.reason === 'invalid-json'
+    ? t('nuxtUiMongocamp.bucketFiles.metadataInvalidJson')
+    : t('nuxtUiMongocamp.bucketFiles.metadataNotObject')
+})
+const canSaveRename = computed(() => !!renameFilename.value.trim() && metadataParse.value.ok)
 
 function openRename(file: FileInformation) {
   fileToRename.value = file
-  renameData.value = {
-    filename: file.filename,
-    metadata: Object.entries(file.metadata ?? {}).map(([key, value]) => ({ key, value })),
-  }
+  renameFilename.value = file.filename
+  renameMetadata.value = Object.keys(file.metadata ?? {}).length ? JSON.stringify(file.metadata, null, 2) : ''
   isRenameModalOpen.value = true
 }
 
 async function handleRenameSave() {
-  if (!fileToRename.value) return
-  const metadata: Record<string, string> = {}
-  for (const entry of renameData.value.metadata) {
-    if (entry.key) metadata[entry.key] = entry.value
+  const parsed = metadataParse.value
+  if (!fileToRename.value || !parsed.ok || !renameFilename.value.trim()) return
+  renameSaving.value = true
+  try {
+    const success = await updateFileInformation(props.bucketName, fileToRename.value.id, {
+      filename: renameFilename.value.trim(),
+      metadata: parsed.value,
+    })
+    if (success) {
+      isRenameModalOpen.value = false
+      await fetchFiles()
+    }
   }
-  const success = await updateFileInformation(props.bucketName, fileToRename.value.id, {
-    filename: renameData.value.filename,
-    metadata,
-  })
-  if (success) {
-    isRenameModalOpen.value = false
-    await fetchFiles()
+  finally {
+    renameSaving.value = false
   }
 }
 
@@ -185,6 +230,14 @@ function makeActionsColumn(): TableColumn<FileInformation> {
     cell: ({ row }: { row: { original: FileInformation } }) => {
       const file = row.original
       return h('div', { class: 'flex gap-1 justify-end' }, [
+        withTooltip(t('nuxtUiMongocamp.bucketFiles.previewTooltip'), h(UButton, {
+          'icon': 'i-lucide-eye',
+          'color': 'neutral',
+          'variant': 'ghost',
+          'size': 'sm',
+          'aria-label': t('nuxtUiMongocamp.bucketFiles.previewTooltip'),
+          'onClick': () => openPreview(file),
+        })),
         withTooltip(t('nuxtUiMongocamp.bucketFiles.downloadFileTooltip'), h(UButton, {
           'icon': 'i-lucide-download',
           'color': 'neutral',
@@ -306,7 +359,20 @@ watch(() => props.bucketName, init, { immediate: true })
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div
+    class="relative flex flex-col gap-4"
+    @dragenter.prevent="onDragEnter"
+    @dragover.prevent
+    @dragleave.prevent="onDragLeave"
+    @drop.prevent="onDrop"
+  >
+    <div
+      v-if="dragging"
+      class="absolute inset-0 z-10 flex items-center justify-center rounded border-2 border-dashed border-primary bg-default/80 text-sm font-medium pointer-events-none"
+      data-testid="drop-overlay"
+    >
+      {{ t('nuxtUiMongocamp.bucketFiles.dropHere') }}
+    </div>
     <div class="flex items-center justify-between gap-4">
       <UInput
         v-model="filterText"
@@ -334,6 +400,7 @@ watch(() => props.bucketName, init, { immediate: true })
         <input
           ref="fileInputRef"
           type="file"
+          multiple
           class="hidden"
           @change="handleFileSelected"
         >
@@ -355,6 +422,37 @@ watch(() => props.bucketName, init, { immediate: true })
         />
       </div>
     </div>
+    <UAlert
+      v-if="uploadProgress"
+      color="neutral"
+      variant="subtle"
+      icon="i-lucide-upload"
+      :title="t('nuxtUiMongocamp.bucketFiles.uploadProgress', { done: uploadProgress.done, total: uploadProgress.total })"
+      :description="uploadProgress.current"
+    />
+    <UAlert
+      v-else-if="uploadResult"
+      :color="uploadResult.failed.length ? 'warning' : 'success'"
+      variant="subtle"
+      :icon="uploadResult.failed.length ? 'i-lucide-triangle-alert' : 'i-lucide-circle-check'"
+      :title="t('nuxtUiMongocamp.bucketFiles.uploadSummary', { uploaded: uploadResult.uploaded, failed: uploadResult.failed.length })"
+      close
+      @update:open="uploadResult = null"
+    >
+      <template
+        v-if="uploadResult.failed.length"
+        #description
+      >
+        <ul class="list-disc pl-4 text-xs">
+          <li
+            v-for="item in uploadResult.failed"
+            :key="item.name"
+          >
+            {{ item.name }}: {{ item.message }}
+          </li>
+        </ul>
+      </template>
+    </UAlert>
     <MongocampErrorAlert
       :error="loadError"
       @retry="fetchFiles"
@@ -387,15 +485,49 @@ watch(() => props.bucketName, init, { immediate: true })
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <FUDataEdit
-          :data="renameData"
-          :schema="renameSchema"
-          :submit-label="t('nuxtUiMongocamp.common.save')"
-          submit-icon="i-lucide-save"
-          @data-saved="handleRenameSave"
+        <div class="flex flex-col gap-4">
+          <UFormField :label="t('nuxtUiMongocamp.bucketFiles.filename')">
+            <UInput
+              v-model="renameFilename"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField
+            :label="t('nuxtUiMongocamp.bucketFiles.columnMetadata')"
+            :help="t('nuxtUiMongocamp.bucketFiles.metadataHelp')"
+            :error="metadataError || undefined"
+          >
+            <UTextarea
+              v-model="renameMetadata"
+              :rows="8"
+              class="w-full font-mono"
+              data-testid="metadata-json"
+            />
+          </UFormField>
+        </div>
+      </template>
+      <template #footer>
+        <UButton
+          :label="t('nuxtUiMongocamp.common.cancel')"
+          color="neutral"
+          variant="ghost"
+          @click="isRenameModalOpen = false"
+        />
+        <UButton
+          :label="t('nuxtUiMongocamp.common.save')"
+          icon="i-lucide-save"
+          :disabled="!canSaveRename"
+          :loading="renameSaving"
+          @click="handleRenameSave"
         />
       </template>
     </UModal>
+
+    <MongocampFilePreview
+      v-model:open="previewOpen"
+      :bucket-name="bucketName"
+      :file="fileToPreview"
+    />
 
     <UModal
       v-model:open="isDeleteModalOpen"

@@ -11,7 +11,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampCollections`](/components/mongocamp-collections) | Table of all collections, with links to info/data pages |
 | [`MongocampCollectionInfos`](/components/mongocamp-collection-infos) | Stat cards + inferred schema (and the server's JSON schema) for one collection |
 | [`MongocampCollectionData`](/components/mongocamp-collection-data) | Paginated, filterable, sortable document table; edit sends only the changed fields |
-| [`MongocampBucketFiles`](/components/mongocamp-bucket-files) | Paginated, filterable GridFS bucket file browser with upload/download/delete/rename |
+| [`MongocampBucketFiles`](/components/mongocamp-bucket-files) | Paginated, filterable GridFS bucket file browser with upload (multi-file, drag and drop)/preview/download/delete/rename (JSON metadata editor) |
 | [`MongocampJobs`](/components/mongocamp-jobs) | Full CRUD table for scheduled background jobs |
 | [`MongocampAccount`](/components/mongocamp-account) | Current-user account page: profile, password change, API key |
 | [`MongocampSettings`](/components/mongocamp-settings) | Read-only server settings: plugins and a searchable, paged configuration table with secrets masked (admins only); `hide*` props toggle its parts |
@@ -24,6 +24,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampAggregationBuilder`](/components/mongocamp-aggregation-builder) | Build and run an aggregation pipeline (stage editor or JSON), page through and export the result |
 | [`MongocampDashboard`](/components/mongocamp-dashboard) | Admin landing page: linked collection/user/role counts, server version, slot for extra content |
 | [`MongocampGrantList`](/components/mongocamp-grant-list) | Read-only grants table (used by the user and role detail drawers) |
+| [`MongocampFilePreview`](/components/mongocamp-file-preview) | Drawer previewing a bucket file: image, PDF, JSON/CSV/text with size caps, otherwise metadata + download |
 | [`MongocampConfirmByName`](/components/mongocamp-confirm-by-name) | Type-the-name confirmation modal for destructive actions (clear/drop collection, bucket clear/delete) |
 | [`MongocampDocumentView`](/components/mongocamp-document-view) | Read-only typed tree / JSON view of one document with copy of path and value (opened from the data table's View button) |
 | [`MongocampQueryBar`](/components/mongocamp-query-bar) | Filter + sort + fields to load + history and saved queries in one bar (used by the data table) |

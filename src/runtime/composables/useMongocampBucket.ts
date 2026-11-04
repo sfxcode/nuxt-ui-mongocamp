@@ -19,7 +19,7 @@ export interface ListFilesResult {
 
 export interface UpdateFileInformationOptions {
   filename?: string
-  metadata?: Record<string, string>
+  metadata?: Record<string, unknown>
 }
 
 function unwrapId(value: unknown): string | undefined {
@@ -94,6 +94,47 @@ export function useMongocampBucket() {
     finally {
       uploading.value = false
     }
+  }
+
+  /** The file's bytes without triggering a download (preview); errors are left to the caller. */
+  async function fetchFileBlob(bucketName: string, fileId: string): Promise<Blob> {
+    return fileApi.getFile({ bucketName, fileId })
+  }
+
+  /**
+   * Uploads several files one after the other (no toast per file); a failure never stops the rest.
+   * `onProgress` fires before each file and after it finished.
+   */
+  async function uploadFiles(
+    bucketName: string,
+    files: File[],
+    options: { signal?: AbortSignal, onProgress?: (done: number, total: number, current?: string) => void } = {},
+  ): Promise<{ uploaded: string[], failed: { name: string, message: string }[], aborted: boolean }> {
+    const uploaded: string[] = []
+    const failed: { name: string, message: string }[] = []
+    let aborted = false
+    uploading.value = true
+    try {
+      for (const [index, file] of files.entries()) {
+        if (options.signal?.aborted) {
+          aborted = true
+          break
+        }
+        options.onProgress?.(index, files.length, file.name)
+        try {
+          await fileApi.insertFile({ bucketName, file, fileName: file.name, metaData: '{}' })
+          uploaded.push(file.name)
+        }
+        catch (e) {
+          failed.push({ name: file.name, message: e instanceof Error ? e.message : t('nuxtUiMongocamp.bucket.uploadFailedFallback') })
+        }
+      }
+      options.onProgress?.(uploaded.length + failed.length, files.length)
+    }
+    finally {
+      uploading.value = false
+    }
+    return { uploaded, failed, aborted }
   }
 
   async function listFiles(bucketName: string, options: ListFilesOptions = {}): Promise<ListFilesResult> {
@@ -198,6 +239,8 @@ export function useMongocampBucket() {
     uploading,
     downloadFile,
     uploadFile,
+    uploadFiles,
+    fetchFileBlob,
     bucketActionInFlight,
     fileActionInFlight,
     listFiles,

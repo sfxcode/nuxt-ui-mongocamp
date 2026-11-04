@@ -42,11 +42,12 @@ The filter input searches `filename` via a Lucene `like` expression (debounced, 
 ## Actions
 
 - **Download** — reuses `useMongocampBucket`'s `downloadFile`, tracked via `downloadingFileIds`
-- **Rename / edit metadata** — opens a `FUDataEdit` form (filename input + a `nuxtUIRepeater` of key/value pairs for metadata) and saves via `updateFileInformation`
+- **Preview** — opens [`MongocampFilePreview`](/components/mongocamp-file-preview) in a drawer
+- **Rename / edit metadata** — a dialog with the filename and the metadata as one **JSON text** (must be a single JSON object, empty = none; invalid text shows an error and disables Save), saved via `updateFileInformation`. Nested values are kept as typed
 - **Delete** — behind a confirmation modal, calls `deleteFile`
-- **Upload** — toolbar button reusing `uploadFile`, refetches the table on success
+- **Upload** — toolbar button (several files at once) **or drag and drop** files onto the component. Files go up one after the other via `uploadFiles`; progress ("Uploading 2 of 5") and a summary with the failed files (name and server message) are shown, a failure never stops the rest, and the table reloads when anything was uploaded
 
-All four actions are tracked via `useMongocampBucket`'s own loading-state refs (`downloadingFileIds`, `fileActionInFlight`, `uploading`) and show success/error toasts from the composable itself — the component doesn't duplicate that feedback.
+Download, rename and delete are tracked via `useMongocampBucket`'s own loading-state refs (`downloadingFileIds`, `fileActionInFlight`, `uploading`) and show success/error toasts from the composable itself — the component doesn't duplicate that feedback.
 
 ## Related
 
