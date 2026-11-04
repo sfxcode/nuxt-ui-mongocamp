@@ -69,7 +69,7 @@ async function mountCollections(props: Record<string, unknown> = {}) {
 }
 
 function row(wrapper: Awaited<ReturnType<typeof mountCollections>>, name: string) {
-  return wrapper.findAll('tbody tr').find(tr => tr.text().includes(name))!
+  return wrapper.findAll('table:not([data-test]) tbody tr').find(tr => tr.text().includes(name))!
 }
 
 function labels(tr: { findAll: (s: string) => { attributes: (n: string) => string | undefined }[] }) {
@@ -84,6 +84,26 @@ async function typeName(value: string) {
   await page().find('input[aria-label^="Type"]').setValue(value)
   await flushPromises()
 }
+
+describe('MongocampCollections — chart', () => {
+  it('charts storage per collection from the loaded numbers, mc_* and bucket members left out, with no extra request', async () => {
+    mockListCollections.mockResolvedValue(['orders', 'users', 'mc_users'])
+    mockGetInfo.mockImplementation(async ({ collectionName }: { collectionName: string }) => ({ count: collectionName === 'orders' ? 7 : 3, storageSize: collectionName === 'orders' ? 2048 : 8192, nindexes: 1 }))
+    const wrapper = await mountCollections()
+    const chart = wrapper.find('[data-testid="collections-chart"]')
+    expect(chart.exists()).toBe(true)
+    expect(chart.attributes('open')).toBeUndefined()
+    const rows = chart.findAll('[data-test="chart-table"] tbody tr').map(tr => tr.findAll('td').map(td => td.text()))
+    expect(rows).toEqual([['users', '8.0 KB'], ['orders', '2.0 KB']])
+    expect(mockGetInfo).toHaveBeenCalledTimes(2)
+  })
+
+  it('is left out for a single collection', async () => {
+    mockListCollections.mockResolvedValue(['orders'])
+    const wrapper = await mountCollections()
+    expect(wrapper.find('[data-testid="collections-chart"]').exists()).toBe(false)
+  })
+})
 
 describe('MongocampCollections — copy', () => {
   it('offers Copy to an admin on an ordinary collection only', async () => {

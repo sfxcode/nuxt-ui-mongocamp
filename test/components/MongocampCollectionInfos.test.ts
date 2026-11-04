@@ -69,7 +69,7 @@ async function mountInfos() {
 type Mounted = Awaited<ReturnType<typeof mountInfos>>
 
 // the statistics are the last table on the page (the schema and index tables come first)
-const statsRows = (component: Mounted) => component.findAll('table').at(-1)!.findAll('tbody tr')
+const statsRows = (component: Mounted) => component.findAll('table').filter(t => !t.attributes('data-test'))!.at(-1)!.findAll('tbody tr')
 
 const analyzeButton = (component: Mounted) => component.findAll('button').find(b => b.text() === 'Analyze fields')!
 
@@ -105,6 +105,23 @@ describe('MongocampCollectionInfos — field statistics', () => {
       rowsPerPage: 100,
       page: 1,
     })
+  })
+
+  it('charts how often each field is present, sparsest first, from the same sample', async () => {
+    mockAggregateRaw.mockResolvedValue(rawResponse(sample))
+    const component = await mountInfos()
+    expect(component.find('[data-testid="presence-chart"]').exists()).toBe(false)
+
+    await analyzeButton(component).trigger('click')
+    await wait()
+
+    const chart = component.find('[data-testid="presence-chart"]')
+    expect(chart.exists()).toBe(true)
+    expect(chart.attributes('open')).toBeUndefined()
+    const rows = chart.findAll('[data-test="chart-table"] tbody tr').map(tr => tr.findAll('td').map(td => td.text()))
+    expect(rows[0]).toEqual(['address', '50%'])
+    expect(rows.at(-1)).toEqual(['status', '100%']) // ties by path
+    expect(mockAggregateRaw).toHaveBeenCalledTimes(1)
   })
 
   it('shows each field with its types, how often it is present and its common values', async () => {

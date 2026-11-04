@@ -132,7 +132,14 @@
       "droppedTitle": "Collection gelöscht",
       "droppedDescription": "Die Collection \"{name}\" wurde gelöscht.",
       "bucketActionFailed": "Die Aktion für den Bucket \"{bucketName}\" ist fehlgeschlagen.",
-      "copyTooltip": "Sammlung kopieren"
+      "copyTooltip": "Sammlung kopieren",
+      "chartSummary": "Diagramm",
+      "chartMetric": "Messgröße",
+      "chartStorage": "Speichergröße",
+      "chartDocuments": "Dokumente",
+      "chartOther": "Rest",
+      "chartLabel": "{metric} je Collection",
+      "chartDescription": "Die {count} größten Collections"
     },
     "collectionInfos": {
       "documents": "Dokumente",
@@ -191,7 +198,10 @@
       "statsFailed": "Die Feldstatistik konnte nicht geladen werden",
       "chartsTitle": "Verteilung",
       "chartsField": "Feld",
-      "chartsPick": "Wählen Sie ein Feld, um seine Verteilung zu sehen"
+      "chartsPick": "Wählen Sie ein Feld, um seine Verteilung zu sehen",
+      "presenceSummary": "Diagramm Feldhäufigkeit",
+      "presenceLabel": "Anteil der Dokumente mit dem Feld (%)",
+      "presenceDescription": "Die {count} Felder, die in den wenigsten Dokumenten vorkommen"
     },
     "collectionData": {
       "filterPlaceholder": "Zeilen filtern...",
@@ -350,7 +360,10 @@
       "columnCollections": "Collections",
       "columnEmpty": "Leer",
       "emptyBadge": "Leer",
-      "loadFailedTitle": "Datenbanken konnten nicht geladen werden"
+      "loadFailedTitle": "Datenbanken konnten nicht geladen werden",
+      "chartSummary": "Diagramm",
+      "chartSize": "Größe auf der Platte",
+      "chartDescription": "Größe von {count} Datenbanken, größte zuerst"
     },
     "version": {
       "unavailable": "MongoCamp nicht verfügbar"

@@ -3,6 +3,8 @@ import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import { useI18n, useMongocampSystem } from '#imports'
+import { formatBytes } from '../utils/formatBytes'
+import { shortenLabel } from '../utils/chartData'
 
 interface DatabaseRow {
   name: string
@@ -15,6 +17,7 @@ const { t } = useI18n()
 const { getDatabaseInfos, listCollectionsByDatabase } = useMongocampSystem()
 
 const databases = ref<DatabaseRow[]>([])
+const chartRows = computed(() => [...databases.value].sort((a, b) => b.sizeKb - a.sizeKb).map(d => ({ name: shortenLabel(d.name), size: d.sizeKb * 1024 })))
 const loading = ref(false)
 const sorting = ref<{ id: string, desc: boolean }[]>([])
 const loadError = ref<unknown>(null)
@@ -115,6 +118,25 @@ fetchDatabases()
       :title="t('nuxtUiMongocamp.databases.loadFailedTitle')"
       @retry="fetchDatabases"
     />
+
+    <details
+      v-if="chartRows.length > 1"
+      class="text-sm"
+      data-testid="databases-chart"
+    >
+      <summary class="cursor-pointer text-dimmed">
+        {{ t('nuxtUiMongocamp.databases.chartSummary') }}
+      </summary>
+      <MongocampChart
+        class="mt-2"
+        :data="chartRows"
+        index="name"
+        :categories="[{ key: 'size', label: t('nuxtUiMongocamp.databases.chartSize') }]"
+        :format="formatBytes"
+        :chart-label="t('nuxtUiMongocamp.databases.chartSize')"
+        :chart-description="t('nuxtUiMongocamp.databases.chartDescription', { count: chartRows.length })"
+      />
+    </details>
 
     <UTable
       v-model:sorting="sorting"

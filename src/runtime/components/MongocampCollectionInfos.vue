@@ -9,6 +9,7 @@ import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import type { DescribedAggregationError } from '../composables/useMongocampAggregation'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { analyzeSamples } from '../utils/analyzeSamples'
+import { shortenLabel } from '../utils/chartData'
 import { downloadTextFile } from '../utils/exportRows'
 import type { FieldStatistic, SampleAnalysis, ValueKind } from '../utils/analyzeSamples'
 import { FULL_ANALYSIS_MAX_DOCUMENTS, statisticsFromSchemaAnalysis } from '../utils/schemaAnalysis'
@@ -254,6 +255,13 @@ function percent(share: number): string {
   if (share >= 1) return '100%'
   return share > 0 && share < 0.01 ? '<1%' : `${Math.round(share * 100)}%`
 }
+
+// the share of documents that have each field, sparsest first (the ones that are always there say little); at most 20
+const PRESENCE_MAX_FIELDS = 20
+const presenceChart = computed(() => [...(statsAnalysis.value?.fields ?? [])]
+  .sort((a, b) => a.share - b.share || a.path.localeCompare(b.path))
+  .slice(0, PRESENCE_MAX_FIELDS)
+  .map(f => ({ path: shortenLabel(f.path, 32), share: Math.round(f.share * 100) })))
 
 const statsColumns = computed<TableColumn<FieldStatistic>[]>(() => [
   {
@@ -529,6 +537,24 @@ async function refreshInfo() {
             <MongocampEmptyState :title="t('nuxtUiMongocamp.collectionInfos.statsEmpty')" />
           </template>
         </UTable>
+        <details
+          v-if="presenceChart.length > 1"
+          class="mt-3 text-sm"
+          data-testid="presence-chart"
+        >
+          <summary class="cursor-pointer text-dimmed">
+            {{ t('nuxtUiMongocamp.collectionInfos.presenceSummary') }}
+          </summary>
+          <MongocampChart
+            class="mt-2"
+            :data="presenceChart"
+            index="path"
+            :categories="[{ key: 'share', label: t('nuxtUiMongocamp.collectionInfos.presenceLabel') }]"
+            :format="(v: number) => `${v}%`"
+            :chart-label="t('nuxtUiMongocamp.collectionInfos.presenceLabel')"
+            :chart-description="t('nuxtUiMongocamp.collectionInfos.presenceDescription', { count: presenceChart.length })"
+          />
+        </details>
       </template>
     </UCard>
 

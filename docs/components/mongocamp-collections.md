@@ -45,6 +45,10 @@ Table of all collections in the default database, with document count, storage s
 - Collections whose name starts with `mc` (MongoCamp's internal collections) are filtered out.
 - The filter input matches client-side against the already-loaded rows.
 
+## Chart
+
+With two or more collections a collapsed **Chart** section shows the biggest ten as bars (storage size or document count, switchable; the rest summed as "other"). It is built from the numbers the table already loaded — no extra request — with the data table as a text alternative.
+
 ## Clear and drop
 
 Admins (`useMongocampRoles().isAdmin`) get two more actions on every ordinary collection:

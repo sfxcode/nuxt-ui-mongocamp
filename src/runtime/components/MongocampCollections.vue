@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatBytes } from '../utils/formatBytes'
+import { shortenLabel, topNWithOther } from '../utils/chartData'
 import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
@@ -39,6 +41,19 @@ const toast = useToast()
 const canClearOrDrop = computed(() => props.canManage && isAdmin.value)
 
 const collections = ref<CollectionRow[]>([])
+
+// biggest ten by the chosen measure, the rest summed into one "other" bar
+const chartMetric = ref<'storage' | 'documents'>('storage')
+const chartMetrics = computed(() => [
+  { value: 'storage', label: t('nuxtUiMongocamp.collections.chartStorage') },
+  { value: 'documents', label: t('nuxtUiMongocamp.collections.chartDocuments') },
+])
+const chartMetricLabel = computed(() => chartMetrics.value.find(m => m.value === chartMetric.value)!.label)
+const chartRows = computed(() => topNWithOther(
+  collections.value.map(c => ({ label: shortenLabel(c.name), value: chartMetric.value === 'storage' ? c.sizekb * 1024 : c.count })),
+  10,
+  t('nuxtUiMongocamp.collections.chartOther'),
+).map(item => ({ name: item.label, value: item.value })))
 const loading = ref(false)
 
 const loadError = ref<unknown>(null)
@@ -306,6 +321,34 @@ fetchCollections()
       :error="loadError"
       @retry="fetchCollections"
     />
+
+    <!-- secondary: collapsed, built from the numbers the table already holds -->
+    <details
+      v-if="chartRows.length > 1"
+      class="text-sm"
+      data-testid="collections-chart"
+    >
+      <summary class="cursor-pointer text-dimmed">
+        {{ t('nuxtUiMongocamp.collections.chartSummary') }}
+      </summary>
+      <div class="mt-2 flex flex-col gap-2">
+        <USelect
+          v-model="chartMetric"
+          :items="chartMetrics"
+          size="sm"
+          class="w-44"
+          :aria-label="t('nuxtUiMongocamp.collections.chartMetric')"
+        />
+        <MongocampChart
+          :data="chartRows"
+          index="name"
+          :categories="[{ key: 'value', label: chartMetricLabel }]"
+          :format="chartMetric === 'storage' ? formatBytes : undefined"
+          :chart-label="t('nuxtUiMongocamp.collections.chartLabel', { metric: chartMetricLabel })"
+          :chart-description="t('nuxtUiMongocamp.collections.chartDescription', { count: chartRows.length })"
+        />
+      </div>
+    </details>
 
     <UTable
       v-model:global-filter="globalFilter"

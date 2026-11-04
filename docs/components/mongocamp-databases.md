@@ -25,6 +25,10 @@ None.
 
 This component is **read-only** — there is no delete action. See [`useMongocampSystem`](/composables/use-mongocamp-system) for why `deleteDatabase` isn't wrapped.
 
+## Chart
+
+With two or more databases a collapsed **Chart** section shows the size on disk per database, biggest first, from the rows already loaded.
+
 ## Related composables
 
 - [`useMongocampSystem`](/composables/use-mongocamp-system)

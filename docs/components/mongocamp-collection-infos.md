@@ -90,6 +90,8 @@ The second button, **Analyze all documents**, asks the server for its own analys
 
 (Notes on the server endpoint: (On MongoCamp up to 1.5.x that endpoint returned an accumulation of every analysis made since the server started — fields of *other* collections included; it is clean since 1.6.1, re-verified on 1.6.3.) The card also drops its result when `collectionName` changes.
 
+After a field analysis, a collapsed **Field presence chart** under the table shows the share of documents that have each field (the 20 sparsest, ties by name) — from the analysis already computed, no request.
+
 ## Related composables
 
 - [`useMongocampAggregation`](/composables/use-mongocamp-aggregation)

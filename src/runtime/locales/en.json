@@ -132,7 +132,14 @@
       "droppedTitle": "Collection dropped",
       "droppedDescription": "The collection \"{name}\" was deleted.",
       "bucketActionFailed": "The action on the bucket \"{bucketName}\" failed.",
-      "copyTooltip": "Copy collection"
+      "copyTooltip": "Copy collection",
+      "chartSummary": "Chart",
+      "chartMetric": "Measure",
+      "chartStorage": "Storage size",
+      "chartDocuments": "Documents",
+      "chartOther": "other",
+      "chartLabel": "{metric} per collection",
+      "chartDescription": "The {count} biggest collections"
     },
     "collectionInfos": {
       "documents": "Documents",
@@ -191,7 +198,10 @@
       "statsFailed": "The field statistics could not be loaded",
       "chartsTitle": "Distribution",
       "chartsField": "Field",
-      "chartsPick": "Choose a field to see its distribution"
+      "chartsPick": "Choose a field to see its distribution",
+      "presenceSummary": "Field presence chart",
+      "presenceLabel": "Share of documents that have the field (%)",
+      "presenceDescription": "The {count} fields found in the fewest documents"
     },
     "collectionData": {
       "filterPlaceholder": "Filter rows...",
@@ -350,7 +360,10 @@
       "columnCollections": "Collections",
       "columnEmpty": "Empty",
       "emptyBadge": "Empty",
-      "loadFailedTitle": "Failed to load databases"
+      "loadFailedTitle": "Failed to load databases",
+      "chartSummary": "Chart",
+      "chartSize": "Size on disk",
+      "chartDescription": "Size of {count} databases, biggest first"
     },
     "version": {
       "unavailable": "MongoCamp unavailable"
