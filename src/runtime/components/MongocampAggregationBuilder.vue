@@ -67,6 +67,8 @@ const rowsPerPage = ref(20)
 const page = ref(1)
 const running = ref(false)
 const result = ref<AggregationResult | null>(null)
+// the page of rows is shown as a table or charted (no extra request)
+const resultView = ref<'table' | 'chart'>('table')
 const runError = ref<DescribedAggregationError | null>(null)
 // what the shown result was produced by — paging re-runs this, not whatever has been typed since
 let lastPipeline: RequestStage[] | null = null
@@ -696,6 +698,25 @@ const exportMenuItems = computed(() => [
           {{ t('nuxtUiMongocamp.aggregation.resultsCount', { count: result.total }, result.total) }}
         </span>
         <div class="flex flex-wrap items-center gap-2">
+          <UFieldGroup size="sm">
+            <UButton
+              icon="i-lucide-table"
+              color="neutral"
+              :variant="resultView === 'table' ? 'subtle' : 'ghost'"
+              :label="t('nuxtUiMongocamp.aggregationChart.viewTable')"
+              data-testid="view-table"
+              @click="resultView = 'table'"
+            />
+            <UButton
+              icon="i-lucide-chart-column"
+              color="neutral"
+              :variant="resultView === 'chart' ? 'subtle' : 'ghost'"
+              :label="t('nuxtUiMongocamp.aggregationChart.viewChart')"
+              :disabled="result.rows.length === 0"
+              data-testid="view-chart"
+              @click="resultView = 'chart'"
+            />
+          </UFieldGroup>
           <UDropdownMenu :items="exportMenuItems">
             <UButton
               icon="i-lucide-download"
@@ -723,7 +744,12 @@ const exportMenuItems = computed(() => [
         </div>
       </div>
 
+      <MongocampAggregationChart
+        v-if="resultView === 'chart'"
+        :rows="result.rows"
+      />
       <UTable
+        v-else
         :data="result.rows"
         :columns="tableColumns"
         :loading="running"

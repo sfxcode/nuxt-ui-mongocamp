@@ -96,6 +96,18 @@ describe('MongocampIndexes — list', () => {
     expect(c.text()).toContain('5 indexes')
   })
 
+  it('charts size and uses of the loaded indexes in a collapsed section, with the same numbers in the tables', async () => {
+    const c = await mountIndexes()
+    const charts = c.find('[data-testid="index-charts"]')
+    expect(charts.exists()).toBe(true)
+    expect(charts.attributes('open')).toBeUndefined()
+    const tables = charts.findAll('[data-test="chart-table"]')
+    expect(tables).toHaveLength(2)
+    expect(tables[0]!.text()).toContain('20 KB')
+    expect(tables[1]!.text()).toContain('12')
+    expect(mockInfo).toHaveBeenCalledTimes(1) // nothing new was requested for the charts
+  })
+
   it('flags an index nothing has used, never the _id index', async () => {
     const c = await mountIndexes()
     expect(cell(c, 'name_1', 4)).toContain('never used since')

@@ -12,6 +12,7 @@ import {
   validateIndexForm,
 } from '../utils/indexForm'
 import type { IndexForm, IndexFormProblem, IndexKind } from '../utils/indexForm'
+import { shortenLabel } from '../utils/chartData'
 import MongocampConfirmByName from './MongocampConfirmByName.vue'
 
 // The indexes of one collection with their size and how often each was used, plus creating (standard, unique, text,
@@ -104,6 +105,16 @@ const rows = computed<Row[]>(() =>
     since: usage.value.get(idx.name)?.since,
   })),
 )
+
+// one bar per index, biggest / most used first; indexes without a number are left out
+const sizeChart = computed(() => rows.value
+  .filter(r => typeof r.size === 'number')
+  .map(r => ({ name: shortenLabel(r.name), size: r.size as number }))
+  .sort((a, b) => b.size - a.size))
+const usageChart = computed(() => rows.value
+  .filter(r => typeof r.ops === 'number')
+  .map(r => ({ name: shortenLabel(r.name), ops: r.ops as number }))
+  .sort((a, b) => b.ops - a.ops))
 
 function withTooltip(text: string, node: ReturnType<typeof h>) {
   return h(UTooltip, { text }, { default: () => node })
@@ -316,6 +327,46 @@ async function runDrop() {
       :columns="columns"
       :loading="loading"
     />
+
+    <!-- secondary: collapsed, built from the sizes and usage already loaded -->
+    <details
+      v-if="sizeChart.length > 1 || usageChart.length > 1"
+      class="mt-3 text-sm"
+      data-testid="index-charts"
+    >
+      <summary class="cursor-pointer text-dimmed">
+        {{ t('nuxtUiMongocamp.indexes.chartsSummary') }}
+      </summary>
+      <div class="mt-2 grid gap-4 md:grid-cols-2">
+        <div v-if="sizeChart.length > 1">
+          <h4 class="mb-1 text-xs font-medium">
+            {{ t('nuxtUiMongocamp.indexes.chartSize') }}
+          </h4>
+          <MongocampChart
+            :data="sizeChart"
+            index="name"
+            :categories="[{ key: 'size', label: t('nuxtUiMongocamp.indexes.chartSize') }]"
+            :format="formatBytes"
+            :height="200"
+            :chart-label="t('nuxtUiMongocamp.indexes.chartSize')"
+            :chart-description="t('nuxtUiMongocamp.indexes.chartSizeDescription', { count: sizeChart.length })"
+          />
+        </div>
+        <div v-if="usageChart.length > 1">
+          <h4 class="mb-1 text-xs font-medium">
+            {{ t('nuxtUiMongocamp.indexes.chartUsage') }}
+          </h4>
+          <MongocampChart
+            :data="usageChart"
+            index="name"
+            :categories="[{ key: 'ops', label: t('nuxtUiMongocamp.indexes.chartUsage') }]"
+            :height="200"
+            :chart-label="t('nuxtUiMongocamp.indexes.chartUsage')"
+            :chart-description="t('nuxtUiMongocamp.indexes.chartUsageDescription', { count: usageChart.length })"
+          />
+        </div>
+      </div>
+    </details>
 
     <UModal
       v-model:open="createOpen"

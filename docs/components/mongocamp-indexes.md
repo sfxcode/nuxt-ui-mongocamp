@@ -47,6 +47,10 @@ The server lists an index's keys as an unordered map, so for a compound index th
 Usage comes from MongoDB's `$indexStats`, a counter that **starts again whenever the database server restarts** — an index can look unused only because the server restarted recently. The `_id_` index is never flagged. If the usage numbers cannot be read, the indexes are still listed with a note.
 :::
 
+## Charts
+
+When two or more indexes have a size (or a use count), a collapsed **Charts** section shows the index size and the uses per index as bars, built from the numbers the table already holds (no request). Each chart has its data table as a text alternative.
+
 ## Creating
 
 **Create Index** opens a dialog:

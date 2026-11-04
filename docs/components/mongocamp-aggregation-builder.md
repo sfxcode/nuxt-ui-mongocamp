@@ -90,6 +90,10 @@ The field names of the collection are offered while typing (the server's field l
 - A pipeline with no results shows an empty state, not an error.
 - Results are plain JSON: dates arrive as ISO text (without milliseconds) and whole numbers beyond 2^53 are shown as text with every digit (the response is read from its text, because the generated client's `JSON.parse` would round them) — a note under the table says so.
 
+## Charting a result
+
+The **Table | Chart** switch above the result charts the page already on screen with [`MongocampAggregationChart`](/components/mongocamp-aggregation-chart) — no extra request; paging re-runs the pipeline as before and the chart follows the new page.
+
 ## When it fails
 
 A failed run shows an alert with the reason and **Retry** (or **Log in again** when the session has expired). For a command MongoDB rejects, only MongoDB's own message is shown — the server's raw error also contains the address of the database server, which is never displayed. A request blocked on its way to the server (an intermittent `405` was seen) is reported as retryable.

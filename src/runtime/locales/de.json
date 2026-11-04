@@ -752,7 +752,12 @@
       "dropped": "Index {name} gelöscht",
       "dropTitle": "Index löschen",
       "dropDescription": "Löscht den Index {name}. Abfragen, die ihn genutzt haben, werden langsamer. Das kann nicht rückgängig gemacht werden.",
-      "dropConfirm": "Index löschen"
+      "dropConfirm": "Index löschen",
+      "chartsSummary": "Diagramme",
+      "chartSize": "Indexgröße",
+      "chartUsage": "Indexnutzung",
+      "chartSizeDescription": "Größe von {count} Indizes, größte zuerst",
+      "chartUsageDescription": "Nutzungen seit dem Serverstart für {count} Indizes, meistgenutzte zuerst"
     },
     "collectionCopy": {
       "title": "Sammlung {source} kopieren",
@@ -1004,6 +1009,23 @@
       },
       "first": "Erstes Dokument",
       "second": "Zweites Dokument"
+    },
+    "aggregationChart": {
+      "viewTable": "Tabelle",
+      "viewChart": "Diagramm",
+      "nothing": "Keine numerische Spalte zum Darstellen auf dieser Seite.",
+      "labelColumn": "Beschriftung",
+      "valueColumns": "Werte (max. {max})",
+      "type": "Typ",
+      "kind": {
+        "bar": "Balken",
+        "area": "Fläche",
+        "donut": "Ring"
+      },
+      "ariaLabel": "Diagramm von {values} nach {label}",
+      "ariaDescription": "{count} Werte der angezeigten Ergebnisseite",
+      "cut": "Nur die ersten {max} Zeilen dieser Seite werden dargestellt.",
+      "skipped": "{count} Zeilen ohne Zahl wurden ausgelassen."
     }
   }
 }

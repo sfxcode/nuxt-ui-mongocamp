@@ -285,6 +285,22 @@ describe('MongocampAggregationBuilder — results', () => {
     expect(sentPipeline(1)).toEqual([{ stage: '$match', value: { grp: 'A' } }])
   })
 
+  it('charts the page already shown, without another request', async () => {
+    const component = await mountBuilder()
+    await runWith(component, rawResponse([{ _id: 'A', n: 3 }, { _id: 'B', n: 5 }], { 'x-pagination-count-rows': '2', 'x-pagination-count-pages': '1', 'x-pagination-current-page': '1' }))
+    expect(mockAggregateRaw).toHaveBeenCalledTimes(1)
+    expect(component.find('[data-testid="aggregation-chart"]').exists()).toBe(false)
+
+    await component.find('[data-testid="view-chart"]').trigger('click')
+    await wait()
+    expect(component.find('[data-testid="aggregation-chart"]').exists()).toBe(true)
+    expect(mockAggregateRaw).toHaveBeenCalledTimes(1)
+
+    await component.find('[data-testid="view-table"]').trigger('click')
+    await wait()
+    expect(component.find('[data-testid="aggregation-chart"]').exists()).toBe(false)
+  })
+
   it('goes back to page 1 when the page size changes', async () => {
     const component = await mountBuilder()
     await runWith(component, rawResponse(rows, { 'x-pagination-count-rows': '100', 'x-pagination-count-pages': '5', 'x-pagination-current-page': '1' }))

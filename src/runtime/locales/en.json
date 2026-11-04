@@ -752,7 +752,12 @@
       "dropped": "Index {name} dropped",
       "dropTitle": "Delete index",
       "dropDescription": "Deletes the index {name}. Queries that used it get slower. This cannot be undone.",
-      "dropConfirm": "Delete index"
+      "dropConfirm": "Delete index",
+      "chartsSummary": "Charts",
+      "chartSize": "Index size",
+      "chartUsage": "Index uses",
+      "chartSizeDescription": "Size of {count} indexes, biggest first",
+      "chartUsageDescription": "Uses since the server started, for {count} indexes, most used first"
     },
     "collectionCopy": {
       "title": "Copy collection {source}",
@@ -1004,6 +1009,23 @@
       },
       "first": "First document",
       "second": "Second document"
+    },
+    "aggregationChart": {
+      "viewTable": "Table",
+      "viewChart": "Chart",
+      "nothing": "No numeric column to chart on this page.",
+      "labelColumn": "Label",
+      "valueColumns": "Values (max {max})",
+      "type": "Type",
+      "kind": {
+        "bar": "Bars",
+        "area": "Area",
+        "donut": "Donut"
+      },
+      "ariaLabel": "Chart of {values} by {label}",
+      "ariaDescription": "{count} values from the shown page of the result",
+      "cut": "Only the first {max} rows of this page are charted.",
+      "skipped": "{count} rows without a number were left out."
     }
   }
 }
