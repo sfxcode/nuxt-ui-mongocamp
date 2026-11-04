@@ -962,6 +962,27 @@
       "tooLarge": "Too large to preview (limit {max}) — download it instead.",
       "clipped": "Only the beginning of the file is shown.",
       "download": "Download"
+    },
+    "commandPalette": {
+      "title": "Go to",
+      "description": "Jump to a collection, bucket, user, role, job or action",
+      "placeholder": "Search collections, users, roles, jobs…",
+      "empty": "Nothing found",
+      "failed": "Not loaded: {parts}",
+      "group": {
+        "collection": "Collections",
+        "bucket": "Buckets",
+        "user": "Users",
+        "role": "Roles",
+        "job": "Jobs",
+        "action": "Actions"
+      },
+      "action": {
+        "account": "Open my account",
+        "settings": "Open server settings",
+        "refresh": "Refresh this list",
+        "logout": "Log out"
+      }
     }
   }
 }

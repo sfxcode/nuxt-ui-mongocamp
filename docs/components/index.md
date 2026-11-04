@@ -24,6 +24,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampAggregationBuilder`](/components/mongocamp-aggregation-builder) | Build and run an aggregation pipeline (stage editor or JSON), page through and export the result |
 | [`MongocampDashboard`](/components/mongocamp-dashboard) | Admin landing page: linked collection/user/role counts, server version, slot for extra content |
 | [`MongocampGrantList`](/components/mongocamp-grant-list) | Read-only grants table (used by the user and role detail drawers) |
+| [`MongocampCommandPalette`](/components/mongocamp-command-palette) | ⌘K "Go to…" palette for collections, buckets, users, roles, jobs and actions, permission-aware, lazy and cached |
 | [`MongocampFilePreview`](/components/mongocamp-file-preview) | Drawer previewing a bucket file: image, PDF, JSON/CSV/text with size caps, otherwise metadata + download |
 | [`MongocampConfirmByName`](/components/mongocamp-confirm-by-name) | Type-the-name confirmation modal for destructive actions (clear/drop collection, bucket clear/delete) |
 | [`MongocampDocumentView`](/components/mongocamp-document-view) | Read-only typed tree / JSON view of one document with copy of path and value (opened from the data table's View button) |

@@ -5,6 +5,7 @@ const items = useNavItems()
 
 <template>
   <div class="flex min-h-full">
+    <MongocampCommandPalette v-if="isLoggedIn" />
     <!-- below lg the nav lives in the header's mobile menu (AppHeader) instead -->
     <nav
       v-if="isLoggedIn"
