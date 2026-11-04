@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, h, reactive, ref, resolveComponent, watch } from 'vue'
-import { useI18n, useMongocampClientApi, useMongocampIndex, useMongocampSchema, useToast } from '#imports'
+import { computed, h, ref, resolveComponent, watch } from 'vue'
+import { useI18n, useMongocampClientApi, useMongocampSchema, useToast } from '#imports'
 import type { TableColumn } from '@nuxt/ui'
-import type { CollectionStatus, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
+import type { CollectionStatus } from '@sfxcode/nuxt-mongocamp-server'
 import type { ColumnDefinition } from '../composables/useMongocampSchema'
+import MongocampIndexes from './MongocampIndexes.vue'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import type { DescribedAggregationError } from '../composables/useMongocampAggregation'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
@@ -22,28 +23,15 @@ const props = withDefaults(defineProps<{
 const { t } = useI18n()
 const { collectionApi, documentApi } = useMongocampClientApi()
 const { schemaFromSamples, schemaToTsInterface } = useMongocampSchema()
-const { listIndexes, createIndex, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
 const { sampleDocuments, describeAggregationError } = useMongocampAggregation()
 const { getJsonSchema, getSchemaAnalysis } = useMongocampAdmin()
 
 const UBadge = resolveComponent('UBadge')
 const UIcon = resolveComponent('UIcon')
-const UButton = resolveComponent('UButton')
-const UTooltip = resolveComponent('UTooltip')
-
-function withTooltip(text: string, node: ReturnType<typeof h>) {
-  return h(UTooltip, { text }, { default: () => node })
-}
 
 const info = ref<CollectionStatus | null>(null)
 const columnDefinitions = ref<ColumnDefinition[]>([])
-const indexes = ref<MongoIndex[]>([])
 const loading = ref(false)
-
-async function fetchIndexes() {
-  if (!props.collectionName) return
-  indexes.value = await listIndexes(props.collectionName)
-}
 
 async function fetchInfo() {
   if (!props.collectionName) return
@@ -56,7 +44,6 @@ async function fetchInfo() {
       page: 1,
     })
     columnDefinitions.value = schemaFromSamples(samples as Array<Record<string, unknown>>)
-    await fetchIndexes()
   }
   finally {
     loading.value = false
@@ -296,173 +283,10 @@ const statsColumns = computed<TableColumn<FieldStatistic>[]>(() => [
   },
 ])
 
-interface IndexRow {
-  name: string
-  keys: string
-  unique: boolean
-  text: boolean
-  expire: boolean
-  sizeKb: number
+// the index panel is its own component; after an index was created or dropped only the numbers above are refreshed
+async function refreshInfo() {
+  info.value = await collectionApi.getCollectionInformation({ collectionName: props.collectionName })
 }
-
-const indexRows = computed<IndexRow[]>(() =>
-  indexes.value.map(idx => ({
-    name: idx.name,
-    keys: Object.entries(idx.keys ?? {}).map(([field, direction]) => `${field}: ${direction}`).join(', '),
-    unique: idx.unique,
-    text: idx.text,
-    expire: idx.expire,
-    sizeKb: Math.round((info.value?.indexSizes?.[idx.name] ?? 0) / 1024),
-  })),
-)
-
-const isCreateIndexModalOpen = ref(false)
-const createIndexError = ref('')
-const newIndex = ref({ fieldName: '', sortAscending: true, indexType: 'standard', duration: '3600s' })
-
-const createIndexSchema = reactive([
-  {
-    $formkit: 'nuxtUIInput',
-    name: 'fieldName',
-    label: t('nuxtUiMongocamp.collectionInfos.fieldName'),
-    validation: 'required',
-  },
-  {
-    $formkit: 'nuxtUISwitch',
-    name: 'sortAscending',
-    label: t('nuxtUiMongocamp.collectionInfos.ascending'),
-  },
-  {
-    $formkit: 'nuxtUISelectMenu',
-    id: 'indexType',
-    name: 'indexType',
-    label: t('nuxtUiMongocamp.collectionInfos.indexType'),
-    options: ['standard', 'unique', 'text', 'expiring'],
-    validation: 'required',
-  },
-  {
-    $formkit: 'nuxtUIInput',
-    name: 'duration',
-    label: t('nuxtUiMongocamp.collectionInfos.expireAfter'),
-    help: t('nuxtUiMongocamp.collectionInfos.expireAfterHelp'),
-    if: '$get(indexType).value === \'expiring\'',
-  },
-])
-
-function extractSelectValue(raw: unknown): string {
-  if (typeof raw === 'object' && raw !== null) {
-    const obj = raw as { value?: string, label?: string }
-    return obj.value ?? obj.label ?? ''
-  }
-  return String(raw ?? '')
-}
-
-function openCreateIndex() {
-  createIndexError.value = ''
-  newIndex.value = { fieldName: '', sortAscending: true, indexType: 'standard', duration: '3600s' }
-  isCreateIndexModalOpen.value = true
-}
-
-async function handleCreateIndex() {
-  createIndexError.value = ''
-  const { fieldName, sortAscending } = newIndex.value
-  const indexType = extractSelectValue(newIndex.value.indexType)
-  try {
-    if (indexType === 'unique') {
-      await createUniqueIndex(props.collectionName, fieldName, sortAscending)
-    }
-    else if (indexType === 'text') {
-      await createTextIndex(props.collectionName, fieldName)
-    }
-    else if (indexType === 'expiring') {
-      await createExpiringIndex(props.collectionName, fieldName, newIndex.value.duration)
-    }
-    else {
-      await createIndex(props.collectionName, { [fieldName]: sortAscending ? 1 : -1 })
-    }
-    isCreateIndexModalOpen.value = false
-    await fetchIndexes()
-  }
-  catch (e) {
-    createIndexError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionInfos.errorCreateIndex')
-  }
-}
-
-const isDeleteIndexModalOpen = ref(false)
-const deleteIndexError = ref('')
-const indexToDelete = ref<string | undefined>(undefined)
-
-function confirmDeleteIndex(indexName: string) {
-  indexToDelete.value = indexName
-  deleteIndexError.value = ''
-  isDeleteIndexModalOpen.value = true
-}
-
-async function handleDeleteIndex() {
-  deleteIndexError.value = ''
-  if (!indexToDelete.value) return
-  try {
-    await deleteIndex(props.collectionName, indexToDelete.value)
-    isDeleteIndexModalOpen.value = false
-    await fetchIndexes()
-  }
-  catch (e) {
-    deleteIndexError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionInfos.errorDeleteIndex')
-  }
-}
-
-const INDEX_FLAG_BADGES: Array<{ key: 'unique' | 'text' | 'expire', label: string, color: string }> = [
-  { key: 'unique', label: 'unique', color: 'warning' },
-  { key: 'text', label: 'text', color: 'info' },
-  { key: 'expire', label: 'expire', color: 'secondary' },
-]
-
-const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
-  {
-    accessorKey: 'name',
-    header: t('nuxtUiMongocamp.collectionInfos.columnIndex'),
-  },
-  {
-    accessorKey: 'keys',
-    header: t('nuxtUiMongocamp.collectionInfos.columnKeys'),
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.keys),
-  },
-  {
-    id: 'flags',
-    header: t('nuxtUiMongocamp.collectionInfos.columnType'),
-    cell: ({ row }) => {
-      const badges = INDEX_FLAG_BADGES
-        .filter(flag => row.original[flag.key])
-        .map(flag => h(UBadge, { label: flag.label, color: flag.color, variant: 'subtle', size: 'sm' }))
-      // a plain index has none of the special flags — say so instead of leaving the cell blank
-      if (badges.length === 0) {
-        badges.push(h(UBadge, { label: t('nuxtUiMongocamp.collectionInfos.typeStandard'), color: 'neutral', variant: 'subtle', size: 'sm' }))
-      }
-      return h('div', { class: 'flex gap-1' }, badges)
-    },
-  },
-  {
-    accessorKey: 'sizeKb',
-    header: t('nuxtUiMongocamp.collectionInfos.columnSizeKb'),
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) =>
-      row.original.name === '_id_'
-        ? null
-        : h('div', { class: 'flex justify-end' }, [
-            withTooltip(t('nuxtUiMongocamp.collectionInfos.deleteIndexTooltip'), h(UButton, {
-              'icon': 'i-lucide-trash-2',
-              'color': 'error',
-              'variant': 'ghost',
-              'size': 'sm',
-              'aria-label': t('nuxtUiMongocamp.collectionInfos.deleteIndexTooltip'),
-              'onClick': () => confirmDeleteIndex(row.original.name),
-            })),
-          ]),
-  },
-])
 </script>
 
 <template>
@@ -524,37 +348,12 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
         </div>
       </UCard>
     </div>
-    <UCard v-if="indexRows.length">
-      <template #header>
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-lucide-list-tree"
-              class="size-4 text-(--ui-primary)"
-            />
-            <span class="font-semibold">{{ t('nuxtUiMongocamp.collectionInfos.indexes') }}</span>
-            <UBadge
-              :label="t('nuxtUiMongocamp.collectionInfos.indexesCount', { count: indexRows.length })"
-              variant="subtle"
-              color="neutral"
-              size="sm"
-            />
-          </div>
-          <UButton
-            icon="i-lucide-plus"
-            :label="t('nuxtUiMongocamp.collectionInfos.createIndex')"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="openCreateIndex"
-          />
-        </div>
-      </template>
-      <UTable
-        :data="indexRows"
-        :columns="indexTableColumns"
-      />
-    </UCard>
+    <MongocampIndexes
+      v-if="!loading"
+      :collection-name="collectionName"
+      :fields="columnDefinitions.map(c => c.columnKey)"
+      @changed="refreshInfo"
+    />
 
     <UCard v-if="schemaRows.length">
       <template #header>
@@ -698,57 +497,6 @@ const indexTableColumns = computed<TableColumn<IndexRow>[]>(() => [
         </UTable>
       </template>
     </UCard>
-
-    <UModal
-      v-model:open="isCreateIndexModalOpen"
-      :title="t('nuxtUiMongocamp.collectionInfos.createIndexTitle')"
-    >
-      <template #body>
-        <FUDataEdit
-          :data="newIndex"
-          :schema="createIndexSchema"
-          :submit-label="t('nuxtUiMongocamp.collectionInfos.createIndex')"
-          submit-icon="i-lucide-plus"
-          @data-saved="handleCreateIndex"
-        />
-        <p
-          v-if="createIndexError"
-          class="mt-2 text-sm text-error-500"
-        >
-          {{ createIndexError }}
-        </p>
-      </template>
-    </UModal>
-
-    <UModal
-      v-model:open="isDeleteIndexModalOpen"
-      :title="t('nuxtUiMongocamp.collectionInfos.deleteIndexTitle')"
-      :ui="{ footer: 'justify-end' }"
-    >
-      <template #body>
-        <p>{{ t('nuxtUiMongocamp.collectionInfos.confirmDeleteIndex', { indexName: indexToDelete }) }}</p>
-        <p
-          v-if="deleteIndexError"
-          class="mt-2 text-sm text-error-500"
-        >
-          {{ deleteIndexError }}
-        </p>
-      </template>
-      <template #footer>
-        <UButton
-          :label="t('nuxtUiMongocamp.common.cancel')"
-          color="neutral"
-          variant="ghost"
-          @click="isDeleteIndexModalOpen = false"
-        />
-        <UButton
-          :label="t('nuxtUiMongocamp.common.delete')"
-          color="error"
-          icon="i-lucide-trash-2"
-          @click="handleDeleteIndex"
-        />
-      </template>
-    </UModal>
 
     <UModal
       v-model:open="isSchemaOpen"

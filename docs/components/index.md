@@ -27,6 +27,7 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampConfirmByName`](/components/mongocamp-confirm-by-name) | Type-the-name confirmation modal for destructive actions (clear/drop collection, bucket clear/delete) |
 | [`MongocampDocumentView`](/components/mongocamp-document-view) | Read-only typed tree / JSON view of one document with copy of path and value (opened from the data table's View button) |
 | [`MongocampQueryBar`](/components/mongocamp-query-bar) | Filter + sort + fields to load + history and saved queries in one bar (used by the data table) |
+| [`MongocampIndexes`](/components/mongocamp-indexes) | Indexes of a collection with size and usage, compound/unique/text/expiring create, typed drop (the info page's index card) |
 | [`MongocampErrorAlert`](/components/mongocamp-error-alert) | Failed-load banner with retry / log-in-again |
 | [`MongocampEmptyState`](/components/mongocamp-empty-state) | Icon + message for empty tables |
 

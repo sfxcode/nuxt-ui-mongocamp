@@ -23,11 +23,7 @@ Documents, Data Size, Storage Size, Avg Doc Size, Indexes, Index Size — from `
 
 ## Indexes card
 
-Backed by [`useMongocampIndex`](/composables/use-mongocamp-index), not just `getCollectionInformation()`'s `indexSizes` map — each row is a real `MongoIndex` (name, keys, `unique`/`text`/`expire` flags), with size in KB merged in by name.
-
-- **Create Index** opens a form (field name, sort direction, index type — standard / unique / text / expiring, with an "expire after" duration field used only for the expiring type) and calls the matching `useMongocampIndex` creator.
-- Every row except the default `_id_` index (which MongoDB won't let you drop) gets a delete button, behind a confirmation modal.
-- Type flags render as badges using the app's semantic color tokens: `unique` → `warning`, `text` → `info`, `expire` → `secondary`. An index with none of these flags shows a neutral `standard` badge, so the Type column is never blank.
+The card is [`MongocampIndexes`](/components/mongocamp-indexes): every index with its keys in order, type flags, size and usage (a *never used since …* hint), **Create Index** (standard, unique, text, expiring — compound for standard and unique) and a drop button behind a typed confirmation, never for `_id_`. After an index was created or dropped the stat cards above are refreshed.
 
 ## Schema card
 

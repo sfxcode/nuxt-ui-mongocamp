@@ -16,7 +16,7 @@ const {
 
 ## Request shapes differ per creator
 
-`createIndex` is the general-purpose compound-key creator — `keys`/`options` are nested under `indexCreateRequest` on the wire:
+`createIndex` is the general-purpose compound-key creator (verified on server 1.6.3: several keys, `unique: true` for a compound unique index, `name`, `expireAfter`; the key order of a compound index is only kept in its name — the listing is unordered; the server also accepts a direction other than `1`/`-1`, e.g. `z_5`, so validate before sending) — `keys`/`options` are nested under `indexCreateRequest` on the wire:
 
 ```ts
 await createIndex('users', { email: 1 }, { unique: true })

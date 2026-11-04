@@ -24,6 +24,11 @@ const mockGetCollectionInformation = vi.fn()
 const mockListDocuments = vi.fn()
 const mockListIndices = vi.fn()
 const mockAggregateRaw = vi.fn()
+// the index panel asks for `$indexStats` through the same `aggregateRaw`; it has its own mock so the statistics tests
+// below keep counting only their own sampling calls
+const mockIndexStats = vi.fn()
+const isIndexStatsCall = (request: { mongoAggregateRequest?: { pipeline?: Array<{ stage?: string }> } }) =>
+  request.mongoAggregateRequest?.pipeline?.[0]?.stage === '$indexStats'
 const mockGetJsonSchema = vi.fn()
 const mockGetSchemaAnalysis = vi.fn()
 const mockDownload = vi.hoisted(() => vi.fn())
@@ -35,7 +40,7 @@ vi.mock('../../src/runtime/utils/exportRows', async importOriginal => ({
 
 mockNuxtImport('useMongocampApi', () => {
   return () => ({
-    collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: mockAggregateRaw, getJsonSchema: mockGetJsonSchema, getSchemaAnalysis: mockGetSchemaAnalysis },
+    collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: (request: Parameters<typeof isIndexStatsCall>[0], init?: unknown) => (isIndexStatsCall(request) ? mockIndexStats(request, init) : mockAggregateRaw(request, init)), getJsonSchema: mockGetJsonSchema, getSchemaAnalysis: mockGetSchemaAnalysis },
     documentApi: { listDocuments: mockListDocuments },
     indexApi: { listIndices: mockListIndices },
   })
@@ -51,6 +56,7 @@ beforeEach(() => {
   mockListDocuments.mockResolvedValue([{ _id: 'a', name: 'x' }])
   mockListIndices.mockResolvedValue([])
   mockAggregateRaw.mockResolvedValue(rawResponse([]))
+  mockIndexStats.mockResolvedValue(rawResponse([]))
   mockGetJsonSchema.mockResolvedValue({ $schema: 'http://json-schema.org/draft-07/schema#', $ref: '#/definitions/people', definitions: { people: { type: 'object' } } })
 })
 
