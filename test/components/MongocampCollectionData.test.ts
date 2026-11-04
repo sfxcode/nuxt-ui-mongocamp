@@ -95,6 +95,7 @@ mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: '
 
 beforeEach(() => {
   vi.clearAllMocks()
+  localStorage.clear() // remembered table state must not leak between tests
   session.isAdmin = false
   session.grants = undefined
   mockListDocumentsRaw.mockResolvedValue(mockRawResponse([], '0'))
@@ -102,6 +103,88 @@ beforeEach(() => {
 })
 
 describe('MongocampCollectionData', () => {
+  describe('remembered table state', () => {
+    async function mountData(props: Record<string, unknown> = {}) {
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers', ...props },
+      })
+      await wait()
+      return component
+    }
+
+    it('keeps the page size across a remount', async () => {
+      const first = await mountData()
+      first.findComponent(USelect).vm.$emit('update:modelValue', 50)
+      await wait()
+      first.unmount()
+
+      mockListDocumentsRaw.mockClear()
+      await mountData()
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(50)
+    })
+
+    it('keeps it per collection', async () => {
+      const first = await mountData()
+      first.findComponent(USelect).vm.$emit('update:modelValue', 50)
+      await wait()
+      first.unmount()
+
+      mockListDocumentsRaw.mockClear()
+      await mountData({ collectionName: 'orders' })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(20)
+    })
+
+    it('does not remember anything with persistState off', async () => {
+      const first = await mountData({ persistState: false })
+      first.findComponent(USelect).vm.$emit('update:modelValue', 50)
+      await wait()
+      first.unmount()
+
+      expect(localStorage.length).toBe(0)
+      mockListDocumentsRaw.mockClear()
+      await mountData({ persistState: false })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(20)
+    })
+
+    it('separates two tables over one collection by stateKey', async () => {
+      const first = await mountData({ stateKey: 'a' })
+      first.findComponent(USelect).vm.$emit('update:modelValue', 100)
+      await wait()
+      first.unmount()
+
+      mockListDocumentsRaw.mockClear()
+      await mountData({ stateKey: 'b' })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(20)
+    })
+
+    it('restores a remembered sort and ignores a malformed entry', async () => {
+      localStorage.setItem('nuxt-ui-mongocamp:collectionData:customers', JSON.stringify({ v: 1, data: { pageSize: 50, sort: [{ id: 'name', desc: true }, 7, { id: '' }] } }))
+      await mountData()
+      expect(mockListDocumentsRaw.mock.calls[0]![0]).toMatchObject({ rowsPerPage: 50, sort: ['-name'] })
+    })
+
+    it('restores hidden columns', async () => {
+      localStorage.setItem('nuxt-ui-mongocamp:collectionData:customers', JSON.stringify({ v: 1, data: { hidden: ['age'] } }))
+      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: 'doc-1', name: 'Alice', age: 30 }], '1'))
+      const component = await mountData()
+      const headers = component.findAll('th').map(th => th.text())
+      expect(headers).toContain('name')
+      expect(headers).not.toContain('age')
+    })
+
+    it('falls back to the defaults for an unusable page size or corrupt JSON', async () => {
+      localStorage.setItem('nuxt-ui-mongocamp:collectionData:customers', JSON.stringify({ v: 1, data: { pageSize: 7, sort: 'x', hidden: 3 } }))
+      await mountData()
+      expect(mockListDocumentsRaw.mock.calls[0]![0]).toMatchObject({ rowsPerPage: 20, sort: undefined })
+
+      localStorage.setItem('nuxt-ui-mongocamp:collectionData:customers', '{not json')
+      mockListDocumentsRaw.mockClear()
+      await mountData()
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(20)
+    })
+  })
+
   it('fetches the first page on mount and derives columns from the first row\'s keys', async () => {
     mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([
       { _id: 'doc-1', name: 'Alice', age: 30, metaData: { created: '2024-01-01T00:00:00.000Z' } },

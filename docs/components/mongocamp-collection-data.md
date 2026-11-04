@@ -16,6 +16,8 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 |---|---|---|
 | `collectionName` | `string` | Required. Collection to browse. |
 | `infoPath` | `string` | Base path of the page rendering [`MongocampCollectionInfos`](/components/mongocamp-collection-infos); the "index created" toast links to `<infoPath>/<collectionName>`. Default `/secured/admin/collections`. |
+| `persistState` | `boolean` | Remember page size, sort and hidden columns per collection in `localStorage` (see [`useMongocampPersistedState`](/composables/use-mongocamp-persisted-state)). Default `true`; the quick search and filters are **not** remembered. |
+| `stateKey` | `string` | Extra key part so two tables over the same collection keep separate state. |
 
 ## Columns
 

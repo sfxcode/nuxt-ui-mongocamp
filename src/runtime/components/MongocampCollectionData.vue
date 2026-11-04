@@ -30,18 +30,30 @@ import type { FilterFieldType, FilterGroup } from '../utils/filterBuilder'
 import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
+import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
 
 const props = withDefaults(defineProps<{
   collectionName: string
   // base path of the page rendering MongocampCollectionInfos (`<infoPath>/<name>`); the "index created" toast links there
   infoPath?: string
+  // remember page size, sort and hidden columns per collection in localStorage
+  persistState?: boolean
+  // extra key part, for two tables over the same collection that should not share their state
+  stateKey?: string
 }>(), {
   infoPath: '/secured/admin/collections',
+  persistState: true,
+  stateKey: '',
 })
 
 const { t } = useI18n()
 const { documentApi } = useMongocampClientApi()
 const { pagination, total } = useMongocampCollection()
+const { state: persisted } = useMongocampPersistedState(
+  () => `collectionData:${props.collectionName}${props.stateKey ? `:${props.stateKey}` : ''}`,
+  { pageSize: pagination.value.pageSize, sort: [] as SortEntry[], hidden: [] as string[] },
+  { storage: props.persistState ? undefined : null },
+)
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
 const { ensureMetaData } = useMongocampDocument()
 const { and, like, or } = useMongocampQuery()
@@ -765,7 +777,11 @@ async function loadDistinctSuggestions(field: string): Promise<string[]> {
 async function init() {
   distinctCache = new Map()
   isInitializing.value = true
-  sorting.value = []
+  // a remembered state is only trusted in its own shape: a hand-edited or stale entry must not break the table
+  const rememberedSize = PAGE_SIZES.includes(persisted.value.pageSize) ? persisted.value.pageSize : PAGE_SIZES[1]!
+  pagination.value.pageSize = rememberedSize
+  sorting.value = (Array.isArray(persisted.value.sort) ? persisted.value.sort : [])
+    .filter(e => typeof e?.id === 'string' && e.id !== '' && typeof e.desc === 'boolean')
   pagination.value.pageIndex = 1
   filterText.value = ''
   filterableColumns.value = []
@@ -774,12 +790,25 @@ async function init() {
   appliedFilterGroup.value = emptyFilterGroup()
   appliedFilterQuery.value = ''
   filtersOpen.value = false
-  columnVisibility.value = {}
+  columnVisibility.value = Object.fromEntries(
+    (Array.isArray(persisted.value.hidden) ? persisted.value.hidden : []).filter(k => typeof k === 'string').map(k => [k, false]),
+  )
   columns.value = []
   documents.value = []
   await fetchDocuments()
   isInitializing.value = false
 }
+
+// remembered as they change (not while a collection is being set up, which would overwrite the new collection's entry)
+watch(() => pagination.value.pageSize, (size) => {
+  if (!isInitializing.value) persisted.value = { ...persisted.value, pageSize: size }
+})
+watch(sorting, (sort) => {
+  if (!isInitializing.value) persisted.value = { ...persisted.value, sort: sort.map(e => ({ id: e.id, desc: e.desc })) }
+}, { deep: true })
+watch(columnVisibility, (visibility) => {
+  if (!isInitializing.value) persisted.value = { ...persisted.value, hidden: Object.keys(visibility).filter(k => visibility[k] === false) }
+}, { deep: true })
 
 watch(() => props.collectionName, init, { immediate: true })
 </script>
