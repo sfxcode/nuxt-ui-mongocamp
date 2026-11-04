@@ -1,6 +1,8 @@
 <script setup>
 const route = useRoute()
 const bucketName = route.params.bucket_name
+
+definePageMeta({ layout: 'collection' })
 </script>
 
 <template>

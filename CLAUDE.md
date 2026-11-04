@@ -172,7 +172,7 @@ Listbox in transfer mode requires `displayMode: 'transfer'` and options as `{ va
 
 ### Playground — `playground/`
 
-SSR is disabled (`ssr: false`). The playground registers the module directly via the local import (`import NuxtUIMongocamp from '..'`). Its `nuxt.config.ts` sets `nuxtUiMongocamp: { useGlobalAuthMiddleware: true, securedRouteParts: ['/secured/**'], managementRouteParts: ['/secured/manager/**'], adminRouteParts: ['/secured/admin/**'], managerRoles: ['manager'] }` so pages under `/secured/`, `/secured/manager/`, and `/secured/admin/` are protected — this is opt-in and not automatic for consumers of the module. The `mongocamp` config key in `nuxt.config.ts` passes through to `@sfxcode/nuxt-mongocamp-server`.
+SSR is disabled (`ssr: false`). The playground registers the module directly via the local import (`import NuxtUIMongocamp from '..'`). Its `nuxt.config.ts` sets `nuxtUiMongocamp: { useGlobalAuthMiddleware: true, securedRouteParts: ['/secured/**'], managementRouteParts: ['/secured/manager/**'], adminRouteParts: ['/secured/admin/**'], managerRoles: ['manager'] }` so pages under `/secured/`, `/secured/manager/`, and `/secured/admin/` are protected — this is opt-in and not automatic for consumers of the module. The `mongocamp` config key in `nuxt.config.ts` passes through to `@sfxcode/nuxt-mongocamp-server`. Collection and bucket pages use the playground's `collection` layout (sidebar `CollectionSidebar`, tabs `CollectionTabs`, palette) — the reference "admin shell"; plan 16 phase 13 decided **not** to ship a shell component (see `docs/guide/admin-app.md`).
 
 ### Tests — `test/`
 

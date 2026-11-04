@@ -32,6 +32,7 @@ export default defineConfig({
             { text: 'Route Protection', link: '/guide/route-protection' },
             { text: 'Session Handling', link: '/guide/session-handling' },
             { text: 'Server Proxy Auth', link: '/guide/server-proxy-auth' },
+            { text: 'Building an admin app', link: '/guide/admin-app' },
           ],
         },
       ],
