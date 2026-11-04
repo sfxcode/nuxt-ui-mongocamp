@@ -121,6 +121,37 @@ describe('MongocampCollectionData', () => {
     })
   })
 
+  describe('compare two documents', () => {
+    const rows = [1, 2, 3].map(n => ({ _id: n.toString(16).padStart(24, '0'), name: `n${n}`, age: n }))
+    async function mountWithRows() {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '3'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      return component
+    }
+    const compareButton = (c: Awaited<ReturnType<typeof mountWithRows>>) => c.find('[data-testid="compare-selected"]')
+
+    it('offers Compare selected for exactly two ticked rows and shows their differences', async () => {
+      const component = await mountWithRows()
+      const boxes = component.findAll('[aria-label="Select row"]')
+      await boxes[0]!.trigger('click')
+      expect(compareButton(component).exists()).toBe(false)
+      await boxes[1]!.trigger('click')
+      expect(compareButton(component).exists()).toBe(true)
+
+      await compareButton(component).trigger('click')
+      await wait()
+      const compare = document.body.querySelector('[data-testid="document-compare"]')
+      expect(compare?.querySelector('[data-path="name"]')?.getAttribute('data-status')).toBe('changed')
+    })
+
+    it('hides it again with three rows ticked', async () => {
+      const component = await mountWithRows()
+      for (const box of component.findAll('[aria-label="Select row"]')) await box.trigger('click')
+      expect(compareButton(component).exists()).toBe(false)
+    })
+  })
+
   describe('select all matching', () => {
     const hex = (n: number) => n.toString(16).padStart(24, '0')
     const pageRows = [1, 2, 3].map(n => ({ _id: hex(n), name: `n${n}` }))

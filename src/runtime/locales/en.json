@@ -454,7 +454,8 @@
       "stoppedDelete": "Stopped: {done} of {total} deleted. The other {left} were not touched.",
       "stoppedEdit": "Stopped: {done} of {total} updated. The other {left} were not touched.",
       "matchingDeleted": "Deleted {deleted} of {total} documents",
-      "matchingUpdated": "Updated {updated} of {total} documents"
+      "matchingUpdated": "Updated {updated} of {total} documents",
+      "compareSelected": "Compare selected"
     },
     "filterBuilder": {
       "matchLabel": "Match",
@@ -983,6 +984,26 @@
         "refresh": "Refresh this list",
         "logout": "Log out"
       }
+    },
+    "documentCompare": {
+      "title": "Compare documents",
+      "path": "Path",
+      "left": "Left",
+      "right": "Right",
+      "state": "State",
+      "root": "(document)",
+      "onlyDifferences": "Only differences",
+      "identical": "The documents are identical.",
+      "nothing": "Nothing to show",
+      "truncated": "The documents are large; only the first paths were compared.",
+      "status": {
+        "same": "same",
+        "changed": "changed",
+        "added": "added",
+        "removed": "removed"
+      },
+      "first": "First document",
+      "second": "Second document"
     }
   }
 }

@@ -402,6 +402,13 @@ const columnVisibility = ref<Record<string, boolean>>({})
 const PAGE_SIZES = [10, 20, 50, 100]
 const isInitializing = ref(false)
 const detailOpen = ref(false)
+// exactly two ticked rows on screen can be compared side by side
+const compareOpen = ref(false)
+const compareRows = computed<Row[]>(() => {
+  const ticked = documents.value.filter((row, index) => rowSelection.value[rowId(row, index)])
+  return ticked.length === 2 && selectedDocIds.value.length === 2 ? ticked : []
+})
+
 const viewDoc = ref<Row | null>(null)
 const viewOpen = ref(false)
 const viewMode = ref<'table' | 'json'>('table')
@@ -1117,6 +1124,16 @@ watch(() => props.collectionName, init, { immediate: true })
     >
       <template #actions>
         <UButton
+          v-if="compareRows.length === 2"
+          icon="i-lucide-git-compare"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          :label="t('nuxtUiMongocamp.bulk.compareSelected')"
+          data-testid="compare-selected"
+          @click="compareOpen = true"
+        />
+        <UButton
           v-if="editableFields.length > 0"
           icon="i-lucide-pencil"
           color="neutral"
@@ -1168,6 +1185,22 @@ watch(() => props.collectionName, init, { immediate: true })
       :projection="activeProjection"
       :total="total"
     />
+
+    <UModal
+      v-model:open="compareOpen"
+      :title="t('nuxtUiMongocamp.documentCompare.title')"
+      :ui="{ content: 'sm:max-w-5xl' }"
+    >
+      <template #body>
+        <MongocampDocumentCompare
+          v-if="compareRows.length === 2"
+          :left="compareRows[0]"
+          :right="compareRows[1]"
+          :left-label="String(compareRows[0]!._id ?? '')"
+          :right-label="String(compareRows[1]!._id ?? '')"
+        />
+      </template>
+    </UModal>
 
     <USlideover
       v-model:open="viewOpen"

@@ -454,7 +454,8 @@
       "stoppedDelete": "Gestoppt: {done} von {total} gelöscht. Die anderen {left} wurden nicht angefasst.",
       "stoppedEdit": "Gestoppt: {done} von {total} aktualisiert. Die anderen {left} wurden nicht angefasst.",
       "matchingDeleted": "{deleted} von {total} Dokumenten gelöscht",
-      "matchingUpdated": "{updated} von {total} Dokumenten aktualisiert"
+      "matchingUpdated": "{updated} von {total} Dokumenten aktualisiert",
+      "compareSelected": "Auswahl vergleichen"
     },
     "filterBuilder": {
       "matchLabel": "Treffer bei",
@@ -983,6 +984,26 @@
         "refresh": "Diese Liste aktualisieren",
         "logout": "Abmelden"
       }
+    },
+    "documentCompare": {
+      "title": "Dokumente vergleichen",
+      "path": "Pfad",
+      "left": "Links",
+      "right": "Rechts",
+      "state": "Status",
+      "root": "(Dokument)",
+      "onlyDifferences": "Nur Unterschiede",
+      "identical": "Die Dokumente sind identisch.",
+      "nothing": "Nichts anzuzeigen",
+      "truncated": "Die Dokumente sind groß; nur die ersten Pfade wurden verglichen.",
+      "status": {
+        "same": "gleich",
+        "changed": "geändert",
+        "added": "hinzugefügt",
+        "removed": "entfernt"
+      },
+      "first": "Erstes Dokument",
+      "second": "Zweites Dokument"
     }
   }
 }
