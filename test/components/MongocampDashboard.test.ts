@@ -80,4 +80,40 @@ describe('MongocampDashboard', () => {
 
     expect(component.text()).toContain('extra content')
   })
+
+  describe('autoRefresh', () => {
+    const waitMs = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+    it('does not reload on its own by default', async () => {
+      await mountSuspended(withUApp(MongocampDashboard), { route: '/' })
+      await flushPromises()
+      await waitMs(1300)
+      expect(mockListUsers).toHaveBeenCalledTimes(1)
+    })
+
+    it('recounts every N seconds and stops when unmounted', async () => {
+      const component = await mountSuspended(withUApp(MongocampDashboard), { route: '/', props: { autoRefresh: 1 } })
+      await flushPromises()
+      expect(mockListUsers).toHaveBeenCalledTimes(1)
+      mockListUsers.mockResolvedValue([{}, {}, {}, {}, {}])
+      await waitMs(1300)
+      expect(mockListUsers.mock.calls.length).toBeGreaterThanOrEqual(2)
+      expect(component.text()).toMatch(/5\s*Users/)
+
+      component.unmount()
+      const calls = mockListUsers.mock.calls.length
+      await waitMs(1300)
+      expect(mockListUsers).toHaveBeenCalledTimes(calls)
+    })
+
+    it('keeps the numbers on screen when a background reload fails', async () => {
+      const component = await mountSuspended(withUApp(MongocampDashboard), { route: '/', props: { autoRefresh: 1 } })
+      await flushPromises()
+      mockListUsers.mockRejectedValue(Object.assign(new Error('The request failed'), { name: 'FetchError' }))
+      await waitMs(1300)
+      await flushPromises()
+      expect(component.text()).toMatch(/2\s*Users/)
+      expect(component.text()).toContain('Failed to load data')
+    })
+  })
 })

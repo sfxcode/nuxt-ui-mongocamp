@@ -1,9 +1,17 @@
 <script setup lang='ts'>
-import { computed, h, reactive, ref, resolveComponent } from 'vue'
+import { computed, h, onMounted, reactive, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useMongocampJobs, useToast } from '#imports'
+import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
+
+const props = withDefaults(defineProps<{
+  // reload the list every N seconds (at least 1; 0 = off). Pauses while the tab is hidden and slows down after failures.
+  autoRefresh?: number
+}>(), {
+  autoRefresh: 0,
+})
 
 const { t } = useI18n()
 const { describeServerError } = useMongocampError()
@@ -39,6 +47,26 @@ async function fetchJobs() {
     loading.value = false
   }
 }
+
+// a background reload keeps the list on screen when it fails — only an explicit load empties it
+async function reloadQuietly() {
+  try {
+    jobs.value = await listJobs()
+    loadError.value = null
+  }
+  catch (e: unknown) {
+    loadError.value = e
+    throw e
+  }
+}
+
+const auto = useMongocampAutoRefresh(reloadQuietly, { intervalMs: () => props.autoRefresh * 1000 })
+function syncAutoRefresh() {
+  auto.stop()
+  if (props.autoRefresh > 0) auto.start()
+}
+onMounted(syncAutoRefresh)
+watch(() => props.autoRefresh, syncAutoRefresh)
 
 const emptyJobConfig = (): JobConfig => ({ name: '', group: '', className: '', description: '', cronExpression: '', priority: 5 })
 

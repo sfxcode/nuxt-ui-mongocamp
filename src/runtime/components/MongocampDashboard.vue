@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from '#imports'
 import { useNuxtApp } from '#app'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
+import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
 
 const props = withDefaults(defineProps<{
   collectionsPath?: string
   usersPath?: string
   rolesPath?: string
+  // reload the counts every N seconds (at least 1; 0 = off). Pauses while the tab is hidden and slows down after failures.
+  autoRefresh?: number
 }>(), {
+  autoRefresh: 0,
   collectionsPath: '/secured/admin/collections',
   usersPath: '/secured/admin/users',
   rolesPath: '/secured/admin/roles',
@@ -40,6 +44,27 @@ async function refresh() {
     loading.value = false
   }
 }
+
+// a background reload keeps the numbers on screen when it fails (the error banner shows it) — only the button blanks them
+async function reloadQuietly() {
+  try {
+    const [users, roles, collections] = await Promise.all([listUsers(), listRoles(), listCollections()])
+    stats.value = { users: users.length, roles: roles.length, collections: collections.length }
+    loadError.value = null
+  }
+  catch (e: unknown) {
+    loadError.value = e
+    throw e
+  }
+}
+
+const auto = useMongocampAutoRefresh(reloadQuietly, { intervalMs: () => props.autoRefresh * 1000 })
+function syncAutoRefresh() {
+  auto.stop()
+  if (props.autoRefresh > 0) auto.start()
+}
+onMounted(syncAutoRefresh)
+watch(() => props.autoRefresh, syncAutoRefresh)
 
 const boxes = computed(() => [
   { key: 'collections', label: t('nuxtUiMongocamp.dashboard.collections'), icon: 'i-lucide-database', to: props.collectionsPath },

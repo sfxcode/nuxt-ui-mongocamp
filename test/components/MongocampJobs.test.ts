@@ -104,4 +104,32 @@ describe('MongocampJobs', () => {
       expect(modal().text()).not.toContain('could not be reached')
     })
   })
+
+  describe('autoRefresh', () => {
+    const waitMs = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+    it('reloads the list every N seconds, only when asked to', async () => {
+      const off = await mountSuspended(withUApp(MongocampJobs), { route: '/' })
+      await flushPromises()
+      await waitMs(1300)
+      expect(mockListJobs).toHaveBeenCalledTimes(1)
+      off.unmount()
+
+      mockListJobs.mockClear()
+      const on = await mountSuspended(withUApp(MongocampJobs), { route: '/', props: { autoRefresh: 1 } })
+      await flushPromises()
+      await waitMs(1300)
+      expect(mockListJobs.mock.calls.length).toBeGreaterThanOrEqual(2)
+      on.unmount()
+    })
+
+    it('keeps the list on screen when a background reload fails', async () => {
+      const component = await mountSuspended(withUApp(MongocampJobs), { route: '/', props: { autoRefresh: 1 } })
+      await flushPromises()
+      mockListJobs.mockRejectedValue(fetchError)
+      await waitMs(1300)
+      await flushPromises()
+      expect(component.text()).toContain('CleanUp')
+    })
+  })
 })

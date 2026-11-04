@@ -95,6 +95,7 @@ export default defineConfig({
             { text: 'useMongocampExportAll', link: '/composables/use-mongocamp-export-all' },
             { text: 'useMongocampPersistedState', link: '/composables/use-mongocamp-persisted-state' },
             { text: 'useMongocampSavedQueries', link: '/composables/use-mongocamp-saved-queries' },
+            { text: 'useMongocampAutoRefresh', link: '/composables/use-mongocamp-auto-refresh' },
             { text: 'useMongocampSession', link: '/composables/use-mongocamp-session' },
             { text: 'useMongocampClientApi', link: '/composables/use-mongocamp-client-api' },
             { text: 'useMongocampProxyApi', link: '/composables/use-mongocamp-proxy-api' },
