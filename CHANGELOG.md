@@ -1,6 +1,69 @@
 # Changelog
 
 
+## v1.4.0
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.5...v1.4.0)
+
+### 🚀 Enhancements
+
+- **settings:** Add hide* props to MongocampSettings ([6fa2eed](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6fa2eed))
+- **settings:** Show cluster members ([93d49c4](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/93d49c4))
+- **session:** Optional server check in the session guard ([cc1eb29](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cc1eb29))
+- **collection-data:** Send partial updates on edit ([8430bf0](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8430bf0))
+- **bucket:** Reject filters too long for the server URI ([6ffb8cc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6ffb8cc))
+- **query:** Negate AND groups with De Morgan ([43e5a7f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/43e5a7f))
+- **errors:** Show the server's own error message and code ([3825a59](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/3825a59))
+- **aggregation:** Deny stats stages and strip the database host from their results ([7d8c69c](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/7d8c69c))
+- **infos:** Analyze all documents with the server's field analysis ([31932cf](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/31932cf))
+- **permissions:** UseMongocampPermissions and a read-only data table ([a042595](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a042595))
+- **query:** ById, isTrue, arrayContains, hasItems and onDay helpers ([7fa8b3f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/7fa8b3f))
+- **fetch:** UseMongocampFetchAll reads every page with a cap, progress and abort ([25499a2](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/25499a2))
+- **export:** UseMongocampExportAll and exact long integers in exports ([764a855](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/764a855))
+- **state:** UseMongocampPersistedState and remembered table state ([ab8ff95](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/ab8ff95))
+- **queries:** UseMongocampSavedQueries with validated, capped browser storage ([871bafd](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/871bafd))
+- **refresh:** UseMongocampAutoRefresh and an autoRefresh prop for dashboard and jobs ([b1d8436](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b1d8436))
+- **stats:** UseMongocampCollectionStats and document path tools ([e42a2cc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e42a2cc))
+- **document:** MongocampDocumentView and a View action in the data table ([27b4309](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/27b4309))
+- **query:** MongocampQueryBar with sort, fields to load, history and saved queries ([06f402a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/06f402a))
+- **indexes:** MongocampIndexes with usage, compound and unique indexes and a typed drop ([2633ba4](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2633ba4))
+- **bulk:** Select all matching documents with a cap, progress, stop and typed confirmation ([1ee1901](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1ee1901))
+- **copy:** MongocampCollectionCopy with quick backup and the same indexes, and MongocampExportAll ([928b237](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/928b237))
+- **aggregation:** Previews, templates, saved pipelines and four more stages in the builder ([354b5a2](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/354b5a2))
+- **charts:** MongocampCollectionCharts with Nuxt UI's UChart and a Distribution card ([b38b70d](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b38b70d))
+- **overview:** MongocampServerOverview and a shared MongocampChart ([ccc256d](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/ccc256d))
+- **permissions:** MongocampPermissionMatrix ([b538888](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b538888))
+- **files:** Bucket file preview, multi-file drag-and-drop upload and JSON metadata editor ([b24182e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b24182e))
+- **palette:** MongocampCommandPalette ([57213bb](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/57213bb))
+- **compare:** MongocampDocumentCompare and Compare selected in the data table ([48f89e6](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/48f89e6))
+- **playground:** Admin shell reference with collection sidebar, tabs and palette ([8cf6b04](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/8cf6b04))
+- **charts:** Chart an aggregation result and index size/usage ([b6a6fe7](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b6a6fe7))
+- **charts:** Collapsed charts in collections, databases and field statistics ([4ccdace](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/4ccdace))
+
+### 🔥 Performance
+
+- **charts:** Load the chart library only when a chart is on screen ([1553854](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1553854))
+
+### 🩹 Fixes
+
+- **numbers:** Keep 64-bit integers exact when reading documents ([cb6531a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cb6531a))
+- **session:** A missing grant is a 403, not a dead session ([f81de4c](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f81de4c))
+- **document:** Lighter tree rows and a CI-safe timeout for the large-document test ([b8e9ba3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b8e9ba3))
+- **ui:** Chart axis labels, matrix contrast, popover alignment and a clearer playground shell ([2f46999](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2f46999))
+
+### 📖 Documentation
+
+- Remove stale probe descriptions and update indexes ([93f8694](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/93f8694))
+- Align behaviour statements with server 1.6.3 ([61f6dfc](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/61f6dfc))
+
+### ✅ Tests
+
+- **settings:** Cover hide* props and document them ([b1b9f85](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b1b9f85))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.3.5
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.4...v1.3.5)
