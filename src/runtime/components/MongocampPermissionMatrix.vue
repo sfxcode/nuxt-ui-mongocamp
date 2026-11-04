@@ -96,7 +96,7 @@ function cellTitle(cell: Cell): string {
 }
 
 function cellClass(cell: Cell): string {
-  if (cell.admin) return 'text-primary'
+  if (cell.admin) return 'font-semibold text-highlighted'
   const any = cell.read === true || cell.write === true || cell.administrate === true
   return any ? 'text-default' : 'text-dimmed'
 }

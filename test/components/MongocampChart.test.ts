@@ -87,4 +87,14 @@ describe('MongocampChart', () => {
       vi.unstubAllGlobals()
     }
   })
+
+  it('cuts long axis labels but keeps the full names in the data table, and never merges two names into one', async () => {
+    const long = 'test_order_backup_20261104_183304'
+    const c = await mountChart({ data: [{ name: long, value: 5 }, { name: 'short', value: 3 }] })
+    expect((c.findComponent(UChart).props() as { data: { name: string }[] }).data.map(d => d.name)).toEqual(['test_order_backup…', 'short'])
+    expect(c.find('[data-test="chart-table"]').text()).toContain(long)
+
+    const same = await mountChart({ data: [{ name: `${'x'.repeat(30)}a`, value: 1 }, { name: `${'x'.repeat(30)}b`, value: 2 }] })
+    expect((same.findComponent(UChart).props() as { data: { name: string }[] }).data.map(d => d.name)).toEqual([`${'x'.repeat(30)}a`, `${'x'.repeat(30)}b`])
+  })
 })

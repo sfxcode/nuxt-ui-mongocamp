@@ -134,7 +134,9 @@ describe('number chart', () => {
     serve(sampleOf('price', [1, 2, 3]), () => [{ _id: { min: 1.5, max: 85.5 }, count: 59 }, { _id: { min: '9007199254740993', max: '9007199254741193' }, count: 2 }], 2)
     const c = await mountChart({ field: 'price', buckets: 6 })
     expect(chartPipeline()).toEqual([{ stage: '$match', value: { price: { $type: 'number' } } }, { stage: '$bucketAuto', value: { groupBy: '$price', buckets: 6 } }])
-    expect(dataOf(c)).toEqual([{ label: '1.5–85.5', count: 59 }, { label: '9007199254740993–9007199254741193', count: 2 }])
+    // the axis label is cut (MongocampChart), the data table keeps every digit
+    expect(dataOf(c)).toEqual([{ label: '1.5–85.5', count: 59 }, { label: '9007199254740993–…', count: 2 }])
+    expect(c.find('[data-test="chart-table"]').text()).toContain('9007199254740993–9007199254741193')
     expect(c.find('[data-test="chart-note"]').text()).toContain('Each range holds about the same number of documents')
     expect(c.text()).toContain('Distribution of numbers')
   })

@@ -21,6 +21,17 @@ const items = useNavItems()
     </aside>
     <div class="flex-1 min-w-0">
       <MongocampCommandPalette v-if="isLoggedIn" />
+      <!-- the sidebar needs width; below xl the same list sits above the page -->
+      <UContainer class="xl:hidden">
+        <details class="pt-3">
+          <summary class="cursor-pointer text-sm text-dimmed">
+            Collections
+          </summary>
+          <div class="pt-2">
+            <CollectionSidebar />
+          </div>
+        </details>
+      </UContainer>
       <UContainer>
         <slot />
       </UContainer>

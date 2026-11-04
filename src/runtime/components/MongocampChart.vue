@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from '#imports'
+import { shortenLabel } from '../utils/chartData'
 
 // Nuxt UI's `UChart` with what every chart of this module needs, so no chart repeats it:
 // - series colours with a fallback: Nuxt UI's stylesheet defines `--ui-chart-1…6`, an app that gets the theme another way
@@ -65,6 +66,18 @@ const FALLBACK_COLORS = ['var(--ui-primary, #16a34a)', '#3b82f6', '#8b5cf6', '#f
 const COLORS = FALLBACK_COLORS.map((fallback, i) => `var(--ui-chart-${i + 1}, ${fallback})`)
 const CHART_UI = { base: 'opacity-100' }
 
+// Axis labels are cut to 18 characters: a long name makes the axis drop its neighbours' labels (a bar without a name).
+// Two names that would collapse into one keep their full text — a category must stay unique. The data table below uses the real names.
+const AXIS_LABEL_MAX = 18
+const chartData = computed(() => {
+  if (props.type === 'donut') return props.data
+  const names = props.data.map(row => String(row[props.index] ?? ''))
+  const short = names.map(name => shortenLabel(name, AXIS_LABEL_MAX))
+  const counts = new Map<string, number>()
+  for (const name of short) counts.set(name, (counts.get(name) ?? 0) + 1)
+  return props.data.map((row, i) => ({ ...row, [props.index]: counts.get(short[i]!)! > 1 ? names[i] : short[i] }))
+})
+
 const columns = computed(() => (props.type === 'donut' ? props.categories.slice(0, 1) : props.categories))
 const show = (value: unknown): string => (typeof value === 'number' && props.format ? props.format(value) : String(value ?? ''))
 </script>
@@ -85,7 +98,7 @@ const show = (value: unknown): string => (typeof value === 'number' && props.for
       <LazyUChart
         v-if="visible"
         :type="type"
-        :data="data"
+        :data="chartData"
         :index="index"
         :categories="categories"
         :colors="COLORS"

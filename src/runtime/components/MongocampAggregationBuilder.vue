@@ -375,7 +375,10 @@ const exportMenuItems = computed(() => [
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <UPopover v-if="mode === 'visual'">
+      <UPopover
+        v-if="mode === 'visual'"
+        :content="{ align: 'start' }"
+      >
         <UButton
           icon="i-lucide-wand-sparkles"
           color="neutral"
@@ -463,7 +466,7 @@ const exportMenuItems = computed(() => [
         </template>
       </UPopover>
 
-      <UPopover>
+      <UPopover :content="{ align: 'start' }">
         <UButton
           icon="i-lucide-bookmark"
           color="neutral"

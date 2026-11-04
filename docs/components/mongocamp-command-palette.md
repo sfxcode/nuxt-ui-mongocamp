@@ -10,6 +10,10 @@
 
 Put it once in a layout that only logged-in users see.
 
+::: tip In development
+Nuxt DevTools also answers ⌘K / Ctrl+K and opens its own palette on top of this one. Press Esc to close it, or give this palette another `shortcut` (for example `meta_shift_k`) while developing.
+:::
+
 ## Props
 
 | Prop | Default | Description |
