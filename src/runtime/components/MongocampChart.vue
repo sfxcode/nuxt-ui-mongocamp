@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from '#imports'
 
 // Nuxt UI's `UChart` with what every chart of this module needs, so no chart repeats it:
@@ -43,6 +43,23 @@ const props = withDefaults(defineProps<{
 
 const { t } = useI18n()
 
+// The chart library is a separate chunk (`LazyUChart`) and is only fetched once the chart is actually on screen — a chart in a
+// closed <details> or below the fold costs nothing. Without IntersectionObserver (tests, very old browsers) it renders at once.
+const root = ref<HTMLElement | null>(null)
+const visible = ref(typeof IntersectionObserver === 'undefined')
+let observer: IntersectionObserver | undefined
+onMounted(() => {
+  if (visible.value || !root.value) return
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some(e => e.isIntersecting)) {
+      visible.value = true
+      observer?.disconnect()
+    }
+  })
+  observer.observe(root.value)
+})
+onBeforeUnmount(() => observer?.disconnect())
+
 // six series colours; the first is the theme's primary colour
 const FALLBACK_COLORS = ['var(--ui-primary, #16a34a)', '#3b82f6', '#8b5cf6', '#f59e0b', '#f43f5e', '#06b6d4']
 const COLORS = FALLBACK_COLORS.map((fallback, i) => `var(--ui-chart-${i + 1}, ${fallback})`)
@@ -53,7 +70,10 @@ const show = (value: unknown): string => (typeof value === 'number' && props.for
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div
+    ref="root"
+    class="flex flex-col gap-2"
+  >
     <p
       v-if="data.length === 0 && emptyText"
       class="text-sm text-dimmed"
@@ -62,7 +82,8 @@ const show = (value: unknown): string => (typeof value === 'number' && props.for
       {{ emptyText }}
     </p>
     <template v-else-if="data.length > 0">
-      <UChart
+      <LazyUChart
+        v-if="visible"
         :type="type"
         :data="data"
         :index="index"
@@ -75,6 +96,11 @@ const show = (value: unknown): string => (typeof value === 'number' && props.for
         :legend="legend ?? (type === 'donut' || categories.length > 1)"
         :height="height"
         :points="false"
+      />
+      <div
+        v-else
+        :style="{ height: `${height}px` }"
+        aria-hidden="true"
       />
       <details
         v-if="showTable"

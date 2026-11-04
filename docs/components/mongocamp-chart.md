@@ -14,6 +14,10 @@ Nuxt UI's [`UChart`](https://ui.nuxt.com/docs/components/chart) with what every 
 />
 ```
 
+## Loading
+
+The chart library (`@tanstack/charts`, about 52 KB gzipped) is its own chunk, fetched through `LazyUChart` only when the chart scrolls into view (an `IntersectionObserver`; without one it draws at once). A chart inside a closed `<details>` — as on the collections, databases, indexes and field-statistics cards — therefore costs nothing until it is opened. Measured on the playground build: before, five route chunks imported the chart chunk statically (it loaded with those pages); now none does. The data table is rendered regardless, so the numbers are never waiting on the library.
+
 ## Props
 
 | Prop | Type | Description |

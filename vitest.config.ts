@@ -16,6 +16,7 @@ export default defineConfig({
         test: {
           name: 'components',
           include: ['test/components/**/*.test.ts'],
+          setupFiles: ['./test/setup/intersection-observer.ts'],
           environmentOptions: {
             nuxt: {
               rootDir: fileURLToPath(new URL('./test/fixtures/basic', import.meta.url)),

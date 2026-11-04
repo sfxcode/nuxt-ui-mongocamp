@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { enableAutoUnmount } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
@@ -62,5 +62,29 @@ describe('MongocampChart', () => {
     expect(c.find('[data-test="chart-empty-text"]').text()).toBe('Nothing here')
     expect(c.findComponent(UChart).exists()).toBe(false)
     expect((await mountChart({ data: [] })).findComponent(UChart).exists()).toBe(false)
+  })
+
+  it('does not fetch the chart library until the chart is on screen', async () => {
+    let report: ((entries: { isIntersecting: boolean }[]) => void) | undefined
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: typeof report) {
+        report = callback
+      }
+
+      observe() {}
+      disconnect() {}
+    })
+    try {
+      const c = await mountChart()
+      expect(c.findComponent(UChart).exists()).toBe(false)
+      expect(c.find('[data-test="chart-table"]').exists()).toBe(true) // the numbers are there regardless
+
+      report!([{ isIntersecting: true }])
+      await new Promise(resolve => setTimeout(resolve, 100))
+      expect(c.findComponent(UChart).exists()).toBe(true)
+    }
+    finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
