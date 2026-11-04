@@ -30,7 +30,7 @@ export function useMongocampPersistedState<T extends Record<string, unknown>>(
     state.value = load()
   })
   watch(state, (value) => {
-    writePersisted(storage, loadedKey, value, options.version)
+    writePersisted(storage, loadedKey, value, options.version, options.maxBytes)
   }, { deep: true })
 
   function reset() {

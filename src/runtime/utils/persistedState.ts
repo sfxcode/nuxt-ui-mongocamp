@@ -18,6 +18,8 @@ export interface PersistOptions<T> {
   migrate?: (data: unknown, fromVersion: number) => T | undefined
   /** Rejects data of the right version but a wrong shape (hand-edited, or written by another build). */
   validate?: (data: unknown) => data is T
+  /** Largest serialised size that is stored (default 16 KB). */
+  maxBytes?: number
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -45,11 +47,11 @@ export function readPersisted<T>(storage: StorageLike | undefined, key: string, 
 }
 
 /** Stores `data`; returns false when it was not stored (too large, storage unavailable or full). */
-export function writePersisted(storage: StorageLike | undefined, key: string, data: unknown, version = PERSISTED_STATE_VERSION): boolean {
+export function writePersisted(storage: StorageLike | undefined, key: string, data: unknown, version = PERSISTED_STATE_VERSION, maxBytes = PERSISTED_STATE_MAX_BYTES): boolean {
   if (!storage) return false
   try {
     const text = JSON.stringify({ v: version, data })
-    if (text.length > PERSISTED_STATE_MAX_BYTES) return false
+    if (text.length > maxBytes) return false
     storage.setItem(key, text)
     return true
   }

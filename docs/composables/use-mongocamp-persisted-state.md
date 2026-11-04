@@ -25,5 +25,6 @@ reset()                     // forget it, back to the defaults
 | `version` | envelope version (default `1`); data of another version is dropped … |
 | `migrate(data, fromVersion)` | … unless this turns an older version into the current shape |
 | `validate(data)` | rejects data of the right version but a wrong shape |
+| `maxBytes` | largest serialised size that is stored (default 16 KB) |
 
 The data is **per browser**: it is not synced and is never sent to the server. Do not store anything secret in it.

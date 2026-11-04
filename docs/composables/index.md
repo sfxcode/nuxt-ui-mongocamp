@@ -28,6 +28,7 @@ All composables are auto-imported.
 | [`useMongocampFetchAll`](/composables/use-mongocamp-fetch-all) | Reads every page of a document or file list with a cap, progress and abort (`fetchAllDocuments`, `fetchAllFiles`) |
 | [`useMongocampExportAll`](/composables/use-mongocamp-export-all) | Exports a whole collection or filter as JSON, NDJSON or CSV (cap, progress, abort; exact 64-bit integers) |
 | [`useMongocampPersistedState`](/composables/use-mongocamp-persisted-state) | A ref remembered in `localStorage` (versioned, size-capped, never throws) |
+| [`useMongocampSavedQueries`](/composables/use-mongocamp-saved-queries) | Saved filters and recent history per collection, browser-only, validated and capped; JSON export/import |
 | [`useMongocampClientApi`](/composables/use-mongocamp-client-api) | Mode-switching drop-in for `useMongocampApi()` — session or [server proxy](/guide/server-proxy-auth) mode |
 | [`useMongocampProxyApi`](/composables/use-mongocamp-proxy-api) | The server-proxy-mode branch `useMongocampClientApi` switches to |
 
