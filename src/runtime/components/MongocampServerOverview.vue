@@ -10,7 +10,7 @@ import type { RankBy } from '../utils/serverOverview'
 
 // What an admin wants to see first: how much the server holds and where. Stat cards, the biggest collections (a chart and a
 // ranked list that links to each collection), the share of storage, the databases, the cluster and the next scheduled jobs.
-// There is one request per collection (a few at a time), so it is capped, shows progress and can be stopped; every part
+// The numbers of all collections come in one request; every part
 // stands on its own — one that cannot be read is named and the others still show.
 const props = withDefaults(defineProps<{
   // base path of the page rendering MongocampCollectionInfos (`<infoPath>/<name>`)
@@ -41,23 +41,18 @@ const { loadOverview } = useMongocampServerOverview()
 
 const overview = ref<ServerOverview | null>(null)
 const loading = ref(false)
-const progress = ref<{ done: number, total: number } | null>(null)
 const rankBy = ref<RankBy>('storageSize')
 let controller: AbortController | undefined
 
-async function load(options: { silent?: boolean } = {}) {
+async function load() {
   controller?.abort()
   const own = new AbortController()
   controller = own
   loading.value = true
-  if (!options.silent) progress.value = null
   try {
     const result = await loadOverview({
       maxCollections: props.maxCollections,
       signal: own.signal,
-      onProgress: (p) => {
-        if (controller === own && !options.silent) progress.value = p
-      },
     })
     if (controller === own) overview.value = result
   }
@@ -66,18 +61,11 @@ async function load(options: { silent?: boolean } = {}) {
     throw e
   }
   finally {
-    if (controller === own) {
-      loading.value = false
-      progress.value = null
-    }
+    if (controller === own) loading.value = false
   }
 }
 
-function stop() {
-  controller?.abort()
-}
-
-const auto = useMongocampAutoRefresh(() => load({ silent: true }), { intervalMs: () => props.autoRefresh * 1000 })
+const auto = useMongocampAutoRefresh(() => load(), { intervalMs: () => props.autoRefresh * 1000 })
 function syncAutoRefresh() {
   auto.stop()
   if (props.autoRefresh > 0) auto.start()
@@ -145,30 +133,9 @@ const seriesMetric = computed(() => [{ key: 'value', label: metricLabel.value }]
         icon="i-lucide-refresh-cw"
         color="neutral"
         variant="ghost"
-        :loading="loading && !progress"
+        :loading="loading"
         :aria-label="t('nuxtUiMongocamp.common.refresh')"
         @click="load()"
-      />
-    </div>
-
-    <div
-      v-if="progress"
-      class="flex items-center gap-3"
-      role="status"
-      data-test="overview-progress"
-    >
-      <UProgress
-        :model-value="progress.done"
-        :max="progress.total"
-        class="flex-1"
-      />
-      <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.serverOverview.reading', progress) }}</span>
-      <UButton
-        :label="t('nuxtUiMongocamp.serverOverview.stop')"
-        color="neutral"
-        variant="soft"
-        size="sm"
-        @click="stop"
       />
     </div>
 

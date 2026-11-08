@@ -42,9 +42,8 @@ MongoCamp's own `mc_*` collections are not counted. GridFS buckets are: their `.
 
 ## Requests, limits and failures
 
-- **One request per collection** (there is no endpoint that lists every collection's numbers at once), a few at a time (6 in flight). On a real server a request takes about 45 ms and 8 collections are read in about 0.1 s; 200 collections would take a second or two.
+- **One request for all collections** (`GET /mongodb/collections/info`, server 1.7.0).
 - **Capped at `maxCollections`** (200). If there are more, the overview says *4 of 6 collections were read; 2 were left out*.
-- **Progress** (*Reading collections: 12 of 40*) and **Stop** while it reads; stopping shows nothing half-read.
-- **Every part stands on its own.** If the databases, the cluster or the jobs cannot be read, a warning names the part with **Try again** and the rest still shows. A collection whose information fails is named (*1 collections could not be read: users*).
+- **Every part stands on its own.** If the databases, the cluster or the jobs cannot be read, a warning names the part with **Try again** and the rest still shows. A collection the server lists as unavailable is named (*1 collections could not be read: users*).
 
 The charts are [`MongocampChart`](/components/mongocamp-chart) and have a text description and a table alternative.

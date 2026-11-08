@@ -30,6 +30,7 @@ const state = { isAdmin: true }
 const mockListCollections = vi.fn()
 const mockGetInfo = vi.fn()
 const mockListDocumentsRaw = vi.fn()
+const mockRenameCollection = vi.fn()
 const mockClearCollection = vi.fn()
 const mockDeleteCollection = vi.fn()
 const mockClearBucket = vi.fn()
@@ -42,7 +43,7 @@ vi.mock('../../src/runtime/composables/useMongocampAdmin', () => ({
 // The real useMongocampRoles and useMongocampBucket run on top of these two mocks.
 mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: state.isAdmin } } }))
 mockNuxtImport('useMongocampClientApi', () => () => ({
-  collectionApi: { listCollections: mockListCollections, getCollectionInformation: mockGetInfo },
+  collectionApi: { listCollections: mockListCollections, listCollectionInformation: mockGetInfo, renameCollection: mockRenameCollection },
   documentApi: { listDocumentsRaw: mockListDocumentsRaw, insertMany: vi.fn() },
   bucketApi: { clearBucket: mockClearBucket, deleteBucket: mockDeleteBucket },
 }))
@@ -53,7 +54,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   state.isAdmin = true
   mockListCollections.mockResolvedValue(['orders', 'mc_users', 'photos.files', 'photos.chunks'])
-  mockGetInfo.mockResolvedValue(INFO)
+  mockGetInfo.mockResolvedValue(['orders', 'mc_users', 'photos.files', 'photos.chunks'].map(name => ({ name, ...INFO })))
   mockListDocumentsRaw.mockResolvedValue({ raw: { headers: { get: () => '3' } }, value: () => Promise.resolve([]) })
   mockClearCollection.mockResolvedValue({ value: true })
   mockDeleteCollection.mockResolvedValue({ value: true })
@@ -88,14 +89,14 @@ async function typeName(value: string) {
 describe('MongocampCollections — chart', () => {
   it('charts storage per collection from the loaded numbers, mc_* and bucket members left out, with no extra request', async () => {
     mockListCollections.mockResolvedValue(['orders', 'users', 'mc_users'])
-    mockGetInfo.mockImplementation(async ({ collectionName }: { collectionName: string }) => ({ count: collectionName === 'orders' ? 7 : 3, storageSize: collectionName === 'orders' ? 2048 : 8192, nindexes: 1 }))
+    mockGetInfo.mockResolvedValue([{ name: 'orders', count: 7, storageSize: 2048, nindexes: 1 }, { name: 'users', count: 3, storageSize: 8192, nindexes: 1 }, { name: 'mc_users', count: 1, storageSize: 1, nindexes: 1 }])
     const wrapper = await mountCollections()
     const chart = wrapper.find('[data-testid="collections-chart"]')
     expect(chart.exists()).toBe(true)
     expect(chart.attributes('open')).toBeUndefined()
     const rows = chart.findAll('[data-test="chart-table"] tbody tr').map(tr => tr.findAll('td').map(td => td.text()))
     expect(rows).toEqual([['users', '8.0 KB'], ['orders', '2.0 KB']])
-    expect(mockGetInfo).toHaveBeenCalledTimes(2)
+    expect(mockGetInfo).toHaveBeenCalledTimes(1)
   })
 
   it('is left out for a single collection', async () => {
@@ -126,6 +127,36 @@ describe('MongocampCollections — copy', () => {
     await wait()
     expect(page().text()).toContain('Copy collection orders')
     expect(page().find('input[aria-label="Name of the new collection"]').exists()).toBe(true)
+  })
+})
+
+describe('MongocampCollections — rename', () => {
+  it('offers Rename to an admin on an ordinary collection only', async () => {
+    const wrapper = await mountCollections()
+    expect(labels(row(wrapper, 'orders'))).toContain('Rename collection')
+    expect(labels(row(wrapper, 'photos.files'))).not.toContain('Rename collection')
+    state.isAdmin = false
+    expect(labels(row(await mountCollections(), 'orders'))).not.toContain('Rename collection')
+    state.isAdmin = true
+    expect(labels(row(await mountCollections({ canManage: false }), 'orders'))).not.toContain('Rename collection')
+  })
+
+  it('renames through the dialog, reloads the list and emits changed', async () => {
+    mockRenameCollection.mockImplementation(async ({ renameRequest }: { renameRequest: { target: string } }) => ({ name: renameRequest.target }))
+    const wrapper = await mountCollections()
+    await row(wrapper, 'orders').find('button[aria-label="Rename collection"]').trigger('click')
+    await wait()
+    expect(page().text()).toContain('Rename collection orders')
+
+    await page().find('input[aria-label="New name"]').setValue('orders_2026')
+    await wait()
+    mockListCollections.mockClear()
+    await page().findAll('button').find(b => b.text() === 'Rename')!.trigger('click')
+    await flushPromises()
+
+    expect(mockRenameCollection).toHaveBeenCalledWith({ collectionName: 'orders', renameRequest: { target: 'orders_2026' } }, undefined)
+    expect(mockListCollections).toHaveBeenCalled()
+    expect(wrapper.findComponent(MongocampCollections).emitted('changed')).toHaveLength(1)
   })
 })
 

@@ -1,8 +1,6 @@
 // Rules for copying a collection into a new one. Pure.
 import { isProtectedCollection } from './collectionProtection'
 
-/** More documents than this are not copied through the browser (everything is held in memory while copying). */
-export const MAX_COPY_DOCUMENTS = 50_000
 export const MAX_COLLECTION_NAME_LENGTH = 100
 
 // Letters, digits, `_`, `-` and `.` (not first). Narrower than MongoDB allows on purpose: the name goes into a URL path and

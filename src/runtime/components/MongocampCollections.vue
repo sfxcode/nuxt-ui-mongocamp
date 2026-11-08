@@ -62,20 +62,15 @@ async function fetchCollections() {
   loading.value = true
   loadError.value = null
   try {
-    const names = await collectionApi.listCollections()
-    const rows = await Promise.all(
-      names
-        .filter(name => !name.startsWith('mc'))
-        .map(async (name) => {
-          const info = await collectionApi.getCollectionInformation({ collectionName: name })
-          return {
-            name,
-            count: info.count,
-            sizekb: Math.round(info.storageSize / 1024),
-            indexCount: info.nindexes,
-          }
-        }),
-    )
+    // two requests in all — the numbers of every collection come in one answer (server 1.7.0), not one request each
+    const [names, infos] = await Promise.all([collectionApi.listCollections(), collectionApi.listCollectionInformation({})])
+    const byName = new Map(infos.map(info => [info.name, info]))
+    const rows = names
+      .filter(name => !name.startsWith('mc'))
+      .flatMap((name) => {
+        const info = byName.get(name)
+        return info ? [{ name, count: info.count, sizekb: Math.round(info.storageSize / 1024), indexCount: info.nindexes }] : []
+      })
     collections.value = rows
   }
   catch (e: unknown) {
@@ -255,6 +250,14 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
             'aria-label': t('nuxtUiMongocamp.collections.copyTooltip'),
             'onClick': () => openCopy(name),
           })),
+          withTooltip(t('nuxtUiMongocamp.collections.renameTooltip'), h(UButton, {
+            'icon': 'i-lucide-pencil',
+            'color': 'neutral',
+            'variant': 'ghost',
+            'size': 'sm',
+            'aria-label': t('nuxtUiMongocamp.collections.renameTooltip'),
+            'onClick': () => openRename(name),
+          })),
           withTooltip(t('nuxtUiMongocamp.collections.clearTooltip'), h(UButton, {
             'icon': 'i-lucide-eraser',
             'color': 'warning',
@@ -285,6 +288,20 @@ const isCopyOpen = ref(false)
 function openCopy(name: string) {
   copySource.value = name
   isCopyOpen.value = true
+}
+
+// Rename is offered to the same people (it breaks the grants of the old name)
+const renameSource = ref('')
+const isRenameOpen = ref(false)
+
+async function onRenamed() {
+  await fetchCollections()
+  emit('changed')
+}
+
+function openRename(name: string) {
+  renameSource.value = name
+  isRenameOpen.value = true
 }
 
 fetchCollections()
@@ -367,6 +384,13 @@ fetchCollections()
       v-model:open="isCopyOpen"
       :source="copySource"
       @done="fetchCollections"
+    />
+
+    <MongocampCollectionRename
+      v-if="renameSource"
+      v-model:open="isRenameOpen"
+      :source="renameSource"
+      @done="onRenamed"
     />
 
     <MongocampConfirmByName

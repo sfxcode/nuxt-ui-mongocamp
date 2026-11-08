@@ -10,7 +10,7 @@ enableAutoUnmount(afterEach)
 const wait = (ms = 50) => new Promise(resolve => setTimeout(resolve, ms))
 
 const api = {
-  collectionApi: { listCollections: vi.fn(), getCollectionInformation: vi.fn() },
+  collectionApi: { listCollectionInformation: vi.fn() },
   databaseApi: { databaseInfos: vi.fn() },
   systemApi: { viewCluster: vi.fn() },
   jobApi: { jobsList: vi.fn() },
@@ -26,6 +26,9 @@ const INFOS: Record<string, ReturnType<typeof info>> = {
   logs: info(5000, 2 * 1024 * 1024, 90, 300 * 1024),
 }
 
+// what `GET /mongodb/collections/info` answers: one summary per collection
+const summary = (name: string, numbers: ReturnType<typeof info> = INFOS[name] ?? info(1, 1024, 1, 0), available = true) => ({ name, collectionType: 'Standard', available, ...numbers })
+
 beforeEach(() => {
   vi.resetAllMocks()
   api.databaseApi.databaseInfos.mockResolvedValue([{ name: 'mongocamp', sizeOnDisk: 5 * 1024 * 1024, empty: false }, { name: 'scratch', sizeOnDisk: 4096, empty: true }])
@@ -35,8 +38,7 @@ beforeEach(() => {
     { name: 'sooner', group: 'g', cronExpression: '0 0 * * * ?', priority: 5, nextScheduledFireTime: new Date('2030-01-01T00:00:00Z') },
     { name: 'paused', group: 'g', cronExpression: '0 0 * * * ?', priority: 5 },
   ])
-  api.collectionApi.listCollections.mockResolvedValue(['orders', 'users', 'logs', 'mc_users'])
-  api.collectionApi.getCollectionInformation.mockImplementation(async ({ collectionName }: { collectionName: string }) => INFOS[collectionName] ?? info(1, 1024, 1, 0))
+  api.collectionApi.listCollectionInformation.mockResolvedValue(['orders', 'users', 'logs', 'mc_users'].map(name => summary(name)))
 })
 
 async function mountOverview(props: Record<string, unknown> = {}) {
@@ -58,7 +60,7 @@ describe('MongocampServerOverview', () => {
     expect(text(c, 'stat-documents')).toBe('6,050')
     expect(text(c, 'stat-storage')).toBe('2.9 MB')
     expect(text(c, 'stat-indexes')).toBe('358 KB')
-    expect(api.collectionApi.getCollectionInformation).toHaveBeenCalledTimes(3)
+    expect(api.collectionApi.listCollectionInformation).toHaveBeenCalledTimes(1)
   })
 
   it('ranks the biggest collections by storage, with a chart and links to each collection', async () => {
@@ -98,8 +100,7 @@ describe('MongocampServerOverview', () => {
   })
 
   it('draws the share of storage as a donut (the biggest slices and the rest as one) and the databases as bars', async () => {
-    api.collectionApi.listCollections.mockResolvedValue(Array.from({ length: 8 }, (_, i) => `c${i}`))
-    api.collectionApi.getCollectionInformation.mockImplementation(async ({ collectionName }: { collectionName: string }) => info(10, (9 - Number(collectionName.slice(1))) * 1000, 10, 0))
+    api.collectionApi.listCollectionInformation.mockResolvedValue(Array.from({ length: 8 }, (_, i) => summary(`c${i}`, info(10, (9 - i) * 1000, 10, 0))))
     const c = await mountOverview()
     const charts = c.findAllComponents(UChart).map(x => x.props() as { type: string, data: Array<{ name: string }> })
     const donut = charts.find(x => x.type === 'donut')!
@@ -129,18 +130,15 @@ describe('MongocampServerOverview', () => {
   })
 
   it('says which collections it left out because of the limit', async () => {
-    api.collectionApi.listCollections.mockResolvedValue(Array.from({ length: 6 }, (_, i) => `c${i}`))
+    api.collectionApi.listCollectionInformation.mockResolvedValue(Array.from({ length: 6 }, (_, i) => summary(`c${i}`)))
     const c = await mountOverview({ maxCollections: 4 })
     expect(text(c, 'stat-collections')).toBe('6')
     expect(text(c, 'overview-partial')).toBe('4 of 6 collections were read; 2 were left out (the limit is 4).')
-    expect(api.collectionApi.getCollectionInformation).toHaveBeenCalledTimes(4)
+    expect(api.collectionApi.listCollectionInformation).toHaveBeenCalledTimes(1)
   })
 
   it('names a collection that could not be read and still shows the rest', async () => {
-    api.collectionApi.getCollectionInformation.mockImplementation(async ({ collectionName }: { collectionName: string }) => {
-      if (collectionName === 'users') throw new Error('x')
-      return INFOS[collectionName]!
-    })
+    api.collectionApi.listCollectionInformation.mockResolvedValue(['orders', 'users', 'logs'].map(name => summary(name, INFOS[name], name !== 'users')))
     const c = await mountOverview()
     expect(text(c, 'overview-failed')).toBe('1 collections could not be read: users')
     expect(ranked(c)).toEqual(['logs', 'orders'])
@@ -161,21 +159,6 @@ describe('MongocampServerOverview', () => {
     expect(text(c, 'stat-databases')).toBe('2')
   })
 
-  it('shows progress while it reads and can be stopped', async () => {
-    let release!: () => void
-    api.collectionApi.getCollectionInformation.mockImplementation((_r: unknown, init: { signal: AbortSignal }) => new Promise((resolve, reject) => {
-      init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })))
-      release = () => resolve(info(1, 1, 1, 1))
-    }))
-    const c = await mountOverview()
-    expect(text(c, 'overview-progress')).toContain('Reading collections: 0 of 3')
-    await c.findAll('button').find(b => b.text() === 'Stop')!.trigger('click')
-    await wait()
-    expect(c.find('[data-test="overview-progress"]').exists()).toBe(false)
-    expect(c.find('[data-test="stat-collections"]').exists()).toBe(false) // nothing half-read is shown
-    release?.()
-  })
-
   it('shows no charts with hideCharts', async () => {
     const c = await mountOverview({ hideCharts: true })
     expect(c.findAllComponents(UChart)).toHaveLength(0)
@@ -191,7 +174,7 @@ describe('MongocampServerOverview', () => {
   })
 
   it('says so when there is nothing to rank', async () => {
-    api.collectionApi.listCollections.mockResolvedValue(['mc_users'])
+    api.collectionApi.listCollectionInformation.mockResolvedValue([summary('mc_users')])
     const c = await mountOverview()
     expect(text(c, 'overview-no-collections')).toContain('No collections to show')
   })
@@ -208,9 +191,8 @@ describe('MongocampServerOverview — autoRefresh', () => {
     const on = await mountOverview({ autoRefresh: 1 })
     await wait(1300)
     expect(api.databaseApi.databaseInfos.mock.calls.length).toBeGreaterThanOrEqual(2)
-    expect(on.find('[data-test="overview-progress"]').exists()).toBe(false)
 
-    api.collectionApi.listCollections.mockRejectedValue(new Error('down'))
+    api.collectionApi.listCollectionInformation.mockRejectedValue(new Error('down'))
     await wait(1300)
     // the failed background reload shows its warning but the numbers stay
     expect(on.find('[data-test="stat-documents"]').exists()).toBe(true)

@@ -79,3 +79,7 @@ The `.files`/`.chunks` pair is **not** collapsed into a single row — each stay
 ## Copy and backup
 
 Administrators get a **Copy collection** button on ordinary collections (never `mc_*` or GridFS halves). It opens [`MongocampCollectionCopy`](/components/mongocamp-collection-copy): copy into a named new collection, or a **Quick backup** into `<name>_backup_<date>_<time>`. The list reloads when a copy finished. `canManage` hides it together with clear and drop.
+
+## Rename
+
+The same people get a **Rename collection** button: [`MongocampCollectionRename`](/components/mongocamp-collection-rename) renames it inside the database (documents and indexes stay) and warns first that **grants are by name**, so the old name's grants stop applying. The list reloads and `changed` is emitted.

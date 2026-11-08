@@ -1,6 +1,5 @@
 import { useMongocampClientApi } from '#imports'
 import type { DatabaseInfo, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
-import { mapLimit } from '../utils/limitedMap'
 import { toCollectionStat } from '../utils/serverOverview'
 import type { CollectionStat } from '../utils/serverOverview'
 import { useMongocampJobs } from './useMongocampJobs'
@@ -12,12 +11,8 @@ export type { CollectionStat } from '../utils/serverOverview'
 export interface ServerOverviewOptions {
   /** Read at most this many collections (default 200); the rest is counted in `skipped`. */
   maxCollections?: number
-  /** Collection requests in flight at once (default 6). */
-  concurrency?: number
   /** Aborting rejects with an `AbortError`. */
   signal?: AbortSignal
-  /** After every collection that was read. */
-  onProgress?: (progress: { done: number, total: number }) => void
 }
 
 export interface ServerOverview {
@@ -29,7 +24,7 @@ export interface ServerOverview {
   collectionCount: number
   /** Collections not read because of `maxCollections`. */
   skipped: number
-  /** Collections whose information could not be read. */
+  /** Collections the server listed but could not read the numbers of (`available: false`). */
   failed: string[]
   cluster: ServerCluster | null
   jobs: JobInformation[] | null
@@ -39,7 +34,6 @@ export interface ServerOverview {
 
 const REQUEST_TIMEOUT_MS = 15000
 const DEFAULT_MAX_COLLECTIONS = 200
-const DEFAULT_CONCURRENCY = 6
 
 function abortError(): DOMException {
   return new DOMException('The operation was aborted.', 'AbortError')
@@ -47,9 +41,9 @@ function abortError(): DOMException {
 
 /**
  * What an admin wants to see first: the databases, the size of every collection, the cluster and the scheduled jobs. The
- * parts are independent — one that fails is reported in `errors` and leaves the others intact. There is no endpoint that
- * lists all collections' numbers at once, so it is **one request per collection** (a few at a time; about 45 ms each on a
- * real server, 8 collections in ~0.1 s), capped at `maxCollections` with progress and abort.
+ * parts are independent — one that fails is reported in `errors` and leaves the others intact. The numbers of **all**
+ * collections come in one request (`GET /mongodb/collections/info`, server 1.7.0); `maxCollections` only limits how many of
+ * them are kept. Aborting rejects with an `AbortError`.
  */
 export function useMongocampServerOverview() {
   const { collectionApi } = useMongocampClientApi()
@@ -62,7 +56,9 @@ export function useMongocampServerOverview() {
     const maxCollections = Math.max(0, Math.floor(options.maxCollections ?? DEFAULT_MAX_COLLECTIONS))
     const errors: ServerOverview['errors'] = {}
 
-    const [databases, names, cluster, jobs] = await Promise.allSettled([getDatabaseInfos(), collectionApi.listCollections(), getCluster(), listJobs()])
+    const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    const init = { signal: signal ? AbortSignal.any([signal, timeout]) : timeout }
+    const [databases, summaries, cluster, jobs] = await Promise.allSettled([getDatabaseInfos(), collectionApi.listCollectionInformation({}, init), getCluster(), listJobs()])
     if (signal?.aborted) throw abortError()
 
     const result: ServerOverview = {
@@ -78,32 +74,19 @@ export function useMongocampServerOverview() {
     if (databases.status === 'rejected') errors.databases = databases.reason
     if (cluster.status === 'rejected') errors.cluster = cluster.reason
     if (jobs.status === 'rejected') errors.jobs = jobs.reason
-    if (names.status === 'rejected') {
-      errors.collections = names.reason
+    if (summaries.status === 'rejected') {
+      errors.collections = summaries.reason
       return result
     }
 
-    const own = (names.value as string[]).filter(name => !name.startsWith('mc_'))
+    const own = summaries.value.filter(summary => !summary.name.startsWith('mc_'))
     result.collectionCount = own.length
-    const toRead = own.slice(0, maxCollections)
-    result.skipped = own.length - toRead.length
-
-    // the total is known now: a UI can show "0 of N" while the first requests are out
-    if (toRead.length > 0) options.onProgress?.({ done: 0, total: toRead.length })
-    const settled = await mapLimit(toRead, options.concurrency ?? DEFAULT_CONCURRENCY, async (name) => {
-      const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
-      const init = { signal: signal ? AbortSignal.any([signal, timeout]) : timeout }
-      return toCollectionStat(name, await collectionApi.getCollectionInformation({ collectionName: name }, init))
-    }, { signal, onProgress: (done, total) => options.onProgress?.({ done, total }) })
-    if (signal?.aborted) throw abortError()
-
-    settled.forEach((outcome, index) => {
-      if (outcome?.ok) result.collections.push(outcome.value)
-      else {
-        result.failed.push(toRead[index]!)
-        if (outcome && errors.collections === undefined) errors.collections = outcome.error
-      }
-    })
+    const kept = own.slice(0, maxCollections)
+    result.skipped = own.length - kept.length
+    for (const summary of kept) {
+      if (summary.available === false) result.failed.push(summary.name)
+      else result.collections.push(toCollectionStat(summary.name, summary))
+    }
     return result
   }
 
