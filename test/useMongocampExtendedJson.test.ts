@@ -155,3 +155,73 @@ describe('64-bit integers beyond 2^53', () => {
     expect(wrapExtendedJson(form, row)).toEqual({ n: big, name: 'x' })
   })
 })
+
+// recorded from server 1.8.1 (`extendedJson=canonical`, live 2026-11-08)
+const CANONICAL = {
+  _id: { $oid: '6af0b563539838117f61b2f9' },
+  s: { $string: '2026-01-01T00:00:00.000Z' },
+  i: { $numberInt: '5' },
+  l: { $numberLong: '9007199254740993' },
+  name: 'x',
+  db: { $numberDouble: '1.5' },
+  dc: { $numberDecimal: '2.50' },
+  o: { $oid: '507f1f77bcf86cd799439022' },
+  t: { $date: { $numberLong: '1772496000000' } },
+}
+
+describe('a typed (canonical) document', () => {
+  it('unwraps to plain form values: text that looks like a date stays text, a canonical date is its ISO instant, a long keeps its digits', () => {
+    expect(unwrapExtendedJson(CANONICAL)).toEqual({
+      _id: '6af0b563539838117f61b2f9',
+      s: '2026-01-01T00:00:00.000Z',
+      i: 5,
+      l: '9007199254740993',
+      name: 'x',
+      db: 1.5,
+      dc: 2.5,
+      o: '507f1f77bcf86cd799439022',
+      t: '2026-03-03T00:00:00.000Z',
+    })
+  })
+
+  it('writes every value back as the type it had when the form value is unchanged', () => {
+    const form = unwrapExtendedJson(CANONICAL) as Record<string, unknown>
+    delete form._id
+    const payload = wrapExtendedJson(form, CANONICAL)
+
+    expect(payload).toEqual({
+      s: { $string: '2026-01-01T00:00:00.000Z' },
+      i: { $numberInt: '5' },
+      l: { $numberLong: '9007199254740993' },
+      name: 'x',
+      db: { $numberDouble: '1.5' },
+      dc: { $numberDecimal: '2.5' },
+      o: { $oid: '507f1f77bcf86cd799439022' },
+      t: { $date: '2026-03-03T00:00:00.000Z' },
+    })
+  })
+
+  it('keeps an edited int an int, an edited decimal a decimal and edited text text', () => {
+    const payload = wrapExtendedJson({ i: 7, dc: 3.75, db: 2, s: '2026-05-05T00:00:00.000Z' }, CANONICAL)
+
+    expect(payload.i).toEqual({ $numberInt: '7' })
+    expect(payload.dc).toEqual({ $numberDecimal: '3.75' })
+    expect(payload.db).toEqual({ $numberDouble: '2' })
+    expect(payload.s).toEqual({ $string: '2026-05-05T00:00:00.000Z' }) // not turned into a date
+  })
+
+  it('sends a number that no longer fits its type plain, and an edited long as a wrapper', () => {
+    const payload = wrapExtendedJson({ i: 2.5, l: 42 }, CANONICAL)
+    expect(payload.i).toBe(2.5)
+    expect(payload.l).toEqual({ $numberLong: '42' })
+    expect(wrapExtendedJson({ i: 3_000_000_000 }, CANONICAL).i).toBe(3_000_000_000) // beyond int32: the server picks long
+  })
+
+  it('still writes a date-looking string of a NEW field as a date, as the form means it', () => {
+    expect(wrapExtendedJson({ fresh: '2026-05-05T00:00:00.000Z' }, CANONICAL).fresh).toEqual({ $date: '2026-05-05T00:00:00.000Z' })
+  })
+
+  it('does not treat a wrapper with other keys as a string wrapper', () => {
+    expect(unwrapExtendedJson({ $string: 'x', other: 1 })).toEqual({ $string: 'x', other: 1 })
+  })
+})

@@ -111,6 +111,16 @@ export function visibleNodes(tree: DocumentTree, expanded: ReadonlySet<string>):
   return out
 }
 
+// a canonical read writes a date as `{ $date: { $numberLong: '<ms>' } }`
+function canonicalDateToIso(raw: unknown): unknown {
+  const ms = typeof raw === 'object' && raw !== null ? (raw as { $numberLong?: unknown }).$numberLong : undefined
+  if (typeof ms === 'string' && /^-?\d+$/.test(ms)) {
+    const date = new Date(Number(ms))
+    if (!Number.isNaN(date.getTime())) return date.toISOString()
+  }
+  return raw
+}
+
 /**
  * The text for a node. A wrapper shows its content (`{ $oid }` → the id, `{ $numberLong }` → every digit), a container
  * its size (`[3]`, `{2}`), an empty one `[]` / `{}`. `title` is a longer form where there is one (a date, localised).
@@ -121,7 +131,7 @@ export function nodeDisplay(node: TreeNode): { text: string, title?: string } {
   if (type === 'array') return { text: `[${(value as unknown[]).length}]` }
   if (type === 'object') return { text: `{${Object.keys(value as object).length}}` }
   if (type === 'date') {
-    const raw = value instanceof Date ? value.toISOString() : (value as { $date?: unknown }).$date
+    const raw = value instanceof Date ? value.toISOString() : canonicalDateToIso((value as { $date?: unknown }).$date)
     const text = typeof raw === 'string' ? raw : JSON.stringify(raw)
     const parsed = typeof raw === 'string' ? new Date(raw) : undefined
     return parsed && !Number.isNaN(parsed.getTime()) ? { text, title: parsed.toLocaleString() } : { text }

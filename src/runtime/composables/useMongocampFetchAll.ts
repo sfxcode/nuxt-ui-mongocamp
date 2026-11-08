@@ -41,7 +41,7 @@ export function useMongocampFetchAll() {
   async function fetchAllDocuments<T = Record<string, unknown>>(collectionName: string, options: FetchAllDocumentsOptions<T> = {}): Promise<FetchAllResult<T>> {
     const { filter, sort, projection, ...paging } = options
     return fetchAllPages<T>(async (page, pageSize) => {
-      const response = await documentApi.listDocumentsRaw({ collectionName, filter, sort, projection, page, rowsPerPage: pageSize }, requestInit(options.signal))
+      const response = await documentApi.searchDocumentsRaw({ collectionName, searchRequest: { filter, sort, projection }, page, rowsPerPage: pageSize }, requestInit(options.signal))
       return { rows: await readJsonKeepingLongs<T[]>(response), total: headerNumber(response.raw?.headers, 'x-pagination-count-rows') }
     }, paging)
   }

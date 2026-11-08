@@ -1,9 +1,11 @@
 # useMongocampPermissions
 
-What the signed-in user may do with a collection, read from the grants in the session profile — so a component can hide an action the server would refuse instead of letting the click fail.
+What the signed-in user may do with a collection — answered by the server (`GET /auth/permissions`, server 1.7.0) once `load()` ran, until then from the grants in the session profile — so a component can hide an action the server would refuse instead of letting the click fail.
 
 ```ts
-const { canRead, canWrite, canAdminister, readableCollections } = useMongocampPermissions()
+const { canRead, canWrite, canAdminister, readableCollections, load } = useMongocampPermissions()
+
+await load('customers')                         // ask the server (no argument: every collection that has a grant)
 
 canWrite('customers')                           // false for a read-only grant
 readableCollections(['customers', 'orders'])    // only the ones the user may read
@@ -15,14 +17,19 @@ readableCollections(['customers', 'orders'])    // only the ones the user may re
 | `canWrite(collection)` | `write: true` |
 | `canAdminister(collection)` | `administrate: true` |
 | `readableCollections(names)` | `names` filtered to the readable ones, same order |
+| `load(collection?)` | asks the server for the signed-in user's rights (one collection, or all with a grant) and keeps the answer for the synchronous checks above; never throws, a failure leaves the grant-based answers; administrators are never asked |
 
 ## UI-level only
 
 This is gating for the interface, like [route protection](/guide/route-protection): the server stays the authority and refuses a write without a grant anyway (a missing grant is answered with a `401` that this module turns into a `403`, so it never logs the user out — see [`useMongocampClientApi`](/composables/use-mongocamp-client-api#a-missing-grant-is-not-a-dead-session)). The helper only removes buttons that could not work.
 
+## The server answer wins
+
+After `load()` the checks answer from the server, which resolves roles, grants and the user itself — so they are right even where the profile's grant list is not (server proxy mode has no profile at all). The answers are cached per signed-in user (`useState`) and merged across calls; a different user starts empty. `MongocampCollectionData` loads its own collection, `MongocampCommandPalette` loads all on first open.
+
 ## It fails open
 
-When it cannot know, the answer is **yes** and the server decides:
+Until the server has answered (and when `load()` fails), when it cannot know, the answer is **yes** and the server decides:
 
 - the user is an **administrator** (everything is allowed);
 - [server proxy mode](/guide/server-proxy-auth) — there is no user, the api key's power is the server's decision;

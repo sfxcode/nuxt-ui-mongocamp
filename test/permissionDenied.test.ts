@@ -8,6 +8,7 @@ describe('isPermissionDeniedBody', () => {
   it('is true for a 401 that names what the user may not do', () => {
     expect(isPermissionDeniedBody(401, { code: 4011, msg: 'user not authorized for collection' })).toBe(true)
     expect(isPermissionDeniedBody(401, { code: 4011, msg: 'user not authorized for request' })).toBe(true)
+    expect(isPermissionDeniedBody(401, { code: 4011, msg: 'user not authorized for bucket' })).toBe(true)
     expect(isPermissionDeniedBody(401, { code: 4011, msg: '  User not authorized for collection ' })).toBe(true)
   })
 

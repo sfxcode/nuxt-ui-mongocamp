@@ -70,6 +70,13 @@ describe('nodeDisplay', () => {
     expect(display('x').text).toBe('x')
   })
 
+  it('shows a canonical date as the instant it is, and a $string as its text (recorded on server 1.8.1)', () => {
+    expect(display({ $date: { $numberLong: '1772496000000' } }).text).toBe('2026-03-03T00:00:00.000Z')
+    expect(display({ $date: { $numberLong: '1772496000000' } }).title).toBe(new Date(1772496000000).toLocaleString())
+    expect(display({ $string: '2026-01-01T00:00:00.000Z' }).text).toBe('2026-01-01T00:00:00.000Z')
+    expect(display({ $numberDouble: '1.5' }).text).toBe('1.5')
+  })
+
   it('gives a date its text and a localised title', () => {
     const shown = display({ $date: '2025-01-02T03:04:05.000Z' })
     expect(shown.text).toBe('2025-01-02T03:04:05.000Z')
@@ -79,6 +86,11 @@ describe('nodeDisplay', () => {
 })
 
 describe('valueToJson', () => {
+  it('writes a canonical document as plain JSON: wrappers gone, a long exact, a $string as text', () => {
+    const text = valueToJson({ _id: { $oid: 'a'.repeat(24) }, i: { $numberInt: '5' }, big: { $numberLong: '9007199254740993' }, t: { $date: { $numberLong: '1772496000000' } }, s: { $string: '2026-01-01T00:00:00.000Z' } }, false)
+    expect(text).toBe(`{"_id":"${'a'.repeat(24)}","i":5,"big":9007199254740993,"t":"2026-03-03T00:00:00.000Z","s":"2026-01-01T00:00:00.000Z"}`)
+  })
+
   it('writes wrappers as plain values and keeps a long exact', () => {
     const text = valueToJson({ _id: { $oid: 'a'.repeat(24) }, big: { $numberLong: '9007199254740993' }, n: { $numberInt: '3' } }, false)
     expect(text).toBe(`{"_id":"${'a'.repeat(24)}","big":9007199254740993,"n":3}`)

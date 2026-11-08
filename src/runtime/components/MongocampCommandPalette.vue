@@ -44,7 +44,7 @@ const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
 const { listUsers, listRoles, listCollections } = useMongocampAdmin()
 const { listJobs } = useMongocampJobs()
-const { canRead } = useMongocampPermissions()
+const { canRead, load: loadPermissions } = useMongocampPermissions()
 const { isAdmin, logoutPath } = useMongocampRoles()
 
 const data = ref<PaletteData>({})
@@ -75,7 +75,8 @@ async function load() {
   }
   // everything but the collections is administrators' business
   const wanted = (admin ? ['collections', 'users', 'roles', 'jobs'] : ['collections']) as (keyof typeof parts)[]
-  const results = await Promise.allSettled(wanted.map(key => parts[key]()))
+  // the server's own answer for the signed-in user's rights (administrators need none); a failure keeps the grants
+  const [results] = await Promise.all([Promise.allSettled(wanted.map(key => parts[key]())), admin ? undefined : loadPermissions()])
   if (current !== generation) return
   const next: PaletteData = {}
   const errors: string[] = []

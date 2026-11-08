@@ -22,7 +22,7 @@ vi.mock('../../src/runtime/composables/useMongocampRoles', () => ({
   useMongocampRoles: () => ({ isAdmin: mockIsAdmin, logoutPath: '/logout' }),
 }))
 vi.mock('../../src/runtime/composables/useMongocampPermissions', () => ({
-  useMongocampPermissions: () => ({ canRead: (c: string) => c !== 'secret' }),
+  useMongocampPermissions: () => ({ canRead: (c: string) => c !== 'secret', load: async () => {} }),
 }))
 mockNuxtImport('navigateTo', () => mockNavigate)
 

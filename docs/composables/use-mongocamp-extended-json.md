@@ -17,6 +17,7 @@ function unwrapExtendedJson(value: unknown): unknown
 Recursively converts extended-JSON wrappers into plain values:
 
 - `{ $oid: '...' }` → the plain string
+- `{ $string: '...' }` → the text (the server's marker, in a typed read, for text that looks like a date)
 - `{ $date: ... }` (string, epoch millis, or `{ $numberLong: '...' }`) → an ISO string
 - `{ $numberInt/$numberLong/$numberDouble/$numberDecimal: '...' }` → a JS number — except a `$numberLong` beyond ±(2^53 − 1), which stays its **exact digit string** (`unwrapExtendedJson(value, { exactLongs: false })` gives the rounded number instead, used only for type inference). A `$numberDecimal` still becomes a JS number, so more than ~15 significant digits are rounded
 - Nested objects and arrays recurse
@@ -37,7 +38,11 @@ The inverse conversion, safe to hand to `documentApi.insert`/`documentApi.update
 - A string of digits whose matching field in `originalDoc` was a `$numberLong` wrapper → rewrapped to `{ $numberLong: value }`, so an exact long stays a 64-bit integer (and an untouched one compares equal to the original, so it is never sent)
 - Nested objects and arrays of objects recurse, matched positionally/by-key against `originalDoc` so oid detection still works inside them
 - `{ $date }` is what the server wants on write: since MongoCamp 1.6.3 it is converted into a real date by insert, full update, partial update and `updateMany` (1.5.x and 1.6.1 stored it as a literal sub-document, so the date could not be filtered). A bare date string such as `2024-03-01` stays plain text.
-- Everything else (numbers, booleans, plain strings, unmatched values) passes through as a plain JS value — the server accepts plain shapes on write, only reads return the extended-JSON wrapped form
+- **With a typed original** (a document read with `extendedJson=canonical`, server 1.8.1) the types survive the round trip, because the server honours every wrapper on insert, update, partial update and `updateMany` (verified live):
+  - a string whose original was `{ $string }` → `{ $string: value }`, so date-looking **text stays text** (the server would store a plain timestamp-shaped string as a date);
+  - a number whose original was `{ $numberInt }` (and fits int32) → `{ $numberInt }`; `{ $numberLong }` (a safe integer) → `{ $numberLong }`; `{ $numberDouble }` → `{ $numberDouble }`; `{ $numberDecimal }` → `{ $numberDecimal }`. A value that no longer fits its type (`2.5` for an int) is sent plain and the server picks the type
+- A date-looking string of a field the original did not have is still a `{ $date }`, as the form means it
+- Everything else (booleans, plain strings, numbers without a typed original, unmatched values) passes through as a plain JS value
 - `_id` is always stripped from the output, even if present in `formData` or `originalDoc`
 
 ### Full-replace safety

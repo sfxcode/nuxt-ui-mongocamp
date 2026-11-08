@@ -52,6 +52,7 @@ const mockUpdatePartial = vi.fn()
 const mockUpdateMany = vi.fn()
 const mockDistinctRaw = vi.fn()
 const mockDeleteMany = vi.fn()
+const mockCountDocuments = vi.fn()
 const mockDelete = vi.fn()
 const mockGetFileInformation = vi.fn()
 const mockGetFile = vi.fn()
@@ -66,6 +67,11 @@ function mockRawResponse<T>(value: T, totalHeader?: string) {
   }
 }
 
+// what `getDocumentRaw` answers for an `extendedJson=canonical` read: a fresh response per call (a body can be read once)
+function serveTyped(doc: unknown) {
+  mockGetDocumentRaw.mockImplementation(async () => ({ raw: new Response(JSON.stringify(doc)), value: () => Promise.resolve({}) }))
+}
+
 // useMongocampApi is a genuine Nuxt auto-import (from '#imports', re-exported by
 // @sfxcode/nuxt-mongocamp-server) — unlike this module's own composables (imported via
 // relative paths, mocked with plain vi.mock elsewhere), so mockNuxtImport is the right tool
@@ -75,12 +81,16 @@ mockNuxtImport('useMongocampApi', () => {
   return () => ({
     documentApi: {
       listDocumentsRaw: mockListDocumentsRaw,
+      // the table POSTs the search; the assertions keep reading the flat `{ filter, sort, projection, page }` shape
+      searchDocumentsRaw: (request: { collectionName: string, searchRequest: object, page?: number, rowsPerPage?: number }, init?: unknown) =>
+        (init === undefined ? mockListDocumentsRaw : (r: object) => mockListDocumentsRaw(r, init))({ collectionName: request.collectionName, ...request.searchRequest, page: request.page, rowsPerPage: request.rowsPerPage }),
       getDocumentRaw: mockGetDocumentRaw,
       insert: mockInsert,
       update: mockUpdate,
       updateDocumentPartial: mockUpdatePartial,
       updateMany: mockUpdateMany,
       deleteMany: mockDeleteMany,
+      countDocuments: mockCountDocuments,
       _delete: mockDelete,
     },
     fileApi: {
@@ -99,6 +109,7 @@ mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: '
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockGetDocumentRaw.mockReset() // a typed read set by one test must not answer the next
   localStorage.clear() // remembered table state must not leak between tests
   session.isAdmin = false
   session.grants = undefined
@@ -155,18 +166,11 @@ describe('MongocampCollectionData', () => {
   describe('select all matching', () => {
     const hex = (n: number) => n.toString(16).padStart(24, '0')
     const pageRows = [1, 2, 3].map(n => ({ _id: hex(n), name: `n${n}` }))
-    const isIdCall = (request: { projection?: string[] }) => request.projection?.[0] === '_id'
 
-    // the table shows 3 rows of `total` matches; a projection-by-_id request is the id collection, answered by `ids`
-    function serve(total: number, ids: () => string[] | Promise<string[]> = () => Array.from({ length: total }, (_, i) => hex(i + 1)), idTotal = total) {
-      mockListDocumentsRaw.mockImplementation(async (request: { projection?: string[], page?: number }, init?: { signal?: AbortSignal }) => {
-        if (!isIdCall(request)) return mockRawResponse(pageRows, String(total))
-        const all = await ids()
-        if (init?.signal?.aborted) throw Object.assign(new Error('aborted'), { name: 'AbortError' })
-        const pageSize = 1000
-        const page = request.page ?? 1
-        return mockRawResponse(all.slice((page - 1) * pageSize, page * pageSize).map(_id => ({ _id })), String(idTotal))
-      })
+    // the table shows 3 rows of `total` matches; the count endpoint answers `counted`
+    function serve(total: number, counted = total) {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(pageRows, String(total)))
+      mockCountDocuments.mockResolvedValue({ count: counted })
     }
 
     async function mountAndSelectPage() {
@@ -175,7 +179,6 @@ describe('MongocampCollectionData', () => {
       await component.find('[aria-label="Select all rows on this page"]').trigger('click')
       return component
     }
-    const idCalls = () => mockListDocumentsRaw.mock.calls.filter(c => isIdCall(c[0]))
     const button = (c: Awaited<ReturnType<typeof mountAndSelectPage>>, label: string) => c.findAll('button').find(b => b.text() === label)
 
     it('offers it only when the whole page is selected and more documents match', async () => {
@@ -197,66 +200,50 @@ describe('MongocampCollectionData', () => {
       expect(component.find('[data-test="select-all-banner"]').exists()).toBe(false)
     })
 
-    it('collects the ids of the current filter in pages of 1000 — ids only — and selects them all', async () => {
-      serve(45)
-      const component = await mountAndSelectPage()
-      await button(component, 'Select all 45 matching documents')!.trigger('click')
-      await wait()
-
-      expect(idCalls()).toHaveLength(1)
-      expect(idCalls()[0]![0]).toMatchObject({ collectionName: 'customers', projection: ['_id'], rowsPerPage: 1000, page: 1 })
-      expect(component.text()).toContain('All 45 matching documents are selected.')
-      expect(component.find('[data-test="select-all-banner"]').exists()).toBe(false)
-    })
-
-    it('collects with the filter the table is showing', async () => {
+    it('counts with the filter the table is showing — one request, no ids read', async () => {
       serve(45)
       const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
       await wait()
       await component.find('input[placeholder="Filter rows..."]').setValue('ali')
       await wait(450)
       await component.find('[aria-label="Select all rows on this page"]').trigger('click')
+      mockListDocumentsRaw.mockClear()
       await button(component as never, 'Select all 45 matching documents')!.trigger('click')
       await wait()
-      expect(idCalls()[0]![0].filter).toBe(mockListDocumentsRaw.mock.calls.filter(c => !isIdCall(c[0])).at(-1)![0].filter)
-      expect(idCalls()[0]![0].filter).toContain('ali')
+
+      expect(mockCountDocuments).toHaveBeenCalledTimes(1)
+      expect(mockCountDocuments.mock.calls[0]![0]).toMatchObject({ collectionName: 'customers' })
+      expect(mockCountDocuments.mock.calls[0]![0].filter).toContain('ali')
+      expect(mockListDocumentsRaw).not.toHaveBeenCalled()
+      expect(component.text()).toContain('All 45 matching documents are selected.')
+      expect(component.find('[data-test="select-all-banner"]').exists()).toBe(false)
     })
 
-    it('refuses above the cap without reading anything', async () => {
-      serve(10_001)
+    it('has no cap: more than 10 000 matches are selected like any other count', async () => {
+      serve(250_000)
       const component = await mountAndSelectPage()
-      await button(component, 'Select all 10001 matching documents')!.trigger('click')
+      await button(component, 'Select all 250000 matching documents')!.trigger('click')
       await wait()
-      expect(idCalls()).toHaveLength(0)
-      expect(component.find('[data-test="bulk-note"]').text()).toContain('10001 documents match, more than the 10000')
-      expect(component.text()).not.toContain('matching documents are selected')
+      expect(component.text()).toContain('All 250000 matching documents are selected.')
     })
 
-    it('can be cancelled while collecting, and then nothing is selected', async () => {
-      let release!: () => void
-      serve(45, () => new Promise<string[]>((resolve) => {
-        release = () => resolve([])
-      }))
-      const component = await mountAndSelectPage()
-      await button(component, 'Select all 45 matching documents')!.trigger('click')
-      await wait()
-      expect(component.find('[data-test="collecting"]').text()).toContain('Collecting ids')
-
-      await component.find('[data-test="collecting"] button').trigger('click')
-      release()
-      await wait()
-      expect(component.find('[data-test="collecting"]').exists()).toBe(false)
-      expect(component.text()).not.toContain('matching documents are selected')
-      expect(component.find('[data-test="bulk-note"]').exists()).toBe(false)
-    })
-
-    it('says so when fewer ids were found than the list reported', async () => {
-      serve(45, () => Array.from({ length: 40 }, (_, i) => hex(i + 1)), 45)
+    it('says so when the count differs from what the list reported', async () => {
+      serve(45, 40)
       const component = await mountAndSelectPage()
       await button(component, 'Select all 45 matching documents')!.trigger('click')
       await wait()
       expect(component.text()).toContain('All 40 matching documents are selected.')
-      expect(component.find('[data-test="bulk-note"]').text()).toContain('40 documents were found; the list reported 45')
+      expect(component.find('[data-test="bulk-note"]').text()).toContain('40 documents match now; the list showed 45')
+    })
+
+    it('shows the server message when counting fails and selects nothing', async () => {
+      serve(45)
+      mockCountDocuments.mockRejectedValue(new Error('down'))
+      const component = await mountAndSelectPage()
+      await button(component, 'Select all 45 matching documents')!.trigger('click')
+      await wait()
+      expect(component.text()).not.toContain('matching documents are selected')
+      expect(component.find('[data-test="bulk-note"]').exists()).toBe(true)
     })
 
     it('does not keep the selection when the list is reloaded', async () => {
@@ -272,7 +259,6 @@ describe('MongocampCollectionData', () => {
     describe('deleting', () => {
       async function selectAll(total: number) {
         serve(total)
-        mockDeleteMany.mockImplementation(async (request: { requestBody: { $or: unknown[] } }) => ({ deletedCount: request.requestBody.$or.length }))
         const component = await mountAndSelectPage()
         await button(component, `Select all ${total} matching documents`)!.trigger('click')
         await wait()
@@ -282,7 +268,8 @@ describe('MongocampCollectionData', () => {
       }
       const confirm = (total: number) => modal().findAll('button').find(b => b.text() === `Delete ${total}`)!
 
-      it('needs the collection name typed, then deletes every id in chunks of 100 and reports the count', async () => {
+      it('needs the collection name typed, then deletes everything with ONE request by the filter', async () => {
+        mockDeleteMany.mockResolvedValue({ deletedCount: 250 })
         const component = await selectAll(250)
         expect(modal().text()).toContain('type the collection name customers')
         expect(confirm(250).attributes('disabled')).toBeDefined()
@@ -297,10 +284,33 @@ describe('MongocampCollectionData', () => {
         await confirm(250).trigger('click')
         await wait(150)
 
-        expect(mockDeleteMany).toHaveBeenCalledTimes(3)
-        expect(mockDeleteMany.mock.calls.map(c => c[0].requestBody.$or.length)).toEqual([100, 100, 50])
-        expect(mockDeleteMany.mock.calls[0]![0].requestBody.$or[0]).toEqual({ _id: hex(1) })
+        expect(mockDeleteMany).toHaveBeenCalledTimes(1)
+        expect(mockDeleteMany.mock.calls[0]![0]).toMatchObject({ collectionName: 'customers', requestBody: {}, matchAll: true })
+        expect(mockDelete).not.toHaveBeenCalled()
         expect(component.text()).not.toContain('matching documents are selected')
+      })
+
+      it('sends the Lucene filter instead of ids when the table is filtered', async () => {
+        mockDeleteMany.mockResolvedValue({ deletedCount: 45 })
+        serve(45)
+        const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+        await wait()
+        await component.find('input[placeholder="Filter rows..."]').setValue('ali')
+        await wait(450)
+        await component.find('[aria-label="Select all rows on this page"]').trigger('click')
+        await button(component as never, 'Select all 45 matching documents')!.trigger('click')
+        await wait()
+        await button(component as never, 'Delete selected')!.trigger('click')
+        await wait()
+        await modal().find('input[aria-label="Collection name"]').setValue('customers')
+        await wait()
+        await confirm(45).trigger('click')
+        await wait(150)
+
+        const request = mockDeleteMany.mock.calls[0]![0]
+        expect(request.filter).toContain('ali')
+        expect(request.matchAll).toBeUndefined()
+        expect(request.requestBody).toEqual({})
       })
 
       it('does not ask for the name when only the rows on screen are selected', async () => {
@@ -313,45 +323,22 @@ describe('MongocampCollectionData', () => {
         expect(modal().findAll('button').find(b => b.text() === 'Delete 3')!.attributes('disabled')).toBeUndefined()
       })
 
-      it('can be stopped between chunks; what was not touched stays selected and is reported', async () => {
-        const component = await selectAll(250)
-        let release!: () => void
-        mockDeleteMany.mockImplementationOnce(() => new Promise((resolve) => {
-          release = () => resolve({ deletedCount: 100 })
-        }))
-        await modal().find('input[aria-label="Collection name"]').setValue('customers')
-        await wait()
-        await confirm(250).trigger('click')
-        await wait()
-        expect(modal().find('[data-test="delete-progress"]').text()).toContain('Deleted 0 of 250')
-
-        await modal().findAll('button').find(b => b.text() === 'Stop')!.trigger('click')
-        release()
-        await wait(150)
-
-        expect(mockDeleteMany).toHaveBeenCalledTimes(1)
-        expect(modal().text()).toContain('Stopped: 100 of 250 deleted. The other 150 were not touched.')
-        expect(component.text()).toContain('All 150 matching documents are selected.')
-      })
-
-      it('keeps the ids that could not be deleted selected and says why', async () => {
+      it('keeps the dialog open with the server message when the request fails', async () => {
         const component = await selectAll(150)
-        mockDeleteMany.mockReset()
-        mockDeleteMany.mockResolvedValueOnce({ deletedCount: 100 }).mockRejectedValue(new Error('forbidden'))
-        mockDelete.mockRejectedValue(new Error('forbidden'))
+        mockDeleteMany.mockRejectedValue(new Error('forbidden'))
         await modal().find('input[aria-label="Collection name"]').setValue('customers')
         await wait()
         await confirm(150).trigger('click')
-        await wait(200)
-        expect(modal().text()).toContain('50 of 150 could not be deleted')
-        expect(component.text()).toContain('All 50 matching documents are selected.')
+        await wait(150)
+        expect(modal().text()).toContain('forbidden')
+        expect(component.text()).toContain('All 150 matching documents are selected.')
       })
     })
 
     describe('editing', () => {
-      it('updates every collected id in chunks and shows progress', async () => {
+      it('updates everything with ONE request by the filter', async () => {
         serve(250)
-        mockUpdateMany.mockImplementation(async () => ({ matchedCount: 100 }))
+        mockUpdateMany.mockResolvedValue({ matchedCount: 250, modifiedCount: 250 })
         const component = await mountAndSelectPage()
         await button(component, 'Select all 250 matching documents')!.trigger('click')
         await wait()
@@ -361,9 +348,9 @@ describe('MongocampCollectionData', () => {
         await wait()
         await modal().findAll('button').find(b => b.text() === 'Update 250')!.trigger('click')
         await wait(150)
-        expect(mockUpdateMany).toHaveBeenCalledTimes(3)
-        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.filter.$or).toHaveLength(100)
-        expect(mockUpdateMany.mock.calls.map(c => c[0].updateRequest.filter.$or.length)).toEqual([100, 100, 50])
+        expect(mockUpdateMany).toHaveBeenCalledTimes(1)
+        expect(mockUpdateMany.mock.calls[0]![0]).toMatchObject({ collectionName: 'customers', matchAll: true, updateRequest: { filter: {} } })
+        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.document).toEqual(expect.any(Object))
       })
     })
   })
@@ -438,7 +425,7 @@ describe('MongocampCollectionData', () => {
       await component.find('[aria-label="Edit document"]').trigger('click')
       await wait()
 
-      expect(mockGetDocumentRaw).toHaveBeenCalledWith({ collectionName: 'customers', documentId: 'a'.repeat(24) })
+      expect(mockGetDocumentRaw).toHaveBeenCalledWith({ collectionName: 'customers', documentId: 'a'.repeat(24), extendedJson: 'canonical' })
       expect((findInputByLabel(modal(), 'Age').element as HTMLInputElement).value).toBe('30')
       expect((findInputByLabel(modal(), 'City').element as HTMLInputElement).value).toBe('X')
     })
@@ -453,11 +440,13 @@ describe('MongocampCollectionData', () => {
       expect(modal().find('button[type="submit"]').exists()).toBe(false)
     })
 
-    it('edits an ordinary row without an extra request', async () => {
+    it('edits an ordinary row from the typed (canonical) read of the document too, never from the plain table row', async () => {
+      serveTyped({ _id: { $oid: 'a'.repeat(24) }, name: 'Alice', age: { $numberInt: '30' }, city: 'X' })
       const component = await mountRows()
       await component.find('[aria-label="Edit document"]').trigger('click')
       await wait()
-      expect(mockGetDocumentRaw).not.toHaveBeenCalled()
+      expect(mockGetDocumentRaw).toHaveBeenCalledWith({ collectionName: 'customers', documentId: 'a'.repeat(24), extendedJson: 'canonical' })
+      expect((findInputByLabel(modal(), 'Age').element as HTMLInputElement).value).toBe('30')
     })
   })
 
@@ -484,6 +473,35 @@ describe('MongocampCollectionData', () => {
       const drawer = modal().text()
       expect(drawer).toContain('objectId')
       expect(drawer).toContain('9007199254740993')
+    })
+
+    it('replaces the row by the typed read of the document: int, long, double, decimal, date and text that looks like a date', async () => {
+      serveTyped({
+        _id: { $oid: 'a'.repeat(24) },
+        i: { $numberInt: '5' },
+        db: { $numberDouble: '1.5' },
+        dc: { $numberDecimal: '2.50' },
+        when: { $date: { $numberLong: '1772496000000' } },
+        label: { $string: '2026-01-01T00:00:00.000Z' },
+        name: 'Alice',
+      })
+      const component = await mountRows()
+      await component.findAll('[aria-label="View document"]')[0]!.trigger('click')
+      await wait()
+
+      expect(mockGetDocumentRaw).toHaveBeenCalledWith({ collectionName: 'customers', documentId: 'a'.repeat(24), extendedJson: 'canonical' })
+      const drawer = modal().text()
+      for (const type of ['objectId', 'int', 'double', 'decimal', 'date']) expect(drawer).toContain(type)
+      expect(drawer).toContain('2026-03-03T00:00:00.000Z') // the canonical date, written as the instant it is
+      expect(drawer).toContain('2026-01-01T00:00:00.000Z') // the text that looks like a date, still text
+    })
+
+    it('keeps the row from the table when the typed read fails', async () => {
+      mockGetDocumentRaw.mockRejectedValue(new Error('down'))
+      const component = await mountRows()
+      await component.findAll('[aria-label="View document"]')[0]!.trigger('click')
+      await wait()
+      expect(modal().text()).toContain('9007199254740993')
     })
 
     it('shows the page as JSON with exact longs and back as a table', async () => {
@@ -746,6 +764,7 @@ describe('MongocampCollectionData', () => {
   describe('edit', () => {
     async function openEdit(rows: unknown[]) {
       mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse(rows, String(rows.length)))
+      serveTyped(rows[0])
       const component = await mountSuspended(withUApp(MongocampCollectionData), {
         route: '/',
         props: { collectionName: 'customers' },
@@ -785,6 +804,34 @@ describe('MongocampCollectionData', () => {
       expect(requestBody['metaData.updated']).toBeDefined()
       expect(requestBody).not.toHaveProperty('metaData')
       expect(requestBody).not.toHaveProperty('metaData.createdBy')
+    })
+
+    it('writes an edited int back as an int, and leaves date-looking text and untouched typed fields alone', async () => {
+      await openEdit([{ _id: { $oid: 'doc-1' }, name: 'Alice', age: { $numberInt: '30' }, label: { $string: '2026-01-01T00:00:00.000Z' }, price: { $numberDecimal: '2.50' } }])
+
+      // a number field commits on blur
+      await findInputByLabel(modal(), 'Age').setValue('31')
+      await findInputByLabel(modal(), 'Age').trigger('blur')
+      await wait()
+      await submit()
+
+      const { requestBody } = mockUpdatePartial.mock.calls[0]![0]
+      expect(requestBody.age).toEqual({ $numberInt: '31' })
+      expect(requestBody).not.toHaveProperty('label') // the text that looks like a date is not touched, so it is not sent
+      expect(requestBody).not.toHaveProperty('price')
+      expect(requestBody).not.toHaveProperty('name')
+    })
+
+    it('keeps edited date-looking text as text with $string instead of letting the server turn it into a date', async () => {
+      await openEdit([{ _id: { $oid: 'doc-1' }, name: 'Alice', label: { $string: '2026-01-01T00:00:00.000Z' } }])
+
+      await findInputByLabel(modal(), 'Name').setValue('Alice 2')
+      await wait()
+      await submit()
+
+      const { requestBody } = mockUpdatePartial.mock.calls[0]![0]
+      expect(requestBody.name).toBe('Alice 2')
+      expect(requestBody).not.toHaveProperty('label')
     })
 
     it('closes without any request when nothing was changed', async () => {
@@ -926,6 +973,7 @@ describe('MongocampCollectionData', () => {
 
     async function mountWithLong() {
       mockListDocumentsRaw.mockResolvedValueOnce(longResponse('[{"_id":"doc-1","name":"Alice","big":9007199254740993}]'))
+      serveTyped({ _id: { $oid: 'doc-1' }, name: 'Alice', big: { $numberLong: '9007199254740993' } })
       const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
       await wait()
       return component

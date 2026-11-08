@@ -25,7 +25,7 @@ import useMongocampDocument from '../composables/useMongocampDocument'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
-import { useMongocampFetchAll } from '../composables/useMongocampFetchAll'
+import { useMongocampBulkByFilter } from '../composables/useMongocampBulkByFilter'
 import MongocampDocumentView from './MongocampDocumentView.vue'
 import MongocampQueryBar from './MongocampQueryBar.vue'
 import MongocampExportAll from './MongocampExportAll.vue'
@@ -61,7 +61,8 @@ const { createIndexForField } = useMongocampIndex()
 const { isManager } = useMongocampRoles()
 // Without a write grant the table is read-only: no insert, import, edit, delete or selection. UI-level only (the server
 // refuses a write without a grant anyway); it shows everything when the grants are unknown (utils/grantMatching.ts).
-const { canWrite } = useMongocampPermissions()
+const { canWrite, load: loadPermissions } = useMongocampPermissions()
+watch(() => props.collectionName, name => loadPermissions(name), { immediate: true })
 const writable = computed(() => canWrite(props.collectionName))
 const toast = useToast()
 
@@ -137,28 +138,31 @@ function openInsert() {
   isEditModalOpen.value = true
 }
 
-// A row loaded with a projection lacks fields, and the full-replace fallback of an edit would write it back as the whole
-// document — so editing a projected row starts from the complete document (one request by id).
-async function loadFullRow(row: Row): Promise<Row | undefined> {
+// One document read with its real types: `extendedJson=canonical` (server 1.8.1) writes every value as the extended-JSON
+// wrapper of its type — `{ $oid }`, `{ $date }`, `{ $numberInt | $numberLong | $numberDouble | $numberDecimal }`, and
+// `{ $string }` for text that looks like a date. (`relaxed` would be lighter but the server rounds a long beyond 2^53 in it.)
+// The table's own page stays a plain read: every number as a wrapper would triple its size.
+async function loadTypedRow(row: Row): Promise<Row | undefined> {
   const id = getDocId(row)
   if (!id) return undefined
-  const res = await documentApi.getDocumentRaw({ collectionName: props.collectionName, documentId: id })
+  const res = await documentApi.getDocumentRaw({ collectionName: props.collectionName, documentId: id, extendedJson: 'canonical' })
   return await readJsonKeepingLongs<Row>(res)
 }
 
+// An edit always starts from the typed document: the save then writes every value back as the type it had (an int stays an
+// int, text that looks like a date stays text — the server would turn it into a date), and a row loaded with a projection is
+// complete (the full-replace fallback would otherwise write the partial row back as the whole document).
 async function openEdit(row: Row) {
   const projected = activeProjection.value.length > 0
-  let source = row
-  if (projected) {
-    try {
-      const full = await loadFullRow(row)
-      if (!full) throw new Error('no id')
-      source = full
-    }
-    catch {
-      toast.add({ title: t('nuxtUiMongocamp.collectionData.editLoadFailed'), color: 'error' })
-      return
-    }
+  let source: Row
+  try {
+    const typed = await loadTypedRow(row)
+    if (!typed) throw new Error('no id')
+    source = typed
+  }
+  catch {
+    toast.add({ title: t('nuxtUiMongocamp.collectionData.editLoadFailed'), color: 'error' })
+    return
   }
   editMode.value = 'update'
   editDocId.value = getDocId(source)
@@ -415,9 +419,22 @@ const viewMode = ref<'table' | 'json'>('table')
 const detailContent = ref('')
 let filterTimer: ReturnType<typeof setTimeout> | undefined
 
+// The row is shown at once; a moment later it is replaced by the typed read of the same document, so the viewer shows real
+// types (an id, a date, int/long/double/decimal, text that merely looks like a date) instead of what plain JSON allows.
 function openView(row: Row) {
   viewDoc.value = row
   viewOpen.value = true
+  void showTyped(row)
+}
+
+async function showTyped(row: Row) {
+  try {
+    const typed = await loadTypedRow(row)
+    if (typed && viewDoc.value === row) viewDoc.value = typed
+  }
+  catch {
+    // the row from the table stays: untyped, but never wrong
+  }
 }
 
 const pageJson = computed(() => valueToJson(documents.value, true))
@@ -576,18 +593,16 @@ const bulkEditing = ref(false)
 const bulkEditError = ref('')
 const bulkEditOpen = ref(false)
 
-// ---- "select all matching": the ids of every document the current filter matches, collected page by page. Never more than
-// MAX_MATCHING at once; the ids are a snapshot, so documents added or removed meanwhile are reported, not hidden.
-const MAX_MATCHING = 10_000
-const { fetchAllDocuments } = useMongocampFetchAll()
-const matching = ref<{ ids: string[], reported: number } | null>(null)
-const collecting = ref<{ loaded: number, target?: number } | null>(null)
+// ---- "select all matching": the selection is the Lucene filter of the list, not a list of ids. Delete and edit are one
+// request each (server 1.7.0), so there is no cap and no id snapshot; the count is read once when the selection is made and
+// compared with what the server reports afterwards.
+const { countDocuments, deleteByFilter, updateByFilter } = useMongocampBulkByFilter()
+const matching = ref<{ filter: string | undefined, count: number } | null>(null)
+const counting = ref(false)
 const bulkNote = ref('')
-const bulkProgress = ref<{ done: number, total: number } | null>(null)
-let collectController: AbortController | undefined
-let bulkController: AbortController | undefined
-// what a bulk action works on: every matching document once they were collected, else the ticked rows
-const bulkIds = computed(() => matching.value?.ids ?? selectedDocIds.value)
+// what a bulk action works on: the ticked rows (never listed while "all matching" is on — the filter is the selection)
+const bulkIds = computed(() => (matching.value ? [] : selectedDocIds.value))
+const bulkCount = computed(() => matching.value?.count ?? bulkIds.value.length)
 const selectablePageCount = computed(() => (writable.value && !isBucketCollection(props.collectionName) ? documents.value.length : 0))
 
 function clearMatching() {
@@ -595,65 +610,25 @@ function clearMatching() {
   bulkNote.value = ''
 }
 
-function isAbort(error: unknown): boolean {
-  return (error as { name?: string } | null)?.name === 'AbortError'
-}
-
 async function collectMatching() {
   clearMatching()
-  const target = total.value
-  if (target > MAX_MATCHING) {
-    bulkNote.value = t('nuxtUiMongocamp.bulk.matchingTooMany', { total: target, cap: MAX_MATCHING })
-    return
-  }
-  const controller = new AbortController()
-  collectController = controller
-  collecting.value = { loaded: 0, target }
+  const filter = buildLuceneFilter(filterText.value)
+  counting.value = true
   try {
-    const result = await fetchAllDocuments<Row>(props.collectionName, {
-      filter: buildLuceneFilter(filterText.value),
-      projection: ['_id'],
-      pageSize: 1000,
-      maxRows: MAX_MATCHING,
-      signal: controller.signal,
-      keyOf: row => String(getDocId(row) ?? ''),
-      onProgress: p => (collecting.value = { loaded: p.loaded, target: p.target }),
-    })
-    // more than the cap now: the collection grew while the ids were read, and a partial list must never look complete
-    if (result.truncated) {
-      bulkNote.value = t('nuxtUiMongocamp.bulk.matchingChanged')
-      return
-    }
-    const ids = result.rows.flatMap((row) => {
-      const id = getDocId(row)
-      return id ? [id] : []
-    })
-    const reported = result.total ?? ids.length
-    matching.value = { ids, reported }
+    const count = await countDocuments(props.collectionName, filter)
+    matching.value = { filter, count }
     rowSelection.value = {}
-    if (ids.length !== reported || result.totalChanged) {
-      bulkNote.value = t('nuxtUiMongocamp.bulk.matchingDrift', { collected: ids.length, reported })
-    }
+    if (count !== total.value) bulkNote.value = t('nuxtUiMongocamp.bulk.matchingDrift', { counted: count, reported: total.value })
   }
   catch (e: unknown) {
-    if (!isAbort(e)) bulkNote.value = (await describeServerError(e)).message
+    bulkNote.value = (await describeServerError(e)).message
   }
   finally {
-    collecting.value = null
-    if (collectController === controller) collectController = undefined
+    counting.value = false
   }
-}
-
-function cancelCollect() {
-  collectController?.abort()
-}
-
-function stopBulk() {
-  bulkController?.abort()
 }
 
 function clearBulkSelection() {
-  collectController?.abort()
   rowSelection.value = {}
   clearMatching()
 }
@@ -670,13 +645,17 @@ function rowId(row: Row, index: number): string {
 async function handleBulkDelete() {
   bulkDeleting.value = true
   bulkError.value = ''
-  const ids = [...bulkIds.value]
-  const all = matching.value !== null
-  const controller = new AbortController()
-  bulkController = controller
-  bulkProgress.value = all ? { done: 0, total: ids.length } : null
   try {
-    const { deleted, failed, notAttempted } = await runBulkDelete(
+    if (matching.value) {
+      const { filter, count } = matching.value
+      const deleted = await deleteByFilter(props.collectionName, filter)
+      clearMatching()
+      await fetchDocuments()
+      toast.add({ title: t('nuxtUiMongocamp.bulk.matchingDeleted', { deleted, total: count }), color: 'success' })
+      return
+    }
+    const ids = [...bulkIds.value]
+    const { failed } = await runBulkDelete(
       ids,
       documentId => documentApi._delete({ collectionName: props.collectionName, documentId }),
       undefined,
@@ -689,27 +668,19 @@ async function handleBulkDelete() {
           requestBody: buildIdFilter(chunk) as unknown as { [key: string]: string },
         })).deletedCount,
       },
-      { signal: controller.signal, onProgress: (done, totalIds) => (bulkProgress.value = all ? { done, total: totalIds } : null) },
     )
     await fetchDocuments()
-    const left = [...failed.map(f => f.item), ...(notAttempted ?? [])]
-    if (all) {
-      // what is left stays selected, so a retry or a look at the rest is one click
-      if (left.length > 0) matching.value = { ids: left, reported: left.length }
-      if (notAttempted?.length) bulkError.value = t('nuxtUiMongocamp.bulk.stoppedDelete', { done: deleted.length, total: ids.length, left: notAttempted.length })
-      else if (failed.length > 0) bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: ids.length, reason: describeError(failed[0]!.error).message })
-      else toast.add({ title: t('nuxtUiMongocamp.bulk.matchingDeleted', { deleted: deleted.length, total: ids.length }), color: 'success' })
-    }
-    else if (failed.length > 0) {
+    if (failed.length > 0) {
       // keep only what is still there selected, and say why
       rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
       bulkError.value = t('nuxtUiMongocamp.bulk.partialFailure', { failed: failed.length, total: ids.length, reason: describeError(failed[0]!.error).message })
     }
   }
+  catch (e: unknown) {
+    bulkError.value = (await describeServerError(e)).message
+  }
   finally {
     bulkDeleting.value = false
-    bulkProgress.value = null
-    if (bulkController === controller) bulkController = undefined
   }
 }
 
@@ -729,42 +700,39 @@ function bulkEditFailureReason(error: unknown): string {
 async function handleBulkEdit(edit: { field: string, value: unknown }) {
   bulkEditing.value = true
   bulkEditError.value = ''
-  const ids = [...bulkIds.value]
-  const all = matching.value !== null
-  const controller = new AbortController()
-  bulkController = controller
-  bulkProgress.value = all ? { done: 0, total: ids.length } : null
   // the generated types say string values only; the server takes any JSON value
   const document = { [edit.field]: edit.value } as unknown as { [key: string]: string }
   try {
-    const { updated, failed, notAttempted } = await runBulkUpdate(
+    if (matching.value) {
+      const { filter, count } = matching.value
+      const { modified } = await updateByFilter(props.collectionName, filter, document)
+      clearMatching()
+      await fetchDocuments()
+      toast.add({ title: t('nuxtUiMongocamp.bulk.matchingUpdated', { updated: modified, total: count }), color: 'success' })
+      return
+    }
+    const ids = [...bulkIds.value]
+    const { failed } = await runBulkUpdate(
       ids,
       chunk => documentApi.updateMany({
         collectionName: props.collectionName,
         updateRequest: { filter: buildIdFilter(chunk) as unknown as { [key: string]: string }, document },
       }),
-      { signal: controller.signal, onProgress: (done, totalIds) => (bulkProgress.value = all ? { done, total: totalIds } : null) },
     )
     await fetchDocuments()
-    const failedIds = failed.flatMap(f => f.ids)
-    if (all) {
-      const left = [...failedIds, ...(notAttempted ?? [])]
-      if (left.length > 0) matching.value = { ids: left, reported: left.length }
-      if (notAttempted?.length) bulkEditError.value = t('nuxtUiMongocamp.bulk.stoppedEdit', { done: updated.length, total: ids.length, left: notAttempted.length })
-      else if (failedIds.length > 0) bulkEditError.value = t('nuxtUiMongocamp.bulk.editPartialFailure', { failed: failedIds.length, total: ids.length, reason: bulkEditFailureReason(failed[0]!.error) })
-      else toast.add({ title: t('nuxtUiMongocamp.bulk.matchingUpdated', { updated: updated.length, total: ids.length }), color: 'success' })
-    }
-    else if (failed.length > 0) {
+    if (failed.length > 0) {
       // keep selected only what is still on screen and was not updated, and say why
+      const failedIds = failed.flatMap(f => f.ids)
       const onScreen = new Set(documents.value.map(row => getDocId(row)))
       rowSelection.value = Object.fromEntries(failedIds.filter(id => onScreen.has(id)).map(id => [id, true]))
       bulkEditError.value = t('nuxtUiMongocamp.bulk.editPartialFailure', { failed: failedIds.length, total: ids.length, reason: bulkEditFailureReason(failed[0]!.error) })
     }
   }
+  catch (e: unknown) {
+    bulkEditError.value = (await describeServerError(e)).message
+  }
   finally {
     bulkEditing.value = false
-    bulkProgress.value = null
-    if (bulkController === controller) bulkController = undefined
   }
 }
 
@@ -777,19 +745,21 @@ async function fetchDocuments() {
   loadError.value = null
   // paging, filtering and sorting all fetch — a selection from rows no longer on screen must not survive
   rowSelection.value = {}
-  collectController?.abort()
   clearMatching()
   filterRejected.value = false
   const filter = buildLuceneFilter(filterText.value)
   try {
-    const res = await documentApi.listDocumentsRaw({
+    // POST, so a long filter is no URL: the GET list dies at 2048 characters without CORS headers (server 1.7.0 added this route)
+    const res = await documentApi.searchDocumentsRaw({
       collectionName: props.collectionName,
       rowsPerPage: pagination.value.pageSize,
       page: pagination.value.pageIndex,
-      sort: sorting.value.length ? sortingToMongoSort(sorting.value) : undefined,
-      // only the fields asked for are loaded (the server always adds `_id`); never an empty list, which is a 500
-      projection: activeProjection.value.length > 0 ? activeProjection.value : undefined,
-      filter,
+      searchRequest: {
+        filter,
+        sort: sorting.value.length ? sortingToMongoSort(sorting.value) : undefined,
+        // only the fields asked for are loaded (the server always adds `_id`); never an empty list, which is a 500
+        projection: activeProjection.value.length > 0 ? activeProjection.value : undefined,
+      },
     })
     total.value = +(res.raw.headers.get('x-pagination-count-rows') ?? 0)
     // read from the response text: the generated client's JSON.parse would round integers beyond 2^53
@@ -1106,20 +1076,18 @@ watch(() => props.collectionName, init, { immediate: true })
 
     <MongocampBulkDelete
       :selected="bulkIds"
+      :selected-count="bulkCount"
       :page-count="selectablePageCount"
       :total="total"
       :all-matching="matching !== null"
-      :collecting="collecting"
+      :counting="counting"
       :note="bulkNote"
       :confirm-name="matching ? collectionName : undefined"
       :deleting="bulkDeleting"
-      :progress="bulkProgress"
       :error="bulkError"
       @open="bulkError = ''"
       @clear="clearBulkSelection"
       @select-all="collectMatching"
-      @cancel-collect="cancelCollect"
-      @stop="stopBulk"
       @confirm="handleBulkDelete"
     >
       <template #actions>
@@ -1146,13 +1114,11 @@ watch(() => props.collectionName, init, { immediate: true })
     </MongocampBulkDelete>
     <MongocampBulkEdit
       v-model:open="bulkEditOpen"
-      :selected="bulkIds.length"
+      :selected="bulkCount"
       :fields="editableFields"
       :saving="bulkEditing"
-      :progress="bulkProgress"
       :error="bulkEditError"
       @apply="handleBulkEdit"
-      @stop="stopBulk"
     />
 
     <pre

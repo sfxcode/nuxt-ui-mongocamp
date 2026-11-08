@@ -25,20 +25,27 @@ describe('typeOf', () => {
   })
 })
 
-describe('inferStrings', () => {
-  it('is off by default and types ids and full timestamps on request', () => {
-    const id = 'a'.repeat(24)
-    expect(typeOf(id)).toBe('string')
-    expect(typeOf(id, { inferStrings: true })).toBe('objectId')
-    expect(typeOf('2026-01-01T00:00:00.000Z', { inferStrings: true })).toBe('date')
-    expect(typeOf('2026-01-01T00:00:00+02:00', { inferStrings: true })).toBe('date')
-    for (const text of ['2026-01-01', '2026-13-45T99:00:00Z', 'a'.repeat(23), 'g'.repeat(24), 'hello']) expect(typeOf(text, { inferStrings: true })).toBe('string')
+describe('typed (canonical) documents', () => {
+  it('does not guess: ids and timestamps in plain text are strings, the wrappers carry the types', () => {
+    expect(typeOf('a'.repeat(24))).toBe('string')
+    expect(typeOf('2026-01-01T00:00:00.000Z')).toBe('string')
+    expect(typeOf({ $string: '2026-01-01T00:00:00.000Z' })).toBe('string')
   })
 
-  it('applies to flattenDocument', () => {
-    const doc = { _id: 'a'.repeat(24), at: '2026-01-01T00:00:00.000Z', name: 'x' }
-    expect(flattenDocument(doc).entries.map(e => e.type)).toEqual(['string', 'string', 'string'])
-    expect(flattenDocument(doc, { inferStrings: true }).entries.map(e => e.type)).toEqual(['objectId', 'date', 'string'])
+  it('types a canonical read from the server (recorded on 1.8.1): int, long, double, decimal, date, id, text', () => {
+    const doc = {
+      _id: { $oid: '6af0b563539838117f61b2f9' },
+      i: { $numberInt: '5' },
+      l: { $numberLong: '9007199254740993' },
+      db: { $numberDouble: '1.5' },
+      dc: { $numberDecimal: '2.50' },
+      t: { $date: { $numberLong: '1772496000000' } },
+      s: { $string: '2026-01-01T00:00:00.000Z' },
+      name: 'x',
+    }
+    expect(flattenDocument(doc).entries.map(e => [e.path, e.type])).toEqual([
+      ['_id', 'objectId'], ['i', 'int'], ['l', 'long'], ['db', 'double'], ['dc', 'decimal'], ['t', 'date'], ['s', 'string'], ['name', 'string'],
+    ])
   })
 })
 

@@ -42,6 +42,8 @@ export function unwrapExtendedJson(value: unknown, options: UnwrapOptions = {}):
   if (Array.isArray(value)) return value.map(item => unwrapExtendedJson(item, options))
   if (!isPlainObject(value)) return value
   if (typeof value.$oid === 'string') return value.$oid
+  // text that looks like a date but is stored as text (the server marks it so in a typed read)
+  if (typeof value.$string === 'string' && Object.keys(value).length === 1) return value.$string
   if ('$date' in value) return unwrapDateTime(value)
   const number = unwrapNumber(value, options.exactLongs ?? true)
   if (number !== undefined) return number
@@ -50,10 +52,32 @@ export function unwrapExtendedJson(value: unknown, options: UnwrapOptions = {}):
   return result
 }
 
+const INT32_MIN = -(2 ** 31)
+const INT32_MAX = 2 ** 31 - 1
+
+// A number goes back as the wrapper its original had, so editing an int does not turn it into a long and an edited decimal
+// stays a decimal. A value that no longer fits the type (2.5 for an int) is sent plain and the server picks the type.
+function rewrapNumber(value: number, original: Record<string, unknown>): unknown {
+  if (!Number.isFinite(value)) return value
+  if ('$numberInt' in original && Number.isInteger(value) && value >= INT32_MIN && value <= INT32_MAX) return { $numberInt: String(value) }
+  if ('$numberLong' in original && Number.isSafeInteger(value)) return { $numberLong: String(value) }
+  if ('$numberDouble' in original) return { $numberDouble: String(value) }
+  if ('$numberDecimal' in original) return { $numberDecimal: String(value) }
+  return value
+}
+
 function rewrapValue(value: unknown, originalValue: unknown): unknown {
   // an exact long (kept as its digit string by unwrapExtendedJson) goes back as the wrapper, so it stays a 64-bit integer
   if (typeof value === 'string' && INTEGER_TEXT.test(value) && isPlainObject(originalValue) && typeof originalValue.$numberLong === 'string') {
     return { $numberLong: value }
+  }
+  if (typeof value === 'number' && isPlainObject(originalValue)) {
+    const wrapped = rewrapNumber(value, originalValue)
+    if (wrapped !== value) return wrapped
+  }
+  // the server stores a string that looks like a timestamp as a DATE unless it is wrapped as text — text that was text stays text
+  if (typeof value === 'string' && isPlainObject(originalValue) && typeof originalValue.$string === 'string') {
+    return { $string: value }
   }
   if (typeof value === 'string' && isIsoDateTimeString(value)) {
     return { $date: value }
@@ -75,9 +99,11 @@ function rewrapValue(value: unknown, originalValue: unknown): unknown {
 }
 
 // Converts the plain-object shape a FUAutoForm-generated form emits back into a document
-// payload safe for documentApi.insert/update. Only date-time (-> $date) and originally-$oid
-// string fields need rewrapping; everything else round-trips as a plain JS value, since the
-// server accepts plain shapes on write (only reads return the extended-JSON wrapped form).
+// payload safe for documentApi.insert/update. Date-time (-> $date) and originally-$oid string
+// fields are rewrapped; with a typed original (a canonical read, server 1.8.1) so are text that
+// looks like a date (`$string`) and numbers that were int/long/double/decimal — the server honours
+// every wrapper on insert, update, partial update and updateMany (verified live). Everything else
+// round-trips as a plain JS value.
 // When originalDoc is given (the edit case), the result starts as a clone of it, so any field
 // present on the real document but never touched by the form survives untouched —
 // documentApi.update is full-replace, so reconstructing the payload purely from the form's own

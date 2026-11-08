@@ -22,8 +22,6 @@ export interface FlattenOptions {
   maxDepth?: number
   /** Stops after this many entries (default 10 000); `truncated` tells. */
   maxEntries?: number
-  /** Type a 24-hex string as `objectId` and a full ISO timestamp as `date` (see `typeOf`). Default off. */
-  inferStrings?: boolean
 }
 
 export interface FlattenResult {
@@ -47,6 +45,8 @@ const WRAPPER_TYPES: Record<string, PathValueType> = {
   $numberInt: 'int',
   $numberDouble: 'double',
   $numberDecimal: 'decimal',
+  // text that looks like a date, marked as text by the server in a typed read
+  $string: 'string',
 }
 
 /** The wrapper's type when `value` is exactly one extended-JSON wrapper, else `undefined`. */
@@ -55,24 +55,18 @@ function wrapperType(value: Record<string, unknown>): PathValueType | undefined 
   return keys.length === 1 ? WRAPPER_TYPES[keys[0]!] : undefined
 }
 
-const OBJECT_ID_TEXT = /^[0-9a-f]{24}$/i
-const FULL_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/
-
 /**
- * What a value is, with extended-JSON wrappers recognised as their BSON type. A document the module has already read
- * has no wrappers left (`_id` and dates are plain strings, a long a digit string), so `inferStrings` types a 24-hex
- * string as `objectId` and a full ISO timestamp as `date` — a guess: an ordinary text of that shape is typed the same.
+ * What a value is, with extended-JSON wrappers recognised as their BSON type. Read a document with `extendedJson=canonical`
+ * (server 1.8.1) to get the types: `_id` and nested ids are `{ $oid }`, dates `{ $date }`, numbers `{ $numberInt }` /
+ * `{ $numberLong }` / `{ $numberDouble }` / `{ $numberDecimal }`, date-looking text `{ $string }`. A document read as plain
+ * JSON has no wrappers (ids and dates are strings) and is typed as what JSON says — the module no longer guesses.
  */
-export function typeOf(value: unknown, options: { inferStrings?: boolean } = {}): PathValueType {
+export function typeOf(value: unknown): PathValueType {
   if (value === null || value === undefined) return 'null'
   if (Array.isArray(value)) return 'array'
   if (value instanceof Date) return 'date'
   switch (typeof value) {
     case 'string':
-      if (options.inferStrings) {
-        if (OBJECT_ID_TEXT.test(value as string)) return 'objectId'
-        if (FULL_TIMESTAMP.test(value as string) && !Number.isNaN(Date.parse(value as string))) return 'date'
-      }
       return 'string'
     case 'boolean': return 'boolean'
     case 'number': return 'number'
@@ -119,13 +113,12 @@ export function joinPath(segments: Array<string | number>): string {
 export function flattenDocument(doc: unknown, options: FlattenOptions = {}): FlattenResult {
   const maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH
   const maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES
-  const inferStrings = options.inferStrings ?? false
   const entries: FlatEntry[] = []
   let truncated = false
 
   const visit = (value: unknown, segments: string[], depth: number): void => {
     if (truncated) return
-    const type = typeOf(value, { inferStrings })
+    const type = typeOf(value)
     const container = type === 'object' || type === 'array'
     const children = container ? (Array.isArray(value) ? value.map((v, i) => [String(i), v] as const) : Object.entries(value as Record<string, unknown>)) : []
     // the root of a scalar (or empty) document is reported under the empty path

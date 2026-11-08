@@ -1,10 +1,12 @@
 import type { Middleware, ResponseContext } from '@sfxcode/nuxt-mongocamp-server/api'
 
-// MongoCamp server 1.6.3 answers a request the user has no grant for — a collection without a grant, a write with a
+// MongoCamp server 1.6.3 and — by default — 1.8.1 answer a request the user has no grant for — a collection without a grant, a write with a
 // read-only grant, every admin-only endpoint — with HTTP **401**, code 4011, and a message that says what was
-// missing (`user not authorized for collection`, `user not authorized for request`). A token that really is dead gets the
+// missing (`user not authorized for collection`, `… for bucket`, `… for request`). A token that really is dead gets the
 // same code with the plain message `user not authorized` (verified with a throwaway non-admin user, 2026-11-03,
-// brain/project/mongocamp-server-1-6-3-caveat-recheck.md).
+// brain/project/mongocamp-server-1-6-3-caveat-recheck.md). Since 1.7.0 the status is the operator's choice
+// (`AUTH_GRANT_DENIED_STATUS`, `401` or `403`, default `401`, `403` planned for the next major version): with `403`
+// this middleware simply never fires, so it stays until the default changes (server docs, api-behaviour.md).
 //
 // The dependency's API middleware clears the stored session on *any* 401 ("a 401 means the token itself is invalid"),
 // and leaves a 403 alone ("authenticated but missing a grant"). So one forbidden request logged a non-admin user out

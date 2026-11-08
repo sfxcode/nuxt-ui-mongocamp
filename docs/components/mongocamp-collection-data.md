@@ -103,7 +103,13 @@ This logic is provided by [`useMongocampBucket`](/composables/use-mongocamp-buck
 
 ## Viewing documents
 
-Every row has a **View** button (also without a write grant) that opens the document in a drawer with [`MongocampDocumentView`](/components/mongocamp-document-view): typed values, copy of path and value, tree or JSON. A **Table | JSON** switch in the toolbar shows the page as JSON text.
+Every row has a **View** button (also without a write grant) that opens the document in a drawer with [`MongocampDocumentView`](/components/mongocamp-document-view): typed values, copy of path and value, tree or JSON. The row appears at once and is replaced a moment later by the **typed read** of the document (`extendedJson=canonical`, see below), so the viewer shows the real types — an id, a date, `int` / `long` / `double` / `decimal`, and text that merely looks like a date — instead of what plain JSON allows (if that request fails the table's row stays). A **Table | JSON** switch in the toolbar shows the page as JSON text.
+
+## Typed reads
+
+The table's own page is a **plain** read (ids and dates are strings, a long beyond 2^53 is read from the response text so it stays exact): putting every number in a wrapper would about triple its size. Everything that needs the real types reads **one document** with `extendedJson=canonical` (server 1.8.1) — **View** and **Edit**. Canonical writes `{ $oid }`, `{ $date }`, `{ $numberInt }`, `{ $numberLong }`, `{ $numberDouble }`, `{ $numberDecimal }`, and `{ $string }` for text that looks like a timestamp. (`relaxed` is not used: the server rounds a long beyond 2^53 in it.)
+
+**Edit** always starts from that typed document (one request), and the save writes every value back as the type it had: an edited `int` goes back as `{ $numberInt }` instead of becoming a long, a decimal stays a decimal, and text such as `"2026-01-01T00:00:00.000Z"` is sent as `{ $string }` — otherwise the server stores a timestamp-shaped string as a **date** (verified live: that is what happens to a plain string). Untouched fields are not sent at all. The raw-JSON editor shows the canonical wrappers and parses them back as they are.
 
 ## Query bar
 
@@ -113,14 +119,15 @@ With fields chosen, only those are requested (`projection`); the other columns a
 
 ## Select all matching
 
-Tick the header checkbox to select the page. When more documents match the current filter, the selection bar offers **Select all N matching documents**. The table then reads the ids of every match (`useMongocampFetchAll`, `_id` only, pages of 1 000, with progress and **Cancel**) and **Delete selected** / **Edit selected** work on all of them, in chunks of 100 ids with progress and **Stop**.
+Tick the header checkbox to select the page. When more documents match the current filter, the selection bar offers **Select all N matching documents**. The table counts the matches (`GET …/documents/count`, one request) and **Delete selected** / **Edit selected** then work on the **filter**, not on a list of ids: one `deleteMany` / `updateMany` request with the Lucene filter of the table ([`useMongocampBulkByFilter`](/composables/use-mongocamp-bulk-by-filter)).
 
-- **Cap:** at most 10 000 documents at once. Above that nothing is read and the bar says how many match; narrow the filter first.
+- **No cap, no chunks:** a million matches are one request. (Before server 1.7.0 the table read every id, capped at 10 000.)
 - **Confirmation:** deleting every match needs the **collection name typed**; the count is on the button.
-- **Snapshot, not atomic:** the ids are the documents that matched when they were read. A document added meanwhile is not touched; if fewer ids than the list reported were found, the bar says so. After the action the result is reported (`Deleted 500 of 500 documents`).
-- **Stop or failure:** what was not touched stays selected (`All 150 matching documents are selected.`) with a message, so a retry is one click.
+- **Not a snapshot:** the server applies the filter when the request arrives. If the count differs from what the list showed (documents added or removed meanwhile) the bar says so, and the result is reported (`Deleted 500 of 500 documents`).
+- **Failure:** the dialog stays open with the server's message and the selection stays, so a retry is one click.
+- An empty filter (no quick search, no query) sends `matchAll=true` — the typed collection name is the only guard.
 - Reloading, paging, filtering or sorting drops the selection.
 
 ## Export all matching
 
-The export menu has **Export all matching…** next to the page exports: it opens [`MongocampExportAll`](/components/mongocamp-export-all) with the current filter, sort and fields and the match count, and exports every matching document (cap 50 000, progress, cancel) as JSON, NDJSON or CSV.
+The export menu has **Export all matching…** next to the page exports: it opens [`MongocampExportAll`](/components/mongocamp-export-all) with the current filter, sort and fields and the match count, and the server streams every matching document as JSON, NDJSON or CSV (no document cap; a file cut short is reported as incomplete).

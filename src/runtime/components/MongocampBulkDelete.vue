@@ -15,25 +15,26 @@ const props = defineProps<{
   total?: number
   // the selection is every matching document (collected by the parent), not the rows on screen
   allMatching?: boolean
-  // ids are being collected: how far, so the bar can show it and offer Cancel
-  collecting?: { loaded: number, target?: number } | null
+  // the matching documents are being counted (one quick request)
+  counting?: boolean
+  // how many documents the selection stands for when `selected` does not list them (all matching: the filter is the selection)
+  selectedCount?: number
   // an honest remark about the selection (a refusal, or a count that differs from the list's)
   note?: string
   // when set, the delete must be confirmed by typing this text (the collection name for "all matching")
   confirmName?: string
-  // how far a running deletion is; the modal then shows it and a Stop button
-  progress?: { done: number, total: number } | null
 }>()
 
-const emit = defineEmits<{ confirm: [], clear: [], open: [], selectAll: [], cancelCollect: [], stop: [] }>()
+const emit = defineEmits<{ confirm: [], clear: [], open: [], selectAll: [] }>()
 
 const { t } = useI18n()
 const isOpen = ref(false)
 
 const typed = ref('')
 const confirmed = computed(() => !props.confirmName || typed.value.trim() === props.confirmName)
+const count = computed(() => props.selectedCount ?? props.selected.length)
 const offerSelectAll = computed(() =>
-  !props.allMatching && !props.collecting && props.total !== undefined && props.pageCount !== undefined
+  !props.allMatching && !props.counting && props.total !== undefined && props.pageCount !== undefined
   && props.pageCount > 0 && props.selected.length === props.pageCount && props.total > props.pageCount,
 )
 
@@ -55,15 +56,15 @@ watch(() => props.deleting, (now, before) => {
 
 <template>
   <div
-    v-if="selected.length > 0 || collecting || note"
+    v-if="count > 0 || counting || note"
     class="flex flex-col gap-1"
   >
     <div
-      v-if="selected.length > 0"
+      v-if="count > 0"
       class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-elevated/50 px-3 py-2"
     >
       <span class="text-sm font-medium">
-        {{ allMatching ? t('nuxtUiMongocamp.bulk.allMatchingSelected', { count: selected.length }) : t('nuxtUiMongocamp.bulk.selectedCount', { count: selected.length }) }}
+        {{ allMatching ? t('nuxtUiMongocamp.bulk.allMatchingSelected', { count }) : t('nuxtUiMongocamp.bulk.selectedCount', { count }) }}
       </span>
       <UButton
         icon="i-lucide-trash-2"
@@ -98,23 +99,16 @@ watch(() => props.deleting, (now, before) => {
       />
     </div>
     <div
-      v-if="collecting"
+      v-if="counting"
       class="flex items-center gap-2 px-3 text-sm"
       role="status"
-      data-test="collecting"
+      data-test="counting"
     >
       <UIcon
         name="i-lucide-loader-circle"
         class="size-4 animate-spin"
       />
-      <span>{{ collecting.target === undefined ? t('nuxtUiMongocamp.bulk.collectingUnknown', { loaded: collecting.loaded }) : t('nuxtUiMongocamp.bulk.collecting', { loaded: collecting.loaded, target: collecting.target }) }}</span>
-      <UButton
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        :label="t('nuxtUiMongocamp.bulk.cancelCollecting')"
-        @click="emit('cancelCollect')"
-      />
+      <span>{{ t('nuxtUiMongocamp.bulk.counting') }}</span>
     </div>
     <p
       v-if="note"
@@ -128,7 +122,7 @@ watch(() => props.deleting, (now, before) => {
 
   <UModal
     v-model:open="isOpen"
-    :title="t('nuxtUiMongocamp.bulk.deleteTitle', { count: selected.length }, selected.length)"
+    :title="t('nuxtUiMongocamp.bulk.deleteTitle', { count }, count)"
     :ui="{ footer: 'justify-end' }"
   >
     <template #body>
@@ -162,18 +156,6 @@ watch(() => props.deleting, (now, before) => {
           :aria-label="t('nuxtUiMongocamp.bulk.typeToConfirmLabel')"
         />
       </UFormField>
-      <div
-        v-if="deleting && progress"
-        class="mt-3 flex flex-col gap-1"
-        role="status"
-        data-test="delete-progress"
-      >
-        <UProgress
-          :model-value="progress.done"
-          :max="progress.total"
-        />
-        <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.bulk.progressDelete', progress) }}</span>
-      </div>
       <UAlert
         v-if="error"
         class="mt-3"
@@ -185,14 +167,6 @@ watch(() => props.deleting, (now, before) => {
     </template>
     <template #footer>
       <UButton
-        v-if="deleting && progress"
-        :label="t('nuxtUiMongocamp.bulk.stop')"
-        color="neutral"
-        variant="soft"
-        @click="emit('stop')"
-      />
-      <UButton
-        v-else
         :label="t('nuxtUiMongocamp.common.cancel')"
         color="neutral"
         variant="ghost"
@@ -200,7 +174,7 @@ watch(() => props.deleting, (now, before) => {
         @click="isOpen = false"
       />
       <UButton
-        :label="t('nuxtUiMongocamp.bulk.confirmDelete', { count: selected.length })"
+        :label="t('nuxtUiMongocamp.bulk.confirmDelete', { count })"
         color="error"
         :loading="deleting"
         :disabled="!confirmed"
