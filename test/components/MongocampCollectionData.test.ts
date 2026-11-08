@@ -51,6 +51,7 @@ const mockUpdate = vi.fn()
 const mockUpdatePartial = vi.fn()
 const mockUpdateMany = vi.fn()
 const mockDistinctRaw = vi.fn()
+const mockGetFieldDetails = vi.fn()
 const mockDeleteMany = vi.fn()
 const mockCountDocuments = vi.fn()
 const mockDelete = vi.fn()
@@ -99,7 +100,7 @@ mockNuxtImport('useMongocampApi', () => {
       insertFile: mockInsertFile,
     },
     bucketApi: {},
-    collectionApi: { distinctRaw: mockDistinctRaw },
+    collectionApi: { distinctRaw: mockDistinctRaw, getFieldDetails: mockGetFieldDetails },
     indexApi: { createIndexForField: mockCreateIndexForField },
   })
 })
@@ -110,6 +111,8 @@ mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: '
 beforeEach(() => {
   vi.clearAllMocks()
   mockGetDocumentRaw.mockReset() // a typed read set by one test must not answer the next
+  mockGetFieldDetails.mockReset()
+  mockGetFieldDetails.mockRejectedValue(new Error('no field analysis')) // the page's own fields are the fallback unless a test serves details
   localStorage.clear() // remembered table state must not leak between tests
   session.isAdmin = false
   session.grants = undefined
@@ -1345,6 +1348,44 @@ describe('MongocampCollectionData', () => {
       const fieldSelect = component.findAllComponents(USelect).find(select => select.html().includes('aria-label="Field"'))!
       const offered = (fieldSelect.vm.$props as unknown as { items: { value: string }[] }).items.map(item => item.value)
       expect(offered).toEqual(['_id', 'age', 'name'])
+    })
+
+    describe('field types from the server (fields/detail)', () => {
+      const DETAILS = [
+        { path: '_id', types: [{ type: 'objectId', count: 2 }] },
+        { path: 'name', types: [{ type: 'string', count: 2 }] },
+        { path: 'age', types: [{ type: 'long', count: 2 }] },
+        { path: 'nickname', types: [{ type: 'string', count: 1 }, { type: 'null', count: 1 }] }, // not on the page
+        { path: 'address', types: [{ type: 'object', count: 1 }] },
+        { path: 'address.city', types: [{ type: 'string', count: 1 }] },
+        { path: 'tags', types: [{ type: 'array', count: 1 }] },
+        { path: 'tags[]', types: [{ type: 'string', count: 2 }] },
+        { path: 'joined', types: [{ type: 'date', count: 2 }] },
+        { path: 'blob', types: [{ type: 'binData', count: 1 }] },
+      ]
+
+      async function openFieldSelect(component: Awaited<ReturnType<typeof mountWithRows>>) {
+        await component.find('[aria-label="Filters"]').trigger('click')
+        await wait()
+        await component.findAll('button').find(b => b.text() === 'Add condition')?.trigger('click')
+        await wait()
+        const select = component.findAllComponents(USelect).find(s => s.html().includes('aria-label="Field"'))!
+        return (select.vm.$props as unknown as { items: { value: string }[] }).items.map(item => item.value)
+      }
+
+      it('offers every field of the collection — also those the loaded page lacks, and nested paths — and none without an operator', async () => {
+        mockGetFieldDetails.mockReset()
+        mockGetFieldDetails.mockResolvedValue(DETAILS)
+        const component = await mountWithRows()
+
+        expect(mockGetFieldDetails).toHaveBeenCalledWith({ collectionName: 'customers' }, expect.anything())
+        expect(await openFieldSelect(component)).toEqual(['_id', 'name', 'age', 'nickname', 'address.city', 'joined'])
+      })
+
+      it('falls back to the page\'s own fields when the analysis fails', async () => {
+        const component = await mountWithRows()
+        expect(await openFieldSelect(component)).toEqual(['_id', 'age', 'name']) // the request failed: the page's fields
+      })
     })
 
     it('never offers _id as a bulk-edit target, even though the filter builder knows it', async () => {

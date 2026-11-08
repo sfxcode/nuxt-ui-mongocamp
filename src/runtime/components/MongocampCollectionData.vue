@@ -26,6 +26,7 @@ import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
 import { useMongocampBulkByFilter } from '../composables/useMongocampBulkByFilter'
+import { useMongocampFieldTypes } from '../composables/useMongocampFieldTypes'
 import MongocampDocumentView from './MongocampDocumentView.vue'
 import MongocampQueryBar from './MongocampQueryBar.vue'
 import MongocampExportAll from './MongocampExportAll.vue'
@@ -220,6 +221,8 @@ async function handleSave() {
   try {
     if (editMode.value === 'insert') {
       await documentApi.insert({ collectionName: props.collectionName, requestBody: payload as { [key: string]: string } })
+      // the new document may have fields the collection did not have
+      void fieldTypes.load(true)
     }
     else {
       if (!editDocId.value) return
@@ -400,7 +403,15 @@ const filterableColumns = ref<string[]>([])
 // the applied query: what MongocampQueryBar edits (filter group + the Lucene string it builds, sort, fields to load)
 const query = ref<QueryState>(emptyQueryState())
 const queryBar = ref<InstanceType<typeof MongocampQueryBar> | null>(null)
-const filterFields = ref<{ key: string, type: FilterFieldType }[]>([])
+// The filter builder's fields come from the server's field analysis for the whole collection (`fields/detail`, nested paths
+// included: the server's Lucene takes `address.city`), not from the rows on screen — a field that the current page lacks is
+// still offered. Until it has loaded, or when it failed, the fields of the loaded rows are used as before.
+const fieldTypes = useMongocampFieldTypes(() => props.collectionName)
+const pageFilterFields = ref<{ key: string, type: FilterFieldType }[]>([])
+const filterFields = computed(() => {
+  const fromServer = fieldTypes.filterFields().filter(f => operatorsFor(f.type).length > 0)
+  return fromServer.length > 0 ? fromServer : pageFilterFields.value
+})
 const sorting = ref<SortEntry[]>([])
 const columnVisibility = ref<Record<string, boolean>>({})
 const PAGE_SIZES = [10, 20, 50, 100]
@@ -785,7 +796,7 @@ async function fetchDocuments() {
       // `_id` only gets the exact operators (the server matches `_id:"<oid>"`, but
       // wildcards on it match nothing). Arrays/objects have no operators at all.
       // `exactLongs: false`: a huge integer is still a number field for the filter, whatever its exact text
-      filterFields.value = schemaFromSamples(rows.map(row => unwrapExtendedJson(row, { exactLongs: false }) as Row))
+      pageFilterFields.value = schemaFromSamples(rows.map(row => unwrapExtendedJson(row, { exactLongs: false }) as Row))
         .map(c => ({ key: c.columnKey, type: c.columnKey === '_id' ? 'objectId' as const : toFilterFieldType(c.columnType) }))
         .filter(f => operatorsFor(f.type).length > 0)
       // GridFS files/chunks documents are managed through the bucket (deleting them one by one would
@@ -914,7 +925,8 @@ async function init() {
   pagination.value.pageIndex = 1
   filterText.value = ''
   filterableColumns.value = []
-  filterFields.value = []
+  pageFilterFields.value = []
+  void fieldTypes.load(true)
   query.value = { ...emptyQueryState(), sort: sorting.value.map(e => (e.desc ? `-${e.id}` : e.id)) }
   queryBar.value?.closePanel()
   columnVisibility.value = Object.fromEntries(

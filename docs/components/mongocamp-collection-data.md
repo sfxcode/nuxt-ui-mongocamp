@@ -105,6 +105,10 @@ This logic is provided by [`useMongocampBucket`](/composables/use-mongocamp-buck
 
 Every row has a **View** button (also without a write grant) that opens the document in a drawer with [`MongocampDocumentView`](/components/mongocamp-document-view): typed values, copy of path and value, tree or JSON. The row appears at once and is replaced a moment later by the **typed read** of the document (`extendedJson=canonical`, see below), so the viewer shows the real types — an id, a date, `int` / `long` / `double` / `decimal`, and text that merely looks like a date — instead of what plain JSON allows (if that request fails the table's row stays). A **Table | JSON** switch in the toolbar shows the page as JSON text.
 
+## Filters
+
+The filter builder's field list comes from the server's field analysis for the **whole collection** ([`useMongocampFieldTypes`](/composables/use-mongocamp-field-types), `fields/detail`), not from the rows on screen: a field the current page lacks is still offered, nested paths (`address.city`) are offered and filtered with the server's dotted-path Lucene (verified live: equals, wildcard, ranges, negation), and containers and binary fields are left out. While the analysis loads, or when it fails, the fields of the loaded rows are used as before. It is loaded when the collection changes and after an insert or import.
+
 ## Typed reads
 
 The table's own page is a **plain** read (ids and dates are strings, a long beyond 2^53 is read from the response text so it stays exact): putting every number in a wrapper would about triple its size. Everything that needs the real types reads **one document** with `extendedJson=canonical` (server 1.8.1) — **View** and **Edit**. Canonical writes `{ $oid }`, `{ $date }`, `{ $numberInt }`, `{ $numberLong }`, `{ $numberDouble }`, `{ $numberDecimal }`, and `{ $string }` for text that looks like a timestamp. (`relaxed` is not used: it writes `int`, `long` and `double` all as a bare number, so the types cannot be told apart.)
