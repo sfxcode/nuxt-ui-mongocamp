@@ -54,6 +54,21 @@ The inverse conversion, safe to hand to `documentApi.insert`/`documentApi.update
 
 **This is the single most important correctness property of this composable.** Never reconstruct an update payload purely from the form's own output — always route it through `wrapExtendedJson` with the original row.
 
+## Type hints (`wrapExtendedJson(form, original?, hints?)`)
+
+Without an original there is nothing that says a number was an `int` or a text is text, so an insert (or a field the edited document did not have) used to be guessed: a timestamp-shaped string became a date, every number a plain JSON number. `hints` — a map of dotted path to BSON type (`utils/bsonTypes.ts`, built by [`useMongocampFieldTypes().hints()`](/composables/use-mongocamp-field-types)) — types those scalars:
+
+| Hint | Written as |
+|---|---|
+| `int` | `{ $numberInt }` (int32 range, else plain) |
+| `long` | `{ $numberLong }` (a digit string keeps every digit) |
+| `double` / `decimal` | `{ $numberDouble }` / `{ $numberDecimal }` (the typed text stays: `2.50`) |
+| `date` | `{ $date }` for a full timestamp with a zone |
+| `objectId` | `{ $oid }` for 24 hex characters |
+| `string` | `{ $string }` for a full timestamp (so the server keeps it as text), else the text |
+
+A value that does not fit its type (`2.5` as an `int`) is sent unchanged and the server picks the type. A **typed original always wins** over a hint; paths are dotted (`address.zip`), array elements `tags[]`. `wireValue(type, value)` is the pure core. Verified live on 1.8.1: every wrapper above is stored with that type on insert (the server normalises `1e3` to `1E+3` and `2` to `2.0` when reading back).
+
 ## Related
 
 - [`MongocampCollectionData`](/components/mongocamp-collection-data) — the only current consumer; passes `documents.value.map(unwrapExtendedJson)` as `FUAutoForm`'s `:data` (schema-inference input) and `unwrapExtendedJson(row)` as the live `v-model`

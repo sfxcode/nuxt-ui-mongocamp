@@ -225,3 +225,54 @@ describe('a typed (canonical) document', () => {
     expect(unwrapExtendedJson({ $string: 'x', other: 1 })).toEqual({ $string: 'x', other: 1 })
   })
 })
+
+describe('wrapExtendedJson with type hints (insert, new fields)', () => {
+  it('writes a hinted scalar as its type when there is no original', () => {
+    const payload = wrapExtendedJson({ age: 5, big: '9007199254740993', price: '2.50', label: '2026-01-01T00:00:00.000Z', when: '2026-01-01T00:00:00.000Z', name: 'x' }, undefined, {
+      age: 'int', big: 'long', price: 'decimal', label: 'string', when: 'date',
+    })
+
+    expect(payload).toEqual({
+      age: { $numberInt: '5' },
+      big: { $numberLong: '9007199254740993' },
+      price: { $numberDecimal: '2.50' },
+      label: { $string: '2026-01-01T00:00:00.000Z' }, // text that looks like a date stays text
+      when: { $date: '2026-01-01T00:00:00.000Z' },
+      name: 'x',
+    })
+  })
+
+  it('without a hint the old guess applies: a timestamp-shaped string is a date', () => {
+    expect(wrapExtendedJson({ label: '2026-01-01T00:00:00.000Z' }).label).toEqual({ $date: '2026-01-01T00:00:00.000Z' })
+  })
+
+  it('follows nested objects by dotted path and array elements as path[]', () => {
+    const payload = wrapExtendedJson({ address: { zip: 12345, note: '2026-01-01T00:00:00.000Z' }, scores: [1, 2] }, undefined, {
+      'address.zip': 'int', 'address.note': 'string', 'scores[]': 'double',
+    })
+
+    expect(payload).toEqual({
+      address: { zip: { $numberInt: '12345' }, note: { $string: '2026-01-01T00:00:00.000Z' } },
+      scores: [{ $numberDouble: '1' }, { $numberDouble: '2' }],
+    })
+  })
+
+  it('a typed original wins over a hint; a field without original uses the hint', () => {
+    const original = { age: { $numberLong: '30' }, label: { $string: '2026-01-01T00:00:00.000Z' } }
+    const payload = wrapExtendedJson({ age: 31, label: '2026-02-02T00:00:00.000Z', fresh: 4 }, original, { age: 'int', label: 'date', fresh: 'int' })
+
+    expect(payload.age).toEqual({ $numberLong: '31' })
+    expect(payload.label).toEqual({ $string: '2026-02-02T00:00:00.000Z' })
+    expect(payload.fresh).toEqual({ $numberInt: '4' })
+  })
+
+  it('leaves objects, arrays and null alone when a hint names them, and a value that does not fit goes plain', () => {
+    const payload = wrapExtendedJson({ meta: { a: 1 }, none: null, age: 2.5 }, undefined, { meta: 'int', none: 'int', age: 'int' })
+
+    expect(payload).toEqual({ meta: { a: 1 }, none: null, age: 2.5 })
+  })
+
+  it('never writes the _id', () => {
+    expect(wrapExtendedJson({ _id: '507f1f77bcf86cd799439011', n: 1 }, undefined, { _id: 'objectId', n: 'int' })).toEqual({ n: { $numberInt: '1' } })
+  })
+})

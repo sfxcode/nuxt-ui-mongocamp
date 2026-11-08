@@ -1,4 +1,6 @@
 import { isIsoDateTimeString } from '../utils/isoDate'
+import { wireValue } from '../utils/bsonTypes'
+import type { TypeHints } from '../utils/bsonTypes'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -66,7 +68,19 @@ function rewrapNumber(value: number, original: Record<string, unknown>): unknown
   return value
 }
 
-function rewrapValue(value: unknown, originalValue: unknown): unknown {
+// `{ $oid }`, `{ $numberInt }`, `{ $string }` … — one wrapper, i.e. a typed original
+function isWrapper(value: unknown): value is Record<string, unknown> {
+  if (!isPlainObject(value)) return false
+  const keys = Object.keys(value)
+  return keys.length === 1 && keys[0]!.startsWith('$')
+}
+
+const joinKey = (path: string, key: string) => (path === '' ? key : `${path}.${key}`)
+
+function rewrapValue(value: unknown, originalValue: unknown, path: string, hints?: TypeHints): unknown {
+  // a hint types a scalar that has no typed original (insert, a new field of an edit); a typed original always wins
+  const hint = hints?.[path]
+  if (hint !== undefined && !isWrapper(originalValue) && value !== null && typeof value !== 'object') return wireValue(hint, value)
   // an exact long (kept as its digit string by unwrapExtendedJson) goes back as the wrapper, so it stays a 64-bit integer
   if (typeof value === 'string' && INTEGER_TEXT.test(value) && isPlainObject(originalValue) && typeof originalValue.$numberLong === 'string') {
     return { $numberLong: value }
@@ -87,12 +101,12 @@ function rewrapValue(value: unknown, originalValue: unknown): unknown {
   }
   if (Array.isArray(value)) {
     const originalArray = Array.isArray(originalValue) ? originalValue : []
-    return value.map((item, index) => rewrapValue(item, originalArray[index]))
+    return value.map((item, index) => rewrapValue(item, originalArray[index], `${path}[]`, hints))
   }
   if (isPlainObject(value)) {
     const originalObject = isPlainObject(originalValue) ? originalValue : undefined
     const nested: Record<string, unknown> = {}
-    for (const [key, v] of Object.entries(value)) nested[key] = rewrapValue(v, originalObject?.[key])
+    for (const [key, v] of Object.entries(value)) nested[key] = rewrapValue(v, originalObject?.[key], joinKey(path, key), hints)
     return nested
   }
   return value
@@ -108,14 +122,17 @@ function rewrapValue(value: unknown, originalValue: unknown): unknown {
 // present on the real document but never touched by the form survives untouched —
 // documentApi.update is full-replace, so reconstructing the payload purely from the form's own
 // output would silently delete it.
+// `hints` (dotted path → BSON type, see utils/bsonTypes.ts) types the fields that have no typed original: an insert, or a
+// field the edited document did not have. Without a hint the old guessing applies (a timestamp-shaped string is a date).
 export function wrapExtendedJson(
   formData: Record<string, unknown>,
   originalDoc?: Record<string, unknown>,
+  hints?: TypeHints,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = originalDoc ? { ...originalDoc } : {}
 
   for (const [key, value] of Object.entries(formData)) {
-    result[key] = rewrapValue(value, originalDoc?.[key])
+    result[key] = rewrapValue(value, originalDoc?.[key], key, hints)
   }
 
   delete result._id
