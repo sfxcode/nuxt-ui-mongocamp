@@ -35,12 +35,16 @@ The indexes of one collection with their **size** and **how often each was used*
 |---|---|
 | Index | the name |
 | Keys | the fields **in index order** (`country: ↑, age: ↓`); a text index shows its fields as `body (text)` |
-| Type | `standard`, `unique`, `text`, `expire <seconds>` |
+| Type | `standard`, or the badges `unique`, `text` (+ its default language), `expire <seconds>`, `sparse`, `partial`, `hidden`, `collation` |
 | Size | bytes per index from the collection information |
 | Usage | `12 uses since 11/1/2026`, or a **never used since …** badge |
 
-::: tip Why the order comes from the name
-The server lists an index's keys as an unordered map, so for a compound index the order only survives in its name (`c_1_b_1`). The component reads the order from the standard name and falls back to the listed order for a custom name. Order matters: queries must filter on the first field.
+::: tip The order is the server's
+The indexes come from `GET …/index/details` (server 1.8.1), which lists the keys as an **ordered** array — so the order is right for a custom-named compound index too (before 1.8.1 it only survived in the standard name `c_1_b_1`). Order matters: queries must filter on the first field.
+:::
+
+::: warning A partial filter is shown as a flag only
+The server lists an index's `partialFilterExpression` garbled (`{ "n": { "underlying": null } }`), so the table only says that there **is** a partial filter, never what it is. Creating one works.
 :::
 
 ::: warning "Never used" is a hint
@@ -59,10 +63,10 @@ When two or more indexes have a size (or a use count), a collapsed **Charts** se
 |---|---|---|
 | Standard | 1–8, each ascending or descending | compound when there are several |
 | Unique | 1–8 | compound unique works too; fails when existing documents repeat the values |
-| Text | one | |
+| Text | 1–8 | one text index may cover several fields (a collection has at most one); the direction is not used |
 | Expiring | one (a date field) | *Expire after*: a number and `s`, `m`, `h` or `d` — `3600s`, `7d` |
 
-A standard or unique index can get a name. The form says what is missing (empty or repeated field, bad duration, too many fields) before anything is sent. Creating an index that already exists is a no-op on the server, not an error; an index with the same fields but other options is refused and the server's message is shown. A unique index over duplicate data answers with a readable "the existing documents repeat values of these fields" instead of MongoDB's raw error.
+Every kind but expiring can get a **name**, be **sparse** (only documents that have the field), **hidden** (kept up to date but not used by queries) and have an optional **partial filter** (a MongoDB filter as JSON — only matching documents are indexed; not together with sparse, the form refuses the combination). Compound order is kept: the keys go to the server as an ordered list. The form says what is missing (empty or repeated field, bad duration, a partial filter that is not a JSON object, too many fields) before anything is sent. Creating an index that already exists is a no-op on the server, not an error; an index with the same fields but other options is refused and the server's message is shown. A unique index over duplicate data answers with a readable "the existing documents repeat values of these fields" instead of MongoDB's raw error.
 
 ## Dropping
 

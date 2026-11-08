@@ -21,7 +21,6 @@ const modal = () => new DOMWrapper(document.body)
 
 const mockListIndices = vi.fn()
 const mockCreateIndex = vi.fn()
-const mockCreateText = vi.fn()
 const mockCreateExpiring = vi.fn()
 const mockDeleteIndex = vi.fn()
 const mockInfo = vi.fn()
@@ -29,9 +28,8 @@ const mockAggregateRaw = vi.fn()
 
 mockNuxtImport('useMongocampApi', () => () => ({
   indexApi: {
-    listIndices: mockListIndices,
+    indexDetails: mockListIndices,
     createIndex: mockCreateIndex,
-    createTextIndex: mockCreateText,
     createExpiringIndex: mockCreateExpiring,
     deleteIndex: mockDeleteIndex,
   },
@@ -41,13 +39,19 @@ mockNuxtImport('useMongocampApi', () => () => ({
 const rawResponse = (rows: unknown) => ({ raw: { headers: { get: () => null } }, value: () => Promise.resolve(rows) })
 const since = '2026-11-01T10:00:00.000Z'
 
-// recorded from server 1.6.3 (live spike 2026-11-04): the listing is unordered, text keys are internal
+// recorded from server 1.8.1 (live spike 2026-11-08): ordered keys as text directions, options listed
+const detail = (name: string, keys: Array<[string, string]>, extra: Record<string, unknown> = {}) => ({
+  name, keys: keys.map(([field, direction]) => ({ field, direction })), unique: false, sparse: false, hidden: false,
+  partialFilterExpression: null, collation: null, weights: null, defaultLanguage: null, expireAfterSeconds: null, version: 2, ...extra,
+})
 const INDEXES = [
-  { name: '_id_', keys: { _id: 1 }, unique: true, text: false, expire: false, expireAfterSeconds: -1, weights: {} },
-  { name: 'c_1_b_1', keys: { b: 1, c: 1 }, unique: true, text: false, expire: false, expireAfterSeconds: -1, weights: {} },
-  { name: 'name_1', keys: { name: 1 }, unique: false, text: false, expire: false, expireAfterSeconds: -1, weights: {} },
-  { name: 'when_1', keys: { when: 1 }, unique: false, text: false, expire: true, expireAfterSeconds: 3600, weights: {} },
-  { name: 'body_text', keys: { _ftsx: 1, _fts: 'text' }, unique: false, text: true, expire: false, expireAfterSeconds: -1, weights: { body: 1 } },
+  detail('_id_', [['_id', '1']], { unique: true }),
+  detail('c_1_b_1', [['c', '1'], ['b', '1']], { unique: true }),
+  detail('name_1', [['name', '1']]),
+  detail('when_1', [['when', '1']], { expireAfterSeconds: 3600 }),
+  detail('body_text', [['body', 'text']], { weights: { body: 1 }, defaultLanguage: 'english' }),
+  detail('my_idx', [['name', '1'], ['n', '-1']], { sparse: true, hidden: true }),
+  detail('active_1', [['active', '1']], { partialFilterExpression: { active: { underlying: null } }, collation: { locale: 'de' } }),
 ]
 const USAGE = [
   { name: '_id_', key: { _id: 1 }, accesses: { ops: 0, since } },
@@ -60,10 +64,9 @@ const USAGE = [
 beforeEach(() => {
   vi.resetAllMocks() // also drops unused `…Once` results, so one failing test cannot leak into the next
   mockListIndices.mockResolvedValue(INDEXES)
-  mockInfo.mockResolvedValue({ count: 10, size: 1, storageSize: 1, avgObjSize: 1, nindexes: 5, totalIndexSize: 1, indexSizes: { _id_: 4096, c_1_b_1: 20480, name_1: 20480, when_1: 20480, body_text: 20480 } })
+  mockInfo.mockResolvedValue({ count: 10, size: 1, storageSize: 1, avgObjSize: 1, nindexes: 7, totalIndexSize: 1, indexSizes: { _id_: 4096, c_1_b_1: 20480, name_1: 20480, when_1: 20480, body_text: 20480 } })
   mockAggregateRaw.mockResolvedValue(rawResponse(USAGE))
   mockCreateIndex.mockResolvedValue({ name: 'a_1' })
-  mockCreateText.mockResolvedValue({ name: 'body_text' })
   mockCreateExpiring.mockResolvedValue({ name: 'when_1' })
   mockDeleteIndex.mockResolvedValue({ dropped: true })
 })
@@ -83,17 +86,29 @@ const button = (scope: { findAll: (s: string) => Array<{ text: () => string, att
 describe('MongocampIndexes — list', () => {
   it('shows keys in index order, type flags, size and usage', async () => {
     const c = await mountIndexes()
-    expect(cell(c, 'c_1_b_1', 1)).toBe('c: ↑, b: ↑') // the server listed { b, c }; the name keeps the order
+    expect(cell(c, 'c_1_b_1', 1)).toBe('c: ↑, b: ↑')
+    expect(cell(c, 'my_idx', 1)).toBe('name: ↑, n: ↓') // a custom name: the order comes from the listing, not from the name
     expect(cell(c, 'c_1_b_1', 2)).toContain('unique')
     expect(cell(c, 'when_1', 2)).toContain('expire 3600s')
     expect(cell(c, 'body_text', 1)).toBe('body (text)')
     expect(cell(c, 'body_text', 2)).toContain('text')
+    expect(cell(c, 'body_text', 2)).toContain('english')
     expect(cell(c, 'name_1', 2)).toContain('standard')
     expect(cell(c, 'c_1_b_1', 3)).toBe('20 KB')
     expect(cell(c, '_id_', 3)).toBe('4.0 KB')
     expect(cell(c, 'c_1_b_1', 4)).toContain('12 uses')
     expect(cell(c, 'c_1_b_1', 4)).toContain(new Date(since).toLocaleDateString())
-    expect(c.text()).toContain('5 indexes')
+    expect(c.text()).toContain('7 indexes')
+  })
+
+  it('shows sparse, hidden, partial and collation flags (a partial filter only as a flag — the server lists it garbled)', async () => {
+    const c = await mountIndexes()
+    expect(cell(c, 'my_idx', 2)).toContain('sparse')
+    expect(cell(c, 'my_idx', 2)).toContain('hidden')
+    expect(cell(c, 'active_1', 2)).toContain('partial')
+    expect(cell(c, 'active_1', 2)).toContain('collation')
+    expect(c.html()).not.toContain('underlying')
+    expect(cell(c, 'name_1', 2)).toContain('standard')
   })
 
   it('charts size and uses of the loaded indexes in a collapsed section, with the same numbers in the tables', async () => {
@@ -175,7 +190,7 @@ describe('MongocampIndexes — create', () => {
     await button(modal(), 'Direction of field 2')!.trigger('click')
     await submit()
 
-    expect(mockCreateIndex).toHaveBeenCalledWith({ collectionName: 'people', indexCreateRequest: { keys: { country: 1, age: -1 }, indexOptionsRequest: undefined } })
+    expect(mockCreateIndex).toHaveBeenCalledWith({ collectionName: 'people', indexCreateRequest: { orderedKeys: [{ field: 'country', direction: '1' }, { field: 'age', direction: '-1' }], indexOptionsRequest: undefined } })
     expect(mockListIndices).toHaveBeenCalledTimes(2)
     expect(c.findComponent(MongocampIndexes).emitted('changed')).toHaveLength(1)
     expect(modal().find('button[type="submit"]').exists()).toBe(false)
@@ -189,18 +204,42 @@ describe('MongocampIndexes — create', () => {
     await field(1).setValue('email')
     await modal().find('input[aria-label="Name (optional)"]').setValue('email_unique')
     await submit()
-    expect(mockCreateIndex.mock.calls[0]![0].indexCreateRequest).toEqual({ keys: { email: 1 }, indexOptionsRequest: { unique: true, name: 'email_unique' } })
+    expect(mockCreateIndex.mock.calls[0]![0].indexCreateRequest).toEqual({ orderedKeys: [{ field: 'email', direction: '1' }], indexOptionsRequest: { unique: true, name: 'email_unique' } })
   })
 
-  it('creates a text index on one field and an expiring one with its duration', async () => {
+  it('creates an index with sparse and hidden, or with a partial filter, and refuses both sparse and partial', async () => {
+    const c = await mountIndexes()
+    await openCreate(c)
+    await field(1).setValue('email')
+    await modal().findAll('button[role="checkbox"]')[0]!.trigger('click') // sparse
+    await modal().findAll('button[role="checkbox"]')[1]!.trigger('click') // hidden
+    await submit()
+    expect(mockCreateIndex.mock.calls[0]![0].indexCreateRequest.indexOptionsRequest).toEqual({ sparse: true, hidden: true })
+
+    await openCreate(c)
+    await field(1).setValue('email')
+    await modal().find('textarea').setValue('{ "active": true }')
+    await modal().findAll('button[role="checkbox"]')[0]!.trigger('click') // sparse again
+    await submit()
+    expect(modal().text()).toContain('Sparse and a partial filter cannot be combined')
+    expect(mockCreateIndex).toHaveBeenCalledTimes(1)
+
+    await modal().findAll('button[role="checkbox"]')[0]!.trigger('click') // sparse off
+    await submit()
+    expect(mockCreateIndex.mock.calls[1]![0].indexCreateRequest.indexOptionsRequest).toEqual({ partialFilterExpression: { active: true } })
+  })
+
+  it('creates a text index over several fields and an expiring one with its duration', async () => {
     const c = await mountIndexes()
     await openCreate(c)
     c.findComponent(USelect).vm.$emit('update:modelValue', 'text')
     await wait()
-    expect(button(modal(), 'Add field')).toBeUndefined()
+    expect(button(modal(), 'Direction of field 1')).toBeUndefined()
     await field(1).setValue('body')
+    await button(modal(), 'Add field')!.trigger('click')
+    await field(2).setValue('title')
     await submit()
-    expect(mockCreateText).toHaveBeenCalledWith({ collectionName: 'people', fieldName: 'body' })
+    expect(mockCreateIndex.mock.calls[0]![0].indexCreateRequest).toEqual({ orderedKeys: [{ field: 'body', direction: 'text' }, { field: 'title', direction: 'text' }], indexOptionsRequest: undefined })
 
     await openCreate(c)
     c.findComponent(USelect).vm.$emit('update:modelValue', 'expiring')
@@ -321,6 +360,6 @@ describe('MongocampIndexes — reload', () => {
     mockListIndices.mockClear()
     name.value = 'orders'
     await wait()
-    expect(mockListIndices).toHaveBeenCalledWith({ collectionName: 'orders' })
+    expect(mockListIndices.mock.calls[0]![0]).toEqual({ collectionName: 'orders' })
   })
 })

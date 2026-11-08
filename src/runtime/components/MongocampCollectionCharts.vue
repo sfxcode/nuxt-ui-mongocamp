@@ -3,15 +3,15 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from '#imports'
 import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import type { DescribedAggregationError } from '../composables/useMongocampAggregation'
-import { analyzeSamples } from '../utils/analyzeSamples'
 import type { ValueKind } from '../utils/analyzeSamples'
 import type { DateUnit } from '../utils/aggregationTemplates'
-import { chartKindFor, chartRequest, chartTypeFor, DEFAULT_BUCKETS, DEFAULT_TOP, dominantKind, highestPoint, MAX_PERIODS, rowsToPoints } from '../utils/collectionChart'
+import { dominantKindOfField } from '../utils/fieldDetails'
+import { chartKindFor, chartRequest, chartTypeFor, DEFAULT_BUCKETS, DEFAULT_TOP, highestPoint, MAX_PERIODS, rowsToPoints } from '../utils/collectionChart'
 import type { ChartKind, ChartPoint } from '../utils/collectionChart'
 
 // How the values of one field are distributed, drawn with Nuxt UI's `UChart` (which needs `@tanstack/charts`): the most common
 // values of a text or true/false field, documents per year/month/day of a date field, equal-count ranges of a number field.
-// The kind comes from a sample of the documents unless `kind` is given. The data comes from one aggregation; a text
+// The kind comes from the server's field analysis (`fields/detail`) unless `kind` is given. The data comes from one aggregation; a text
 // description (aria) and a collapsible table carry the same numbers for anyone who cannot see the chart.
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -22,14 +22,17 @@ const props = withDefaults(defineProps<{
   top?: number
   // numbers: how many ranges
   buckets?: number
+  // a Lucene filter (what a table shows): only the matching documents are charted; the kind is still detected from the whole collection
+  filter?: string
 }>(), {
   kind: undefined,
   top: DEFAULT_TOP,
   buckets: DEFAULT_BUCKETS,
+  filter: undefined,
 })
 
 const { t } = useI18n()
-const { runAggregation, sampleDocuments, describeAggregationError } = useMongocampAggregation()
+const { runAggregation, listFieldDetails, describeAggregationError } = useMongocampAggregation()
 
 type Status = 'loading' | 'ready' | 'empty' | 'unsupported' | 'unknown' | 'invalid' | 'error'
 const status = ref<Status>('loading')
@@ -59,9 +62,10 @@ async function load() {
     if (!chartKind) {
       const key = `${props.collectionName}\u0000${props.field}`
       if (detected?.key !== key) {
-        const { rows } = await sampleDocuments(props.collectionName, 200)
+        // the server's own field analysis (types of every path found in a sample of its documents), not a client-side guess
+        const details = await listFieldDetails(props.collectionName)
         if (mine !== run) return
-        const found = dominantKind(analyzeSamples(rows), props.field)
+        const found = dominantKindOfField(details, props.field)
         detected = { key, kind: chartKindFor(found), type: found }
       }
       detectedType.value = detected.type
@@ -77,7 +81,7 @@ async function load() {
       status.value = 'invalid'
       return
     }
-    const result = await runAggregation(props.collectionName, request.pipeline, { page: 1, rowsPerPage: request.rowsPerPage }, { signal: own.signal })
+    const result = await runAggregation(props.collectionName, request.pipeline, { page: 1, rowsPerPage: request.rowsPerPage }, { signal: own.signal, filter: props.filter })
     if (mine !== run) return
     points.value = rowsToPoints(chartKind, result.rows, t('nuxtUiMongocamp.charts.noneLabel'))
     total.value = result.total
@@ -90,7 +94,7 @@ async function load() {
   }
 }
 
-watch(() => [props.collectionName, props.field, props.kind, props.top, props.buckets], load, { immediate: true })
+watch(() => [props.collectionName, props.field, props.kind, props.top, props.buckets, props.filter], load, { immediate: true })
 // only the date histogram changes with the unit
 watch(unit, () => {
   if (current.value === 'dates') void load()

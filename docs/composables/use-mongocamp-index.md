@@ -4,7 +4,9 @@ Wraps `indexApi` for MongoDB index management — used by [`MongocampCollectionI
 
 ```ts
 const {
-  listIndexes,         // (collectionName: string) => Promise<MongoIndex[]>
+  listIndexes,         // (collectionName: string) => Promise<MongoIndex[]> — the old, unordered listing
+  listIndexDetails,    // (collectionName: string) => Promise<IndexInfo[]> — ordered keys and all options (server 1.8.1)
+  createOrderedIndex,  // (collectionName: string, orderedKeys: { field, direction }[], options?: IndexOptionsRequest) => Promise<IndexCreateResponse>
   createIndex,          // (collectionName: string, keys: Record<string, number>, options?: IndexOptionsRequest) => Promise<IndexCreateResponse>
   createIndexForField,   // (collectionName: string, fieldName: string, sortAscending?: boolean) => Promise<IndexCreateResponse>
   createUniqueIndex,     // (collectionName: string, fieldName: string, sortAscending?: boolean) => Promise<IndexCreateResponse>
@@ -13,6 +15,19 @@ const {
   deleteIndex,           // (collectionName: string, indexName: string) => Promise<IndexDropResponse>
 } = useMongocampIndex()
 ```
+
+## `listIndexDetails` and `createOrderedIndex` (server 1.8.1)
+
+`listIndexDetails` calls `GET …/index/details` (15 s timeout) and returns, per index, the keys as an **ordered** array `{ field, direction }` (`direction` is the text `'1'`, `'-1'` or `'text'`) with `unique`, `sparse`, `hidden`, `weights`, `defaultLanguage`, `expireAfterSeconds` and `collation` — what [`MongocampIndexes`](/components/mongocamp-indexes) shows. `partialFilterExpression` is listed but **garbled by the server** (`{ "n": { "underlying": null } }`): treat it as "there is one".
+
+`createOrderedIndex` creates from the same ordered keys, so the field order of a compound index is kept, and takes the options of the newer servers (`unique`, `sparse`, `hidden`, `name`, `partialFilterExpression`, `weights`, `defaultLanguage`, `collation`):
+
+```ts
+await createOrderedIndex('users', [{ field: 'country', direction: '1' }, { field: 'age', direction: '-1' }], { name: 'by_country_age', hidden: true })
+await createOrderedIndex('posts', [{ field: 'title', direction: 'text' }, { field: 'body', direction: 'text' }], { defaultLanguage: 'english' }) // one text index over several fields
+```
+
+Refusals (verified live): a direction other than `1`/`-1`/`text` is a `400` (code `4006`), `sparse` together with `partialFilterExpression` a `400` (code `67`), a unique index over duplicate data a `409` (code `11000`), dropping `_id_` a `400` (code `72`), dropping a missing index a `404` (code `27`).
 
 ## Request shapes differ per creator
 

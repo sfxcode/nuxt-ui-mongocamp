@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
+import type { IndexInfo } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useToast } from '#imports'
 import { useMongocampIndex } from '../composables/useMongocampIndex'
 import { useMongocampCollectionStats } from '../composables/useMongocampCollectionStats'
 import type { CollectionStorage, IndexUsage } from '../composables/useMongocampCollectionStats'
 import { readServerError } from '../utils/serverError'
 import {
-  buildIndexRequest, canDropIndex, classifyIndexError, describeKey, formatBytes, indexKeys, isUnusedIndex, MAX_INDEX_FIELDS,
-  validateIndexForm,
+  buildIndexRequest, canDropIndex, classifyIndexError, describeKey, formatBytes, indexKeys, isExpiringIndex, isTextIndex, isUnusedIndex,
+  MAX_INDEX_FIELDS, validateIndexForm,
 } from '../utils/indexForm'
 import type { IndexForm, IndexFormProblem, IndexKind } from '../utils/indexForm'
 import { shortenLabel } from '../utils/chartData'
@@ -37,14 +37,14 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const toast = useToast()
 const { describeServerError } = useMongocampError()
-const { listIndexes, createIndex, createTextIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
+const { listIndexDetails, createOrderedIndex, createExpiringIndex, deleteIndex } = useMongocampIndex()
 const { getStorage, getIndexUsage } = useMongocampCollectionStats()
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
 
-const indexes = ref<MongoIndex[]>([])
+const indexes = ref<IndexInfo[]>([])
 const storage = ref<CollectionStorage | null>(null)
 const usage = ref<Map<string, IndexUsage>>(new Map())
 const usageFailed = ref(false)
@@ -60,7 +60,7 @@ async function load() {
   loading.value = true
   loadError.value = null
   try {
-    const [list, size, uses] = await Promise.allSettled([listIndexes(props.collectionName), getStorage(props.collectionName), getIndexUsage(props.collectionName)])
+    const [list, size, uses] = await Promise.allSettled([listIndexDetails(props.collectionName), getStorage(props.collectionName), getIndexUsage(props.collectionName)])
     if (mine !== run) return
     if (list.status === 'rejected') {
       loadError.value = list.reason
@@ -85,8 +85,13 @@ interface Row {
   keys: string
   unique: boolean
   text: boolean
-  expire: boolean
-  expireAfterSeconds: number
+  sparse: boolean
+  hidden: boolean
+  // only that there is a partial filter: the server lists its content garbled
+  partial: boolean
+  collation: boolean
+  language: string | undefined
+  expireAfterSeconds: number | undefined
   size: number | undefined
   ops: number | undefined
   since: string | null | undefined
@@ -97,9 +102,13 @@ const rows = computed<Row[]>(() =>
     name: idx.name,
     keys: indexKeys(idx).map(describeKey).join(', '),
     unique: idx.unique,
-    text: idx.text,
-    expire: idx.expire,
-    expireAfterSeconds: idx.expireAfterSeconds,
+    text: isTextIndex(idx),
+    sparse: idx.sparse,
+    hidden: idx.hidden,
+    partial: idx.partialFilterExpression != null,
+    collation: idx.collation != null,
+    language: idx.defaultLanguage ?? undefined,
+    expireAfterSeconds: isExpiringIndex(idx) ? idx.expireAfterSeconds : undefined,
     size: storage.value?.indexSizes[idx.name],
     ops: usage.value.get(idx.name)?.ops,
     since: usage.value.get(idx.name)?.since,
@@ -139,7 +148,12 @@ const columns = computed<TableColumn<Row>[]>(() => [
       const flags: Array<{ label: string, color: 'warning' | 'info' | 'secondary' }> = []
       if (row.original.unique) flags.push({ label: 'unique', color: 'warning' })
       if (row.original.text) flags.push({ label: 'text', color: 'info' })
-      if (row.original.expire) flags.push({ label: `expire ${row.original.expireAfterSeconds}s`, color: 'secondary' })
+      if (row.original.expireAfterSeconds !== undefined) flags.push({ label: `expire ${row.original.expireAfterSeconds}s`, color: 'secondary' })
+      if (row.original.sparse) flags.push({ label: 'sparse', color: 'secondary' })
+      if (row.original.partial) flags.push({ label: 'partial', color: 'secondary' })
+      if (row.original.hidden) flags.push({ label: 'hidden', color: 'warning' })
+      if (row.original.collation) flags.push({ label: 'collation', color: 'secondary' })
+      if (row.original.text && row.original.language) flags.push({ label: row.original.language, color: 'info' })
       const badges = flags.map(flag => h(UBadge, { label: flag.label, color: flag.color, variant: 'subtle', size: 'sm' }))
       // a plain index has none of the special flags — say so instead of leaving the cell blank
       if (badges.length === 0) badges.push(h(UBadge, { label: t('nuxtUiMongocamp.collectionInfos.typeStandard'), color: 'neutral', variant: 'subtle', size: 'sm' }))
@@ -199,18 +213,24 @@ const creating = ref(false)
 const form = ref<IndexForm>(blankForm())
 
 function blankForm(): IndexForm {
-  return { kind: 'standard', fields: [{ field: '', descending: false }], name: '', expireAfter: '3600s' }
+  return { kind: 'standard', fields: [{ field: '', descending: false }], name: '', expireAfter: '3600s', sparse: false, hidden: false, partialFilter: '' }
 }
+
+// a JSON example belongs here, not in a locale string (vue-i18n reads braces as placeholders)
+const PARTIAL_PLACEHOLDER = '{ "status": "active" }'
 
 const kindItems = computed(() => (['standard', 'unique', 'text', 'expiring'] as IndexKind[]).map(kind => ({
   value: kind,
   label: t(`nuxtUiMongocamp.indexes.kind${kind.charAt(0).toUpperCase()}${kind.slice(1)}`),
 })))
-const singleField = computed(() => form.value.kind === 'text' || form.value.kind === 'expiring')
+// an expiring index has one field; a text index may span several (no direction), the others are compound
+const singleField = computed(() => form.value.kind === 'expiring')
+const textKind = computed(() => form.value.kind === 'text')
+const takesOptions = computed(() => form.value.kind !== 'expiring')
 const shownFields = computed(() => (singleField.value ? form.value.fields.slice(0, 1) : form.value.fields))
 const problems = computed(() => validateIndexForm(form.value))
 const problemText = (problem: IndexFormProblem) => {
-  const key = { 'no-field': 'problemNoField', 'empty-field': 'problemEmptyField', 'duplicate-field': 'problemDuplicateField', 'too-many-fields': 'problemTooManyFields', 'bad-duration': 'problemBadDuration', 'bad-name': 'problemBadName' }[problem]
+  const key = { 'no-field': 'problemNoField', 'empty-field': 'problemEmptyField', 'duplicate-field': 'problemDuplicateField', 'too-many-fields': 'problemTooManyFields', 'bad-duration': 'problemBadDuration', 'bad-name': 'problemBadName', 'bad-partial-filter': 'problemPartialJson', 'sparse-and-partial': 'problemSparsePartial' }[problem]
   return t(`nuxtUiMongocamp.indexes.${key}`, { max: MAX_INDEX_FIELDS })
 }
 
@@ -246,11 +266,9 @@ async function submitCreate() {
   const request = buildIndexRequest(form.value)
   creating.value = true
   try {
-    const result = request.call === 'createIndex'
-      ? await createIndex(props.collectionName, request.keys, request.options)
-      : request.call === 'createTextIndex'
-        ? await createTextIndex(props.collectionName, request.field)
-        : await createExpiringIndex(props.collectionName, request.field, request.duration)
+    const result = request.call === 'createOrderedIndex'
+      ? await createOrderedIndex(props.collectionName, request.keys, request.options)
+      : await createExpiringIndex(props.collectionName, request.field, request.duration)
     createOpen.value = false
     toast.add({ title: t('nuxtUiMongocamp.indexes.created', { name: result.name }), color: 'success' })
     await load()
@@ -400,7 +418,7 @@ async function runDrop() {
                 :aria-label="t('nuxtUiMongocamp.indexes.fieldLabel', { position: index + 1 })"
               />
               <UButton
-                v-if="!singleField"
+                v-if="!singleField && !textKind"
                 :icon="row.descending ? 'i-lucide-arrow-down-wide-narrow' : 'i-lucide-arrow-up-narrow-wide'"
                 color="neutral"
                 variant="ghost"
@@ -436,7 +454,7 @@ async function runDrop() {
               @click="addField"
             />
             <p
-              v-if="!singleField && form.fields.length > 1"
+              v-if="!singleField && !textKind && form.fields.length > 1"
               class="text-xs text-dimmed"
             >
               {{ t('nuxtUiMongocamp.indexes.compoundNote') }}
@@ -462,7 +480,7 @@ async function runDrop() {
           </UFormField>
 
           <UFormField
-            v-if="form.kind === 'standard' || form.kind === 'unique'"
+            v-if="takesOptions"
             :label="t('nuxtUiMongocamp.indexes.nameLabel')"
           >
             <UInput
@@ -471,6 +489,33 @@ async function runDrop() {
               :aria-label="t('nuxtUiMongocamp.indexes.nameLabel')"
             />
           </UFormField>
+
+          <template v-if="takesOptions">
+            <div class="flex flex-wrap gap-x-6 gap-y-2">
+              <UCheckbox
+                v-model="form.sparse"
+                :label="t('nuxtUiMongocamp.indexes.sparseLabel')"
+                :description="t('nuxtUiMongocamp.indexes.sparseHelp')"
+              />
+              <UCheckbox
+                v-model="form.hidden"
+                :label="t('nuxtUiMongocamp.indexes.hiddenLabel')"
+                :description="t('nuxtUiMongocamp.indexes.hiddenHelp')"
+              />
+            </div>
+            <UFormField
+              :label="t('nuxtUiMongocamp.indexes.partialLabel')"
+              :help="t('nuxtUiMongocamp.indexes.partialHelp')"
+            >
+              <UTextarea
+                v-model="form.partialFilter"
+                class="w-full font-mono"
+                :rows="2"
+                :placeholder="PARTIAL_PLACEHOLDER"
+                :aria-label="t('nuxtUiMongocamp.indexes.partialLabel')"
+              />
+            </UFormField>
+          </template>
 
           <ul
             v-if="attempted && problems.length > 0"

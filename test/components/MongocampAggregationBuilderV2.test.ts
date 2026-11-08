@@ -23,7 +23,7 @@ const body = () => new DOMWrapper(document.body)
 const mockAggregateRaw = vi.fn()
 const mockGetFields = vi.fn()
 
-mockNuxtImport('useMongocampApi', () => () => ({ collectionApi: { aggregateRaw: mockAggregateRaw, getCollectionFields: mockGetFields } }))
+mockNuxtImport('useMongocampApi', () => () => ({ collectionApi: { aggregateRaw: mockAggregateRaw, getFieldDetails: mockGetFields } }))
 
 const rawResponse = (rows: unknown) => ({ raw: { headers: { get: () => null } }, value: () => Promise.resolve(rows) })
 
@@ -31,7 +31,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   localStorage.clear()
   mockAggregateRaw.mockResolvedValue(rawResponse([]))
-  mockGetFields.mockResolvedValue(['price', 'grp', 'when'])
+  mockGetFields.mockResolvedValue([{ path: 'price', types: [{ type: 'double', count: 3 }] }, { path: 'grp', types: [{ type: 'string', count: 3 }] }, { path: 'when', types: [{ type: 'date', count: 3 }] }])
 })
 
 async function mountBuilder() {

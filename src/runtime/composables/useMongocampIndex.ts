@@ -1,5 +1,5 @@
 import { useMongocampClientApi } from '#imports'
-import type { IndexCreateResponse, IndexDropResponse, IndexOptionsRequest, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
+import type { IndexCreateResponse, IndexDropResponse, IndexInfo, IndexOptionsRequest, MongoIndex } from '@sfxcode/nuxt-mongocamp-server'
 
 const REQUEST_TIMEOUT_MS = 15000
 
@@ -15,8 +15,26 @@ export function useMongocampIndex() {
     return indexApi.listIndices({ collectionName })
   }
 
+  /**
+   * The indexes with everything the server knows (`GET …/index/details`, server 1.8.1): the keys as an **ordered** array
+   * `{ field, direction: '1' | '-1' | 'text' }`, `unique`, `sparse`, `hidden`, `weights`, `defaultLanguage`,
+   * `expireAfterSeconds`, `collation`. (`partialFilterExpression` is listed but garbled by the server.)
+   */
+  async function listIndexDetails(collectionName: string): Promise<IndexInfo[]> {
+    return indexApi.indexDetails({ collectionName }, withTimeout())
+  }
+
   async function createIndex(collectionName: string, keys: Record<string, number>, options?: IndexOptionsRequest): Promise<IndexCreateResponse> {
     return indexApi.createIndex({ collectionName, indexCreateRequest: { keys, indexOptionsRequest: options } })
+  }
+
+  /**
+   * Creates an index from **ordered** keys (compound order is kept; `direction` is `'1'`, `'-1'` or `'text'`, any other is a
+   * 400) with the options of the newer servers: `unique`, `sparse`, `hidden`, `name`, `partialFilterExpression`, `weights`,
+   * `defaultLanguage`, `collation`. A text index may span several fields. Sparse together with a partial filter is a 400.
+   */
+  async function createOrderedIndex(collectionName: string, orderedKeys: Array<{ field: string, direction: string }>, options?: IndexOptionsRequest): Promise<IndexCreateResponse> {
+    return indexApi.createIndex({ collectionName, indexCreateRequest: { orderedKeys, indexOptionsRequest: options } })
   }
 
   // One call for a plain single-field index; a duplicate or incompatible existing index is refused by
@@ -41,5 +59,5 @@ export function useMongocampIndex() {
     return indexApi.deleteIndex({ collectionName, indexName })
   }
 
-  return { listIndexes, createIndex, createIndexForField, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex }
+  return { listIndexes, listIndexDetails, createIndex, createOrderedIndex, createIndexForField, createUniqueIndex, createTextIndex, createExpiringIndex, deleteIndex }
 }

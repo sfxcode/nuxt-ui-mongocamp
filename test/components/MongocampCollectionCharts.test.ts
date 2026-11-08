@@ -9,18 +9,34 @@ enableAutoUnmount(afterEach)
 
 const wait = (ms = 50) => new Promise(resolve => setTimeout(resolve, ms))
 const mockAggregateRaw = vi.fn()
+const mockFieldDetails = vi.fn()
 
-mockNuxtImport('useMongocampApi', () => () => ({ collectionApi: { aggregateRaw: mockAggregateRaw } }))
+mockNuxtImport('useMongocampApi', () => () => ({ collectionApi: { aggregateRaw: mockAggregateRaw, getFieldDetails: mockFieldDetails } }))
 
 type Request = { mongoAggregateRequest: { pipeline: Array<{ stage: string, value: unknown }> }, rowsPerPage?: number, page?: number }
 const response = (rows: unknown, total?: number) => ({ raw: { headers: { get: (n: string) => (n === 'x-pagination-count-rows' ? String(total ?? (rows as unknown[]).length) : null) } }, value: () => Promise.resolve(rows) })
-const isSample = (r: Request) => r.mongoAggregateRequest.pipeline[0]?.stage === '$sample'
-const chartCalls = () => mockAggregateRaw.mock.calls.filter(c => !isSample(c[0]))
+const chartCalls = () => mockAggregateRaw.mock.calls
 const chartPipeline = (call = 0) => chartCalls()[call]![0].mongoAggregateRequest.pipeline
 
-// `sample` answers the type detection, `chart` answers the chart's own aggregation
-function serve(sample: unknown[], chart: (r: Request) => unknown, total?: number) {
-  mockAggregateRaw.mockImplementation(async (r: Request) => (isSample(r) ? response(sample) : response(chart(r), total)))
+// what `GET …/fields/detail` answers for some documents: one entry per field with the `$type` names found
+const typeName = (v: unknown) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'boolean' ? 'bool' : typeof v === 'number' ? (Number.isInteger(v) ? 'long' : 'double') : typeof v === 'string' ? (/^\d{4}-\d\d-\d\dT/.test(v) ? 'date' : 'string') : 'object')
+function detailsOf(rows: Array<Record<string, unknown>>) {
+  const byPath = new Map<string, Map<string, number>>()
+  const add = (path: string, value: unknown) => {
+    const counts = byPath.get(path) ?? new Map<string, number>()
+    counts.set(typeName(value), (counts.get(typeName(value)) ?? 0) + 1)
+    byPath.set(path, counts)
+    // like the server: an object's fields follow as `path.field`
+    if (typeName(value) === 'object') for (const [key, inner] of Object.entries(value as object)) add(`${path}.${key}`, inner)
+  }
+  for (const row of rows) for (const [path, value] of Object.entries(row)) add(path, value)
+  return [...byPath.entries()].map(([path, counts]) => ({ path, types: [...counts.entries()].map(([type, count]) => ({ type, count })) }))
+}
+
+// `sample` stands for the documents the server analysed (type detection), `chart` answers the chart's own aggregation
+function serve(sample: Array<Record<string, unknown>>, chart: (r: Request) => unknown, total?: number) {
+  mockFieldDetails.mockResolvedValue(detailsOf(sample))
+  mockAggregateRaw.mockImplementation(async (r: Request) => response(chart(r), total))
 }
 
 beforeEach(() => {
@@ -107,11 +123,12 @@ describe('date chart', () => {
     expect(propsOf(c).ariaDescription).toBe('2 periods from 2026-01 to 2026-02; the highest is 2026-02 with 6 documents.')
 
     mockAggregateRaw.mockClear()
+    mockFieldDetails.mockClear()
     serve(dates, () => [{ _id: '2026', count: 10 }], 1)
     c.findAllComponents(USelect).find(s => s.html().includes('aria-label="Per"'))!.vm.$emit('update:modelValue', 'year')
     await wait()
     expect(JSON.stringify(chartPipeline())).toContain('"%Y"')
-    expect(mockAggregateRaw.mock.calls.filter(call => isSample(call[0]))).toHaveLength(0) // the kind is remembered, only the aggregation runs again
+    expect(mockFieldDetails).toHaveBeenCalledTimes(0) // the kind is remembered, only the aggregation runs again
     expect(dataOf(c)).toEqual([{ label: '2026', count: 10 }])
   })
 
@@ -170,18 +187,18 @@ describe('when there is no chart', () => {
     expect(c.find('[data-test="chart-empty"]').text()).toContain('No documents have a value of this kind in when')
   })
 
-  it('a forced kind skips the sample', async () => {
+  it('a forced kind skips the field analysis', async () => {
     serve([], () => [{ _id: 'x', count: 1 }])
     const c = await mountChart({ field: 'cat', kind: 'values' })
-    expect(mockAggregateRaw.mock.calls.filter(call => isSample(call[0]))).toHaveLength(0)
+    expect(mockFieldDetails).not.toHaveBeenCalled()
     expect(dataOf(c)).toEqual([{ label: 'x', count: 1 }])
   })
 })
 
 describe('loading and failing', () => {
   it('shows the server message and tries again', async () => {
-    mockAggregateRaw.mockImplementation(async (r: Request) => {
-      if (isSample(r)) return response(sampleOf('cat', ['a']))
+    mockFieldDetails.mockResolvedValue(detailsOf(sampleOf('cat', ['a'])))
+    mockAggregateRaw.mockImplementation(async () => {
       throw Object.assign(new Error('x'), { response: new Response(JSON.stringify({ code: 40324, msg: 'boom from mongo' }), { status: 500 }) })
     })
     const c = await mountChart()
@@ -196,8 +213,9 @@ describe('loading and failing', () => {
 
   it('shows a loading note while it asks', async () => {
     let release!: () => void
-    mockAggregateRaw.mockImplementation((r: Request) => new Promise((resolve) => {
-      release = () => resolve(isSample(r) ? response(sampleOf('cat', ['a'])) : response([{ _id: 'a', count: 1 }]))
+    mockFieldDetails.mockResolvedValue(detailsOf(sampleOf('cat', ['a'])))
+    mockAggregateRaw.mockImplementation(() => new Promise((resolve) => {
+      release = () => resolve(response([{ _id: 'a', count: 1 }]))
     }))
     const c = await mountChart()
     expect(c.find('[data-test="chart-loading"]').exists()).toBe(true)
@@ -208,8 +226,8 @@ describe('loading and failing', () => {
   it('follows a changed field and ignores a slower answer for the old one', async () => {
     const field = shallowRef('cat')
     const resolvers: Array<() => void> = []
+    mockFieldDetails.mockResolvedValue(detailsOf([{ cat: 'a', other: 'b' }]))
     mockAggregateRaw.mockImplementation((r: Request) => new Promise((resolve) => {
-      if (isSample(r)) return resolve(response([{ cat: 'a', other: 'b' }]))
       const pipeline = r.mongoAggregateRequest.pipeline
       const name = String((pipeline[0]!.value as { _id: string })._id)
       resolvers.push(() => resolve(response([{ _id: name, count: 1 }])))
@@ -229,8 +247,8 @@ describe('loading and failing', () => {
 
   it('cancels a running request when it goes away', async () => {
     let signal: AbortSignal | undefined
-    mockAggregateRaw.mockImplementation((r: Request, init: { signal: AbortSignal }) => {
-      if (isSample(r)) return Promise.resolve(response(sampleOf('cat', ['a'])))
+    mockFieldDetails.mockResolvedValue(detailsOf(sampleOf('cat', ['a'])))
+    mockAggregateRaw.mockImplementation((_r: Request, init: { signal: AbortSignal }) => {
       signal = init.signal
       return new Promise(() => {})
     })
@@ -240,5 +258,30 @@ describe('loading and failing', () => {
     c.unmount()
     await wait()
     expect(signal!.aborted).toBe(true)
+  })
+})
+
+describe('chart of a filter', () => {
+  it('sends the Lucene filter with the chart request (not with the field analysis) and re-runs when it changes', async () => {
+    serve(sampleOf('cat', ['a', 'b']), () => [{ _id: 'a', count: 2 }])
+    const filter = shallowRef('status:open')
+    const component = await mountSuspended(defineComponent({ setup: () => () => h(UApp, () => h(MongocampCollectionCharts, { collectionName: 'orders', field: 'cat', filter: filter.value })) }), { route: '/' })
+    await wait()
+
+    expect(chartCalls()).toHaveLength(1)
+    expect(chartCalls()[0]![0].filter).toBe('status:open')
+    expect(mockFieldDetails.mock.calls[0]![0]).not.toHaveProperty('filter')
+
+    filter.value = 'status:closed'
+    await wait(100)
+    expect(chartCalls().at(-1)![0].filter).toBe('status:closed')
+    component.unmount()
+  })
+
+  it('says so instead of sending a filter that does not fit in the URL', async () => {
+    serve(sampleOf('cat', ['a']), () => [])
+    const c = await mountChart({ filter: `name:(${'x'.repeat(2000)})` })
+    expect(chartCalls()).toHaveLength(0)
+    expect(c.text()).toContain('The filter is too long to chart')
   })
 })

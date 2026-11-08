@@ -8,6 +8,15 @@ export class ForbiddenPipelineError extends Error {
   }
 }
 
+// Thrown instead of sending a filter that would not fit in the URL: the aggregate endpoint takes the Lucene filter as a
+// query parameter, and the server answers an over-long URI with a 414 that has no CORS headers (an opaque network failure).
+export class FilterTooLongError extends Error {
+  constructor(public max: number) {
+    super(`The filter is longer than ${max} characters`)
+    this.name = 'FilterTooLongError'
+  }
+}
+
 export interface ServerErrorInfo {
   kind: 'mongo' | 'other'
   message: string

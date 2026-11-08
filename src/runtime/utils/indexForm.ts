@@ -1,17 +1,23 @@
 // Pure rules of the index manager: how to show an index the server lists, and how a create form becomes a request.
-// Server facts (live on 1.6.3, brain/project/mongocamp-server-1-6-3-endpoints.md): the listing is an unordered map, so the
-// order of a compound index only survives in its name; a text index lists internal keys (`_fts`) and its fields as
-// `weights`; the server accepts any number as a direction (`z_5`), so only 1 and -1 are offered; an empty key list and a
-// unique index over duplicate data are a 500; identical re-creation is a no-op.
+// Server facts (live on 1.8.1, brain/project/mongocamp-server-1-8-1-endpoints.md): `index/details` lists the keys as an
+// ORDERED array `{ field, direction }` (direction is the text `1`, `-1` or `text`) together with `unique`, `sparse`, `hidden`,
+// `weights`, `defaultLanguage`, `expireAfterSeconds` and `collation`; creating takes the same ordered keys plus options.
+// A direction other than 1/-1/text is a 400 (code 4006), sparse together with a partial filter a 400 (code 67), a unique
+// index over duplicate data a 409 (code 11000), re-creating an identical index a no-op. The listed
+// `partialFilterExpression` is garbled by the server (`{ "n": { "underlying": null } }`) — only its presence is shown.
 
-export interface IndexLike {
+/** An index as `GET …/index/details` lists it (the parts this module reads). */
+export interface IndexDetailLike {
   name: string
-  keys?: Record<string, unknown>
-  weights?: Record<string, unknown>
-  text?: boolean
+  keys?: Array<{ field: string, direction: string }>
   unique?: boolean
-  expire?: boolean
-  expireAfterSeconds?: number
+  sparse?: boolean
+  hidden?: boolean
+  partialFilterExpression?: unknown
+  collation?: unknown
+  weights?: Record<string, unknown>
+  defaultLanguage?: string
+  expireAfterSeconds?: number | null
 }
 
 export interface IndexKey {
@@ -22,33 +28,22 @@ export interface IndexKey {
 
 export const MAX_INDEX_FIELDS = 8
 
-/**
- * The fields of an index in index order. A text index shows its `weights` fields. For others the key order the server lists
- * is not reliable, so the standard name (`a_1_b_-1`) is used when it spells out exactly these keys; else the listed order.
- */
-export function indexKeys(index: IndexLike): IndexKey[] {
-  return indexKeysWithOrder(index).keys
+/** The fields of an index in index order, straight from the server's ordered listing. */
+export function indexKeys(index: Pick<IndexDetailLike, 'keys'>): IndexKey[] {
+  return (index.keys ?? []).map(({ field, direction }) => ({
+    field,
+    direction: direction === '1' ? 1 : direction === '-1' ? -1 : direction === 'text' ? 'text' : 'other',
+  }))
 }
 
-/**
- * `indexKeys` plus whether the order is **known**: always for one key or a text index, for a compound index only when its
- * standard name spells out the keys. A custom-named compound index is listed in an arbitrary order, so the order is not
- * known and must not be copied onto another collection.
- */
-export function indexKeysWithOrder(index: IndexLike): { keys: IndexKey[], orderKnown: boolean } {
-  if (index.text && index.weights && Object.keys(index.weights).length > 0) {
-    return { keys: Object.keys(index.weights).map(field => ({ field, direction: 'text' as const })), orderKnown: true }
-  }
-  const entries = Object.entries(index.keys ?? {}).map(([field, value]) => ({ field, direction: (value === 1 || value === -1 ? value : 'other') as IndexKey['direction'], value }))
-  if (entries.length <= 1) return { keys: entries.map(e => ({ field: e.field, direction: e.direction })), orderKnown: true }
-  const positions = entries.map(e => ({ e, at: index.name.indexOf(`${e.field}_${String(e.value)}`) }))
-  if (positions.every(p => p.at >= 0)) {
-    const sorted = [...positions].sort((a, b) => a.at - b.at)
-    if (sorted.map(p => `${p.e.field}_${String(p.e.value)}`).join('_') === index.name) {
-      return { keys: sorted.map(p => ({ field: p.e.field, direction: p.e.direction })), orderKnown: true }
-    }
-  }
-  return { keys: entries.map(e => ({ field: e.field, direction: e.direction })), orderKnown: false }
+/** Whether the index is a text index (any key is `text`). */
+export function isTextIndex(index: Pick<IndexDetailLike, 'keys'>): boolean {
+  return indexKeys(index).some(key => key.direction === 'text')
+}
+
+/** Whether the index expires documents (a TTL index). */
+export function isExpiringIndex(index: Pick<IndexDetailLike, 'expireAfterSeconds'>): boolean {
+  return typeof index.expireAfterSeconds === 'number'
 }
 
 export function describeKey(key: IndexKey): string {
@@ -69,44 +64,83 @@ export type IndexKind = 'standard' | 'unique' | 'text' | 'expiring'
 
 export interface IndexForm {
   kind: IndexKind
-  /** One row per field; a text or expiring index uses the first. */
+  /** One row per field; an expiring index uses the first, a text index all of them (the direction is ignored). */
   fields: Array<{ field: string, descending: boolean }>
-  /** Optional name (standard and unique only). */
+  /** Optional name (every kind but expiring). */
   name: string
   expireAfter: string
+  /** Index only the documents that have the field (not together with a partial filter). */
+  sparse: boolean
+  /** Created but not used by queries until unhidden. */
+  hidden: boolean
+  /** A MongoDB filter as JSON text: only the documents it matches are indexed. Empty = none. */
+  partialFilter: string
 }
 
-export type IndexFormProblem = 'no-field' | 'empty-field' | 'duplicate-field' | 'too-many-fields' | 'bad-duration' | 'bad-name'
+export type IndexFormProblem = 'no-field' | 'empty-field' | 'duplicate-field' | 'too-many-fields' | 'bad-duration' | 'bad-name' | 'bad-partial-filter' | 'sparse-and-partial'
+
+/** The partial filter text as an object: `undefined` for empty, `null` when it is not a JSON object. */
+export function parsePartialFilter(text: string): Record<string, unknown> | null | undefined {
+  if (text.trim() === '') return undefined
+  try {
+    const value: unknown = JSON.parse(text)
+    return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0 ? value as Record<string, unknown> : null
+  }
+  catch {
+    return null
+  }
+}
+
+/** Kinds that go through the ordered create (`createIndex` with `orderedKeys` and options); an expiring index has its own call. */
+const takesOptions = (kind: IndexKind) => kind !== 'expiring'
 
 export function validateIndexForm(form: IndexForm): IndexFormProblem[] {
   const problems: IndexFormProblem[] = []
-  const rows = form.kind === 'text' || form.kind === 'expiring' ? form.fields.slice(0, 1) : form.fields
+  const rows = form.kind === 'expiring' ? form.fields.slice(0, 1) : form.fields
   if (rows.length === 0) return ['no-field']
   const names = rows.map(r => r.field.trim())
   if (names.includes('')) problems.push('empty-field')
   if (new Set(names.filter(Boolean)).size !== names.filter(Boolean).length) problems.push('duplicate-field')
   if (rows.length > MAX_INDEX_FIELDS) problems.push('too-many-fields')
   if (form.kind === 'expiring' && !isValidExpireAfter(form.expireAfter)) problems.push('bad-duration')
-  if ((form.kind === 'standard' || form.kind === 'unique') && form.name.trim().length > 100) problems.push('bad-name')
+  if (takesOptions(form.kind) && form.name.trim().length > 100) problems.push('bad-name')
+  if (takesOptions(form.kind)) {
+    const partial = parsePartialFilter(form.partialFilter)
+    if (partial === null) problems.push('bad-partial-filter')
+    // MongoDB refuses both options together (server 400, code 67)
+    else if (partial !== undefined && form.sparse) problems.push('sparse-and-partial')
+  }
   return problems
 }
 
+export interface IndexCreateOptions {
+  unique?: boolean
+  name?: string
+  sparse?: boolean
+  hidden?: boolean
+  partialFilterExpression?: Record<string, unknown>
+}
+
 export type IndexRequest
-  = | { call: 'createIndex', keys: Record<string, 1 | -1>, options?: { unique?: boolean, name?: string } }
-    | { call: 'createTextIndex', field: string }
+  = | { call: 'createOrderedIndex', keys: Array<{ field: string, direction: '1' | '-1' | 'text' }>, options?: IndexCreateOptions }
     | { call: 'createExpiringIndex', field: string, duration: string }
 
-/** The call a valid form stands for. Compound standard and unique indexes go through `createIndex` (verified live). */
+/**
+ * The call a valid form stands for. Every kind but expiring goes through the ordered create, which keeps the field order of
+ * a compound index and accepts a text index over several fields (server 1.8.1, verified live).
+ */
 export function buildIndexRequest(form: IndexForm): IndexRequest {
   const rows = form.fields.map(r => ({ field: r.field.trim(), descending: r.descending }))
-  if (form.kind === 'text') return { call: 'createTextIndex', field: rows[0]!.field }
   if (form.kind === 'expiring') return { call: 'createExpiringIndex', field: rows[0]!.field, duration: form.expireAfter.trim() }
-  const keys: Record<string, 1 | -1> = {}
-  for (const row of rows) keys[row.field] = row.descending ? -1 : 1
-  const options: { unique?: boolean, name?: string } = {}
+  const keys = rows.map(row => ({ field: row.field, direction: form.kind === 'text' ? 'text' as const : row.descending ? '-1' as const : '1' as const }))
+  const options: IndexCreateOptions = {}
   if (form.kind === 'unique') options.unique = true
   if (form.name.trim() !== '') options.name = form.name.trim()
-  return Object.keys(options).length > 0 ? { call: 'createIndex', keys, options } : { call: 'createIndex', keys }
+  if (form.sparse) options.sparse = true
+  if (form.hidden) options.hidden = true
+  const partial = parsePartialFilter(form.partialFilter)
+  if (partial) options.partialFilterExpression = partial
+  return Object.keys(options).length > 0 ? { call: 'createOrderedIndex', keys, options } : { call: 'createOrderedIndex', keys }
 }
 
 export type IndexErrorKind = 'duplicate-values' | 'conflict' | 'empty-keys' | 'other'

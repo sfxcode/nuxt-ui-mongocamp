@@ -16,9 +16,10 @@ How the values of **one field** are distributed, drawn with Nuxt UI's [`UChart`]
 |---|---|---|---|
 | `collectionName` | `string` | — | Required |
 | `field` | `string` | — | Required. A top-level field or a nested path (`address.city`). No `$`, no empty segments |
-| `kind` | `'values' \| 'dates' \| 'numbers'` | detected | Force a chart kind instead of detecting it from a sample of 200 documents |
+| `kind` | `'values' \| 'dates' \| 'numbers'` | detected | Force a chart kind instead of detecting it from the server's field analysis (`fields/detail`: the `$type` names of the field in a sample of 1000 documents — numeric types add up, `objectId` counts as text) |
 | `top` | `number` | `10` | Values: how many of the most common values are shown |
 | `buckets` | `number` | `10` | Numbers: how many ranges |
+| `filter` | `string` | — | A Lucene filter (what a table shows): only the matching documents are charted, applied by the server as the first `$match` (`aggregate?filter=`, server 1.7.0). The kind is still detected from the whole collection. A filter over ~1 800 encoded characters is refused (`The filter is too long to chart`) because it travels in the URL |
 
 ## The three charts
 

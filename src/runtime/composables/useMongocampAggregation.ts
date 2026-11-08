@@ -1,9 +1,11 @@
 import { useMongocampClientApi, useI18n } from '#imports'
-import type { PipelineStage } from '@sfxcode/nuxt-mongocamp-server'
+import type { FieldInfo, PipelineStage } from '@sfxcode/nuxt-mongocamp-server'
 import { useMongocampError } from './useMongocampError'
 import { findForbidden, STATS_OPERATORS } from '../utils/aggregationPipeline'
 import type { RequestStage } from '../utils/aggregationPipeline'
-import { ForbiddenPipelineError } from '../utils/aggregationErrors'
+import { FilterTooLongError, ForbiddenPipelineError } from '../utils/aggregationErrors'
+import { fieldPathsOf } from '../utils/fieldDetails'
+import { isFilterTooLong, MAX_ENCODED_FILTER_LENGTH } from '../utils/requestLimits'
 import { stripServerFields } from '../utils/aggregationResult'
 import { readJsonKeepingLongs } from '../utils/bigIntJson'
 import { headerNumber } from '../utils/paginationHeaders'
@@ -40,6 +42,12 @@ export interface AggregationOptions {
    * For the module's own stats calls; the aggregation builder never sets it.
    */
   allowStatsStages?: boolean
+  /**
+   * A Lucene filter (the syntax of the document list) applied by the server as the first `$match` (server 1.7.0), so an
+   * aggregation can follow what a table shows. It travels in the URL: one over ~1 800 encoded characters is refused up front
+   * with a `FilterTooLongError` instead of becoming an opaque network failure.
+   */
+  filter?: string
   /** Aborting rejects the call (an `AbortError`); the 30 s timeout still applies. */
   signal?: AbortSignal
 }
@@ -86,6 +94,7 @@ export function useMongocampAggregation() {
   async function runAggregation(collectionName: string, pipeline: RequestStage[], paging: AggregationPaging = {}, options: AggregationOptions = {}): Promise<AggregationResult> {
     const findings = findForbidden(pipeline, options.allowStatsStages ? STATS_OPERATORS : [])
     if (findings.length > 0) throw new ForbiddenPipelineError(findings)
+    if (isFilterTooLong(options.filter)) throw new FilterTooLongError(MAX_ENCODED_FILTER_LENGTH)
 
     const page = paging.page ?? 1
     // no result at all is a normal `200 []`
@@ -95,6 +104,7 @@ export function useMongocampAggregation() {
       mongoAggregateRequest: { pipeline: pipeline as unknown as PipelineStage[], allowDiskUse: false },
       rowsPerPage: paging.rowsPerPage,
       page,
+      filter: options.filter?.trim() ? options.filter : undefined,
     }, requestInit(AGGREGATE_TIMEOUT_MS, options.signal))
     // read from the response text so integers beyond 2^53 stay exact; they (and the decimal/int wrappers the server
     // writes) come out of unwrapExtendedJson as an exact digit string / a number
@@ -111,10 +121,19 @@ export function useMongocampAggregation() {
     }
   }
 
-  /** The top-level field names the server knows for a collection (unordered by the server, sorted here); for suggestions only. */
+  /**
+   * Every field of a collection with the types of its values (`GET …/fields/detail`, server 1.8.1): a flat list, one entry
+   * per path — nested ones as `address.city`, the elements of an array as `tags[]` — each with the MongoDB `$type` names found
+   * in a sample and how often. `sampleSize` (server default 1000) and `depth` (default 3) tune it; a bigger sample is more
+   * exact and slower.
+   */
+  async function listFieldDetails(collectionName: string, options: { sampleSize?: number, depth?: number } = {}): Promise<FieldInfo[]> {
+    return collectionApi.getFieldDetails({ collectionName, sampleSize: options.sampleSize, depth: options.depth }, withTimeout(REQUEST_TIMEOUT_MS))
+  }
+
+  /** The field paths of a collection, nested ones included (`address.city`), sorted; for suggestions. */
   async function listFieldNames(collectionName: string): Promise<string[]> {
-    const names = await collectionApi.getCollectionFields({ collectionName }, withTimeout(REQUEST_TIMEOUT_MS))
-    return [...new Set(names as string[])].sort((a, b) => a.localeCompare(b))
+    return fieldPathsOf(await listFieldDetails(collectionName))
   }
 
   // The values arrive as native JSON, unordered, one page of them. Only strings, numbers and booleans
@@ -138,6 +157,7 @@ export function useMongocampAggregation() {
   // Turns whatever a call threw into one showable message. The server's own text for a failed command
   // names the database server's host and port, so only the quoted MongoDB message is ever shown.
   async function describeAggregationError(error: unknown): Promise<DescribedAggregationError> {
+    if (error instanceof FilterTooLongError) return { kind: 'other', message: t('nuxtUiMongocamp.aggregation.errors.filterTooLong', { max: error.max }) }
     if (error instanceof ForbiddenPipelineError) {
       return { kind: 'forbidden', message: t('nuxtUiMongocamp.aggregation.errors.forbidden', { operator: error.findings[0]?.operator ?? '' }) }
     }
@@ -159,5 +179,5 @@ export function useMongocampAggregation() {
     return { kind, message: described.message }
   }
 
-  return { runAggregation, listDistinct, listFieldNames, sampleDocuments, describeAggregationError }
+  return { runAggregation, listDistinct, listFieldNames, listFieldDetails, sampleDocuments, describeAggregationError }
 }

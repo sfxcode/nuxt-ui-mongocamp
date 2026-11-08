@@ -565,7 +565,8 @@
       "errors": {
         "forbidden": "This pipeline uses {operator}, which is not allowed here.",
         "retryable": "The request was blocked on its way to the server. Try again.",
-        "unavailable": "The server did not answer this request. Try again."
+        "unavailable": "The server did not answer this request. Try again.",
+        "filterTooLong": "The filter is too long to chart ({max} characters at most). Narrow it first."
       },
       "modeVisual": "Stages",
       "modeJson": "JSON",
@@ -742,7 +743,7 @@
       "expireLabel": "Expire after",
       "expireHelp": "A number and s, m, h or d, for example 3600s or 7d.",
       "compoundNote": "With several fields the order matters: the first field is the one queries must filter on.",
-      "textNote": "A text index covers one field.",
+      "textNote": "A text index can cover several fields; a collection has at most one.",
       "create": "Create index",
       "problemNoField": "Enter at least one field",
       "problemEmptyField": "A field name is empty",
@@ -762,7 +763,15 @@
       "chartSize": "Index size",
       "chartUsage": "Index uses",
       "chartSizeDescription": "Size of {count} indexes, biggest first",
-      "chartUsageDescription": "Uses since the server started, for {count} indexes, most used first"
+      "chartUsageDescription": "Uses since the server started, for {count} indexes, most used first",
+      "sparseLabel": "Sparse",
+      "sparseHelp": "Only index documents that have the field.",
+      "hiddenLabel": "Hidden",
+      "hiddenHelp": "Keep the index up to date but do not use it for queries.",
+      "partialLabel": "Partial filter (optional)",
+      "partialHelp": "A MongoDB filter as JSON: only the documents it matches are indexed. Not together with Sparse.",
+      "problemPartialJson": "The partial filter must be a JSON object, for example the filter of a query",
+      "problemSparsePartial": "Sparse and a partial filter cannot be combined"
     },
     "collectionCopy": {
       "title": "Copy collection {source}",

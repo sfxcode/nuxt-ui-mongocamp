@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockCollectionApi = {
   aggregateRaw: vi.fn(),
   distinctRaw: vi.fn(),
+  getFieldDetails: vi.fn(),
 }
 
 vi.mock('#imports', () => ({
@@ -27,6 +28,24 @@ function rawResponse(value: unknown, headers: Record<string, string> = {}) {
 const withAbortSignal = () => expect.objectContaining({ signal: expect.any(AbortSignal) })
 
 describe('runAggregation', () => {
+  it('sends the Lucene filter as the filter parameter, and no parameter for a blank one', async () => {
+    mockCollectionApi.aggregateRaw.mockResolvedValue(rawResponse([]))
+    const { runAggregation } = useMongocampAggregation()
+
+    await runAggregation('people', [{ stage: '$count', value: 'c' }], {}, { filter: 'age:[18 TO 99]' })
+    expect(mockCollectionApi.aggregateRaw.mock.calls[0]![0].filter).toBe('age:[18 TO 99]')
+
+    await runAggregation('people', [{ stage: '$count', value: 'c' }], {}, { filter: '   ' })
+    expect(mockCollectionApi.aggregateRaw.mock.calls[1]![0].filter).toBeUndefined()
+  })
+
+  it('refuses a filter that would not fit in the URL before any request', async () => {
+    const failure = await useMongocampAggregation().runAggregation('people', [{ stage: '$count', value: 'c' }], {}, { filter: `name:(${'x'.repeat(2000)})` }).catch(e => e)
+
+    expect(failure.name).toBe('FilterTooLongError')
+    expect(mockCollectionApi.aggregateRaw).not.toHaveBeenCalled()
+  })
+
   it('sends the pipeline as raw JSON with allowDiskUse (required by the server), paging and a timeout signal', async () => {
     mockCollectionApi.aggregateRaw.mockResolvedValueOnce(rawResponse([]))
     const pipeline = [{ stage: '$match', value: { grp: 'A' } }, { stage: '$limit', value: 5 }]
@@ -298,5 +317,31 @@ describe('describeAggregationError', () => {
     const result = await useMongocampAggregation().describeAggregationError(responseError(500, { code: -1, msg: 'Timed out on server 10.0.0.5:27017. Giving up' }))
 
     expect(result.message).not.toMatch(/10\.0\.0\.5|27017/)
+  })
+})
+
+describe('field details', () => {
+  const DETAILS = [
+    { path: 'name', types: [{ type: 'string', count: 6 }] },
+    { path: 'address', types: [{ type: 'object', count: 2 }] },
+    { path: 'address.city', types: [{ type: 'string', count: 2 }] },
+    { path: 'tags', types: [{ type: 'array', count: 1 }] },
+    { path: 'tags[]', types: [{ type: 'string', count: 2 }] },
+  ]
+
+  it('asks the server for every field with its types, with the sample size and depth it was given and a timeout', async () => {
+    mockCollectionApi.getFieldDetails.mockResolvedValueOnce(DETAILS)
+
+    const result = await useMongocampAggregation().listFieldDetails('people', { sampleSize: 500, depth: 5 })
+
+    expect(result).toBe(DETAILS)
+    expect(mockCollectionApi.getFieldDetails).toHaveBeenCalledWith({ collectionName: 'people', sampleSize: 500, depth: 5 }, withAbortSignal())
+  })
+
+  it('suggests the paths a stage can name: nested ones included, array elements left out', async () => {
+    mockCollectionApi.getFieldDetails.mockResolvedValueOnce(DETAILS)
+
+    expect(await useMongocampAggregation().listFieldNames('people')).toEqual(['address', 'address.city', 'name', 'tags'])
+    expect(mockCollectionApi.getFieldDetails.mock.calls[0]![0]).toEqual({ collectionName: 'people', sampleSize: undefined, depth: undefined })
   })
 })

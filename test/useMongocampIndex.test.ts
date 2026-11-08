@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockIndexApi = {
   listIndices: vi.fn(),
+  indexDetails: vi.fn(),
   createIndex: vi.fn(),
   createUniqueIndex: vi.fn(),
   createIndexForField: vi.fn(),
@@ -30,6 +31,31 @@ describe('listIndexes', () => {
 
     expect(mockIndexApi.listIndices).toHaveBeenCalledWith({ collectionName: 'users' })
     expect(result).toBe(indexes)
+  })
+})
+
+describe('listIndexDetails', () => {
+  it('asks for the details (ordered keys and options) with a timeout', async () => {
+    const details = [{ name: 'a_1_b_-1', keys: [{ field: 'a', direction: '1' }, { field: 'b', direction: '-1' }] }]
+    mockIndexApi.indexDetails.mockResolvedValueOnce(details)
+
+    const result = await useMongocampIndex().listIndexDetails('users')
+
+    expect(mockIndexApi.indexDetails).toHaveBeenCalledWith({ collectionName: 'users' }, { signal: expect.any(AbortSignal) })
+    expect(result).toBe(details)
+  })
+})
+
+describe('createOrderedIndex', () => {
+  it('sends the ordered keys and the options under indexCreateRequest', async () => {
+    mockIndexApi.createIndex.mockResolvedValueOnce({ name: 'mine' })
+
+    await useMongocampIndex().createOrderedIndex('users', [{ field: 'a', direction: '1' }, { field: 'b', direction: '-1' }], { name: 'mine', sparse: true })
+
+    expect(mockIndexApi.createIndex).toHaveBeenCalledWith({
+      collectionName: 'users',
+      indexCreateRequest: { orderedKeys: [{ field: 'a', direction: '1' }, { field: 'b', direction: '-1' }], indexOptionsRequest: { name: 'mine', sparse: true } },
+    })
   })
 })
 

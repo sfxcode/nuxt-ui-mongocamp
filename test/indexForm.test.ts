@@ -1,32 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildIndexRequest, canDropIndex, classifyIndexError, describeKey, formatBytes, indexKeys, isUnusedIndex, isValidExpireAfter,
-  MAX_INDEX_FIELDS, validateIndexForm,
+  buildIndexRequest, canDropIndex, classifyIndexError, describeKey, formatBytes, indexKeys, isExpiringIndex, isTextIndex, isUnusedIndex, isValidExpireAfter,
+  MAX_INDEX_FIELDS, parsePartialFilter, validateIndexForm,
 } from '../src/runtime/utils/indexForm'
 import type { IndexForm } from '../src/runtime/utils/indexForm'
 
 describe('indexKeys', () => {
-  it('restores the order of a compound index from its name (the server lists keys unordered)', () => {
-    // recorded: created as { c: 1, b: 1 }, listed as { b: 1, c: 1 }, named c_1_b_1
-    expect(indexKeys({ name: 'c_1_b_1', keys: { b: 1, c: 1 } }).map(k => k.field)).toEqual(['c', 'b'])
-    expect(indexKeys({ name: 'a_1_b_-1', keys: { a: 1, b: -1 } })).toEqual([{ field: 'a', direction: 1 }, { field: 'b', direction: -1 }])
+  it('reads the ordered keys the server lists (recorded on 1.8.1)', () => {
+    // created as { name: 1, n: -1 } with the name my_idx — the order survives in the listing now, whatever the name says
+    expect(indexKeys({ keys: [{ field: 'name', direction: '1' }, { field: 'n', direction: '-1' }] })).toEqual([{ field: 'name', direction: 1 }, { field: 'n', direction: -1 }])
+    expect(indexKeys({ keys: [{ field: 'b', direction: '1' }, { field: 'a', direction: '1' }] }).map(k => k.field)).toEqual(['b', 'a'])
   })
 
-  it('handles fields that contain underscores and dots', () => {
-    expect(indexKeys({ name: 'user_id_1_a.b_-1', keys: { 'a.b': -1, 'user_id': 1 } }).map(k => k.field)).toEqual(['user_id', 'a.b'])
+  it('reads the fields of a text index straight from its keys', () => {
+    expect(indexKeys({ keys: [{ field: 'name', direction: 'text' }, { field: 't', direction: 'text' }] })).toEqual([{ field: 'name', direction: 'text' }, { field: 't', direction: 'text' }])
   })
 
-  it('keeps the listed order for a custom name or a single key', () => {
-    expect(indexKeys({ name: 'my_idx', keys: { x: 1, y: -1 } }).map(k => k.field)).toEqual(['x', 'y'])
-    expect(indexKeys({ name: 'when_1', keys: { when: 1 } })).toEqual([{ field: 'when', direction: 1 }])
+  it('marks a direction that is neither 1, -1 nor text, and copes with no keys', () => {
+    expect(indexKeys({ keys: [{ field: 'z', direction: '5' }] })).toEqual([{ field: 'z', direction: 'other' }])
+    expect(indexKeys({})).toEqual([])
   })
 
-  it('shows the fields of a text index from its weights, not the internal keys', () => {
-    expect(indexKeys({ name: 'body_text', text: true, keys: { _ftsx: 1, _fts: 'text' }, weights: { body: 1 } })).toEqual([{ field: 'body', direction: 'text' }])
-  })
-
-  it('marks a direction that is neither 1 nor -1', () => {
-    expect(indexKeys({ name: 'z_5', keys: { z: 5 } })).toEqual([{ field: 'z', direction: 'other' }])
+  it('tells text and expiring indexes apart', () => {
+    expect(isTextIndex({ keys: [{ field: 'a', direction: 'text' }] })).toBe(true)
+    expect(isTextIndex({ keys: [{ field: 'a', direction: '1' }] })).toBe(false)
+    expect(isExpiringIndex({ expireAfterSeconds: 3600 })).toBe(true)
+    expect(isExpiringIndex({ expireAfterSeconds: null })).toBe(false)
+    expect(isExpiringIndex({})).toBe(false)
   })
 
   it('describes keys', () => {
@@ -54,7 +54,7 @@ describe('expire duration', () => {
   })
 })
 
-const form = (patch: Partial<IndexForm> = {}): IndexForm => ({ kind: 'standard', fields: [{ field: 'a', descending: false }], name: '', expireAfter: '3600s', ...patch })
+const form = (patch: Partial<IndexForm> = {}): IndexForm => ({ kind: 'standard', fields: [{ field: 'a', descending: false }], name: '', expireAfter: '3600s', sparse: false, hidden: false, partialFilter: '', ...patch })
 
 describe('validateIndexForm', () => {
   it('accepts a plain form', () => {
@@ -69,10 +69,26 @@ describe('validateIndexForm', () => {
     expect(validateIndexForm(form({ fields: many }))).toContain('too-many-fields')
   })
 
-  it('checks the duration only for an expiring index, and only the first field of text/expiring', () => {
+  it('checks the duration only for an expiring index, and only its first field', () => {
     expect(validateIndexForm(form({ kind: 'expiring', expireAfter: 'soon' }))).toEqual(['bad-duration'])
     expect(validateIndexForm(form({ kind: 'standard', expireAfter: 'soon' }))).toEqual([])
-    expect(validateIndexForm(form({ kind: 'text', fields: [{ field: 'a', descending: false }, { field: '', descending: false }] }))).toEqual([])
+    expect(validateIndexForm(form({ kind: 'expiring', fields: [{ field: 'a', descending: false }, { field: '', descending: false }] }))).toEqual([])
+  })
+
+  it('checks every field of a text index (it may span several)', () => {
+    expect(validateIndexForm(form({ kind: 'text', fields: [{ field: 'a', descending: false }, { field: '', descending: false }] }))).toEqual(['empty-field'])
+    expect(validateIndexForm(form({ kind: 'text', fields: [{ field: 'a', descending: false }, { field: 'b', descending: false }] }))).toEqual([])
+  })
+
+  it('wants the partial filter to be a JSON object, and refuses it together with sparse', () => {
+    expect(validateIndexForm(form({ partialFilter: '{ "status": "active" }' }))).toEqual([])
+    for (const bad of ['status:active', '[1]', '{}', '"x"', '{ broken']) expect(validateIndexForm(form({ partialFilter: bad }))).toEqual(['bad-partial-filter'])
+    expect(validateIndexForm(form({ sparse: true, partialFilter: '{ "a": 1 }' }))).toEqual(['sparse-and-partial'])
+    expect(validateIndexForm(form({ sparse: true }))).toEqual([])
+  })
+
+  it('leaves the options alone for an expiring index', () => {
+    expect(validateIndexForm(form({ kind: 'expiring', partialFilter: 'nonsense', sparse: true }))).toEqual([])
   })
 
   it('refuses an overlong name', () => {
@@ -80,18 +96,36 @@ describe('validateIndexForm', () => {
   })
 })
 
+describe('parsePartialFilter', () => {
+  it('is undefined for empty, null for anything that is not a non-empty JSON object', () => {
+    expect(parsePartialFilter('  ')).toBeUndefined()
+    expect(parsePartialFilter('{ "a": { "$gt": 0 } }')).toEqual({ a: { $gt: 0 } })
+    expect(parsePartialFilter('[]')).toBeNull()
+  })
+})
+
 describe('buildIndexRequest', () => {
-  it('builds a compound standard index with directions in field order', () => {
-    expect(buildIndexRequest(form({ fields: [{ field: ' c ', descending: false }, { field: 'b', descending: true }] }))).toEqual({ call: 'createIndex', keys: { c: 1, b: -1 } })
+  it('builds a compound index with ordered keys and directions as text', () => {
+    expect(buildIndexRequest(form({ fields: [{ field: ' c ', descending: false }, { field: 'b', descending: true }] }))).toEqual({
+      call: 'createOrderedIndex',
+      keys: [{ field: 'c', direction: '1' }, { field: 'b', direction: '-1' }],
+    })
   })
 
-  it('sets unique and a name through the options', () => {
-    expect(buildIndexRequest(form({ kind: 'unique', name: ' mine ' }))).toEqual({ call: 'createIndex', keys: { a: 1 }, options: { unique: true, name: 'mine' } })
-    expect(buildIndexRequest(form({ name: 'only_name' }))).toEqual({ call: 'createIndex', keys: { a: 1 }, options: { name: 'only_name' } })
+  it('sets unique, a name, sparse, hidden and the partial filter through the options', () => {
+    expect(buildIndexRequest(form({ kind: 'unique', name: ' mine ' }))).toEqual({ call: 'createOrderedIndex', keys: [{ field: 'a', direction: '1' }], options: { unique: true, name: 'mine' } })
+    expect(buildIndexRequest(form({ sparse: true, hidden: true }))).toEqual({ call: 'createOrderedIndex', keys: [{ field: 'a', direction: '1' }], options: { sparse: true, hidden: true } })
+    expect(buildIndexRequest(form({ partialFilter: '{ "n": { "$gt": 0 } }' }))).toEqual({ call: 'createOrderedIndex', keys: [{ field: 'a', direction: '1' }], options: { partialFilterExpression: { n: { $gt: 0 } } } })
   })
 
-  it('uses the single-field calls for text and expiring', () => {
-    expect(buildIndexRequest(form({ kind: 'text' }))).toEqual({ call: 'createTextIndex', field: 'a' })
+  it('builds a text index over several fields, whatever the directions say', () => {
+    expect(buildIndexRequest(form({ kind: 'text', fields: [{ field: 'a', descending: true }, { field: 'b', descending: false }] }))).toEqual({
+      call: 'createOrderedIndex',
+      keys: [{ field: 'a', direction: 'text' }, { field: 'b', direction: 'text' }],
+    })
+  })
+
+  it('uses the dedicated call for an expiring index', () => {
     expect(buildIndexRequest(form({ kind: 'expiring', expireAfter: ' 1d ' }))).toEqual({ call: 'createExpiringIndex', field: 'a', duration: '1d' })
   })
 })

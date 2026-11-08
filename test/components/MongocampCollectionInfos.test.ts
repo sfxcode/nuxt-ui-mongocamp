@@ -42,7 +42,7 @@ mockNuxtImport('useMongocampApi', () => {
   return () => ({
     collectionApi: { getCollectionInformation: mockGetCollectionInformation, aggregateRaw: (request: Parameters<typeof isIndexStatsCall>[0], init?: unknown) => (isIndexStatsCall(request) ? mockIndexStats(request, init) : mockAggregateRaw(request, init)), getJsonSchema: mockGetJsonSchema, getSchemaAnalysis: mockGetSchemaAnalysis },
     documentApi: { listDocuments: mockListDocuments },
-    indexApi: { listIndices: mockListIndices },
+    indexApi: { indexDetails: mockListIndices },
   })
 })
 
