@@ -12,7 +12,7 @@ A Nuxt module that wraps [`@sfxcode/nuxt-mongocamp-server`](https://www.npmjs.co
 
 ## Requirements
 
-MongoCamp server **1.6.3 or later** (with `@sfxcode/nuxt-mongocamp-server` ^1.6.3). Older servers are not supported.
+MongoCamp server **1.8.1 or later** (with `@sfxcode/nuxt-mongocamp-server` ^1.8.0). Older servers are not supported — the module uses the 1.7/1.8 endpoints directly (counts, search, batch info, copy/rename, ordered indexes, typed reads, streaming export/import). See [Server 1.8](/guide/server-1-8).
 
 ## Features
 
