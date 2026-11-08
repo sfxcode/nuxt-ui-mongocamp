@@ -36,6 +36,6 @@ The module needs **MongoCamp server 1.8.1 or later** (`@sfxcode/nuxt-mongocamp-s
 
 - **Lucene gaps**: open ranges, `>=`, `_exists_`, number/date wildcards, bare one-day ranges and negated `AND` groups (MongoCamp/mongocamp-server#69, #70) — see [`useMongocampQuery`](/composables/use-mongocamp-query).
 - **Raw aggregation stats stages**: `$indexStats` / `$collStats` rows still carry `host`, `ns` and `spec`; the module strips them for its own calls ([`runAggregation`](/composables/use-mongocamp-aggregation)). The dedicated `index/stats` endpoint is clean.
-- **`$lookup` and `$unionWith`** are not denied by the server (an admin can read other collections, `mc_users` included); the aggregation builder refuses them in the UI. Report/fix upstream.
+- **`$lookup` and `$unionWith`** are not on the server's deny-list, but the server enforces the caller's grants for the other collection (a non-admin without a grant gets `403`, code `4032`; an admin can read every collection anyway, `mc_users` included). The aggregation builder still refuses them in the UI as an early, friendly stop.
 - **Partial index filters** are listed garbled by `index/details`; the index card shows only that there is one.
 - **Long filters in a URL**: aggregation, export and bucket file lists send the Lucene filter as a query parameter — over ~1 800 encoded characters the module refuses it up front (the server's `414` has no CORS headers). The document list uses `POST …/search` and has no such limit.

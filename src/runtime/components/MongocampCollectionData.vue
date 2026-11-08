@@ -140,7 +140,7 @@ function openInsert() {
 
 // One document read with its real types: `extendedJson=canonical` (server 1.8.1) writes every value as the extended-JSON
 // wrapper of its type — `{ $oid }`, `{ $date }`, `{ $numberInt | $numberLong | $numberDouble | $numberDecimal }`, and
-// `{ $string }` for text that looks like a date. (`relaxed` would be lighter but the server rounds a long beyond 2^53 in it.)
+// `{ $string }` for text that looks like a date. (`relaxed` is lighter but writes int, long and double all as a bare number, so the types cannot be told apart.)
 // The table's own page stays a plain read: every number as a wrapper would triple its size.
 async function loadTypedRow(row: Row): Promise<Row | undefined> {
   const id = getDocId(row)
