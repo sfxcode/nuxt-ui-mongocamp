@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dominantKindOfField, fieldPathsOf, valueKindOfType } from '../src/runtime/utils/fieldDetails'
+import { bsonOfType, columnTypeOf, dominantKindOfField, fieldPathsOf, toFieldTypeInfos, toTypeHints, valueKindOfType } from '../src/runtime/utils/fieldDetails'
 
 // recorded from server 1.8.1 (live spike 2026-11-08)
 const DETAILS = [
@@ -48,5 +48,31 @@ describe('dominantKindOfField', () => {
 describe('fieldPathsOf', () => {
   it('lists nested paths sorted and leaves out the elements of arrays', () => {
     expect(fieldPathsOf(DETAILS)).toEqual(['_id', 'age', 'big', 'blob', 'empty', 'flag', 'nested', 'nested.x', 'score', 'tags', 'when'])
+  })
+})
+
+describe('FieldTypeInfo mappings', () => {
+  it('maps $type names to BSON types; containers, binary data and the like have none', () => {
+    expect(['string', 'int', 'long', 'double', 'decimal', 'bool', 'date', 'objectId', 'null'].map(bsonOfType)).toEqual(['string', 'int', 'long', 'double', 'decimal', 'bool', 'date', 'objectId', 'null'])
+    for (const type of ['object', 'array', 'binData', 'regex', 'timestamp', 'constructor']) expect(bsonOfType(type)).toBeUndefined()
+  })
+
+  it('orders types by frequency, adds counts of one type, ignores null, remembers containers', () => {
+    const [info] = toFieldTypeInfos([{ path: 'a', types: [{ type: 'string', count: 1 }, { type: 'long', count: 3 }, { type: 'null', count: 9 }, { type: 'object', count: 2 }, { type: 'long', count: 1 }] }])
+
+    expect(info).toEqual({ path: 'a', types: ['long', 'string'], dominant: 'long', container: 'object', mixed: true, element: false })
+  })
+
+  it('column types for bulk edit and import', () => {
+    const col = (types: Array<{ type: string, count: number }>) => columnTypeOf(toFieldTypeInfos([{ path: 'x', types }])[0]!)
+    expect([col([{ type: 'int', count: 1 }]), col([{ type: 'bool', count: 1 }]), col([{ type: 'date', count: 1 }]), col([{ type: 'string', count: 1 }]), col([{ type: 'array', count: 1 }]), col([])]).toEqual(['number', 'boolean', 'date-time', 'string', 'json', 'string'])
+  })
+
+  it('hints skip containers and multi-type paths', () => {
+    expect(toTypeHints(toFieldTypeInfos([
+      { path: 'a', types: [{ type: 'int', count: 1 }] },
+      { path: 'b', types: [{ type: 'int', count: 1 }, { type: 'long', count: 1 }] },
+      { path: 'c', types: [{ type: 'object', count: 1 }] },
+    ]))).toEqual({ a: 'int' })
   })
 })

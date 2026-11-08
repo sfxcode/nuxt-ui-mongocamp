@@ -15,6 +15,7 @@ All composables are auto-imported.
 | [`useMongocampSystem`](/composables/use-mongocamp-system) | Read-only database viewer (list, per-database info, collections), cluster members and masked server settings |
 | [`useMongocampExport`](/composables/use-mongocamp-export) | `rowsToCsv` and `downloadTextFile` for exporting rows already on screen |
 | [`useMongocampFilterBuilder`](/composables/use-mongocamp-filter-builder) | Turns filter rows (field, operator, value) into one Lucene query; type-aware operators, injection-safe |
+| [`useMongocampFieldTypes`](/composables/use-mongocamp-field-types) | field paths with the types of their values for a collection (`fields/detail`, cached): filter fields, write hints |
 | [`useMongocampBulkByFilter`](/composables/use-mongocamp-bulk-by-filter) | `countDocuments` / `deleteByFilter` / `updateByFilter`: one request each by the Lucene filter of the list |
 | [`useMongocampBulkDelete`](/composables/use-mongocamp-bulk-delete) | `runBulkDelete`: delete many items with limited concurrency (or one request per chunk) and a per-item failure report |
 | [`useMongocampImport`](/composables/use-mongocamp-import) | `importRows`: insert documents in batches with a per-batch failure report |
