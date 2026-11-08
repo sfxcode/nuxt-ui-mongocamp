@@ -15,11 +15,16 @@ export function rowsToCsv(rows: Record<string, unknown>[], keys: string[]): stri
   return lines.join('\r\n')
 }
 
-export function downloadTextFile(filename: string, content: string, mimeType: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: `${mimeType};charset=utf-8` }))
+/** Hands a Blob to the browser as a download. */
+export function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
   link.download = filename
   link.click()
   URL.revokeObjectURL(url)
+}
+
+export function downloadTextFile(filename: string, content: string, mimeType: string) {
+  downloadBlob(filename, new Blob([content], { type: `${mimeType};charset=utf-8` }))
 }

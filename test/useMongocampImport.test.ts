@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockDocumentApi = { insertMany: vi.fn() }
+const mockDocumentApi = { insertMany: vi.fn(), importDocuments: vi.fn() }
 
 vi.mock('#imports', () => ({
   useMongocampClientApi: () => ({ documentApi: mockDocumentApi }),
@@ -23,7 +23,7 @@ describe('importRows', () => {
     expect(mockDocumentApi.insertMany).toHaveBeenCalledTimes(2)
     expect(mockDocumentApi.insertMany).toHaveBeenNthCalledWith(
       1,
-      { collectionName: 'people', requestBody: [{ a: 1 }, { a: 2 }] },
+      { collectionName: 'people', requestBody: [{ a: 1 }, { a: 2 }], ordered: false },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
     expect(result.inserted).toBe(3)
@@ -70,5 +70,30 @@ describe('importRows', () => {
 
     expect(result.failedBatches).toHaveLength(1)
     expect(result).toMatchObject({ aborted: true, skipped: 1 })
+  })
+})
+
+describe('importNdjson', () => {
+  it('sends the file itself as the request body — nothing is read or parsed — and returns the server\'s counts', async () => {
+    const answer = { read: 3, inserted: 2, failed: 1, errors: [{ index: 3, code: 4008, message: 'the line is not valid JSON' }], errorsTruncated: false }
+    mockDocumentApi.importDocuments.mockResolvedValueOnce(answer)
+    const file = new File(['{"a":1}\n{"a":2}\nbad\n'], 'rows.ndjson')
+    const controller = new AbortController()
+
+    const result = await useMongocampImport().importNdjson('people', file, { signal: controller.signal })
+
+    expect(result).toBe(answer)
+    expect(mockDocumentApi.importDocuments).toHaveBeenCalledTimes(1)
+    const [request, init] = mockDocumentApi.importDocuments.mock.calls[0]!
+    expect(request.collectionName).toBe('people')
+    expect(request.body).toBe(file)
+    expect(init).toEqual({ signal: controller.signal })
+  })
+
+  it('lets a refusal reach the caller (413 above the server\'s size limit)', async () => {
+    const refusal = Object.assign(new Error('too big'), { response: new Response('{}', { status: 413 }) })
+    mockDocumentApi.importDocuments.mockRejectedValueOnce(refusal)
+
+    await expect(useMongocampImport().importNdjson('people', new Blob(['x']))).rejects.toBe(refusal)
   })
 })

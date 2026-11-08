@@ -3,12 +3,12 @@ import { computed, ref, watch } from 'vue'
 import { useI18n, useMongocampError } from '#imports'
 import { useMongocampExportAll } from '../composables/useMongocampExportAll'
 import type { ExportResult } from '../composables/useMongocampExportAll'
-import { DEFAULT_EXPORT_MAX_ROWS } from '../utils/exportDocuments'
+import { formatBytes } from '../utils/formatBytes'
 import type { ExportFormat } from '../utils/exportDocuments'
 
 // Exports every document of a collection — or every one a filter matches — as JSON, NDJSON or CSV, not only the page on
-// screen. A dialog without trigger: the parent owns `v-model:open`. Reading shows progress and can be cancelled (then
-// nothing is downloaded); a file cut at the cap says so.
+// screen. The server streams the file (no document cap). A dialog without trigger: the parent owns `v-model:open`. It shows
+// the bytes received and can be cancelled (then nothing is downloaded); a file the server cut short says so.
 const props = defineProps<{
   collection: string
   // Lucene filter, sort and fields of the list the user is looking at
@@ -28,7 +28,7 @@ const { exportCollection } = useMongocampExportAll()
 type Step = 'form' | 'running' | 'done'
 const step = ref<Step>('form')
 const format = ref<ExportFormat>('json')
-const progress = ref({ loaded: 0, target: 0 })
+const progress = ref({ bytes: 0, lines: 0 })
 const result = ref<ExportResult | null>(null)
 const cancelled = ref(false)
 const errorText = ref('')
@@ -50,14 +50,14 @@ const formatItems = computed(() => [
   { label: t('nuxtUiMongocamp.exportAll.formatNdjson'), value: 'ndjson' },
   { label: t('nuxtUiMongocamp.exportAll.formatCsv'), value: 'csv' },
 ])
-const percent = computed(() => (progress.value.target === 0 ? 0 : Math.round((progress.value.loaded / progress.value.target) * 100)))
+const received = computed(() => formatBytes(progress.value.bytes))
 
 async function start() {
   errorText.value = ''
   cancelled.value = false
   result.value = null
   step.value = 'running'
-  progress.value = { loaded: 0, target: props.total ?? 0 }
+  progress.value = { bytes: 0, lines: 0 }
   const run = new AbortController()
   controller = run
   try {
@@ -67,9 +67,10 @@ async function start() {
       filter: props.filter,
       sort: props.sort?.length ? props.sort : undefined,
       projection: props.projection?.length ? props.projection : undefined,
+      expected: props.total,
       signal: run.signal,
       onProgress: (p) => {
-        progress.value = { loaded: p.loaded, target: p.target ?? p.total ?? p.loaded }
+        progress.value = p
       },
     })
     step.value = 'done'
@@ -122,7 +123,7 @@ function cancel() {
           />
         </UFormField>
         <p class="text-xs text-dimmed">
-          {{ t('nuxtUiMongocamp.exportAll.cap', { cap: DEFAULT_EXPORT_MAX_ROWS }) }}
+          {{ t('nuxtUiMongocamp.exportAll.streamNote') }}
         </p>
       </div>
 
@@ -132,11 +133,8 @@ function cancel() {
         role="status"
         data-test="export-progress"
       >
-        <UProgress
-          :model-value="percent"
-          :max="100"
-        />
-        <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.exportAll.reading', { done: progress.loaded, total: progress.target }) }}</span>
+        <UProgress />
+        <span class="text-sm text-dimmed">{{ t('nuxtUiMongocamp.exportAll.receiving', { size: received }) }}</span>
       </div>
 
       <div
@@ -159,31 +157,20 @@ function cancel() {
         </p>
         <template v-else-if="result">
           <UAlert
-            v-if="result.truncated"
+            v-if="result.incomplete"
             color="warning"
             variant="subtle"
             icon="i-lucide-circle-alert"
-            :title="t('nuxtUiMongocamp.exportAll.truncated', { count: result.rowCount, total: result.total ?? result.rowCount })"
+            :title="t('nuxtUiMongocamp.exportAll.incomplete', { file: result.filename })"
+            data-test="export-incomplete"
           />
           <UAlert
             v-else
             color="success"
             variant="subtle"
             icon="i-lucide-circle-check"
-            :title="t('nuxtUiMongocamp.exportAll.done', { count: result.rowCount, file: result.filename }, result.rowCount)"
+            :title="result.documents === undefined ? t('nuxtUiMongocamp.exportAll.doneSize', { size: formatBytes(result.bytes), file: result.filename }) : t('nuxtUiMongocamp.exportAll.done', { count: result.documents, file: result.filename }, result.documents)"
           />
-          <p
-            v-if="result.truncated"
-            class="text-sm text-dimmed"
-          >
-            {{ t('nuxtUiMongocamp.exportAll.done', { count: result.rowCount, file: result.filename }, result.rowCount) }}
-          </p>
-          <p
-            v-if="result.totalChanged"
-            class="text-sm text-warning"
-          >
-            {{ t('nuxtUiMongocamp.exportAll.changed') }}
-          </p>
         </template>
       </div>
     </template>

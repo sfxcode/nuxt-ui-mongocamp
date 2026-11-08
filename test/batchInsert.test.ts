@@ -9,7 +9,7 @@ describe('runBatchInsert', () => {
     const result = await runBatchInsert(rows(7), insert, { batchSize: 3 })
 
     expect(insert.mock.calls.map(c => c[0].map((r: { i: number }) => r.i))).toEqual([[0, 1, 2], [3, 4, 5], [6]])
-    expect(result).toEqual({ inserted: 7, failedBatches: [], skipped: 0, aborted: false })
+    expect(result).toEqual({ inserted: 7, failedBatches: [], rowErrors: [], skipped: 0, aborted: false })
   })
 
   it('handles batch boundaries: exact multiple, one more, one fewer', async () => {
@@ -22,7 +22,7 @@ describe('runBatchInsert', () => {
 
   it('never calls insert for an empty input (the server answers 500 for an empty batch)', async () => {
     const insert = vi.fn()
-    expect(await runBatchInsert([], insert)).toEqual({ inserted: 0, failedBatches: [], skipped: 0, aborted: false })
+    expect(await runBatchInsert([], insert)).toEqual({ inserted: 0, failedBatches: [], rowErrors: [], skipped: 0, aborted: false })
     expect(insert).not.toHaveBeenCalled()
   })
 
@@ -79,5 +79,37 @@ describe('runBatchInsert', () => {
     const insert = vi.fn().mockResolvedValue({})
     await runBatchInsert(rows(25_000), insert, { batchSize: 1_000_000 })
     expect(insert.mock.calls.every(c => c[0].length <= 10_000)).toBe(true)
+  })
+
+  describe('rows refused one by one (insertMany ordered=false)', () => {
+    const dup = (index: number) => ({ index, code: 11000, message: 'E11000 duplicate key error' })
+
+    it('counts what the server says landed and maps batch positions to input positions', async () => {
+      const insert = vi.fn()
+        .mockResolvedValueOnce({ insertedCount: 3, errors: [] })
+        .mockResolvedValueOnce({ insertedCount: 2, errors: [dup(1)] })
+      const result = await runBatchInsert(rows(6), insert, { batchSize: 3 })
+
+      expect(result.inserted).toBe(5)
+      expect(result.rowErrors).toEqual([{ index: 4, code: 11000, message: 'E11000 duplicate key error' }])
+      expect(result.failedBatches).toEqual([expect.objectContaining({ start: 4, count: 1, mayBePartial: false })])
+      expect((result.failedBatches[0]!.error as Error).message).toBe('E11000 duplicate key error')
+    })
+
+    it('makes neighbouring rows with the same message one range, and keeps different ones apart', async () => {
+      const insert = vi.fn().mockResolvedValue({ insertedCount: 6, errors: [dup(0), dup(1), dup(2), { index: 4, code: 121, message: 'invalid' }, dup(6)] })
+      const result = await runBatchInsert(rows(11), insert, { batchSize: 20 })
+
+      expect(result.failedBatches.map(f => [f.start, f.count])).toEqual([[0, 3], [4, 1], [6, 1]])
+    })
+
+    it('keeps whole-batch failures and row failures in input order', async () => {
+      const insert = vi.fn()
+        .mockResolvedValueOnce({ insertedCount: 2, errors: [dup(2)] })
+        .mockRejectedValueOnce(new Error('boom'))
+      const result = await runBatchInsert(rows(6), insert, { batchSize: 3 })
+
+      expect(result.failedBatches.map(f => [f.start, f.count])).toEqual([[2, 1], [3, 3]])
+    })
   })
 })

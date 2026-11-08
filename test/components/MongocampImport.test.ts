@@ -30,9 +30,10 @@ function button(label: string) {
 }
 
 const mockInsertMany = vi.fn()
+const mockImportDocuments = vi.fn()
 
 mockNuxtImport('useMongocampApi', () => {
-  return () => ({ documentApi: { insertMany: mockInsertMany } })
+  return () => ({ documentApi: { insertMany: mockInsertMany, importDocuments: mockImportDocuments } })
 })
 
 beforeEach(() => {
@@ -69,8 +70,8 @@ describe('MongocampImport', () => {
   it('opens a dialog that asks for a file', async () => {
     await mountAndOpen()
 
-    expect(modal().text()).toContain('Choose a JSON or CSV file')
-    expect(modal().text()).toContain('Up to 10000 rows')
+    expect(modal().text()).toContain('Choose a JSON, NDJSON or CSV file')
+    expect(modal().text()).toContain('up to 10000 rows and 5 MB')
   })
 
   it('imports a CSV with inferred types, stamps metadata and reports the result', async () => {
@@ -168,5 +169,114 @@ describe('MongocampImport', () => {
     expect(sentRows(1).map(r => r.a)).toEqual([1, 2])
     expect(modal().text()).toContain('2 rows imported')
     expect(component.findComponent(MongocampImport).emitted('imported')).toEqual([[2]])
+  })
+
+  it('imports the rows around one the server refused, names that row, and retries exactly it', async () => {
+    mockInsertMany.mockResolvedValueOnce({ wasAcknowledged: true, insertedCount: 2, errors: [{ index: 1, code: 11000, message: 'E11000 duplicate key error' }] })
+    const component = await mountAndOpen()
+    await chooseFile('rows.json', '[{"a":1},{"a":2},{"a":3}]')
+    await button('Import 3 rows')?.trigger('click')
+    await wait()
+
+    expect(mockInsertMany.mock.calls[0]![0]).toMatchObject({ ordered: false })
+    expect(modal().text()).toContain('2 rows imported')
+    expect(modal().text()).toContain('Rows 2–2 could not be imported: E11000 duplicate key error')
+    expect(modal().text()).not.toContain('may already have been added')
+    expect(component.findComponent(MongocampImport).emitted('imported')).toEqual([[2]])
+
+    await button('Retry failed rows')?.trigger('click')
+    await wait()
+
+    expect(sentRows(1).map(r => r.a)).toEqual([2])
+  })
+
+  describe('a NDJSON file goes to the server as it is', () => {
+    async function chooseNdjson(name: string, text: string) {
+      const input = modal().find('[data-testid="import-file-input"]')
+      Object.defineProperty(input.element, 'files', { value: [new File([text], name)], configurable: true })
+      await input.trigger('change')
+      await wait(100)
+    }
+
+    it('shows the first lines and the size instead of rows to validate, and sends no batches', async () => {
+      await mountAndOpen()
+      await chooseNdjson('rows.ndjson', '{"name":"a","n":1}\n{"name":"b","tags":["x"]}\nnot json\n')
+
+      const preview = modal().find('[data-test="ndjson-preview"]')
+      expect(preview.text()).toContain('rows.ndjson')
+      expect(preview.text()).toContain('sent to the server as it is')
+      expect(preview.text()).toContain('1 of the first lines is not a JSON object')
+      expect(preview.text()).toContain('name')
+      expect(preview.text()).toContain('["x"]')
+      expect(mockInsertMany).not.toHaveBeenCalled()
+      expect(button('Import file')).toBeDefined()
+    })
+
+    it('uploads the file itself, shows what the server stored and names the failed lines', async () => {
+      mockImportDocuments.mockResolvedValue({ read: 4, inserted: 3, failed: 1, errors: [{ index: 4, code: 4008, message: 'the line is not valid JSON: expected json value got \'bad\'' }], errorsTruncated: false })
+      const component = await mountAndOpen()
+      await chooseNdjson('rows.jsonl', '{"a":1}\n{"a":2}\n{"a":3}\nbad\n')
+      await button('Import file')!.trigger('click')
+      await wait()
+
+      expect(mockInsertMany).not.toHaveBeenCalled()
+      expect(mockImportDocuments).toHaveBeenCalledTimes(1)
+      const request = mockImportDocuments.mock.calls[0]![0]
+      expect(request.collectionName).toBe('people')
+      expect(request.body).toBeInstanceOf(File)
+      expect((request.body as File).name).toBe('rows.jsonl')
+      const result = modal().find('[data-test="ndjson-result"]').text()
+      expect(result).toContain('3 rows imported')
+      expect(result).toContain('1 of 4 lines could not be imported')
+      expect(result).toContain('Line 4: the line is not valid JSON')
+      expect(button('Retry failed rows')).toBeUndefined()
+      expect(component.findComponent(MongocampImport).emitted('imported')).toEqual([[3]])
+    })
+
+    it('shows the server\'s message when the whole upload is refused', async () => {
+      mockImportDocuments.mockRejectedValue(Object.assign(new Error('x'), {
+        name: 'ResponseError',
+        response: new Response(JSON.stringify({ code: 4130, msg: 'the body is larger than the limit' }), { status: 413 }),
+      }))
+      const component = await mountAndOpen()
+      await chooseNdjson('big.ndjson', '{"a":1}\n')
+      await button('Import file')!.trigger('click')
+      await wait()
+
+      expect(modal().find('[data-test="ndjson-result"]').text()).toContain('the body is larger than the limit')
+      expect(component.findComponent(MongocampImport).emitted('imported')).toBeUndefined()
+    })
+
+    it('can be stopped while the server reads: back to the preview, nothing claimed', async () => {
+      mockImportDocuments.mockImplementation((_request: unknown, init: { signal: AbortSignal }) => new Promise((_, reject) => {
+        init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })))
+      }))
+      await mountAndOpen()
+      await chooseNdjson('rows.ndjson', '{"a":1}\n')
+      await button('Import file')!.trigger('click')
+      await wait()
+      expect(modal().find('[data-test="ndjson-importing"]').exists()).toBe(true)
+
+      await button('Stop')!.trigger('click')
+      await wait()
+
+      expect(modal().find('[data-test="ndjson-preview"]').exists()).toBe(true)
+      expect(modal().find('[data-test="ndjson-result"]').exists()).toBe(false)
+    })
+
+    it('reads only the head of a big file for the preview', async () => {
+      await mountAndOpen()
+      const line = `{"name":"${'x'.repeat(100)}"}\n`
+      const big = line.repeat(2000) // ~ 220 KB: more than the 64 KB head
+      const slice = vi.spyOn(File.prototype, 'slice')
+      const whole = vi.spyOn(File.prototype, 'text')
+      await chooseNdjson('big.ndjson', big)
+
+      expect(slice).toHaveBeenCalledWith(0, 64 * 1024)
+      expect(whole).not.toHaveBeenCalled() // the file itself is never read whole
+      expect(modal().find('[data-test="ndjson-preview"]').text()).not.toContain('is not a JSON object') // the cut last line is dropped, not shown as broken
+      slice.mockRestore()
+      whole.mockRestore()
+    })
   })
 })

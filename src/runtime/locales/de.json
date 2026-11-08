@@ -504,8 +504,8 @@
     "import": {
       "trigger": "Dokumente importieren",
       "title": "Dokumente importieren",
-      "chooseFile": "JSON- oder CSV-Datei auswählen",
-      "hint": "Ein JSON-Array von Objekten oder eine CSV-Datei mit Kopfzeile. Bis zu {maxRows} Zeilen und {maxMb} MB.",
+      "chooseFile": "JSON-, NDJSON- oder CSV-Datei wählen",
+      "hint": "Ein JSON-Array aus Objekten, eine CSV-Datei mit Kopfzeile (bis zu {maxRows} Zeilen und {maxMb} MB) oder eine NDJSON-Datei — ein JSON-Dokument pro Zeile, wie der Export sie schreibt —, die unverändert und ohne diese Grenze an den Server geht.",
       "chooseButton": "Datei auswählen",
       "readError": "Die Datei konnte nicht gelesen werden",
       "format": "Format",
@@ -559,7 +559,14 @@
         "invalid-boolean": "Erwartet true/false, yes/no oder 1/0",
         "invalid-date": "Kein gültiges ISO-Datum",
         "invalid-json-value": "Kein gültiges JSON"
-      }
+      },
+      "ndjsonNote": "Die Datei geht unverändert Zeile für Zeile an den Server: Es gibt keine Zeilengrenze und nichts wird im Browser gehalten. Die Typen folgen den Regeln des Servers (Extended-JSON-Wrapper werden beachtet, ein Text in Zeitstempelform wird zum Datum), Metadaten werden nicht gesetzt. Eine Zeile, die nicht gespeichert werden kann, hält die anderen nicht auf.",
+      "ndjsonUnreadable": "{count} der ersten Zeilen ist kein JSON-Objekt. | {count} der ersten Zeilen sind keine JSON-Objekte.",
+      "importFile": "Datei importieren",
+      "ndjsonImporting": "Der Server liest die Datei …",
+      "ndjsonFailed": "{failed} von {read} Zeilen konnten nicht importiert werden",
+      "ndjsonLine": "Zeile {line}: {reason}",
+      "ndjsonMoreErrors": "Nur die ersten fehlgeschlagenen Zeilen werden genannt."
     },
     "aggregation": {
       "errors": {
@@ -821,17 +828,17 @@
       "formatJson": "JSON (ein Array)",
       "formatNdjson": "NDJSON (ein Dokument pro Zeile)",
       "formatCsv": "CSV",
-      "cap": "Es werden höchstens {cap} Dokumente exportiert; weitere werden abgeschnitten und das wird hier gemeldet.",
       "start": "Exportieren",
       "stop": "Abbrechen",
       "close": "Schließen",
-      "reading": "{done} von {total} gelesen",
       "done": "{count} Dokument nach {file} exportiert. | {count} Dokumente nach {file} exportiert.",
-      "truncated": "Die Datei ist unvollständig: nur die ersten {count} von {total} Dokumenten wurden exportiert. Grenzen Sie den Filter ein.",
-      "changed": "Während des Lesens wurden Dokumente hinzugefügt oder entfernt, die Datei kann eines auslassen oder doppelt enthalten.",
       "cancelled": "Abgebrochen — nichts wurde heruntergeladen.",
       "failed": "Der Export ist fehlgeschlagen",
-      "menuItem": "Alle passenden exportieren…"
+      "menuItem": "Alle passenden exportieren…",
+      "streamNote": "Der Server liefert die Datei als Datenstrom: Die Anzahl der Dokumente ist nicht begrenzt.",
+      "receiving": "Datei wird empfangen: {size}",
+      "incomplete": "Der Server hat vor dem Ende abgebrochen, daher ist {file} unvollständig. Bitte erneut versuchen.",
+      "doneSize": "{file} exportiert ({size})."
     },
     "charts": {
       "titleValues": "Häufigste Werte",

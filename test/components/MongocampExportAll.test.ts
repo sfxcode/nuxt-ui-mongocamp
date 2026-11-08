@@ -17,7 +17,7 @@ vi.mock('../../src/runtime/composables/useMongocampExportAll', () => ({
   useMongocampExportAll: () => ({ exportCollection: mockExport }),
 }))
 
-const result = (patch: Record<string, unknown> = {}) => ({ content: '[]', filename: 'orders-20261104-1000.json', mimeType: 'application/json', format: 'json', rowCount: 3, total: 3, truncated: false, totalChanged: false, ...patch })
+const result = (patch: Record<string, unknown> = {}) => ({ blob: new Blob(['[]']), filename: 'orders-20261104-1000.json', mimeType: 'application/json', format: 'json', bytes: 2048, documents: 3, incomplete: false, ...patch })
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -58,7 +58,7 @@ describe('MongocampExportAll', () => {
     await wait()
 
     expect(mockExport).toHaveBeenCalledTimes(1)
-    expect(mockExport.mock.calls[0]![0]).toMatchObject({ collection: 'orders', format: 'csv', filter: 'status:open', sort: ['-age'], projection: ['name'], signal: expect.any(AbortSignal) })
+    expect(mockExport.mock.calls[0]![0]).toMatchObject({ collection: 'orders', format: 'csv', filter: 'status:open', sort: ['-age'], projection: ['name'], expected: 3, signal: expect.any(AbortSignal) })
     expect(modal().find('[data-test="export-result"]').text()).toContain('Exported 3 documents to orders-20261104-1000.json.')
   })
 
@@ -70,32 +70,39 @@ describe('MongocampExportAll', () => {
     expect(mockExport.mock.calls[0]![0].projection).toBeUndefined()
   })
 
-  it('says the file is incomplete when the cap cut it off', async () => {
-    mockExport.mockResolvedValue(result({ rowCount: 50_000, total: 70_000, truncated: true }))
+  it('has no cap and says the server streams the file', async () => {
+    await mountExport({ total: 5_000_000 })
+    expect(modal().text()).toContain('no limit on the number of documents')
+    expect(modal().text()).not.toContain('At most')
+  })
+
+  it('says the file is incomplete when the server stopped before the end', async () => {
+    mockExport.mockResolvedValue(result({ incomplete: true, documents: undefined }))
     await mountExport()
     await button('Export').trigger('click')
     await wait()
     const text = modal().find('[data-test="export-result"]').text()
-    expect(text).toContain('The file is incomplete: only the first 50000 of 70000 documents were exported')
+    expect(text).toContain('The server stopped before the end, so orders-20261104-1000.json is incomplete')
+    expect(text).not.toContain('Exported')
   })
 
-  it('warns when the collection changed while it was read', async () => {
-    mockExport.mockResolvedValue(result({ totalChanged: true }))
+  it('names the size when the number of documents is not known', async () => {
+    mockExport.mockResolvedValue(result({ documents: undefined, bytes: 5 * 1024 * 1024 }))
     await mountExport()
     await button('Export').trigger('click')
     await wait()
-    expect(modal().text()).toContain('may miss or repeat one')
+    expect(modal().find('[data-test="export-result"]').text()).toContain('Exported orders-20261104-1000.json (5.0 MB).')
   })
 
   it('shows progress and can be cancelled — then nothing is downloaded', async () => {
-    mockExport.mockImplementation(async (options: { signal: AbortSignal, onProgress: (p: { loaded: number, target: number }) => void }) => {
-      options.onProgress({ loaded: 500, target: 2000 })
+    mockExport.mockImplementation(async (options: { signal: AbortSignal, onProgress: (p: { bytes: number, lines: number }) => void }) => {
+      options.onProgress({ bytes: 3 * 1024 * 1024, lines: 5000 })
       await new Promise<void>((_, reject) => options.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))))
     })
     await mountExport({ total: 2000 })
     await button('Export').trigger('click')
     await wait()
-    expect(modal().find('[data-test="export-progress"]').text()).toContain('Reading 500 of 2000')
+    expect(modal().find('[data-test="export-progress"]').text()).toContain('Receiving the file: 3.0 MB')
 
     await button('Cancel').trigger('click')
     await wait()

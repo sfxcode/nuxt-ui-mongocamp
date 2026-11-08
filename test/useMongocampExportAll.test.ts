@@ -1,113 +1,130 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockFetchAllDocuments = vi.fn()
-const mockDownload = vi.hoisted(() => vi.fn())
+const mockExportDocumentsRaw = vi.fn()
+const mockDownloadBlob = vi.hoisted(() => vi.fn())
 
-vi.mock('../src/runtime/composables/useMongocampFetchAll', () => ({
-  useMongocampFetchAll: () => ({ fetchAllDocuments: mockFetchAllDocuments }),
+vi.mock('#imports', () => ({
+  useMongocampClientApi: () => ({ documentApi: { exportDocumentsRaw: mockExportDocumentsRaw } }),
 }))
 
 vi.mock('../src/runtime/utils/exportRows', async importOriginal => ({
   ...await importOriginal<typeof import('../src/runtime/utils/exportRows')>(),
-  downloadTextFile: mockDownload,
+  downloadBlob: mockDownloadBlob,
 }))
 
 const { useMongocampExportAll } = await import('../src/runtime/composables/useMongocampExportAll')
 
-const fetched = (rows: unknown[], extra: Record<string, unknown> = {}) => ({ rows, total: rows.length, truncated: false, totalChanged: false, duplicates: 0, pages: 1, ...extra })
+// the server streams: the body arrives in chunks
+function serve(text: string, chunkSize = 7) {
+  const bytes = new TextEncoder().encode(text)
+  mockExportDocumentsRaw.mockImplementation(async () => ({
+    raw: new Response(new ReadableStream({
+      start(controller) {
+        for (let i = 0; i < bytes.length; i += chunkSize) controller.enqueue(bytes.slice(i, i + chunkSize))
+        controller.close()
+      },
+    })),
+  }))
+}
+
+const NDJSON = '{"_id":"a","n":1}\n{"_id":"b","n":2}\n{"big":9007199254740993,"_id":"c"}\n'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockFetchAllDocuments.mockResolvedValue(fetched([{ _id: 'a', n: 1 }, { _id: 'b', n: 2 }]))
 })
 
 describe('exportCollection', () => {
-  it('reads every document of the collection and downloads the file', async () => {
+  it('asks the server for the file with the filter, sort, fields and limit, and hands the blob to the browser', async () => {
+    serve(NDJSON)
     const { exportCollection } = useMongocampExportAll()
 
-    const result = await exportCollection({ collection: 'customers', format: 'csv', filename: 'all.csv' })
+    const result = await exportCollection({ collection: 'customers', format: 'ndjson', filter: 'a:1', sort: ['-n'], projection: ['n'], maxRows: 10, filename: 'all.ndjson' })
 
-    expect(mockFetchAllDocuments).toHaveBeenCalledTimes(1)
-    expect(mockFetchAllDocuments.mock.calls[0]![0]).toBe('customers')
-    expect(mockDownload).toHaveBeenCalledWith('all.csv', '_id,n\r\na,1\r\nb,2', 'text/csv')
-    expect(result).toMatchObject({ content: '_id,n\r\na,1\r\nb,2', filename: 'all.csv', mimeType: 'text/csv', format: 'csv', rowCount: 2, total: 2, truncated: false, totalChanged: false })
+    expect(mockExportDocumentsRaw).toHaveBeenCalledTimes(1)
+    expect(mockExportDocumentsRaw.mock.calls[0]![0]).toEqual({ collectionName: 'customers', format: 'ndjson', filter: 'a:1', sort: ['-n'], projection: ['n'], limit: 10 })
+    expect(mockDownloadBlob).toHaveBeenCalledWith('all.ndjson', result.blob)
+    expect(result).toMatchObject({ filename: 'all.ndjson', mimeType: 'application/x-ndjson', format: 'ndjson', bytes: NDJSON.length, documents: 3, incomplete: false })
   })
 
-  it('writes json, ndjson and csv with the right mime type and extension', async () => {
-    const { exportCollection } = useMongocampExportAll()
+  it('keeps the file exactly as the server wrote it — a long beyond 2^53 keeps every digit', async () => {
+    serve(NDJSON)
+    const result = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'ndjson', download: false })
 
-    const json = await exportCollection({ collection: 'c', format: 'json', download: false })
-    const ndjson = await exportCollection({ collection: 'c', format: 'ndjson', download: false })
-
-    expect(json).toMatchObject({ mimeType: 'application/json', content: '[\n  {"_id":"a","n":1},\n  {"_id":"b","n":2}\n]\n' })
-    expect(json.filename).toMatch(/^c-\d{8}-\d{4}\.json$/)
-    expect(ndjson).toMatchObject({ mimeType: 'application/x-ndjson', content: '{"_id":"a","n":1}\n{"_id":"b","n":2}\n' })
-    expect(ndjson.filename).toMatch(/\.ndjson$/)
+    expect(await result.blob.text()).toBe(NDJSON)
+    expect(mockDownloadBlob).not.toHaveBeenCalled()
   })
 
-  it('only returns the text for download: false', async () => {
-    const result = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', download: false })
+  it('has no cap: nothing is sent as a limit unless asked, and an empty projection or filter is left out', async () => {
+    serve('[]')
+    await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', filter: '  ', sort: [], projection: [], download: false })
 
-    expect(mockDownload).not.toHaveBeenCalled()
-    expect(result.content).toContain('"_id":"a"')
+    expect(mockExportDocumentsRaw.mock.calls[0]![0]).toEqual({ collectionName: 'c', format: 'json', filter: undefined, sort: undefined, projection: undefined, limit: undefined })
   })
 
-  it('passes filter, sort, projection, page size, progress and signal on, and caps at 50 000 documents by default', async () => {
-    const onProgress = vi.fn()
-    const signal = new AbortController().signal
+  it('takes `columns` as the projection of a CSV when no projection is given', async () => {
+    serve('b,a\r\n2,1\r\n')
+    await useMongocampExportAll().exportCollection({ collection: 'c', format: 'csv', columns: ['b', 'a'], download: false })
 
-    await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', download: false, filter: 'g:3', sort: ['name'], projection: ['_id', 'name'], pageSize: 200, onProgress, signal })
-
-    expect(mockFetchAllDocuments.mock.calls[0]![1]).toMatchObject({ filter: 'g:3', sort: ['name'], projection: ['_id', 'name'], pageSize: 200, maxRows: 50_000, onProgress, signal })
+    expect(mockExportDocumentsRaw.mock.calls[0]![0].projection).toEqual(['b', 'a'])
   })
 
-  it('lets the caller raise the cap, and drops a document repeated by paging drift (keyed by _id)', async () => {
-    await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', download: false, maxRows: 200_000 })
+  it('reports progress per chunk: bytes and lines', async () => {
+    serve(NDJSON, 10)
+    const seen: Array<{ bytes: number, lines: number }> = []
+    await useMongocampExportAll().exportCollection({ collection: 'c', format: 'ndjson', download: false, onProgress: p => seen.push(p) })
 
-    const options = mockFetchAllDocuments.mock.calls[0]![1] as { maxRows: number, keyOf: (row: { _id: unknown }) => string }
-    expect(options.maxRows).toBe(200_000)
-    expect(options.keyOf({ _id: 'abc' })).toBe('abc')
+    expect(seen.length).toBeGreaterThan(2)
+    expect(seen.at(-1)).toEqual({ bytes: NDJSON.length, lines: 3 })
+    expect(seen.map(p => p.bytes)).toEqual([...seen.map(p => p.bytes)].sort((a, b) => a - b))
   })
 
-  it('writes the documents as the table shows them: wrappers unwrapped, an exact long kept', async () => {
-    mockFetchAllDocuments.mockResolvedValue(fetched([{ _id: { $oid: 'a' }, when: { $date: '2024-03-01T10:00:00.000Z' }, big: { $numberLong: '9007199254740993' } }]))
+  it('counts a last line without a line break', async () => {
+    serve('{"a":1}\n{"a":2}')
+    const result = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'ndjson', download: false })
 
-    const { content } = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'ndjson', download: false })
-
-    expect(content).toBe('{"_id":"a","when":"2024-03-01T10:00:00.000Z","big":9007199254740993}\n')
+    expect(result.documents).toBe(2)
   })
 
-  it('says when the file is incomplete (the cap was hit) and when the collection changed while reading — and still downloads what was read', async () => {
-    mockFetchAllDocuments.mockResolvedValue(fetched([{ _id: 'a' }], { total: 90_000, truncated: true, totalChanged: true }))
+  describe('a file the server cut short (it ends a failing stream with a normal 200)', () => {
+    it('JSON must end with a closing bracket', async () => {
+      serve('[{"a":1},{"a":2}]\n')
+      expect(await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', expected: 2, download: false })).toMatchObject({ incomplete: false, documents: 2 })
 
-    const result = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json' })
+      serve('[{"a":1},{"a"')
+      expect(await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', expected: 2, download: false })).toMatchObject({ incomplete: true, documents: undefined })
+    })
 
-    expect(result).toMatchObject({ rowCount: 1, total: 90_000, truncated: true, totalChanged: true })
-    expect(mockDownload).toHaveBeenCalledTimes(1)
+    it('NDJSON must hold the expected number of documents (capped by maxRows)', async () => {
+      serve('{"a":1}\n{"a":2}\n')
+      const { exportCollection } = useMongocampExportAll()
+      expect((await exportCollection({ collection: 'c', format: 'ndjson', expected: 5, download: false })).incomplete).toBe(true)
+      expect((await exportCollection({ collection: 'c', format: 'ndjson', expected: 5, maxRows: 2, download: false })).incomplete).toBe(false)
+      expect((await exportCollection({ collection: 'c', format: 'ndjson', download: false })).incomplete).toBe(false) // nothing expected, nothing to compare
+    })
+
+    it('CSV must hold a header and at least the expected number of lines', async () => {
+      serve('a,b\r\n1,2\r\n')
+      const { exportCollection } = useMongocampExportAll()
+      expect(await exportCollection({ collection: 'c', format: 'csv', expected: 1, download: false })).toMatchObject({ incomplete: false, documents: 1 })
+      expect((await exportCollection({ collection: 'c', format: 'csv', expected: 3, download: false })).incomplete).toBe(true)
+    })
   })
 
-  it('uses the given CSV columns', async () => {
-    const { content } = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'csv', download: false, columns: ['n', '_id'] })
+  it('refuses a filter that would not fit in the URL before any request', async () => {
+    const failure = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', filter: `name:(${'x'.repeat(2000)})`, download: false }).catch(e => e)
 
-    expect(content).toBe('n,_id\r\n1,a\r\n2,b')
+    expect(failure.name).toBe('FilterTooLongError')
+    expect(mockExportDocumentsRaw).not.toHaveBeenCalled()
   })
 
-  it('downloads nothing when the read is aborted or fails, and lets the error through', async () => {
-    mockFetchAllDocuments.mockRejectedValueOnce(Object.assign(new Error('aborted'), { name: 'AbortError' }))
-    await expect(useMongocampExportAll().exportCollection({ collection: 'c', format: 'csv' })).rejects.toMatchObject({ name: 'AbortError' })
+  it('rejects with the abort and downloads nothing when aborted', async () => {
+    mockExportDocumentsRaw.mockImplementation(async (_request: unknown, init: { signal: AbortSignal }) => {
+      throw Object.assign(new Error('aborted'), { name: init.signal.aborted ? 'AbortError' : 'Error' })
+    })
+    const controller = new AbortController()
+    controller.abort()
 
-    mockFetchAllDocuments.mockRejectedValueOnce(new Error('boom'))
-    await expect(useMongocampExportAll().exportCollection({ collection: 'c', format: 'csv' })).rejects.toThrow('boom')
-    expect(mockDownload).not.toHaveBeenCalled()
-  })
-
-  it('exports an empty collection as an empty file', async () => {
-    mockFetchAllDocuments.mockResolvedValue(fetched([]))
-
-    const json = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', download: false })
-    const csv = await useMongocampExportAll().exportCollection({ collection: 'c', format: 'csv', download: false })
-
-    expect(json).toMatchObject({ content: '[]\n', rowCount: 0 })
-    expect(csv.content).toBe('')
+    await expect(useMongocampExportAll().exportCollection({ collection: 'c', format: 'json', signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' })
+    expect(mockDownloadBlob).not.toHaveBeenCalled()
   })
 })

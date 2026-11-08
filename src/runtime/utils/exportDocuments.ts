@@ -11,9 +11,6 @@ export const EXPORT_MIME_TYPES: Record<ExportFormat, string> = {
   csv: 'text/csv',
 }
 
-/** More documents than this are not read into one browser file unless the caller raises the cap on purpose. */
-export const DEFAULT_EXPORT_MAX_ROWS = 50_000
-
 const INTEGER_TEXT = /^-?\d+$/
 
 // An integer beyond ±(2^53 − 1) arrives as `{ $numberLong: 'digits' }` (see utils/bigIntJson.ts). It becomes a BigInt here,

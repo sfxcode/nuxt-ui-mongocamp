@@ -26,10 +26,14 @@ The component renders its own trigger button (a file-up icon) and the dialog.
 
 ## The dialog
 
-1. **Choose a file** — `.json`, `.csv`, `.tsv` or `.txt`. The format is taken from the extension, otherwise from the first character (`[` or `{` means JSON).
+1. **Choose a file** — `.json`, `.ndjson` / `.jsonl`, `.csv`, `.tsv` or `.txt`. The format is taken from the extension, otherwise from the first character (`[` or `{` means JSON).
 2. **Preview** — shows `N of M rows ready to import`, the first five rows, and every row that will be skipped with its row number and the reason (the first ten are listed, the rest counted). For CSV you can change the delimiter (comma, semicolon, tab) and the type of every column; the switches decide whether empty text cells are kept as empty strings and whether created/updated information is added (on by default, like the single-document form).
 3. **Import** — runs in batches of 1 000 with a progress bar and a **Stop** button; stopping reports how many rows were not sent (rows already sent stay imported).
 4. **Result** — how many rows were imported, and for each failed batch the file rows it covered and the server's own reason. **Retry failed rows** sends only those rows again.
+
+## NDJSON files go to the server as they are
+
+A `.ndjson` / `.jsonl` file (one JSON document per line, as [the export](/composables/use-mongocamp-export-all) writes it) is **not parsed in the browser**: only its first 64 KB are read, for a preview of the first lines (a line that is not a JSON object is counted), and **Import file** sends the file itself to the server ([`importNdjson`](/composables/use-mongocamp-import#importndjson-collection-file-signal-server-1-8-1)). There is **no row limit** and nothing is held in memory. The server reads the file in unordered batches: a line that cannot be stored does not stop the others, and the result names the first failed lines as `Line N: reason` (1-based, blank lines count). Differences from the other formats: types follow the server's rules (extended-JSON wrappers are honoured, a timestamp-shaped text becomes a date), no metadata is stamped, there is no **Retry** (fix the lines and import again), and **Stop** only abandons the request — documents the server already stored stay.
 
 ## Files
 

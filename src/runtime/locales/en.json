@@ -504,8 +504,8 @@
     "import": {
       "trigger": "Import documents",
       "title": "Import documents",
-      "chooseFile": "Choose a JSON or CSV file",
-      "hint": "A JSON array of objects, or a CSV file with a header row. Up to {maxRows} rows and {maxMb} MB.",
+      "chooseFile": "Choose a JSON, NDJSON or CSV file",
+      "hint": "A JSON array of objects, a CSV file with a header row (up to {maxRows} rows and {maxMb} MB), or a NDJSON file — one JSON document per line, as the export writes it — which goes to the server as it is, without that limit.",
       "chooseButton": "Choose file",
       "readError": "The file could not be read",
       "format": "Format",
@@ -559,7 +559,14 @@
         "invalid-boolean": "Expected true/false, yes/no or 1/0",
         "invalid-date": "Not a valid ISO date",
         "invalid-json-value": "Not valid JSON"
-      }
+      },
+      "ndjsonNote": "The file is sent to the server as it is, line by line: there is no row limit and nothing is held in the browser. Types follow the server's rules (extended JSON wrappers are honoured, a timestamp-shaped text becomes a date) and no metadata is stamped. A line that cannot be stored does not stop the others.",
+      "ndjsonUnreadable": "{count} of the first lines is not a JSON object. | {count} of the first lines are not JSON objects.",
+      "importFile": "Import file",
+      "ndjsonImporting": "The server is reading the file…",
+      "ndjsonFailed": "{failed} of {read} lines could not be imported",
+      "ndjsonLine": "Line {line}: {reason}",
+      "ndjsonMoreErrors": "Only the first failed lines are named."
     },
     "aggregation": {
       "errors": {
@@ -821,17 +828,17 @@
       "formatJson": "JSON (one array)",
       "formatNdjson": "NDJSON (one document per line)",
       "formatCsv": "CSV",
-      "cap": "At most {cap} documents are exported; more are cut off and the file says so here.",
       "start": "Export",
       "stop": "Cancel",
       "close": "Close",
-      "reading": "Reading {done} of {total}",
       "done": "Exported {count} document to {file}. | Exported {count} documents to {file}.",
-      "truncated": "The file is incomplete: only the first {count} of {total} documents were exported. Narrow the filter.",
-      "changed": "Documents were added or removed while reading, so the file may miss or repeat one.",
       "cancelled": "Cancelled — nothing was downloaded.",
       "failed": "The export failed",
-      "menuItem": "Export all matching…"
+      "menuItem": "Export all matching…",
+      "streamNote": "The server streams the file: there is no limit on the number of documents.",
+      "receiving": "Receiving the file: {size}",
+      "incomplete": "The server stopped before the end, so {file} is incomplete. Try again.",
+      "doneSize": "Exported {file} ({size})."
     },
     "charts": {
       "titleValues": "Most common values",

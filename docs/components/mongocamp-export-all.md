@@ -15,7 +15,7 @@ Exports **every** document of a collection — or every one a filter matches —
 
 ## Behavior
 
-- Choose **JSON**, **NDJSON** or **CSV**, then **Export**; the file is downloaded when everything is read (see [`useMongocampExportAll`](/composables/use-mongocamp-export-all)).
-- Progress while reading and **Cancel**: nothing is downloaded after a cancel.
-- At most **50 000** documents. If more match, the file holds the first ones and the dialog says in a warning that **the file is incomplete** and how many of how many it holds — narrow the filter.
-- If documents were added or removed while reading, the dialog says the file may miss or repeat one.
+- Choose **JSON**, **NDJSON** or **CSV**, then **Export**; the server streams the file and it is downloaded when it has arrived (see [`useMongocampExportAll`](/composables/use-mongocamp-export-all)).
+- **No document cap.** The dialog shows the bytes received and **Cancel**: nothing is downloaded after a cancel.
+- The server ends a failing stream with a normal `200`, so the file is checked against the count (`total`): a file that is cut short is reported as **incomplete** (the server stopped before the end — try again). Without a count the dialog names the file size instead of a document count.
+- The filter travels in the URL; a filter over ~1 800 encoded characters is refused with a message.
