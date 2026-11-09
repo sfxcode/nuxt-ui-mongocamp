@@ -17,6 +17,7 @@ The playground has it at `/secured/admin/collections/<name>/aggregate`, linked f
 | Prop | Type | Description |
 |---|---|---|
 | `collectionName` | `string` | Required. Collection the pipeline runs on. Changing it clears the shown result. |
+| `filter` | `string` | Optional Lucene filter (what a table shows). The server applies it as the first `$match` of every run — stage previews and the result page — via `aggregate?filter=` (server 1.7.0). It is shown as a chip *Applies to: …* with a remove button that drops it for the next runs; a filter over ~1 800 encoded characters is refused with a message. |
 
 ## The two views
 

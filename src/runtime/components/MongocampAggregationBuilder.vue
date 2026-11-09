@@ -23,7 +23,15 @@ import { downloadTextFile, rowsToCsv } from '../utils/exportRows'
 
 const props = defineProps<{
   collectionName: string
+  // a Lucene filter (what a table shows): the server applies it as the first `$match` of every run — previews, the result page
+  filter?: string
 }>()
+
+// the filter the runs use; the chip's remove button clears it without touching the prop
+const appliedFilter = ref<string | undefined>(props.filter)
+watch(() => props.filter, (next) => {
+  appliedFilter.value = next
+})
 
 const PAGE_SIZES = [10, 20, 50, 100]
 // an example, not a translation: it is JSON
@@ -271,7 +279,7 @@ async function execute(pageNumber: number) {
   running.value = true
   runError.value = null
   try {
-    const outcome = await runAggregation(props.collectionName, lastPipeline, { page: pageNumber, rowsPerPage: rowsPerPage.value })
+    const outcome = await runAggregation(props.collectionName, lastPipeline, { page: pageNumber, rowsPerPage: rowsPerPage.value }, { filter: appliedFilter.value })
     if (run !== runCounter) return
     result.value = outcome
     page.value = outcome.page
@@ -346,6 +354,27 @@ const exportMenuItems = computed(() => [
 
 <template>
   <div class="flex flex-col gap-4">
+    <div
+      v-if="appliedFilter"
+      class="flex flex-wrap items-center gap-2 text-sm"
+      data-test="applied-filter"
+    >
+      <span class="text-dimmed">{{ t('nuxtUiMongocamp.aggregation.appliesTo') }}</span>
+      <UBadge
+        :label="appliedFilter"
+        color="neutral"
+        variant="subtle"
+        class="font-mono"
+      />
+      <UButton
+        icon="i-lucide-x"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        :aria-label="t('nuxtUiMongocamp.aggregation.removeFilter')"
+        @click="appliedFilter = undefined"
+      />
+    </div>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-1">
         <UButton
@@ -625,6 +654,7 @@ const exportMenuItems = computed(() => [
             :collection-name="collectionName"
             :pipeline="previewFor(index)"
             :stage-number="index + 1"
+            :filter="appliedFilter"
           />
         </div>
       </div>

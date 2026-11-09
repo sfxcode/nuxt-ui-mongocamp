@@ -39,12 +39,15 @@ const props = withDefaults(defineProps<{
   collectionName: string
   // base path of the page rendering MongocampCollectionInfos (`<infoPath>/<name>`); the "index created" toast links there
   infoPath?: string
+  // base path of the page rendering MongocampAggregationBuilder (`<aggregatePath>/<name>/aggregate?filter=…`); no link without it
+  aggregatePath?: string
   // remember page size, sort and hidden columns per collection in localStorage
   persistState?: boolean
   // extra key part, for two tables over the same collection that should not share their state
   stateKey?: string
 }>(), {
   infoPath: '/secured/admin/collections',
+  aggregatePath: '',
   persistState: true,
   stateKey: '',
 })
@@ -1092,6 +1095,17 @@ watch(() => props.collectionName, init, { immediate: true })
             :aria-label="t('nuxtUiMongocamp.collectionData.columnsTooltip')"
           />
         </UDropdownMenu>
+        <UButton
+          v-if="aggregatePath && !isBucketCollection(collectionName)"
+          icon="i-lucide-sigma"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :disabled="chartFilterTooLong"
+          :to="{ path: `${aggregatePath}/${collectionName}/aggregate`, query: chartFilter ? { filter: chartFilter } : {} }"
+          :aria-label="t('nuxtUiMongocamp.collectionData.aggregateTooltip')"
+          data-test="aggregate-link"
+        />
         <UButton
           v-if="!isBucketCollection(collectionName)"
           icon="i-lucide-chart-column"

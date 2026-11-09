@@ -364,3 +364,50 @@ describe('saved pipelines', () => {
     expect(body().text()).not.toContain('Join')
   })
 })
+
+describe('a filter from the table', () => {
+  const previewButton = (c: Mounted) => c.findAll('button').find(b => b.text() === 'Preview after this stage')!
+  async function mountWithFilter(filter = 'status:open') {
+    const c = await mountSuspended(withUApp(MongocampAggregationBuilder), { route: '/', props: { collectionName: 'people', filter } })
+    await wait()
+    return c
+  }
+
+  it('shows what it applies to and sends the filter with the run', async () => {
+    const c = await mountWithFilter()
+    expect(c.find('[data-test="applied-filter"]').text()).toContain('status:open')
+
+    await button(c, 'Run')!.trigger('click')
+    await wait()
+
+    expect(mockAggregateRaw.mock.calls[0]![0].filter).toBe('status:open')
+  })
+
+  it('sends it with the stage previews too', async () => {
+    const c = await mountWithFilter()
+    mockAggregateRaw.mockResolvedValue(rawResponse([{ _id: 'a' }]))
+    await previewButton(c).trigger('click')
+    await wait()
+
+    expect(mockAggregateRaw.mock.calls[0]![0].filter).toBe('status:open')
+  })
+
+  it('the chip\'s remove button drops it for the next runs', async () => {
+    const c = await mountWithFilter()
+    await c.find('[data-test="applied-filter"] button').trigger('click')
+    await wait()
+    expect(c.find('[data-test="applied-filter"]').exists()).toBe(false)
+
+    await button(c, 'Run')!.trigger('click')
+    await wait()
+    expect(mockAggregateRaw.mock.calls[0]![0].filter).toBeUndefined()
+  })
+
+  it('is absent without a filter', async () => {
+    const c = await mountBuilder()
+    expect(c.find('[data-test="applied-filter"]').exists()).toBe(false)
+    await button(c, 'Run')!.trigger('click')
+    await wait()
+    expect(mockAggregateRaw.mock.calls[0]![0].filter).toBeUndefined()
+  })
+})

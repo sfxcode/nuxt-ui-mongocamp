@@ -16,6 +16,8 @@ const props = defineProps<{
   pipeline: RequestStage[] | undefined
   // 1-based stage number, for the title
   stageNumber: number
+  // a Lucene filter the server applies first (`aggregate?filter=`)
+  filter?: string
 }>()
 
 const { t } = useI18n()
@@ -42,7 +44,7 @@ async function execute(pipeline: RequestStage[]) {
   loading.value = true
   error.value = null
   try {
-    const result = await runAggregation(props.collectionName, pipeline, { page: 1, rowsPerPage: PREVIEW_LIMIT }, { signal: own.signal })
+    const result = await runAggregation(props.collectionName, pipeline, { page: 1, rowsPerPage: PREVIEW_LIMIT }, { signal: own.signal, filter: props.filter })
     if (mine !== run) return
     rows.value = result.rows
   }
@@ -56,7 +58,7 @@ async function execute(pipeline: RequestStage[]) {
   }
 }
 
-const key = computed(() => (props.pipeline ? pipelineKey(props.pipeline) : ''))
+const key = computed(() => (props.pipeline ? `${props.filter ?? ''}\u0000${pipelineKey(props.pipeline)}` : ''))
 let first = true
 watch(key, () => {
   if (!props.pipeline) {

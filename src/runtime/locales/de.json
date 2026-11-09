@@ -248,7 +248,8 @@
       "chartField": "Feld",
       "chartScopeAll": "Alle {count} Dokumente der Sammlung. | Alle {count} Dokumente der Sammlung.",
       "chartScopeFiltered": "Das {count} Dokument, das zum aktuellen Filter passt. | Die {count} Dokumente, die zum aktuellen Filter passen.",
-      "chartTooLong": "Der aktuelle Filter ist zu lang für eine Diagrammanfrage. Bitte zuerst einschränken."
+      "chartTooLong": "Der aktuelle Filter ist zu lang für eine Diagrammanfrage. Bitte zuerst einschränken.",
+      "aggregateTooltip": "Die passenden Dokumente aggregieren"
     },
     "bucketFiles": {
       "filterPlaceholder": "Nach Dateiname filtern...",
@@ -667,7 +668,9 @@
       "saveFailedLimit": "Es können höchstens 50 Pipelines gespeichert werden — löschen Sie zuerst eine",
       "saveFailedSize": "Die gespeicherten Pipelines sind zu groß — löschen Sie zuerst eine",
       "savedNote": "Nur in diesem Browser gespeichert.",
-      "unitYear": "Jahr"
+      "unitYear": "Jahr",
+      "appliesTo": "Gilt für:",
+      "removeFilter": "Filter entfernen"
     },
     "documentView": {
       "modeTree": "Baum",

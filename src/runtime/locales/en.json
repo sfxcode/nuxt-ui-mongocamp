@@ -248,7 +248,8 @@
       "chartField": "Field",
       "chartScopeAll": "All {count} document of the collection. | All {count} documents of the collection.",
       "chartScopeFiltered": "The {count} document that match the current filter. | The {count} documents that match the current filter.",
-      "chartTooLong": "The current filter is too long to send with a chart request. Narrow it first."
+      "chartTooLong": "The current filter is too long to send with a chart request. Narrow it first.",
+      "aggregateTooltip": "Aggregate the matching documents"
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",
@@ -667,7 +668,9 @@
       "saveFailedLimit": "At most 50 pipelines can be saved — delete one first",
       "saveFailedSize": "The saved pipelines are too large — delete one first",
       "savedNote": "Saved in this browser only.",
-      "unitYear": "Year"
+      "unitYear": "Year",
+      "appliesTo": "Applies to:",
+      "removeFilter": "Remove the filter"
     },
     "documentView": {
       "modeTree": "Tree",

@@ -15,6 +15,7 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 | Prop | Type | Description |
 |---|---|---|
 | `collectionName` | `string` | Required. Collection to browse. |
+| `aggregatePath` | `string` | Base path of the page rendering [`MongocampAggregationBuilder`](/components/mongocamp-aggregation-builder). With it the toolbar has an **Aggregate the matching documents** link to `<aggregatePath>/<collectionName>/aggregate?filter=<applied Lucene>` (the page passes the query's `filter` to the builder). No link without it (default empty). |
 | `infoPath` | `string` | Base path of the page rendering [`MongocampCollectionInfos`](/components/mongocamp-collection-infos); the "index created" toast links to `<infoPath>/<collectionName>`. Default `/secured/admin/collections`. |
 | `persistState` | `boolean` | Remember page size, sort and hidden columns per collection in `localStorage` (see [`useMongocampPersistedState`](/composables/use-mongocamp-persisted-state)). Default `true`; the quick search and filters are **not** remembered. |
 | `stateKey` | `string` | Extra key part so two tables over the same collection keep separate state. |

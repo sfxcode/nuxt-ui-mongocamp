@@ -185,6 +185,22 @@ describe('MongocampCollectionData', () => {
       expect((select.vm.$props as unknown as { items: { value: string }[] }).items.map(i => i.value)).toEqual(['name'])
     })
 
+    it('links to the aggregation page with the applied filter when an aggregatePath is given, and has no link without one', async () => {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '2'))
+      const without = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      expect(without.find('[data-test="aggregate-link"]').exists()).toBe(false)
+
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers', aggregatePath: '/admin/collections' } })
+      await wait()
+      await component.find('input[placeholder="Filter rows..."]').setValue('ali')
+      await wait(450)
+      const href = component.find('[data-test="aggregate-link"]').attributes('href') ?? ''
+      expect(href).toContain('/admin/collections/customers/aggregate')
+      expect(decodeURIComponent(href)).toContain('filter=')
+      expect(decodeURIComponent(href)).toContain('ali')
+    })
+
     it('has no chart button for a GridFS collection', async () => {
       const component = await mountRows('photos.files')
       expect(chartButton(component).exists()).toBe(false)

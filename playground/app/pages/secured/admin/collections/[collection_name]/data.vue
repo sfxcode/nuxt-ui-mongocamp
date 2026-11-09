@@ -8,6 +8,9 @@ definePageMeta({ layout: 'collection' })
 <template>
   <div class="flex flex-col gap-8 p-4">
     <CollectionTabs :collection-name="collectionName" />
-    <MongocampCollectionData :collection-name="collectionName" />
+    <MongocampCollectionData
+      :collection-name="collectionName"
+      aggregate-path="/secured/admin/collections"
+    />
   </div>
 </template>
