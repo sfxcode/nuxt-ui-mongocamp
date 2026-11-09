@@ -1,6 +1,42 @@
 # Changelog
 
 
+## v1.5.0
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.4.0...v1.5.0)
+
+### 🚀 Enhancements
+
+- **collection-data:** Bulk by filter, server permissions, POST search and typed reads ([f2097c1](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f2097c1))
+- **collections:** Batch collection info, server-side copy and rename ([18735be](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/18735be))
+- **indexes:** Ordered index details and create options, field details, aggregation filter ([f5a78ef](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f5a78ef))
+- **import-export:** Ordered inserts, NDJSON import and streamed export ([6973792](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6973792))
+- **extended-json:** Type hints for writing typed values ([bcd5914](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/bcd5914))
+- **field-types:** UseMongocampFieldTypes over fields/detail ([b7b0135](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b7b0135))
+- **collection-data:** Filter builder fields from the server's field analysis ([5f35ac3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/5f35ac3))
+- **bulk-edit:** Write the field's real BSON type ([cee8dc0](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cee8dc0))
+- **collection-data:** Insert with the collection's field types ([1dfa9fb](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/1dfa9fb))
+- **compare:** Compare the typed documents ([39383e3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/39383e3))
+- **collection-data:** Chart a field of the matching documents ([7191cd3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/7191cd3))
+- **aggregation:** Start the builder from the table's filter ([c56ae66](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c56ae66))
+- **admin:** Show "administrators only" without a request ([341c3f4](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/341c3f4))
+- **settings:** Hint while a missing grant is answered with 401 ([22a5d20](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/22a5d20))
+- **bucket:** Distribution chart of the stored files ([6991177](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/6991177))
+
+### 📖 Documentation
+
+- Server 1.8.1 baseline, guide and index entries ([36d4a02](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/36d4a02))
+- Correct the $lookup and relaxed extendedJson notes ([e738857](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e738857))
+- Reword 1.6.x claims as dated, mark API the module no longer uses ([091dac3](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/091dac3))
+
+### ✅ Tests
+
+- **locales:** Guard test for translation keys, drop 16 orphaned keys ([a2bd03f](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/a2bd03f))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.4.0
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.3.5...v1.4.0)
