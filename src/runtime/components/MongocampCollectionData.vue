@@ -197,7 +197,8 @@ async function handleSave() {
     // the v-model, so it is dropped here — otherwise every saved document would get a stray `slots: {}`. On an edit
     // the result starts as a clone of the row, so a real `slots` field of the document survives untouched.
     const { slots: _slots, ...formValues } = editFormData.value
-    payload = wrapExtendedJson(formValues, editMode.value === 'update' ? originalRow.value : undefined)
+    // the collection's field types type what has no typed original — an insert, or a field the edited document did not have
+    payload = wrapExtendedJson(formValues, editMode.value === 'update' ? originalRow.value : undefined, fieldTypes.hints())
   }
   else {
     try {

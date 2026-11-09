@@ -109,6 +109,10 @@ Every row has a **View** button (also without a write grant) that opens the docu
 
 The filter builder's field list comes from the server's field analysis for the **whole collection** ([`useMongocampFieldTypes`](/composables/use-mongocamp-field-types), `fields/detail`), not from the rows on screen: a field the current page lacks is still offered, nested paths (`address.city`) are offered and filtered with the server's dotted-path Lucene (verified live: equals, wildcard, ranges, negation), and containers and binary fields are left out. While the analysis loads, or when it fails, the fields of the loaded rows are used as before. It is loaded when the collection changes and after an insert or import.
 
+## Inserting with the collection's types
+
+An insert (and a field the edited document did not have) is written with the collection's field types from [`useMongocampFieldTypes`](/composables/use-mongocamp-field-types): a field that holds **text** everywhere stays text even when the new value looks like a timestamp (written as `{ $string }` — the server would otherwise store it as a date), an `int` field is written as `{ $numberInt }`, a long keeps its digits. Fields with more than one type found, or without a known type, are written as plain JSON and the old rule applies (a timestamp-shaped text becomes a date).
+
 ## Typed reads
 
 The table's own page is a **plain** read (ids and dates are strings, a long beyond 2^53 is read from the response text so it stays exact): putting every number in a wrapper would about triple its size. Everything that needs the real types reads **one document** with `extendedJson=canonical` (server 1.8.1) — **View** and **Edit**. Canonical writes `{ $oid }`, `{ $date }`, `{ $numberInt }`, `{ $numberLong }`, `{ $numberDouble }`, `{ $numberDecimal }`, and `{ $string }` for text that looks like a timestamp. (`relaxed` is not used: it writes `int`, `long` and `double` all as a bare number, so the types cannot be told apart.)

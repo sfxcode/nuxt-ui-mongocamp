@@ -764,6 +764,48 @@ describe('MongocampCollectionData', () => {
     })
   })
 
+  describe('insert with the collection\'s field types', () => {
+    it('keeps a text field that holds timestamp-shaped text as text ($string) instead of letting the server make it a date', async () => {
+      mockGetFieldDetails.mockReset()
+      mockGetFieldDetails.mockResolvedValue([
+        { path: '_id', types: [{ type: 'objectId', count: 1 }] },
+        { path: 'name', types: [{ type: 'string', count: 1 }] },
+        { path: 'code', types: [{ type: 'string', count: 1 }] },
+      ])
+      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice', code: 'A' }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await component.find('[aria-label="Insert document"]').trigger('click')
+      await wait()
+
+      await findInputByLabel(modal(), 'Name').setValue('Charlie')
+      await findInputByLabel(modal(), 'Code').setValue('2026-01-01T00:00:00.000Z')
+      await wait()
+      await modal().find('button[type="submit"]').trigger('click')
+      await wait()
+
+      const { requestBody } = mockInsert.mock.calls[0]![0]
+      expect(requestBody.name).toBe('Charlie')
+      expect(requestBody.code).toEqual({ $string: '2026-01-01T00:00:00.000Z' })
+    })
+
+    it('without the field analysis a timestamp-shaped text is a date, as before', async () => {
+      mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice', code: 'A' }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await component.find('[aria-label="Insert document"]').trigger('click')
+      await wait()
+
+      await findInputByLabel(modal(), 'Name').setValue('Charlie')
+      await findInputByLabel(modal(), 'Code').setValue('2026-01-01T00:00:00.000Z')
+      await wait()
+      await modal().find('button[type="submit"]').trigger('click')
+      await wait()
+
+      expect(mockInsert.mock.calls[0]![0].requestBody.code).toEqual({ $date: '2026-01-01T00:00:00.000Z' })
+    })
+  })
+
   describe('edit', () => {
     async function openEdit(rows: unknown[]) {
       mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse(rows, String(rows.length)))
