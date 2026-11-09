@@ -5,6 +5,7 @@ import type { Column } from '@tanstack/vue-table'
 import { useI18n, useMongocampSystem } from '#imports'
 import { formatBytes } from '../utils/formatBytes'
 import { shortenLabel } from '../utils/chartData'
+import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 interface DatabaseRow {
   name: string
@@ -22,6 +23,7 @@ const loading = ref(false)
 const sorting = ref<{ id: string, desc: boolean }[]>([])
 const loadError = ref<unknown>(null)
 
+const { blocked, message } = useMongocampAdminGate()
 async function fetchDatabases() {
   loading.value = true
   loadError.value = null
@@ -92,11 +94,20 @@ const columns = computed<TableColumn<DatabaseRow>[]>(() => [
   },
 ])
 
-fetchDatabases()
+if (!blocked.value) fetchDatabases()
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <MongocampEmptyState
+    v-if="blocked"
+    icon="i-lucide-shield-alert"
+    :title="message"
+    data-test="admin-only"
+  />
+  <div
+    v-else
+    class="flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
         {{ t('nuxtUiMongocamp.databases.heading') }}

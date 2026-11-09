@@ -15,7 +15,8 @@
       "yes": "Ja",
       "no": "Nein",
       "admin": "Admin",
-      "standard": "Standard"
+      "standard": "Standard",
+      "adminOnly": "Dieser Bereich ist nur für Administratoren."
     },
     "login": {
       "heading": "Mongocamp-Anmeldung",

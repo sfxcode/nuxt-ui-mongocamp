@@ -5,6 +5,9 @@ import { UApp } from '#components'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import MongocampJobs from '../../src/runtime/components/MongocampJobs.vue'
 
+// these components are for administrators: the gate (useMongocampAdminGate) lets an admin profile through
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'admin@example.com', isAdmin: true, roles: [] } } }))
+
 // see MongocampRoles.test.ts for why the UApp wrapper, the forced unmount and the body-level modal() are needed
 enableAutoUnmount(afterEach)
 

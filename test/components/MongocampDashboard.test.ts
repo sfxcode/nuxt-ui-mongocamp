@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { UApp } from '#components'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
 import MongocampDashboard from '../../src/runtime/components/MongocampDashboard.vue'
+
+// these components are for administrators: the gate (useMongocampAdminGate) lets an admin profile through
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'admin@example.com', isAdmin: true, roles: [] } } }))
 
 // UTooltip needs a UApp provider — see test/components/MongocampRoles.test.ts
 function withUApp(component: unknown) {

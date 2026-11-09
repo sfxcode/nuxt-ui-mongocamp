@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from '#imports'
 import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
+import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 import { useMongocampServerOverview } from '../composables/useMongocampServerOverview'
 import type { ServerOverview } from '../composables/useMongocampServerOverview'
 import { formatBytes } from '../utils/formatBytes'
@@ -65,13 +66,14 @@ async function load() {
   }
 }
 
+const { blocked, message } = useMongocampAdminGate()
 const auto = useMongocampAutoRefresh(() => load(), { intervalMs: () => props.autoRefresh * 1000 })
 function syncAutoRefresh() {
   auto.stop()
-  if (props.autoRefresh > 0) auto.start()
+  if (!blocked.value && props.autoRefresh > 0) auto.start()
 }
 onMounted(() => {
-  void load()
+  if (!blocked.value) void load()
   syncAutoRefresh()
 })
 watch(() => props.autoRefresh, syncAutoRefresh)
@@ -116,7 +118,14 @@ const seriesMetric = computed(() => [{ key: 'value', label: metricLabel.value }]
 </script>
 
 <template>
+  <MongocampEmptyState
+    v-if="blocked"
+    icon="i-lucide-shield-alert"
+    :title="message"
+    data-test="admin-only"
+  />
   <div
+    v-else
     class="flex flex-col gap-6"
     data-test="server-overview"
   >

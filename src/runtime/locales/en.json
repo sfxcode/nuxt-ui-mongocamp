@@ -15,7 +15,8 @@
       "yes": "Yes",
       "no": "No",
       "admin": "Admin",
-      "standard": "Standard"
+      "standard": "Standard",
+      "adminOnly": "This area is for administrators only."
     },
     "login": {
       "heading": "Mongocamp Login",

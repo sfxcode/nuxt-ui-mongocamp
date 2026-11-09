@@ -97,6 +97,7 @@ export default defineConfig({
             { text: 'useMongocampAccount', link: '/composables/use-mongocamp-account' },
             { text: 'useMongocampSystem', link: '/composables/use-mongocamp-system' },
             { text: 'useMongocampError', link: '/composables/use-mongocamp-error' },
+            { text: 'useMongocampAdminGate', link: '/composables/use-mongocamp-admin-gate' },
             { text: 'useMongocampFieldTypes', link: '/composables/use-mongocamp-field-types' },
             { text: 'useMongocampBulkByFilter', link: '/composables/use-mongocamp-bulk-by-filter' },
             { text: 'useMongocampBulkDelete', link: '/composables/use-mongocamp-bulk-delete' },

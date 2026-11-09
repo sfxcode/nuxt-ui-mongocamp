@@ -4,6 +4,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Grant } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
+import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 const props = defineProps<{
   roleName: string
@@ -74,6 +75,7 @@ const editGrantSchema = reactive([
 
 const loadError = ref<unknown>(null)
 
+const { blocked, message } = useMongocampAdminGate()
 async function fetchRole() {
   loading.value = true
   loadError.value = null
@@ -262,12 +264,23 @@ const columns = computed<TableColumn<Grant>[]>(() => [
   },
 ])
 
-fetchRole()
-fetchCollections()
+if (!blocked.value) {
+  fetchRole()
+  fetchCollections()
+}
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <MongocampEmptyState
+    v-if="blocked"
+    icon="i-lucide-shield-alert"
+    :title="message"
+    data-test="admin-only"
+  />
+  <div
+    v-else
+    class="flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between">
       <h2 class="text-xl font-semibold">
         {{ t('nuxtUiMongocamp.roleGrants.heading', { roleName }) }}

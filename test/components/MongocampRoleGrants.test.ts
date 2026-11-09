@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { DOMWrapper, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { UApp, USelectMenu } from '#components'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
 import MongocampRoleGrants from '../../src/runtime/components/MongocampRoleGrants.vue'
+
+// these components are for administrators: the gate (useMongocampAdminGate) lets an admin profile through
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'admin@example.com', isAdmin: true, roles: [] } } }))
 
 // See test/components/MongocampRoles.test.ts for why each of these helpers is needed.
 enableAutoUnmount(afterEach)

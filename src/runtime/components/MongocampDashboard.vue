@@ -4,6 +4,7 @@ import { useI18n } from '#imports'
 import { useNuxtApp } from '#app'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
+import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 const props = withDefaults(defineProps<{
   collectionsPath?: string
@@ -58,10 +59,11 @@ async function reloadQuietly() {
   }
 }
 
+const { blocked, message } = useMongocampAdminGate()
 const auto = useMongocampAutoRefresh(reloadQuietly, { intervalMs: () => props.autoRefresh * 1000 })
 function syncAutoRefresh() {
   auto.stop()
-  if (props.autoRefresh > 0) auto.start()
+  if (!blocked.value && props.autoRefresh > 0) auto.start()
 }
 onMounted(syncAutoRefresh)
 watch(() => props.autoRefresh, syncAutoRefresh)
@@ -75,7 +77,7 @@ const boxes = computed(() => [
 // lets a parent that changes data behind the dashboard's back (e.g. a reset button in the slot) re-count
 defineExpose({ refresh })
 
-refresh()
+if (!blocked.value) refresh()
 </script>
 
 <template>
@@ -95,7 +97,10 @@ refresh()
           </span>
         </p>
       </div>
-      <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+      <UTooltip
+        v-if="!blocked"
+        :text="t('nuxtUiMongocamp.common.refresh')"
+      >
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"
@@ -107,12 +112,22 @@ refresh()
       </UTooltip>
     </div>
 
+    <MongocampEmptyState
+      v-if="blocked"
+      icon="i-lucide-shield-alert"
+      :title="message"
+      data-test="admin-only"
+    />
     <MongocampErrorAlert
+      v-if="!blocked"
       :error="loadError"
       @retry="refresh"
     />
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div
+      v-if="!blocked"
+      class="grid grid-cols-1 gap-4 sm:grid-cols-3"
+    >
       <NuxtLink
         v-for="box in boxes"
         :key="box.key"

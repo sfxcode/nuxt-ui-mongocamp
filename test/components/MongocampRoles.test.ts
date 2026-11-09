@@ -2,9 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { DOMWrapper, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { UApp } from '#components'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useNuxtApp } from '#app'
 import MongocampRoles from '../../src/runtime/components/MongocampRoles.vue'
+
+// these components are for administrators: the gate (useMongocampAdminGate) lets an admin profile through
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'admin@example.com', isAdmin: true, roles: [] } } }))
 
 // UModal's close transition is timer-based, so a stale modal from a previous test can still
 // be in document.body (which modal() queries globally) when the next test starts — force an

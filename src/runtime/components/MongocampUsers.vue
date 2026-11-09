@@ -7,6 +7,7 @@ import { useI18n, useMongocampError, useMongocampStorage, useToast } from '#impo
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
+import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 interface RoleItem {
   value: string
@@ -131,6 +132,7 @@ async function handleBulkDelete() {
   }
 }
 
+const { blocked, message } = useMongocampAdminGate()
 async function fetchUsers() {
   loading.value = true
   loadError.value = null
@@ -406,12 +408,23 @@ const columns = computed<TableColumn<UserProfile>[]>(() => [
   },
 ])
 
-fetchUsers()
-fetchRoles()
+if (!blocked.value) {
+  fetchUsers()
+  fetchRoles()
+}
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <MongocampEmptyState
+    v-if="blocked"
+    icon="i-lucide-shield-alert"
+    :title="message"
+    data-test="admin-only"
+  />
+  <div
+    v-else
+    class="flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
         {{ t('nuxtUiMongocamp.users.heading') }}

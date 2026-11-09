@@ -5,6 +5,7 @@ import type { Column } from '@tanstack/vue-table'
 import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useMongocampJobs, useToast } from '#imports'
 import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
+import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 const props = withDefaults(defineProps<{
   // reload the list every N seconds (at least 1; 0 = off). Pauses while the tab is hidden and slows down after failures.
@@ -60,10 +61,11 @@ async function reloadQuietly() {
   }
 }
 
+const { blocked, message } = useMongocampAdminGate()
 const auto = useMongocampAutoRefresh(reloadQuietly, { intervalMs: () => props.autoRefresh * 1000 })
 function syncAutoRefresh() {
   auto.stop()
-  if (props.autoRefresh > 0) auto.start()
+  if (!blocked.value && props.autoRefresh > 0) auto.start()
 }
 onMounted(syncAutoRefresh)
 watch(() => props.autoRefresh, syncAutoRefresh)
@@ -332,11 +334,20 @@ const columns = computed<TableColumn<JobInformation>[]>(() => [
   },
 ])
 
-fetchJobs()
+if (!blocked.value) fetchJobs()
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <MongocampEmptyState
+    v-if="blocked"
+    icon="i-lucide-shield-alert"
+    :title="message"
+    data-test="admin-only"
+  />
+  <div
+    v-else
+    class="flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-xl font-semibold">
         {{ t('nuxtUiMongocamp.jobs.heading') }}

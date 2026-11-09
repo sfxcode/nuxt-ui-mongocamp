@@ -5,6 +5,9 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp } from '#components'
 import MongocampDatabases from '../../src/runtime/components/MongocampDatabases.vue'
 
+// these components are for administrators: the gate (useMongocampAdminGate) lets an admin profile through
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'admin@example.com', isAdmin: true, roles: [] } } }))
+
 enableAutoUnmount(afterEach)
 
 const mockInfos = vi.fn()
