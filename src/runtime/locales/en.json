@@ -278,7 +278,10 @@
       "uploadSummary": "{uploaded} uploaded, {failed} failed",
       "metadataInvalidJson": "Not valid JSON",
       "metadataNotObject": "Metadata must be a JSON object",
-      "metadataHelp": "A JSON object; leave empty for no metadata"
+      "metadataHelp": "A JSON object; leave empty for no metadata",
+      "distribution": "Distribution of the stored files",
+      "distributionField": "Field",
+      "distributionNone": "No field of the stored files can be charted."
     },
     "jobs": {
       "heading": "Jobs",

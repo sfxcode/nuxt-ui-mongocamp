@@ -54,3 +54,8 @@ Download, rename and delete are tracked via `useMongocampBucket`'s own loading-s
 - [`useMongocampBucket`](/composables/use-mongocamp-bucket) — `listFiles`/`deleteFile`/`updateFileInformation`/`downloadFile`/`uploadFile`
 - [`MongocampCollections`](/components/mongocamp-collections) — the `bucketFilesPath`-linked entry point
 - [`MongocampCollectionData`](/components/mongocamp-collection-data) — the generic raw-document view that still covers `<bucket>.files`/`<bucket>.chunks` collections directly
+
+## Distribution of the stored files
+
+A collapsed **Distribution of the stored files** section charts one field of the bucket's `<bucket>.files` collection ([`MongocampCollectionCharts`](/components/mongocamp-collection-charts)): by default the `contentType` (or `metadata.contentType`), else the `uploadDate` (documents per month), else the first field with something to count; the field select offers text, number, date and boolean fields ([`useMongocampFieldTypes`](/composables/use-mongocamp-field-types)). **Nothing is requested until the section is opened.** It is hidden for a user who may not read `<bucket>.files` (the server's answer from `GET /auth/permissions`; the profile's grants until it arrives), and says so when no field can be charted.
+

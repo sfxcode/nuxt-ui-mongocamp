@@ -278,7 +278,10 @@
       "uploadSummary": "{uploaded} hochgeladen, {failed} fehlgeschlagen",
       "metadataInvalidJson": "Kein gültiges JSON",
       "metadataNotObject": "Metadaten müssen ein JSON-Objekt sein",
-      "metadataHelp": "Ein JSON-Objekt; leer lassen für keine Metadaten"
+      "metadataHelp": "Ein JSON-Objekt; leer lassen für keine Metadaten",
+      "distribution": "Verteilung der gespeicherten Dateien",
+      "distributionField": "Feld",
+      "distributionNone": "Kein Feld der gespeicherten Dateien lässt sich darstellen."
     },
     "jobs": {
       "heading": "Jobs",

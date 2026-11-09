@@ -6,6 +6,9 @@ import type { FileInformation } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
+import { useMongocampFieldTypes } from '../composables/useMongocampFieldTypes'
+import { useMongocampPermissions } from '../composables/useMongocampPermissions'
+import MongocampCollectionCharts from './MongocampCollectionCharts.vue'
 import { useMongocampQuery } from '../composables/useMongocampQuery'
 import { parseMetadataJson } from '../utils/filePreview'
 
@@ -28,6 +31,38 @@ const {
 const { like } = useMongocampQuery()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
+
+// ---- distribution of the stored files: a collapsed chart over the bucket's `<name>.files` collection --------------------
+// Nothing is requested until the section is opened. Hidden when the user may not read that collection (the server's answer
+// from `GET /auth/permissions`, the profile's grants until it arrives).
+const filesCollection = computed(() => `${props.bucketName}.files`)
+const fieldTypes = useMongocampFieldTypes(() => filesCollection.value)
+const { canRead, load: loadPermissions } = useMongocampPermissions()
+const showDistribution = computed(() => canRead(filesCollection.value))
+const distributionOpen = ref(false)
+const distributionField = ref('')
+const distributionFields = computed(() => fieldTypes.filterFields()
+  .filter(f => f.type === 'string' || f.type === 'number' || f.type === 'date-time' || f.type === 'boolean')
+  .map(f => f.key))
+const distributionItems = computed(() => distributionFields.value.map(key => ({ label: key, value: key })))
+
+// the type of file is the useful first look; the upload date when files carry no content type
+function defaultDistributionField(fields: string[]): string {
+  return ['contentType', 'metadata.contentType', 'uploadDate'].find(key => fields.includes(key)) ?? fields[0] ?? ''
+}
+
+async function onDistributionToggle(event: Event) {
+  distributionOpen.value = (event.target as HTMLDetailsElement).open
+  if (!distributionOpen.value) return
+  await fieldTypes.load()
+  if (!distributionFields.value.includes(distributionField.value)) distributionField.value = defaultDistributionField(distributionFields.value)
+}
+
+void loadPermissions(filesCollection.value)
+watch(filesCollection, (name) => {
+  distributionField.value = ''
+  void loadPermissions(name)
+})
 
 function openFilePicker() {
   fileInputRef.value?.click()
@@ -522,6 +557,42 @@ watch(() => props.bucketName, init, { immediate: true })
         />
       </template>
     </UModal>
+
+    <details
+      v-if="showDistribution"
+      class="text-sm"
+      data-test="bucket-distribution"
+      @toggle="onDistributionToggle"
+    >
+      <summary class="cursor-pointer text-dimmed">
+        {{ t('nuxtUiMongocamp.bucketFiles.distribution') }}
+      </summary>
+      <div class="mt-3 flex flex-col gap-3">
+        <UFormField
+          v-if="distributionItems.length > 0"
+          :label="t('nuxtUiMongocamp.bucketFiles.distributionField')"
+        >
+          <USelect
+            v-model="distributionField"
+            :items="distributionItems"
+            class="w-full sm:w-64"
+            :aria-label="t('nuxtUiMongocamp.bucketFiles.distributionField')"
+          />
+        </UFormField>
+        <p
+          v-else-if="fieldTypes.status() === 'ready' || fieldTypes.status() === 'failed'"
+          class="text-dimmed"
+          data-test="distribution-empty"
+        >
+          {{ t('nuxtUiMongocamp.bucketFiles.distributionNone') }}
+        </p>
+        <MongocampCollectionCharts
+          v-if="distributionOpen && distributionField"
+          :collection-name="filesCollection"
+          :field="distributionField"
+        />
+      </div>
+    </details>
 
     <MongocampFilePreview
       v-model:open="previewOpen"
