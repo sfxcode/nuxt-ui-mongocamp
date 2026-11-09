@@ -242,7 +242,13 @@
       "viewModeLabel": "Seitenansicht",
       "editLoadFailed": "Das vollständige Dokument konnte zum Bearbeiten nicht geladen werden",
       "compareLoading": "Die Dokumente werden geladen …",
-      "compareUntyped": "Die Dokumente konnten nicht mit ihren Typen gelesen werden, daher werden die Werte der Tabelle verglichen: Ein Typwechsel (ein int und ein long mit derselben Zahl) wird nicht gezeigt."
+      "compareUntyped": "Die Dokumente konnten nicht mit ihren Typen gelesen werden, daher werden die Werte der Tabelle verglichen: Ein Typwechsel (ein int und ein long mit derselben Zahl) wird nicht gezeigt.",
+      "chartTooltip": "Ein Feld darstellen",
+      "chartTitle": "Ein Feld der passenden Dokumente darstellen",
+      "chartField": "Feld",
+      "chartScopeAll": "Alle {count} Dokumente der Sammlung. | Alle {count} Dokumente der Sammlung.",
+      "chartScopeFiltered": "Das {count} Dokument, das zum aktuellen Filter passt. | Die {count} Dokumente, die zum aktuellen Filter passen.",
+      "chartTooLong": "Der aktuelle Filter ist zu lang für eine Diagrammanfrage. Bitte zuerst einschränken."
     },
     "bucketFiles": {
       "filterPlaceholder": "Nach Dateiname filtern...",

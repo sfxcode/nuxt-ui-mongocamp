@@ -242,7 +242,13 @@
       "viewModeLabel": "Page view",
       "editLoadFailed": "The full document could not be loaded for editing",
       "compareLoading": "Loading the documents…",
-      "compareUntyped": "The documents could not be read with their types, so the table's values are compared: a change of type (an int and a long with the same number) is not shown."
+      "compareUntyped": "The documents could not be read with their types, so the table's values are compared: a change of type (an int and a long with the same number) is not shown.",
+      "chartTooltip": "Chart a field",
+      "chartTitle": "Chart a field of the matching documents",
+      "chartField": "Field",
+      "chartScopeAll": "All {count} document of the collection. | All {count} documents of the collection.",
+      "chartScopeFiltered": "The {count} document that match the current filter. | The {count} documents that match the current filter.",
+      "chartTooLong": "The current filter is too long to send with a chart request. Narrow it first."
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",

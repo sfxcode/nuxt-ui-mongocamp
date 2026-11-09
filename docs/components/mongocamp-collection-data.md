@@ -109,6 +109,10 @@ Every row has a **View** button (also without a write grant) that opens the docu
 
 The filter builder's field list comes from the server's field analysis for the **whole collection** ([`useMongocampFieldTypes`](/composables/use-mongocamp-field-types), `fields/detail`), not from the rows on screen: a field the current page lacks is still offered, nested paths (`address.city`) are offered and filtered with the server's dotted-path Lucene (verified live: equals, wildcard, ranges, negation), and containers and binary fields are left out. While the analysis loads, or when it fails, the fields of the loaded rows are used as before. It is loaded when the collection changes and after an insert or import.
 
+## Charting what the table shows
+
+The **Chart a field** button (not for GridFS collections) opens a dialog with a field select and a chart ([`MongocampCollectionCharts`](/components/mongocamp-collection-charts)) of that field over **the documents the table currently matches**: the applied Lucene filter (quick search + filter builder) is sent as `aggregate?filter=` and the server applies it as the first `$match`. Only fields with something to count are offered — text, numbers, dates, booleans (no `_id`, objects or arrays). A filter too long for the URL is refused with a message instead of being sent.
+
 ## Comparing two documents
 
 **Compare selected** (exactly two ticked rows) reads both documents with their real types (`extendedJson=canonical`, two parallel requests) and opens [`MongocampDocumentCompare`](/components/mongocamp-document-compare) on them, so an `int` 5 and a `long` 5, or a `double` and a `decimal` with the same text, show up as a **type change** with both types named. If a read fails, the table's rows are compared and the dialog says that types were not compared.

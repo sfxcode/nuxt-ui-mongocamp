@@ -32,6 +32,8 @@ import type { BsonType } from '../utils/bsonTypes'
 import MongocampDocumentView from './MongocampDocumentView.vue'
 import MongocampQueryBar from './MongocampQueryBar.vue'
 import MongocampExportAll from './MongocampExportAll.vue'
+import MongocampCollectionCharts from './MongocampCollectionCharts.vue'
+import { isFilterTooLong } from '../utils/requestLimits'
 
 const props = withDefaults(defineProps<{
   collectionName: string
@@ -915,6 +917,20 @@ function exportPage(format: 'json' | 'csv') {
   downloadTextFile(`${props.collectionName}.csv`, rowsToCsv(rows, keys), 'text/csv')
 }
 
+// "Chart this filter": the distribution of one field over the documents the table currently shows (the server applies the Lucene
+// filter as the first `$match`, see MongocampCollectionCharts). Only fields with something to count: text, numbers, dates, booleans.
+const chartOpen = ref(false)
+const chartField = ref('')
+const chartFields = computed(() => filterFields.value.filter(f => f.type === 'string' || f.type === 'number' || f.type === 'date-time' || f.type === 'boolean').map(f => f.key))
+const chartItems = computed(() => chartFields.value.map(key => ({ label: key, value: key })))
+const chartFilter = computed(() => buildLuceneFilter(filterText.value))
+const chartFilterTooLong = computed(() => isFilterTooLong(chartFilter.value))
+
+function openChart() {
+  if (!chartFields.value.includes(chartField.value)) chartField.value = chartFields.value[0] ?? ''
+  chartOpen.value = true
+}
+
 const exportAllOpen = ref(false)
 const exportMenuItems = computed(() => [
   { label: t('nuxtUiMongocamp.collectionData.exportJson'), icon: 'i-lucide-file-json', onSelect: () => exportPage('json') },
@@ -1076,6 +1092,16 @@ watch(() => props.collectionName, init, { immediate: true })
             :aria-label="t('nuxtUiMongocamp.collectionData.columnsTooltip')"
           />
         </UDropdownMenu>
+        <UButton
+          v-if="!isBucketCollection(collectionName)"
+          icon="i-lucide-chart-column"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :disabled="chartFields.length === 0 || documents.length === 0"
+          :aria-label="t('nuxtUiMongocamp.collectionData.chartTooltip')"
+          @click="openChart"
+        />
         <UDropdownMenu :items="exportMenuItems">
           <UButton
             icon="i-lucide-download"
@@ -1196,6 +1222,45 @@ watch(() => props.collectionName, init, { immediate: true })
       :projection="activeProjection"
       :total="total"
     />
+
+    <UModal
+      v-model:open="chartOpen"
+      :title="t('nuxtUiMongocamp.collectionData.chartTitle')"
+      :ui="{ content: 'sm:max-w-3xl' }"
+    >
+      <template #body>
+        <div
+          class="flex flex-col gap-3"
+          data-test="chart-dialog"
+        >
+          <p class="text-sm text-dimmed">
+            {{ chartFilter ? t('nuxtUiMongocamp.collectionData.chartScopeFiltered', { count: total }, total) : t('nuxtUiMongocamp.collectionData.chartScopeAll', { count: total }, total) }}
+          </p>
+          <UFormField :label="t('nuxtUiMongocamp.collectionData.chartField')">
+            <USelect
+              v-model="chartField"
+              :items="chartItems"
+              class="w-full"
+              :aria-label="t('nuxtUiMongocamp.collectionData.chartField')"
+            />
+          </UFormField>
+          <UAlert
+            v-if="chartFilterTooLong"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-triangle-alert"
+            :description="t('nuxtUiMongocamp.collectionData.chartTooLong')"
+            data-test="chart-too-long"
+          />
+          <MongocampCollectionCharts
+            v-else-if="chartOpen && chartField"
+            :collection-name="collectionName"
+            :field="chartField"
+            :filter="chartFilter"
+          />
+        </div>
+      </template>
+    </UModal>
 
     <UModal
       v-model:open="compareOpen"

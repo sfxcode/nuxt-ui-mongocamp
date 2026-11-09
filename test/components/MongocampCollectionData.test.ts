@@ -4,6 +4,7 @@ import { DOMWrapper, enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp, USelect } from '#components'
 import MongocampCollectionData from '../../src/runtime/components/MongocampCollectionData.vue'
+import MongocampCollectionCharts from '../../src/runtime/components/MongocampCollectionCharts.vue'
 import MongocampQueryBar from '../../src/runtime/components/MongocampQueryBar.vue'
 import MongocampExportAll from '../../src/runtime/components/MongocampExportAll.vue'
 
@@ -132,6 +133,72 @@ describe('MongocampCollectionData', () => {
       const dialog = component.findComponent(MongocampExportAll)
       expect(dialog.exists()).toBe(true)
       expect(dialog.props()).toMatchObject({ collection: 'customers', filter: 'name:"Alice"', sort: ['-age'], projection: ['name'], total: 45, open: false })
+    })
+  })
+
+  describe('chart this filter', () => {
+    const rows = [
+      { _id: { $oid: 'doc-1' }, name: 'Alice', age: 30 },
+      { _id: { $oid: 'doc-2' }, name: 'Bob', age: 25 },
+    ]
+    async function mountRows(collectionName = 'customers') {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse(rows, '2'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName } })
+      await wait()
+      return component
+    }
+    const chartButton = (c: Awaited<ReturnType<typeof mountRows>>) => c.find('[aria-label="Chart a field"]')
+
+    it('opens a dialog with the fields that can be charted and charts the field over the applied filter', async () => {
+      const component = await mountRows()
+      await component.find('input[placeholder="Filter rows..."]').setValue('ali')
+      await wait(450)
+      await chartButton(component).trigger('click')
+      await wait()
+
+      const dialog = modal().find('[data-test="chart-dialog"]')
+      expect(dialog.exists()).toBe(true)
+      expect(dialog.text()).toContain('documents that match the current filter')
+      const charts = component.findComponent(MongocampCollectionCharts)
+      expect(charts.exists()).toBe(true)
+      expect(charts.props()).toMatchObject({ collectionName: 'customers', field: 'age' })
+      expect(charts.props('filter')).toContain('ali')
+    })
+
+    it('charts the whole collection when nothing is filtered', async () => {
+      const component = await mountRows()
+      await chartButton(component).trigger('click')
+      await wait()
+
+      expect(modal().find('[data-test="chart-dialog"]').text()).toContain('All 2 documents of the collection')
+      expect(component.findComponent(MongocampCollectionCharts).props('filter')).toBeUndefined()
+    })
+
+    it('offers only fields that have something to count — no _id, no objects or arrays', async () => {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice', tags: ['a'], address: { city: 'X' } }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), { route: '/', props: { collectionName: 'customers' } })
+      await wait()
+      await chartButton(component).trigger('click')
+      await wait()
+
+      const select = component.findAllComponents(USelect).find(s => s.html().includes('aria-label="Field"'))!
+      expect((select.vm.$props as unknown as { items: { value: string }[] }).items.map(i => i.value)).toEqual(['name'])
+    })
+
+    it('has no chart button for a GridFS collection', async () => {
+      const component = await mountRows('photos.files')
+      expect(chartButton(component).exists()).toBe(false)
+    })
+
+    it('refuses a filter too long for the request instead of sending it', async () => {
+      const component = await mountRows()
+      await component.find('input[placeholder="Filter rows..."]').setValue('x'.repeat(2200))
+      await wait(450)
+      await chartButton(component).trigger('click')
+      await wait()
+
+      expect(modal().find('[data-test="chart-too-long"]').exists()).toBe(true)
+      expect(component.findComponent(MongocampCollectionCharts).exists()).toBe(false)
     })
   })
 
