@@ -422,6 +422,10 @@ const isInitializing = ref(false)
 const detailOpen = ref(false)
 // exactly two ticked rows on screen can be compared side by side
 const compareOpen = ref(false)
+// Compare reads both documents with their real types (canonical), so `1` as an int and `1` as a long show up as a type
+// change; if a read fails the table's rows are compared and the dialog says the types were not.
+const compareState = ref<'loading' | 'typed' | 'untyped'>('loading')
+const typedPair = ref<[Row, Row] | null>(null)
 const compareRows = computed<Row[]>(() => {
   const ticked = documents.value.filter((row, index) => rowSelection.value[rowId(row, index)])
   return ticked.length === 2 && selectedDocIds.value.length === 2 ? ticked : []
@@ -645,6 +649,25 @@ async function collectMatching() {
 function clearBulkSelection() {
   rowSelection.value = {}
   clearMatching()
+}
+
+async function openCompare() {
+  const [left, right] = compareRows.value
+  if (!left || !right) return
+  compareOpen.value = true
+  compareState.value = 'loading'
+  typedPair.value = null
+  try {
+    const [typedLeft, typedRight] = await Promise.all([loadTypedRow(left), loadTypedRow(right)])
+    if (!typedLeft || !typedRight) throw new Error('no id')
+    // closed meanwhile: this answer is stale
+    if (!compareOpen.value) return
+    typedPair.value = [typedLeft, typedRight]
+    compareState.value = 'typed'
+  }
+  catch {
+    compareState.value = 'untyped'
+  }
 }
 
 function openBulkEdit() {
@@ -1121,7 +1144,7 @@ watch(() => props.collectionName, init, { immediate: true })
           size="sm"
           :label="t('nuxtUiMongocamp.bulk.compareSelected')"
           data-testid="compare-selected"
-          @click="compareOpen = true"
+          @click="openCompare"
         />
         <UButton
           v-if="editableFields.length > 0"
@@ -1180,13 +1203,29 @@ watch(() => props.collectionName, init, { immediate: true })
       :ui="{ content: 'sm:max-w-5xl' }"
     >
       <template #body>
-        <MongocampDocumentCompare
-          v-if="compareRows.length === 2"
-          :left="compareRows[0]"
-          :right="compareRows[1]"
-          :left-label="String(compareRows[0]!._id ?? '')"
-          :right-label="String(compareRows[1]!._id ?? '')"
-        />
+        <p
+          v-if="compareState === 'loading'"
+          class="text-sm text-dimmed"
+          role="status"
+          data-test="compare-loading"
+        >
+          {{ t('nuxtUiMongocamp.collectionData.compareLoading') }}
+        </p>
+        <template v-else-if="compareRows.length === 2">
+          <p
+            v-if="compareState === 'untyped'"
+            class="mb-2 text-sm text-warning"
+            data-test="compare-untyped"
+          >
+            {{ t('nuxtUiMongocamp.collectionData.compareUntyped') }}
+          </p>
+          <MongocampDocumentCompare
+            :left="typedPair?.[0] ?? compareRows[0]"
+            :right="typedPair?.[1] ?? compareRows[1]"
+            :left-label="String(compareRows[0]!._id ?? '')"
+            :right-label="String(compareRows[1]!._id ?? '')"
+          />
+        </template>
       </template>
     </UModal>
 

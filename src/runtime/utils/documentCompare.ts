@@ -36,10 +36,13 @@ export function plainValue(value: unknown): unknown {
 const WRAPPED_AS_TEXT = new Set<PathValueType>(['objectId', 'date', 'long', 'decimal'])
 const NUMERIC = new Set<PathValueType>(['number', 'int', 'long', 'double', 'decimal'])
 
-// The module reads wrappers back as plain text/numbers, so a wrapper type next to its plain form is not a difference.
+const EXACT_NUMERIC = new Set<PathValueType>(['int', 'long', 'double', 'decimal'])
+
+// A plain read gives wrapper types as plain text/numbers, so a wrapper type next to its plain form is not a difference. Two
+// EXACT numeric types (both sides read with their types, `extendedJson=canonical`) are: an int 5 and a long 5 differ.
 function typesAgree(a: PathValueType, b: PathValueType): boolean {
   if (a === b) return true
-  if (NUMERIC.has(a) && NUMERIC.has(b)) return true
+  if (NUMERIC.has(a) && NUMERIC.has(b)) return !(EXACT_NUMERIC.has(a) && EXACT_NUMERIC.has(b))
   return (a === 'string' && WRAPPED_AS_TEXT.has(b)) || (b === 'string' && WRAPPED_AS_TEXT.has(a))
 }
 

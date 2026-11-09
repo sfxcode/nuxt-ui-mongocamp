@@ -43,6 +43,23 @@ describe('compareDocuments', () => {
   })
 })
 
+describe('typed (canonical) documents', () => {
+  it('an int 5 and a long 5 differ; so do a double and a decimal with the same text', () => {
+    const result = compareDocuments(
+      { a: { $numberInt: '5' }, b: { $numberDouble: '1.5' }, c: { $numberLong: '7' } },
+      { a: { $numberLong: '5' }, b: { $numberDecimal: '1.5' }, c: { $numberLong: '7' } },
+    )
+
+    expect(result.rows.map(r => [r.path, r.status, r.typeDiffers])).toEqual([['a', 'changed', true], ['b', 'changed', true], ['c', 'same', false]])
+  })
+
+  it('a plain number next to an exact wrapper is still not a difference (one side was read plain)', () => {
+    const result = compareDocuments({ a: { $numberLong: '5' } }, { a: 5 })
+
+    expect(result.rows[0]).toMatchObject({ status: 'same', typeDiffers: false })
+  })
+})
+
 describe('compareText', () => {
   it('writes leaves as short text', () => {
     expect(compareText(null)).toBe('null')

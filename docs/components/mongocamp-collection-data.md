@@ -109,6 +109,10 @@ Every row has a **View** button (also without a write grant) that opens the docu
 
 The filter builder's field list comes from the server's field analysis for the **whole collection** ([`useMongocampFieldTypes`](/composables/use-mongocamp-field-types), `fields/detail`), not from the rows on screen: a field the current page lacks is still offered, nested paths (`address.city`) are offered and filtered with the server's dotted-path Lucene (verified live: equals, wildcard, ranges, negation), and containers and binary fields are left out. While the analysis loads, or when it fails, the fields of the loaded rows are used as before. It is loaded when the collection changes and after an insert or import.
 
+## Comparing two documents
+
+**Compare selected** (exactly two ticked rows) reads both documents with their real types (`extendedJson=canonical`, two parallel requests) and opens [`MongocampDocumentCompare`](/components/mongocamp-document-compare) on them, so an `int` 5 and a `long` 5, or a `double` and a `decimal` with the same text, show up as a **type change** with both types named. If a read fails, the table's rows are compared and the dialog says that types were not compared.
+
 ## Inserting with the collection's types
 
 An insert (and a field the edited document did not have) is written with the collection's field types from [`useMongocampFieldTypes`](/composables/use-mongocamp-field-types): a field that holds **text** everywhere stays text even when the new value looks like a timestamp (written as `{ $string }` — the server would otherwise store it as a date), an `int` field is written as `{ $numberInt }`, a long keeps its digits. Fields with more than one type found, or without a known type, are written as plain JSON and the old rule applies (a timestamp-shaped text becomes a date).

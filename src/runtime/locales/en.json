@@ -250,7 +250,9 @@
       "viewJson": "JSON",
       "viewModeLabel": "Page view",
       "editLoadFailed": "The full document could not be loaded for editing",
-      "projectedNote": "Only some fields are loaded"
+      "projectedNote": "Only some fields are loaded",
+      "compareLoading": "Loading the documents…",
+      "compareUntyped": "The documents could not be read with their types, so the table's values are compared: a change of type (an int and a long with the same number) is not shown."
     },
     "bucketFiles": {
       "filterPlaceholder": "Filter by filename...",

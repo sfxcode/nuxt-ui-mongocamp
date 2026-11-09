@@ -159,6 +159,45 @@ describe('MongocampCollectionData', () => {
       expect(compare?.querySelector('[data-path="name"]')?.getAttribute('data-status')).toBe('changed')
     })
 
+    describe('with the typed documents', () => {
+      const compareData = async (serve: () => void) => {
+        mockGetDocumentRaw.mockReset()
+        serve()
+        const component = await mountWithRows()
+        const boxes = component.findAll('[aria-label="Select row"]')
+        await boxes[0]!.trigger('click')
+        await boxes[1]!.trigger('click')
+        await compareButton(component).trigger('click')
+        await wait(120)
+        return component
+      }
+      const rowOf = (path: string) => document.body.querySelector(`[data-testid="document-compare"] [data-path="${path}"]`)
+
+      it('reads both documents canonically and shows a change of type when the text of the value is the same', async () => {
+        await compareData(() => {
+          mockGetDocumentRaw.mockImplementation(async ({ documentId }: { documentId: string }) => ({
+            raw: new Response(JSON.stringify({ _id: { $oid: documentId }, name: 'same', age: documentId.endsWith('1') ? { $numberInt: '5' } : { $numberLong: '5' } })),
+            value: () => Promise.resolve({}),
+          }))
+        })
+
+        expect(mockGetDocumentRaw).toHaveBeenCalledTimes(2)
+        expect(mockGetDocumentRaw.mock.calls.every(c => c[0].extendedJson === 'canonical')).toBe(true)
+        expect(rowOf('name')?.getAttribute('data-status')).toBe('same')
+        expect(rowOf('age')?.getAttribute('data-status')).toBe('changed')
+        expect(rowOf('age')?.textContent).toContain('int')
+        expect(rowOf('age')?.textContent).toContain('long')
+        expect(document.body.querySelector('[data-test="compare-untyped"]')).toBeNull()
+      })
+
+      it('compares the table rows and says the types were not compared when a read fails', async () => {
+        await compareData(() => mockGetDocumentRaw.mockRejectedValue(new Error('down')))
+
+        expect(document.body.querySelector('[data-test="compare-untyped"]')?.textContent).toContain('could not be read with their types')
+        expect(rowOf('name')?.getAttribute('data-status')).toBe('changed')
+      })
+    })
+
     it('hides it again with three rows ticked', async () => {
       const component = await mountWithRows()
       for (const box of component.findAll('[aria-label="Select row"]')) await box.trigger('click')
