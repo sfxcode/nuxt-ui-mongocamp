@@ -1,6 +1,10 @@
 # useMongocampFetchAll
 
-Reads **every** page of a document or file list — with a cap, progress and cancellation. It is the base for exporting a whole collection, copying one, "select all N matching" and whole-collection analysis; the list components themselves page on screen and don't need it.
+Reads **every** page of a document or file list — with a cap, progress and cancellation. Before server 1.8 it was the base for exporting a whole collection, copying one and "select all N matching"; the list components themselves page on screen and don't need it.
+
+::: tip Not used by the module itself since server 1.8
+Bulk delete/edit by filter, copy, export and import now run on the server, so none of the module's own components call `fetchAllDocuments` / `fetchAllFiles` any more. They stay a public helper for apps that need every row of a collection in the browser (the document search is POSTed, so long filters work).
+:::
 
 ```ts
 const { fetchAllDocuments, fetchAllFiles } = useMongocampFetchAll()

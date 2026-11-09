@@ -35,6 +35,8 @@ function requestInit(signal: AbortSignal | undefined): RequestInit {
  * Capped at 10 000 rows by default (`maxRows` raises it); see `utils/pagedFetch.ts` for stopping, progress, abort and
  * the effect of documents changing during the read. Every page has its own 60 s timeout.
  */
+// Since server 1.8 the module's own components no longer page through a collection (bulk work, copy, export and import run on
+// the server), so nothing inside the module calls these two; they stay a public helper for apps that need every row.
 export function useMongocampFetchAll() {
   const { documentApi, fileApi } = useMongocampClientApi()
 

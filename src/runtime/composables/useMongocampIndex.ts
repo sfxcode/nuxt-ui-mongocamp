@@ -11,6 +11,7 @@ function withTimeout(): RequestInit {
 export function useMongocampIndex() {
   const { indexApi } = useMongocampClientApi()
 
+  /** @deprecated The unordered listing (a compound index's key order is lost). Use `listIndexDetails`; kept for apps, not used by the module since server 1.8. */
   async function listIndexes(collectionName: string): Promise<MongoIndex[]> {
     return indexApi.listIndices({ collectionName })
   }
@@ -24,6 +25,7 @@ export function useMongocampIndex() {
     return indexApi.indexDetails({ collectionName }, withTimeout())
   }
 
+  /** Creates from an unordered `keys` map. Prefer `createOrderedIndex`, which keeps the order of a compound index and takes the 1.8 options. */
   async function createIndex(collectionName: string, keys: Record<string, number>, options?: IndexOptionsRequest): Promise<IndexCreateResponse> {
     return indexApi.createIndex({ collectionName, indexCreateRequest: { keys, indexOptionsRequest: options } })
   }

@@ -2,6 +2,10 @@
 
 Wraps `indexApi` for MongoDB index management — used by [`MongocampCollectionInfos`](/components/mongocamp-collection-infos)'s Indexes card.
 
+::: warning Prefer the 1.8 calls
+`listIndexes` (unordered keys) and `createIndex` (unordered `keys` map) are kept for apps and are **deprecated**: use [`listIndexDetails` and `createOrderedIndex`](#listindexdetails-and-createorderedindex-server-1-8-1), which keep a compound index's field order and take `sparse`, `hidden`, partial filters and more. The module's own components use the new calls only (and `createExpiringIndex`, `createIndexForField`).
+:::
+
 ```ts
 const {
   listIndexes,         // (collectionName: string) => Promise<MongoIndex[]> — the old, unordered listing

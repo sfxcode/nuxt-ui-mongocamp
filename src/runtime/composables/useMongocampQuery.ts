@@ -19,7 +19,7 @@ export interface MongocampQueryHelper {
    * Matches documents where the field has a value. Without `type` this ORs a text wildcard with a
    * full-range number and a full-range date clause, so it works for any of those types.
    *
-   * MongoCamp (still, as of 1.6.3) does not understand `_exists_:field` (it matches nothing), and `field:*` only matches text,
+   * MongoCamp (last verified on 1.6.3, not re-checked on 1.8) does not understand `_exists_:field` (it matches nothing), and `field:*` only matches text,
    * which is why this is not just a wildcard.
    */
   exists: (fieldName: string, type?: ExistsFieldType) => string
@@ -45,7 +45,7 @@ export interface MongocampQueryHelper {
   /**
    * `field:[from TO to]` — inclusive range.
    *
-   * Pass `null` (or `'*'`) for an open end. MongoCamp (still, as of 1.6.3) rejects `[x TO *]`, so the open end is replaced by
+   * Pass `null` (or `'*'`) for an open end. MongoCamp (last verified on 1.6.3, not re-checked on 1.8) rejects `[x TO *]`, so the open end is replaced by
    * the far bound of the other bound's type: the 64-bit integer limits for numbers, year 0001 / 9999 for
    * dates. Both ends open means "has a value" and returns `exists(field)`. An open end next to a *text*
    * bound can't be expressed and still becomes `*`, which the server rejects.
@@ -148,7 +148,7 @@ export interface MongocampQueryHelper {
   notOnDay: (fieldName: string, day: string) => string
   /**
    * The negation of any expression these helpers produced, written so the server evaluates it correctly.
-   * MongoCamp (still, as of 1.6.3) evaluates `-(A AND B)` as `-A AND -B`, so a negated `AND` group is rewritten with
+   * MongoCamp (last verified on 1.6.3, not re-checked on 1.8) evaluates `-(A AND B)` as `-A AND -B`, so a negated `AND` group is rewritten with
    * De Morgan's law as `((-A) OR (-B))` — each negated clause in its own parentheses, which the server needs — and a
    * negated `OR` group as `((-A) AND (-B))`, recursively. A single clause becomes `-clause` (and `-clause` becomes
    * `clause`). Returns `''` for an empty expression. Throws `UnsupportedExpressionError` for text it cannot read
