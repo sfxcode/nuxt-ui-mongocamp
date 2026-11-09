@@ -460,7 +460,12 @@
       "matchingDeleted": "{deleted} von {total} Dokumenten gelöscht",
       "matchingUpdated": "{updated} von {total} Dokumenten aktualisiert",
       "compareSelected": "Auswahl vergleichen",
-      "counting": "Zähle passende Dokumente…"
+      "counting": "Zähle passende Dokumente…",
+      "typeInt": "Ganzzahl (int32)",
+      "typeLong": "Long (int64)",
+      "typeDouble": "Double",
+      "typeDecimal": "Decimal128",
+      "editMixed": "Die Werte dieses Feldes haben mehr als einen Typ. Bitte den Typ des neuen Wertes wählen."
     },
     "filterBuilder": {
       "matchLabel": "Treffer bei",

@@ -10,7 +10,7 @@ You normally don't use it directly. It is documented for apps that build their o
 |---|---|---|
 | `open` (`v-model:open`) | `boolean` | Whether the dialog is open |
 | `selected` | `number` | How many documents are selected (shown in the title and the confirm button) |
-| `fields` | `{ key: string, type: 'string' \| 'number' \| 'boolean' \| 'date-time' \| 'json' }[]` | Fields the user can choose from; each field's `type` is the starting value type |
+| `fields` | `{ key: string, type: 'string' \| 'number' \| 'boolean' \| 'date-time' \| 'json', bson?: BsonType, mixed?: boolean }[]` | Fields the user can choose from; `type` is the starting value type, `bson` the field's dominant BSON type (from [`useMongocampFieldTypes`](/composables/use-mongocamp-field-types)) which preselects an exact numeric type, `mixed` marks a field that holds more than one kind of value |
 | `saving` | `boolean` | The parent is running the update — disables the buttons and shows a spinner |
 | `error` | `string` | Shown in the dialog, which then stays open |
 
@@ -18,13 +18,17 @@ You normally don't use it directly. It is documented for apps that build their o
 
 | Event | Payload | Description |
 |---|---|---|
-| `apply` | `{ field: string, value: unknown }` | The user confirmed — run the update now |
+| `apply` | `{ field: string, value: unknown, bson?: BsonType }` | The user confirmed — run the update now. `bson` is the type to write the value as (the parent wraps it with `wireValue`); absent means plain JSON and the server picks the type |
 
 The dialog closes by itself when `saving` goes back to `false` and there is no `error`.
 
 ## The value
 
 The user picks the field, the value type and types the value; a boolean uses a true/false select. The value is converted with the same rules as an [import](/components/mongocamp-import#csv-column-types): numbers must be plain numbers, dates ISO 8601 (read as UTC, stored as an ISO string with milliseconds), JSON must parse. An invalid or missing value shows the reason and disables **Update**. An empty text is a valid value only for a Text field.
+
+## Types
+
+The value type offers the import types plus the exact numeric BSON types: **Integer (int32)**, **Long (int64)**, **Double**, **Decimal128**. A field starts on its own type when it is known — editing an `int` field stays an `int` instead of silently becoming a long. The exact types are checked as typed text (an int must be a whole number in the int32 range, a long keeps every digit) and the dialog refuses a value that does not fit. A **Text** value that looks like a timestamp is written as text (`{ $string }`), because the server would otherwise store it as a date; a **Date** is written as `{ $date }`. A field with more than one kind of value shows a note and asks you to choose. Without the field analysis the plain type is used, as before.
 
 ## How `MongocampCollectionData` applies it
 

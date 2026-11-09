@@ -460,7 +460,12 @@
       "matchingDeleted": "Deleted {deleted} of {total} documents",
       "matchingUpdated": "Updated {updated} of {total} documents",
       "compareSelected": "Compare selected",
-      "counting": "Counting matching documents…"
+      "counting": "Counting matching documents…",
+      "typeInt": "Integer (int32)",
+      "typeLong": "Long (int64)",
+      "typeDouble": "Double",
+      "typeDecimal": "Decimal128",
+      "editMixed": "The values of this field have more than one type. Choose the type the new value should have."
     },
     "filterBuilder": {
       "matchLabel": "Match",

@@ -27,6 +27,8 @@ import { useMongocampAggregation } from '../composables/useMongocampAggregation'
 import { useMongocampPersistedState } from '../composables/useMongocampPersistedState'
 import { useMongocampBulkByFilter } from '../composables/useMongocampBulkByFilter'
 import { useMongocampFieldTypes } from '../composables/useMongocampFieldTypes'
+import { wireValue } from '../utils/bsonTypes'
+import type { BsonType } from '../utils/bsonTypes'
 import MongocampDocumentView from './MongocampDocumentView.vue'
 import MongocampQueryBar from './MongocampQueryBar.vue'
 import MongocampExportAll from './MongocampExportAll.vue'
@@ -696,10 +698,15 @@ async function handleBulkDelete() {
 }
 
 // scalar fields of the loaded rows a bulk edit can write; `_id` and the metaData object are never offered
-const editableFields = computed<{ key: string, type: ImportColumnType }[]>(() =>
+const editableFields = computed<{ key: string, type: ImportColumnType, bson?: BsonType, mixed?: boolean }[]>(() =>
   filterFields.value
     .filter(f => f.key !== 'metaData' && isEditableField(f.key))
-    .flatMap(f => f.type === 'objectId' ? [] : [{ key: f.key, type: f.type === 'array' || f.type === 'object' ? 'json' as const : f.type }]),
+    .flatMap((f) => {
+      if (f.type === 'objectId') return []
+      // the field's real BSON type, when the server's field analysis is there: an int stays an int
+      const info = fieldTypes.typeOf(f.key)
+      return [{ key: f.key, type: f.type === 'array' || f.type === 'object' ? 'json' as const : f.type, bson: info?.dominant, mixed: info?.mixed }]
+    }),
 )
 
 function bulkEditFailureReason(error: unknown): string {
@@ -708,11 +715,13 @@ function bulkEditFailureReason(error: unknown): string {
   return describeError(error).message
 }
 
-async function handleBulkEdit(edit: { field: string, value: unknown }) {
+async function handleBulkEdit(edit: { field: string, value: unknown, bson?: BsonType }) {
   bulkEditing.value = true
   bulkEditError.value = ''
   // the generated types say string values only; the server takes any JSON value
-  const document = { [edit.field]: edit.value } as unknown as { [key: string]: string }
+  // written as the chosen BSON type (an int as `{ $numberInt }`, text that looks like a date as `{ $string }`, …); no type chosen: plain
+  const value = edit.bson ? wireValue(edit.bson, edit.value) : edit.value
+  const document = { [edit.field]: value } as unknown as { [key: string]: string }
   try {
     if (matching.value) {
       const { filter, count } = matching.value

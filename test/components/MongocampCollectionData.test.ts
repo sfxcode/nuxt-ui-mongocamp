@@ -1591,6 +1591,93 @@ describe('MongocampCollectionData', () => {
       expect(mockListDocumentsRaw).toHaveBeenCalledTimes(2)
     })
 
+    describe('writes the field\'s real type (server field analysis)', () => {
+      const typedRows = [
+        { _id: hex(1), name: 'Alice', age: 30, code: 'A', big: 5, mix: 1 },
+        { _id: hex(2), name: 'Bob', age: 25, code: 'B', big: 6, mix: 'x' },
+      ]
+      const DETAILS = [
+        { path: '_id', types: [{ type: 'objectId', count: 2 }] },
+        { path: 'name', types: [{ type: 'string', count: 2 }] },
+        { path: 'age', types: [{ type: 'int', count: 2 }] },
+        { path: 'code', types: [{ type: 'string', count: 2 }] },
+        { path: 'big', types: [{ type: 'long', count: 2 }] },
+        { path: 'mix', types: [{ type: 'long', count: 1 }, { type: 'string', count: 1 }] },
+      ]
+
+      async function openTyped() {
+        mockGetFieldDetails.mockReset()
+        mockGetFieldDetails.mockResolvedValue(DETAILS)
+        const component = await mountAndSelectFirstTwo(typedRows)
+        return component
+      }
+      const applyText = async (component: Awaited<ReturnType<typeof openTyped>>, field: string, value: string) => {
+        selectByLabel(component, 'Field').vm.$emit('update:modelValue', field)
+        await wait()
+        await modal().find('input[aria-label="Value"]').setValue(value)
+        await wait()
+        await modal().findAll('button').find(b => b.text() === 'Update 2')?.trigger('click')
+        await wait()
+      }
+
+      it('preselects the field\'s own type, so an int stays an int', async () => {
+        const component = await openTyped()
+        selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+        await wait()
+        expect((selectByLabel(component, 'Value type').vm.$props as unknown as { modelValue: string }).modelValue).toBe('int')
+
+        await applyText(component, 'age', '31')
+
+        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.document).toEqual({ age: { $numberInt: '31' } })
+      })
+
+      it('keeps every digit of a long', async () => {
+        const component = await openTyped()
+        await applyText(component, 'big', '9007199254740995')
+        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.document).toEqual({ big: { $numberLong: '9007199254740995' } })
+      })
+
+      it('writes text that looks like a date as text, not as a date', async () => {
+        const component = await openTyped()
+        await applyText(component, 'code', '2026-01-01T00:00:00.000Z')
+        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.document).toEqual({ code: { $string: '2026-01-01T00:00:00.000Z' } })
+      })
+
+      it('blocks a value that does not fit the type (2.5 as an int, a long as an int beyond int32)', async () => {
+        const component = await openTyped()
+        selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+        await wait()
+        for (const bad of ['2.5', '3000000000', 'abc']) {
+          await modal().find('input[aria-label="Value"]').setValue(bad)
+          await wait()
+          expect(modal().text()).toContain('Not a valid number')
+          expect(modal().findAll('button').find(b => b.text() === 'Update 2')?.attributes('disabled')).toBeDefined()
+        }
+        expect(mockUpdateMany).not.toHaveBeenCalled()
+      })
+
+      it('says so when the field holds more than one kind of value', async () => {
+        const component = await openTyped()
+        selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'mix')
+        await wait()
+        expect(modal().find('[data-test="mixed-note"]').exists()).toBe(true)
+        selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+        await wait()
+        expect(modal().find('[data-test="mixed-note"]').exists()).toBe(false)
+      })
+
+      it('without the field analysis the plain number is sent as before', async () => {
+        const component = await mountAndSelectFirstTwo()
+        selectByLabel(component, 'Field').vm.$emit('update:modelValue', 'age')
+        await wait()
+        await modal().find('input[aria-label="Value"]').setValue('31')
+        await wait()
+        await modal().findAll('button').find(b => b.text() === 'Update 2')?.trigger('click')
+        await wait()
+        expect(mockUpdateMany.mock.calls[0]![0].updateRequest.document).toEqual({ age: 31 })
+      })
+    })
+
     it('blocks an invalid value instead of sending it', async () => {
       const component = await mountAndSelectFirstTwo()
 
