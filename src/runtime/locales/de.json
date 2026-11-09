@@ -165,18 +165,9 @@
       "columnInAllSamples": "In allen Stichproben",
       "columnIndex": "Index",
       "columnKeys": "Schlüssel",
-      "columnSizeKb": "Größe (KB)",
       "deleteIndexTooltip": "Index löschen",
-      "fieldName": "Feldname",
-      "ascending": "Aufsteigend",
-      "indexType": "Indextyp",
-      "expireAfter": "Ablauf nach (z. B. 3600s)",
-      "expireAfterHelp": "Wird nur für den Indextyp \"expiring\" verwendet.",
       "createIndexTitle": "Index erstellen",
-      "deleteIndexTitle": "Index löschen",
-      "confirmDeleteIndex": "Möchten Sie den Index \"{indexName}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "errorCreateIndex": "Fehler beim Erstellen des Index",
-      "errorDeleteIndex": "Fehler beim Löschen des Index",
       "typeStandard": "Standard",
       "statsTitle": "Feldstatistik",
       "statsAnalyze": "Felder analysieren",
@@ -250,7 +241,6 @@
       "viewJson": "JSON",
       "viewModeLabel": "Seitenansicht",
       "editLoadFailed": "Das vollständige Dokument konnte zum Bearbeiten nicht geladen werden",
-      "projectedNote": "Es werden nur einige Felder geladen",
       "compareLoading": "Die Dokumente werden geladen …",
       "compareUntyped": "Die Dokumente konnten nicht mit ihren Typen gelesen werden, daher werden die Werte der Tabelle verglichen: Ein Typwechsel (ein int und ein long mit derselben Zahl) wird nicht gezeigt."
     },
@@ -274,8 +264,6 @@
       "downloadFileTooltip": "Datei herunterladen",
       "renameTooltip": "Umbenennen / Metadaten bearbeiten",
       "deleteFileTooltip": "Datei löschen",
-      "metadataKey": "Schlüssel",
-      "metadataValue": "Wert",
       "previewTooltip": "Datei ansehen",
       "dropHere": "Dateien zum Hochladen ablegen",
       "uploadProgress": "Lade {done} von {total} hoch…",
@@ -676,7 +664,6 @@
       "unitYear": "Jahr"
     },
     "documentView": {
-      "heading": "Dokument",
       "modeTree": "Baum",
       "modeJson": "JSON",
       "modeLabel": "Ansicht",
@@ -913,7 +900,6 @@
       "clusterTitle": "Cluster",
       "coordinator": "Koordinator",
       "siteMaster": "Site-Master",
-      "member": "Mitglied",
       "jobsTitle": "Nächste Jobs",
       "jobsNone": "Kein Job hat einen nächsten Lauf",
       "allJobs": "Alle Jobs",
@@ -1018,9 +1004,7 @@
         "changed": "geändert",
         "added": "hinzugefügt",
         "removed": "entfernt"
-      },
-      "first": "Erstes Dokument",
-      "second": "Zweites Dokument"
+      }
     },
     "aggregationChart": {
       "viewTable": "Tabelle",

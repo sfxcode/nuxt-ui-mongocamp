@@ -165,18 +165,9 @@
       "columnInAllSamples": "In all samples",
       "columnIndex": "Index",
       "columnKeys": "Keys",
-      "columnSizeKb": "Size (KB)",
       "deleteIndexTooltip": "Delete index",
-      "fieldName": "Field Name",
-      "ascending": "Ascending",
-      "indexType": "Index Type",
-      "expireAfter": "Expire After (e.g. 3600s)",
-      "expireAfterHelp": "Only used for the expiring index type.",
       "createIndexTitle": "Create Index",
-      "deleteIndexTitle": "Delete Index",
-      "confirmDeleteIndex": "Are you sure you want to delete the index \"{indexName}\"? This action cannot be undone.",
       "errorCreateIndex": "Error creating index",
-      "errorDeleteIndex": "Error deleting index",
       "typeStandard": "standard",
       "statsTitle": "Field statistics",
       "statsAnalyze": "Analyze fields",
@@ -250,7 +241,6 @@
       "viewJson": "JSON",
       "viewModeLabel": "Page view",
       "editLoadFailed": "The full document could not be loaded for editing",
-      "projectedNote": "Only some fields are loaded",
       "compareLoading": "Loading the documents…",
       "compareUntyped": "The documents could not be read with their types, so the table's values are compared: a change of type (an int and a long with the same number) is not shown."
     },
@@ -274,8 +264,6 @@
       "downloadFileTooltip": "Download file",
       "renameTooltip": "Rename / edit metadata",
       "deleteFileTooltip": "Delete file",
-      "metadataKey": "Key",
-      "metadataValue": "Value",
       "previewTooltip": "Preview file",
       "dropHere": "Drop files to upload",
       "uploadProgress": "Uploading {done} of {total}…",
@@ -676,7 +664,6 @@
       "unitYear": "Year"
     },
     "documentView": {
-      "heading": "Document",
       "modeTree": "Tree",
       "modeJson": "JSON",
       "modeLabel": "View mode",
@@ -913,7 +900,6 @@
       "clusterTitle": "Cluster",
       "coordinator": "Coordinator",
       "siteMaster": "Site master",
-      "member": "Member",
       "jobsTitle": "Next jobs",
       "jobsNone": "No job has a next run",
       "allJobs": "All jobs",
@@ -1018,9 +1004,7 @@
         "changed": "changed",
         "added": "added",
         "removed": "removed"
-      },
-      "first": "First document",
-      "second": "Second document"
+      }
     },
     "aggregationChart": {
       "viewTable": "Table",
