@@ -155,6 +155,30 @@ describe('MongocampSettings', () => {
     expect(component.text()).toContain('local-files')
   })
 
+  describe('grant status hint', () => {
+    const withGrantStatus = (status: number) => [...rawConfigurations, { key: 'AUTH_GRANT_DENIED_STATUS', value: status, configType: 'Long', needsRestartForActivation: false, comment: '' }]
+
+    it('explains that a missing grant is answered with 401, and what the module does about it', async () => {
+      mockListConfigurations.mockResolvedValue(withGrantStatus(401))
+      const component = await mountSettings()
+
+      const hint = component.find('[data-test="grant-hint"]')
+      expect(hint.text()).toContain('A missing grant is answered with 401')
+      expect(hint.text()).toContain('AUTH_GRANT_DENIED_STATUS to 403')
+    })
+
+    it('says nothing for 403, without the setting, or with hideGrantHint', async () => {
+      mockListConfigurations.mockResolvedValue(withGrantStatus(403))
+      expect((await mountSettings()).find('[data-test="grant-hint"]').exists()).toBe(false)
+
+      mockListConfigurations.mockResolvedValue(rawConfigurations)
+      expect((await mountSettings()).find('[data-test="grant-hint"]').exists()).toBe(false)
+
+      mockListConfigurations.mockResolvedValue(withGrantStatus(401))
+      expect((await mountSettings({ hideGrantHint: true })).find('[data-test="grant-hint"]').exists()).toBe(false)
+    })
+  })
+
   it('shows plain values for switches even when the key mentions a token', async () => {
     const component = await mountSettings()
 

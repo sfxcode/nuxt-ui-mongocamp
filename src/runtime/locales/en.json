@@ -350,7 +350,9 @@
       "columnType": "Type",
       "columnRestart": "Restart",
       "restartNeeded": "needs restart",
-      "empty": "No settings found"
+      "empty": "No settings found",
+      "grantHintTitle": "A missing grant is answered with 401",
+      "grantHint": "AUTH_GRANT_DENIED_STATUS is 401 (the default). The generated client treats a 401 as a dead session, so this module turns that answer into a 403 itself and nobody is logged out. Set AUTH_GRANT_DENIED_STATUS to 403 on the server to make 403 the server's own answer."
     },
     "databases": {
       "heading": "Databases",

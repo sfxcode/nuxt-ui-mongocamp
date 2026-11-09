@@ -3,7 +3,7 @@ import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { useI18n, useMongocampRoles, useMongocampSystem } from '#imports'
 import type { ServerCluster, ServerPlugins } from '../composables/useMongocampSystem'
-import { MASKED_VALUE } from '../utils/configRows'
+import { grantStatusHint, MASKED_VALUE } from '../utils/configRows'
 import type { ConfigRow } from '../utils/configRows'
 
 const PAGE_SIZE = 10
@@ -23,6 +23,8 @@ const props = withDefaults(defineProps<{
   hideSearch?: boolean
   /** Hide the note that secret values are masked. */
   hideMaskedNote?: boolean
+  /** Hide the hint that the server answers a missing grant with 401 (`AUTH_GRANT_DENIED_STATUS`). */
+  hideGrantHint?: boolean
 }>(), {
   hideHeading: false,
   hideRefresh: false,
@@ -31,6 +33,7 @@ const props = withDefaults(defineProps<{
   hideConfigurations: false,
   hideSearch: false,
   hideMaskedNote: false,
+  hideGrantHint: false,
 })
 
 const { t } = useI18n()
@@ -45,6 +48,7 @@ const cluster = ref<ServerCluster | null>(null)
 const loading = ref(false)
 const loadError = ref<unknown>(null)
 const search = ref('')
+const showGrantHint = computed(() => grantStatusHint(configurations.value))
 const page = ref(1)
 
 async function fetchSettings() {
@@ -252,6 +256,16 @@ fetchSettings()
           {{ t('nuxtUiMongocamp.settings.maskedNote') }}
         </p>
       </div>
+
+      <UAlert
+        v-if="!hideConfigurations && !hideGrantHint && showGrantHint"
+        color="info"
+        variant="subtle"
+        icon="i-lucide-info"
+        :title="t('nuxtUiMongocamp.settings.grantHintTitle')"
+        :description="t('nuxtUiMongocamp.settings.grantHint')"
+        data-test="grant-hint"
+      />
 
       <UTable
         v-if="!hideConfigurations"

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildConfigRows, isSecretConfigKey, MASKED_VALUE } from '../src/runtime/utils/configRows'
+import { buildConfigRows, grantStatusHint, isSecretConfigKey, MASKED_VALUE } from '../src/runtime/utils/configRows'
 
 // shaped like the real MongoCamp 1.5.10 payload (checked live): Option[String] values arrive as `{ value }`,
 // the generated client type claims `value: number`, lists are arrays, unset lists are null
@@ -110,5 +110,20 @@ describe('buildConfigRows', () => {
     const rows = buildConfigRows([{ key: 'B', value: 1 }, { key: 'A', value: 2 }])
 
     expect(rows.map(r => r.key)).toEqual(['A', 'B'])
+  })
+})
+
+describe('grantStatusHint', () => {
+  const row = (value: unknown) => buildConfigRows([{ key: 'AUTH_GRANT_DENIED_STATUS', value, configType: 'Long', needsRestartForActivation: false, comment: '' }])
+
+  it('is true while the server answers a missing grant with 401', () => {
+    expect(grantStatusHint(row(401))).toBe(true)
+  })
+
+  it('is false for 403, for another setting, for an older server without the key and for nothing', () => {
+    expect(grantStatusHint(row(403))).toBe(false)
+    expect(grantStatusHint(buildConfigRows([{ key: 'SERVER_PORT', value: 401, configType: 'Long', needsRestartForActivation: false, comment: '' }]))).toBe(false)
+    expect(grantStatusHint([])).toBe(false)
+    expect(grantStatusHint(row(null))).toBe(false)
   })
 })

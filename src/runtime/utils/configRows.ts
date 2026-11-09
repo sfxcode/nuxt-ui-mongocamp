@@ -83,3 +83,14 @@ export function buildConfigRows(configurations: unknown): ConfigRow[] {
   }
   return rows.sort((a, b) => a.key.localeCompare(b.key))
 }
+
+export const GRANT_STATUS_KEY = 'AUTH_GRANT_DENIED_STATUS'
+
+/**
+ * Whether the server still answers a missing grant with `401` (its default; `403` is planned for the next major version): a
+ * generated client clears the session on a 401, which this module works around by turning that 401 into a 403 itself. `false`
+ * when the setting is `403`, absent (an older server) or unreadable.
+ */
+export function grantStatusHint(rows: readonly ConfigRow[]): boolean {
+  return rows.find(row => row.key === GRANT_STATUS_KEY)?.value.trim() === '401'
+}

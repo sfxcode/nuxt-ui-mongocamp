@@ -23,6 +23,7 @@ All optional; every one defaults to `false` (show everything).
 | `hideConfigurations` | the whole configuration section (search, masked note, table, pager) — the configuration request is skipped too |
 | `hideSearch` | the configuration search box |
 | `hideMaskedNote` | the "secret values are masked" note |
+| `hideGrantHint` | `boolean` | Hide the info alert shown while the server's `AUTH_GRANT_DENIED_STATUS` is `401` (its default): a missing grant is then answered with 401, which the generated client treats as a dead session — the module turns it into a 403 itself, and `403` on the server makes it the server's own answer. No alert for `403` or on a server without the setting. |
 
 ```vue
 <MongocampSettings hide-heading hide-plugins hide-search />
