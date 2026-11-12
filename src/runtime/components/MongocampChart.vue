@@ -4,10 +4,6 @@ import { useI18n } from '#imports'
 import { shortenLabel } from '../utils/chartData'
 
 // Nuxt UI's `UChart` with what every chart of this module needs, so no chart repeats it:
-// - series colours with a fallback: Nuxt UI's stylesheet defines `--ui-chart-1…6`, an app that gets the theme another way
-//   (the UnoCSS preset, see canstand/unocss-nuxt-ui#2) does not, and the bars would have no colour;
-// - `ui.base = 'opacity-100'`: UChart hides itself with the Tailwind-v4-only variant `in-data-measured:opacity-100`, which the
-//   UnoCSS preset never generates, so it would stay invisible (`opacity-100` wins over `opacity-0` when the classes merge);
 // - the accessible text: an `aria-label`, an `aria-description` and a collapsible table with the same numbers, so nothing
 //   depends on seeing the chart. Colour never carries meaning alone: bars are labelled on the axis, donut slices in the table.
 const props = withDefaults(defineProps<{
@@ -61,10 +57,8 @@ onMounted(() => {
 })
 onBeforeUnmount(() => observer?.disconnect())
 
-// six series colours; the first is the theme's primary colour
-const FALLBACK_COLORS = ['var(--ui-primary, #16a34a)', '#3b82f6', '#8b5cf6', '#f59e0b', '#f43f5e', '#06b6d4']
-const COLORS = FALLBACK_COLORS.map((fallback, i) => `var(--ui-chart-${i + 1}, ${fallback})`)
-const CHART_UI = { base: 'opacity-100' }
+// six series colours from the theme (`--ui-chart-1…6`, the first is the primary colour; unocss-nuxt-ui >= 1.3.0 defines them)
+const COLORS = Array.from({ length: 6 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
 // Axis labels are cut to 18 characters: a long name makes the axis drop its neighbours' labels (a bar without a name).
 // Two names that would collapse into one keep their full text — a category must stay unique. The data table below uses the real names.
@@ -102,7 +96,6 @@ const show = (value: unknown): string => (typeof value === 'number' && props.for
         :index="index"
         :categories="categories"
         :colors="COLORS"
-        :ui="CHART_UI"
         :aria-label="chartLabel"
         :aria-description="chartDescription"
         :format="format"

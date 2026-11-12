@@ -41,6 +41,5 @@ The chart library (`@tanstack/charts`, about 52 KB gzipped) is its own chunk, fe
 
 ## What it does for you
 
-- **Series colours with a fallback.** Nuxt UI's stylesheet defines `--ui-chart-1…6`; an app whose theme comes another way (the UnoCSS preset) has none and the bars would have no colour. Six colours are always passed, each `var(--ui-chart-N, <fallback>)`, the first falling back to `--ui-primary`.
-- **Visible without Tailwind v4.** `UChart` hides itself with the variant `in-data-measured:opacity-100`, which the UnoCSS preset never generates, so the chart stayed invisible. `ui.base = 'opacity-100'` wins when the classes merge (the short fade-in is lost). Tracked upstream in [canstand/unocss-nuxt-ui#2](https://github.com/canstand/unocss-nuxt-ui/issues/2); once fixed there, both workarounds can go.
+- **Theme colours.** Six series colours are passed as `var(--ui-chart-N)`, the first being the primary colour. With the UnoCSS preset this needs `unocss-nuxt-ui` 1.3.0 or newer, which defines `--ui-chart-*` and the `in-data-*` variant `UChart` uses to fade in (earlier versions left the chart invisible and uncoloured, canstand/unocss-nuxt-ui#2).
 - **Accessible.** The `aria-label`, the `aria-description` and a collapsible table with the same numbers; colour never carries meaning alone.

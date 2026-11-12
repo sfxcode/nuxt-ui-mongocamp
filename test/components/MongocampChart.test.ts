@@ -23,15 +23,13 @@ describe('MongocampChart', () => {
     expect(chartProps(c)).toMatchObject({ type: 'bar', ariaLabel: 'Sizes', ariaDescription: '2 bars; the biggest is a.', height: 260, points: false })
   })
 
-  it('always has six series colours, each with a fallback for apps whose theme has none (the UnoCSS preset)', async () => {
+  it('always has six series colours taken from the theme', async () => {
     const { colors } = chartProps(await mountChart())
-    expect(colors).toHaveLength(6)
-    expect(colors[0]).toBe('var(--ui-chart-1, var(--ui-primary, #16a34a))')
-    for (const [i, color] of colors.entries()) expect(color).toMatch(new RegExp(`^var\\(--ui-chart-${i + 1}, .+\\)$`))
+    expect(colors).toEqual([1, 2, 3, 4, 5, 6].map(i => `var(--ui-chart-${i})`))
   })
 
-  it('is visible without the Tailwind-only in-data-measured variant', async () => {
-    expect(chartProps(await mountChart()).ui).toEqual({ base: 'opacity-100' })
+  it('needs no visibility override (unocss-nuxt-ui >= 1.3.0 generates the in-data-* variant)', async () => {
+    expect(chartProps(await mountChart()).ui).toBeUndefined()
   })
 
   it('offers the same numbers as a table, formatted like the chart', async () => {
