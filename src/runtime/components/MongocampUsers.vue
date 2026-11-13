@@ -17,6 +17,13 @@ interface RoleItem {
 defineProps<{
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
+}>()
+
+const emit = defineEmits<{
+  // a write went through and the list was reloaded
+  changed: []
 }>()
 
 const { t } = useI18n()
@@ -126,6 +133,7 @@ async function handleBulkDelete() {
   try {
     const { failed } = await runBulkDelete(ids, id => deleteUser(id))
     await fetchUsers()
+    emit('changed')
     if (failed.length > 0) {
       // keep only what is still there selected, and say why
       rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
@@ -175,6 +183,7 @@ async function handleAddUser() {
     isAddModalOpen.value = false
     newUser.value = { userId: '', password: '', roles: [] }
     await fetchUsers()
+    emit('changed')
   }
   catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.users.errorAddUser')
@@ -200,6 +209,7 @@ async function handleEditUser() {
     }
     isEditModalOpen.value = false
     await fetchUsers()
+    emit('changed')
   }
   catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.users.errorEditUser')
@@ -223,6 +233,7 @@ async function handleDeleteUser() {
     await deleteUser(userToDelete.value)
     isDeleteModalOpen.value = false
     await fetchUsers()
+    emit('changed')
   }
   catch (e: unknown) {
     deleteError.value = (await describeServerError(e, 'nuxtUiMongocamp.users.errorDelete')).message
@@ -257,6 +268,7 @@ async function handleRegenerateKey() {
     newApiKey.value = await regenerateUserApiKey(keyUser.value)
     // the list rows carry the old key; reload so nothing stale stays in memory
     await fetchUsers()
+    emit('changed')
   }
   catch (e: unknown) {
     keyError.value = (await describeServerError(e)).message
@@ -417,6 +429,8 @@ if (!blocked.value) {
   fetchUsers()
   fetchRoles()
 }
+
+defineExpose({ refresh: fetchUsers })
 </script>
 
 <template>
@@ -446,7 +460,10 @@ if (!blocked.value) {
           class="flex-1 max-w-xs"
           @input="onFilterInput"
         />
-        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.common.refresh')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -456,6 +473,7 @@ if (!blocked.value) {
             @click="fetchUsers"
           />
         </UTooltip>
+        <slot name="toolbar" />
         <UButton
           icon="i-lucide-plus"
           :label="t('nuxtUiMongocamp.users.addUser')"

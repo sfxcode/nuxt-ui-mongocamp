@@ -13,6 +13,13 @@ const props = defineProps<{
   grantsPath?: string
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
+}>()
+
+const emit = defineEmits<{
+  // a write went through and the list was reloaded
+  changed: []
 }>()
 
 const { t } = useI18n()
@@ -90,6 +97,7 @@ async function handleBulkDelete() {
   try {
     const { failed } = await runBulkDelete(names, name => deleteRole(name))
     await fetchRoles()
+    emit('changed')
     if (failed.length > 0) {
       // keep only what is still there selected, and say why
       rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
@@ -131,6 +139,7 @@ async function handleAddRole() {
     isAddModalOpen.value = false
     newRole.value = { name: '', isAdmin: false }
     await fetchRoles()
+    emit('changed')
   }
   catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.roles.errorAddRole')
@@ -149,6 +158,7 @@ async function handleEditRole() {
     await updateRole(editRole.value.roleName, editRole.value.isAdmin, editGrants.value)
     isEditModalOpen.value = false
     await fetchRoles()
+    emit('changed')
   }
   catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.roles.errorEditRole')
@@ -171,6 +181,7 @@ async function handleCloneRole() {
     await addRole(cloneRole.value.name, cloneRole.value.isAdmin, cloneGrants.value)
     isCloneModalOpen.value = false
     await fetchRoles()
+    emit('changed')
   }
   catch (e: unknown) {
     cloneError.value = (await describeServerError(e, 'nuxtUiMongocamp.roles.errorClone')).message
@@ -197,6 +208,7 @@ async function handleDeleteRole() {
     await deleteRole(roleToDelete.value)
     isDeleteModalOpen.value = false
     await fetchRoles()
+    emit('changed')
   }
   catch (e: unknown) {
     deleteError.value = (await describeServerError(e, 'nuxtUiMongocamp.roles.errorDelete')).message
@@ -322,6 +334,8 @@ const columns = computed<TableColumn<Role>[]>(() => [
 ])
 
 if (!blocked.value) fetchRoles()
+
+defineExpose({ refresh: fetchRoles })
 </script>
 
 <template>
@@ -351,7 +365,10 @@ if (!blocked.value) fetchRoles()
           class="flex-1 max-w-xs"
           @input="onFilterInput"
         />
-        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.common.refresh')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -361,6 +378,7 @@ if (!blocked.value) fetchRoles()
             @click="fetchRoles"
           />
         </UTooltip>
+        <slot name="toolbar" />
         <UButton
           icon="i-lucide-plus"
           :label="t('nuxtUiMongocamp.roles.addRole')"

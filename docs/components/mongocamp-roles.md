@@ -16,6 +16,33 @@ Full CRUD table for managing roles — create, edit (admin flag, collection gran
 |---|---|---|---|
 | `grantsPath` | `string` | `/secured/admin/roles` | Base path the key icon links to: `<grantsPath>/<roleName>` |
 | `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
+| `hideRefresh` | `boolean` | `false` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+- **`changed` event** — emitted after a role was added, edited, cloned or deleted, once the component has reloaded. Never on a failed or cancelled action, never on a plain reload.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampRoles ref="list" hide-heading hide-refresh @changed="reloadOtherLists">
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampRoles>
+</template>
+```
 
 ## Behavior
 

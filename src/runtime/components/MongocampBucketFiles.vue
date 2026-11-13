@@ -14,6 +14,13 @@ import { parseMetadataJson } from '../utils/filePreview'
 
 const props = defineProps<{
   bucketName: string
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
+}>()
+
+const emit = defineEmits<{
+  // a write went through and the list was reloaded
+  changed: []
 }>()
 
 const { t } = useI18n()
@@ -84,7 +91,10 @@ async function handleFiles(list: File[]) {
       },
     })
     uploadResult.value = { uploaded: result.uploaded.length, failed: result.failed }
-    if (result.uploaded.length) await fetchFiles()
+    if (result.uploaded.length) {
+      await fetchFiles()
+      emit('changed')
+    }
   }
   finally {
     uploadProgress.value = null
@@ -234,6 +244,7 @@ async function handleRenameSave() {
     if (success) {
       isRenameModalOpen.value = false
       await fetchFiles()
+      emit('changed')
     }
   }
   finally {
@@ -255,6 +266,7 @@ async function handleDeleteFile() {
   if (success) {
     isDeleteModalOpen.value = false
     await fetchFiles()
+    emit('changed')
   }
 }
 
@@ -391,6 +403,8 @@ async function init() {
 }
 
 watch(() => props.bucketName, init, { immediate: true })
+
+defineExpose({ refresh: init })
 </script>
 
 <template>
@@ -439,7 +453,10 @@ watch(() => props.bucketName, init, { immediate: true })
           class="hidden"
           @change="handleFileSelected"
         >
-        <UTooltip :text="t('nuxtUiMongocamp.bucketFiles.reloadTooltip')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.bucketFiles.reloadTooltip')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -449,6 +466,7 @@ watch(() => props.bucketName, init, { immediate: true })
             @click="init"
           />
         </UTooltip>
+        <slot name="toolbar" />
         <UPagination
           v-model:page="pagination.pageIndex"
           :total="total"

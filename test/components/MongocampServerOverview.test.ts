@@ -55,6 +55,28 @@ const text = (c: Mounted, test: string) => c.find(`[data-test="${test}"]`).text(
 const ranked = (c: Mounted) => c.findAll('[data-test="ranked-list"] li').map(li => li.find('a').text())
 
 describe('MongocampServerOverview', () => {
+  it('hideRefresh removes the reload button; the toolbar slot and refresh() are there for the page', async () => {
+    const exposed: { current: { refresh?: () => unknown } | null } = { current: null }
+    const mountWith = (hideRefresh: boolean) => mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(
+        MongocampServerOverview,
+        { hideRefresh, ref: (el: unknown) => { exposed.current = el as typeof exposed.current } },
+        { toolbar: () => h('button', { 'data-test': 'page-button' }, 'Mine') },
+      )),
+    }), { route: '/' })
+
+    const shown = await mountWith(false)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    const reloadButtons = shown.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists()).length
+    expect(reloadButtons).toBeGreaterThan(0)
+
+    const hidden = await mountWith(true)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    expect(hidden.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists())).toHaveLength(reloadButtons - 1)
+    expect(hidden.find('[data-test="page-button"]').exists()).toBe(true)
+    expect(typeof exposed.current?.refresh).toBe('function')
+  })
+
   it('hideHeading removes the heading and keeps the toolbar', async () => {
     const shown = await mountOverview()
     expect(shown.find('h2').exists()).toBe(true)

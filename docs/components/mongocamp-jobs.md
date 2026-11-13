@@ -16,8 +16,35 @@ Full CRUD table for scheduled background jobs — list, register, edit, execute-
 |---|---|---|---|
 | `autoRefresh` | `number` | `0` | Reloads every N seconds (at least 1; `0` = off, the default) through [`useMongocampAutoRefresh`](/composables/use-mongocamp-auto-refresh): pauses while the tab is hidden, never overlaps a running load and slows down after failures. A failed background reload keeps what is on screen and shows the error banner. |
 | `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
+| `hideRefresh` | `boolean` | `false` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. |
 
 The job list is global, not scoped to a collection or role.
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+- **`changed` event** — emitted after a job was added, edited or deleted, once the component has reloaded. Never on a failed or cancelled action, never on a plain reload.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampJobs ref="list" hide-heading hide-refresh @changed="reloadOtherLists">
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampJobs>
+</template>
+```
 
 ## Columns
 

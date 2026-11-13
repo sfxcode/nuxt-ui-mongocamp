@@ -51,6 +51,28 @@ beforeEach(() => {
 })
 
 describe('MongocampJobs', () => {
+  it('hideRefresh removes the reload button; the toolbar slot and refresh() are there for the page', async () => {
+    const exposed: { current: { refresh?: () => unknown } | null } = { current: null }
+    const mountWith = (hideRefresh: boolean) => mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(
+        MongocampJobs,
+        { hideRefresh, ref: (el: unknown) => { exposed.current = el as typeof exposed.current } },
+        { toolbar: () => h('button', { 'data-test': 'page-button' }, 'Mine') },
+      )),
+    }), { route: '/' })
+
+    const shown = await mountWith(false)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    const reloadButtons = shown.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists()).length
+    expect(reloadButtons).toBeGreaterThan(0)
+
+    const hidden = await mountWith(true)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    expect(hidden.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists())).toHaveLength(reloadButtons - 1)
+    expect(hidden.find('[data-test="page-button"]').exists()).toBe(true)
+    expect(typeof exposed.current?.refresh).toBe('function')
+  })
+
   it('hideHeading removes the heading and keeps the toolbar', async () => {
     const shown = await mountSuspended(withUApp(MongocampJobs), { route: '/' })
     expect(shown.find('h2').exists()).toBe(true)
@@ -79,8 +101,8 @@ describe('MongocampJobs', () => {
 
     const confirm = () => modal().findAll('button').find(b => b.text() === 'Delete')
 
-    it('deletes the job by group and name after confirming, then reloads', async () => {
-      await openDelete()
+    it('deletes the job by group and name after confirming, reloads, then emits changed', async () => {
+      const component = await openDelete()
       expect(mockDeleteJob).not.toHaveBeenCalled()
 
       await confirm()?.trigger('click')
@@ -88,6 +110,7 @@ describe('MongocampJobs', () => {
 
       expect(mockDeleteJob).toHaveBeenCalledWith('Maintenance', 'CleanUp')
       expect(mockListJobs).toHaveBeenCalledTimes(2)
+      expect(component.findComponent(MongocampJobs).emitted('changed')).toHaveLength(1)
     })
 
     it('keeps the dialog open and says why when the server refuses, instead of failing silently', async () => {

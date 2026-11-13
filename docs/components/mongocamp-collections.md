@@ -23,6 +23,33 @@ Table of all collections in the default database, with document count, storage s
 | `bucketFilesPath` | `string` | `/secured/admin/buckets` | Base path for the bucket file-browser link (bucket rows only): `<bucketFilesPath>/<bucketName>` — points at a consumer-owned page rendering [`MongocampBucketFiles`](/components/mongocamp-bucket-files) |
 | `canManage` | `boolean` | `true` | Set to `false` to hide **Clear** and **Drop** for ordinary collections even for an admin |
 | `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
+| `hideRefresh` | `boolean` | `false` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+- **`changed` event** — see [Events](#events).
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampCollections ref="list" hide-heading hide-refresh @changed="reloadOtherLists">
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampCollections>
+</template>
+```
 
 ## Events
 

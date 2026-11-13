@@ -12,10 +12,17 @@ const props = withDefaults(defineProps<{
   autoRefresh?: number
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>(), {
   autoRefresh: 0,
   hideHeading: false,
 })
+
+const emit = defineEmits<{
+  // a write went through and the list was reloaded
+  changed: []
+}>()
 
 const { t } = useI18n()
 const { describeServerError } = useMongocampError()
@@ -174,6 +181,7 @@ async function handleAddJob() {
     await registerJob({ ...newJob.value, className })
     isAddModalOpen.value = false
     await fetchJobs()
+    emit('changed')
   }
   catch (e) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.jobs.errorAdd')
@@ -201,6 +209,7 @@ async function handleEditJob() {
     await updateJob(editJobOriginal.value.group, editJobOriginal.value.name, jobConfig)
     isEditModalOpen.value = false
     await fetchJobs()
+    emit('changed')
   }
   catch (e) {
     errorMessage.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.jobs.errorEdit')
@@ -226,6 +235,7 @@ async function handleDeleteJob() {
     await deleteJob(jobToDelete.value.group, jobToDelete.value.name)
     isDeleteModalOpen.value = false
     await fetchJobs()
+    emit('changed')
   }
   catch (e: unknown) {
     deleteError.value = (await describeServerError(e, 'nuxtUiMongocamp.jobs.errorDelete')).message
@@ -338,6 +348,8 @@ const columns = computed<TableColumn<JobInformation>[]>(() => [
 ])
 
 if (!blocked.value) fetchJobs()
+
+defineExpose({ refresh: fetchJobs })
 </script>
 
 <template>
@@ -359,7 +371,10 @@ if (!blocked.value) fetchJobs()
         {{ t('nuxtUiMongocamp.jobs.heading') }}
       </h2>
       <div class="ml-auto flex items-center gap-2">
-        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.common.refresh')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -369,6 +384,7 @@ if (!blocked.value) fetchJobs()
             @click="fetchJobs"
           />
         </UTooltip>
+        <slot name="toolbar" />
         <UButton
           icon="i-lucide-plus"
           :label="t('nuxtUiMongocamp.jobs.addJob')"

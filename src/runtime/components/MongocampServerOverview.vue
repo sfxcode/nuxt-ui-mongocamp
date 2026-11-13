@@ -29,6 +29,8 @@ const props = withDefaults(defineProps<{
   hideCharts?: boolean
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>(), {
   hideHeading: false,
   infoPath: '/secured/admin/collections',
@@ -118,6 +120,8 @@ const failedNames = computed(() => {
 })
 const seriesSize = computed(() => [{ key: 'value', label: t('nuxtUiMongocamp.serverOverview.seriesSize') }])
 const seriesMetric = computed(() => [{ key: 'value', label: metricLabel.value }])
+
+defineExpose({ refresh: () => load() })
 </script>
 
 <template>
@@ -144,15 +148,18 @@ const seriesMetric = computed(() => [{ key: 'value', label: metricLabel.value }]
           {{ t('nuxtUiMongocamp.serverOverview.subtitle') }}
         </p>
       </div>
-      <UButton
-        class="ml-auto"
-        icon="i-lucide-refresh-cw"
-        color="neutral"
-        variant="ghost"
-        :loading="loading"
-        :aria-label="t('nuxtUiMongocamp.common.refresh')"
-        @click="load()"
-      />
+      <div class="ml-auto flex items-center gap-1">
+        <UButton
+          v-if="!hideRefresh"
+          icon="i-lucide-refresh-cw"
+          color="neutral"
+          variant="ghost"
+          :loading="loading"
+          :aria-label="t('nuxtUiMongocamp.common.refresh')"
+          @click="load()"
+        />
+        <slot name="toolbar" />
+      </div>
     </div>
 
     <UAlert

@@ -80,6 +80,28 @@ beforeEach(() => {
 })
 
 describe('MongocampUsers', () => {
+  it('hideRefresh removes the reload button; the toolbar slot and refresh() are there for the page', async () => {
+    const exposed: { current: { refresh?: () => unknown } | null } = { current: null }
+    const mountWith = (hideRefresh: boolean) => mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(
+        MongocampUsers,
+        { hideRefresh, ref: (el: unknown) => { exposed.current = el as typeof exposed.current } },
+        { toolbar: () => h('button', { 'data-test': 'page-button' }, 'Mine') },
+      )),
+    }), { route: '/' })
+
+    const shown = await mountWith(false)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    const reloadButtons = shown.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists()).length
+    expect(reloadButtons).toBeGreaterThan(0)
+
+    const hidden = await mountWith(true)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    expect(hidden.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists())).toHaveLength(reloadButtons - 1)
+    expect(hidden.find('[data-test="page-button"]').exists()).toBe(true)
+    expect(typeof exposed.current?.refresh).toBe('function')
+  })
+
   it('hideHeading removes the heading and keeps the toolbar', async () => {
     const shown = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
     expect(shown.find('h2').exists()).toBe(true)
@@ -152,8 +174,8 @@ describe('MongocampUsers', () => {
 
     const confirm = () => modal().findAll('button').find(b => b.text() === 'Delete')
 
-    it('deletes after confirming, then reloads', async () => {
-      await openDelete()
+    it('deletes after confirming, reloads, then emits changed', async () => {
+      const component = await openDelete()
       expect(mockDeleteUser).not.toHaveBeenCalled()
 
       await confirm()?.trigger('click')
@@ -161,14 +183,17 @@ describe('MongocampUsers', () => {
 
       expect(mockDeleteUser).toHaveBeenCalledWith('bob@example.com')
       expect(mockListUsers).toHaveBeenCalledTimes(2)
+      expect(component.findComponent(MongocampUsers).emitted('changed')).toHaveLength(1)
     })
 
     it('keeps the dialog open and says why when the server refuses, instead of failing silently', async () => {
-      await openDelete()
+      const component = await openDelete()
       mockDeleteUser.mockRejectedValueOnce(fetchError)
 
       await confirm()?.trigger('click')
       await flushPromises()
+
+      expect(component.findComponent(MongocampUsers).emitted('changed')).toBeUndefined()
 
       expect(modal().text()).toContain('Delete User')
       expect(modal().text()).toContain('could not be reached')

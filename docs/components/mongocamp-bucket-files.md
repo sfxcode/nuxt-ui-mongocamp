@@ -24,6 +24,33 @@ Typically reached via [`MongocampCollections`](/components/mongocamp-collections
 | Prop | Type | Description |
 |---|---|---|
 | `bucketName` | `string` | The GridFS bucket to browse (no `.files`/`.chunks` suffix — the bare bucket name) |
+| `hideRefresh` | `boolean` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. Default `false`. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+- **`changed` event** — emitted after a file was uploaded, renamed or deleted, once the component has reloaded. Never on a failed or cancelled action, never on a plain reload.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampBucketFiles ref="list" :bucket-name="name" hide-refresh @changed="reloadOtherLists">
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampBucketFiles>
+</template>
+```
 
 ## Columns
 

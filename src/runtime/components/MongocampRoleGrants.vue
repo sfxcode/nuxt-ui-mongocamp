@@ -10,6 +10,13 @@ const props = defineProps<{
   roleName: string
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
+}>()
+
+const emit = defineEmits<{
+  // a write went through and the list was reloaded
+  changed: []
 }>()
 
 const { t } = useI18n()
@@ -121,6 +128,7 @@ async function saveGrants(next: Grant[]): Promise<boolean> {
     saving.value = false
   }
   await fetchRole()
+  emit('changed')
   return true
 }
 
@@ -270,6 +278,8 @@ if (!blocked.value) {
   fetchRole()
   fetchCollections()
 }
+
+defineExpose({ refresh: fetchRole })
 </script>
 
 <template>
@@ -291,7 +301,10 @@ if (!blocked.value) {
         {{ t('nuxtUiMongocamp.roleGrants.heading', { roleName }) }}
       </h2>
       <div class="ml-auto flex gap-2">
-        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.common.refresh')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -301,6 +314,7 @@ if (!blocked.value) {
             @click="fetchRole"
           />
         </UTooltip>
+        <slot name="toolbar" />
         <UTooltip :text="t('nuxtUiMongocamp.roleGrants.addAllReadTooltip')">
           <UButton
             icon="i-lucide-eye"

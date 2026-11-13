@@ -38,6 +38,17 @@ beforeEach(() => {
 })
 
 describe('MongocampDashboard', () => {
+  it('hideRefresh removes the reload button; refresh() stays exposed', async () => {
+    const exposed: { current: { refresh?: () => unknown } | null } = { current: null }
+    const component = await mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(MongocampDashboard, { hideRefresh: true, ref: (el: unknown) => { exposed.current = el as typeof exposed.current } })),
+    }), { route: '/' })
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    expect(component.find('button[aria-label="Refresh"]').exists()).toBe(false)
+    expect(typeof exposed.current?.refresh).toBe('function')
+  })
+
   it('hideHeading removes the heading and keeps the toolbar', async () => {
     const shown = await mountSuspended(withUApp(MongocampDashboard), { route: '/' })
     expect(shown.find('h1').exists()).toBe(true)

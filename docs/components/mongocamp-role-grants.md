@@ -16,6 +16,33 @@ Per-role collection grant management — lists collection grants for a named rol
 |---|---|---|---|
 | `roleName` | `string` | yes | Name of the role whose grants are being managed |
 | `hideHeading` | `boolean` | no | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
+| `hideRefresh` | `boolean` | no | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+- **`changed` event** — emitted after a grant change was saved, once the component has reloaded. Never on a failed or cancelled action, never on a plain reload.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampRoleGrants ref="list" :role-name="name" hide-heading hide-refresh @changed="reloadOtherLists">
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampRoleGrants>
+</template>
+```
 
 ## Columns
 

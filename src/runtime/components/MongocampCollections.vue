@@ -16,6 +16,8 @@ const props = withDefaults(defineProps<{
   canManage?: boolean
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>(), {
   canManage: true,
   hideHeading: false,
@@ -308,6 +310,8 @@ function openRename(name: string) {
 }
 
 fetchCollections()
+
+defineExpose({ refresh: fetchCollections })
 </script>
 
 <template>
@@ -327,7 +331,10 @@ fetchCollections()
           size="sm"
           class="flex-1 max-w-xs"
         />
-        <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.common.refresh')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -337,6 +344,7 @@ fetchCollections()
             @click="fetchCollections"
           />
         </UTooltip>
+        <slot name="toolbar" />
       </div>
     </div>
 

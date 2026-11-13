@@ -45,12 +45,20 @@ const props = withDefaults(defineProps<{
   persistState?: boolean
   // extra key part, for two tables over the same collection that should not share their state
   stateKey?: string
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>(), {
+  hideRefresh: false,
   infoPath: '/secured/admin/collections',
   aggregatePath: '',
   persistState: true,
   stateKey: '',
 })
+
+const emit = defineEmits<{
+  // a write went through and the list was reloaded
+  changed: []
+}>()
 
 const { t } = useI18n()
 const { documentApi } = useMongocampClientApi()
@@ -86,7 +94,10 @@ async function handleFileSelected(event: Event) {
   input.value = ''
   if (!file) return
   const success = await uploadFile(props.collectionName, file)
-  if (success) await fetchDocuments()
+  if (success) {
+    await fetchDocuments()
+    emit('changed')
+  }
 }
 
 const UButton = resolveComponent('UButton')
@@ -245,6 +256,7 @@ async function handleSave() {
         if (result.matchedCount === 0) throw new Error(t('nuxtUiMongocamp.collectionData.documentGone'))
         isEditModalOpen.value = false
         await fetchDocuments()
+        emit('changed')
         return
       }
       const body: Record<string, unknown> = { ...payload }
@@ -254,6 +266,7 @@ async function handleSave() {
     }
     isEditModalOpen.value = false
     await fetchDocuments()
+    emit('changed')
   }
   catch (e) {
     editError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionData.errorSave')
@@ -267,6 +280,7 @@ async function handleDelete() {
     await documentApi._delete({ collectionName: props.collectionName, documentId: docToDelete.value })
     isDeleteModalOpen.value = false
     await fetchDocuments()
+    emit('changed')
   }
   catch (e) {
     deleteError.value = e instanceof Error ? e.message : t('nuxtUiMongocamp.collectionData.errorDelete')
@@ -693,6 +707,7 @@ async function handleBulkDelete() {
       const deleted = await deleteByFilter(props.collectionName, filter)
       clearMatching()
       await fetchDocuments()
+      emit('changed')
       toast.add({ title: t('nuxtUiMongocamp.bulk.matchingDeleted', { deleted, total: count }), color: 'success' })
       return
     }
@@ -712,6 +727,7 @@ async function handleBulkDelete() {
       },
     )
     await fetchDocuments()
+    emit('changed')
     if (failed.length > 0) {
       // keep only what is still there selected, and say why
       rowSelection.value = Object.fromEntries(failed.map(f => [f.item, true]))
@@ -757,6 +773,7 @@ async function handleBulkEdit(edit: { field: string, value: unknown, bson?: Bson
       const { modified } = await updateByFilter(props.collectionName, filter, document)
       clearMatching()
       await fetchDocuments()
+      emit('changed')
       toast.add({ title: t('nuxtUiMongocamp.bulk.matchingUpdated', { updated: modified, total: count }), color: 'success' })
       return
     }
@@ -769,6 +786,7 @@ async function handleBulkEdit(edit: { field: string, value: unknown, bson?: Bson
       }),
     )
     await fetchDocuments()
+    emit('changed')
     if (failed.length > 0) {
       // keep selected only what is still on screen and was not updated, and say why
       const failedIds = failed.flatMap(f => f.ids)
@@ -966,6 +984,12 @@ async function loadDistinctSuggestions(field: string): Promise<string[]> {
   return suggestions
 }
 
+// The import wizard wrote documents: reload and tell the page
+async function onImported() {
+  await init()
+  emit('changed')
+}
+
 async function init() {
   distinctCache = new Map()
   isInitializing.value = true
@@ -1002,6 +1026,8 @@ watch(columnVisibility, (visibility) => {
 }, { deep: true })
 
 watch(() => props.collectionName, init, { immediate: true })
+
+defineExpose({ refresh: init })
 </script>
 
 <template>
@@ -1056,9 +1082,12 @@ watch(() => props.collectionName, init, { immediate: true })
         <MongocampImport
           v-if="writable && !isBucketCollection(collectionName)"
           :collection-name="collectionName"
-          @imported="init"
+          @imported="onImported"
         />
-        <UTooltip :text="t('nuxtUiMongocamp.collectionData.reloadTooltip')">
+        <UTooltip
+          v-if="!hideRefresh"
+          :text="t('nuxtUiMongocamp.collectionData.reloadTooltip')"
+        >
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -1068,6 +1097,7 @@ watch(() => props.collectionName, init, { immediate: true })
             @click="init"
           />
         </UTooltip>
+        <slot name="toolbar" />
         <div
           class="inline-flex rounded-md border border-default p-0.5"
           role="group"

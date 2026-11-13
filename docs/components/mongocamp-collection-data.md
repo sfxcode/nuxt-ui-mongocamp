@@ -19,6 +19,33 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 | `infoPath` | `string` | Base path of the page rendering [`MongocampCollectionInfos`](/components/mongocamp-collection-infos); the "index created" toast links to `<infoPath>/<collectionName>`. Default `/secured/admin/collections`. |
 | `persistState` | `boolean` | Remember page size, sort and hidden columns per collection in `localStorage` (see [`useMongocampPersistedState`](/composables/use-mongocamp-persisted-state)). Default `true`; the quick search and filters are **not** remembered. |
 | `stateKey` | `string` | Extra key part so two tables over the same collection keep separate state. |
+| `hideRefresh` | `boolean` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. Default `false`. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+- **`changed` event** — emitted after documents were inserted, saved, deleted, bulk-edited or imported, or a file was uploaded, once the component has reloaded. Never on a failed or cancelled action, never on a plain reload.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampCollectionData ref="list" :collection-name="name" hide-refresh @changed="reloadOtherLists">
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampCollectionData>
+</template>
+```
 
 ## Columns
 

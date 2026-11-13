@@ -18,6 +18,32 @@ Who may do what: **users × collections**, worked out from the roles' grants the
 | `maxCollections` | `number` | `60` | At most this many collections (columns) are drawn; the note says how many were cut |
 | `maxUsers` | `number` | `200` | The same for users (rows) |
 | `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. The subtitle goes with it. |
+| `hideRefresh` | `boolean` | `false` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampPermissionMatrix ref="list" hide-heading hide-refresh>
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampPermissionMatrix>
+</template>
+```
 
 ## Reading the matrix
 

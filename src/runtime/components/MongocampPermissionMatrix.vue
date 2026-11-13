@@ -20,6 +20,8 @@ const props = withDefaults(defineProps<{
   maxUsers?: number
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>(), {
   hideHeading: false,
   grantsPath: '/secured/admin/roles',
@@ -118,6 +120,8 @@ function exportCsv() {
   const { keys, rows } = matrixToCsvRows({ ...shown.value, users: users.value, collections: collections.value })
   downloadTextFile(`permissions-${new Date().toISOString().slice(0, 10)}.csv`, rowsToCsv(rows, keys), 'text/csv')
 }
+
+defineExpose({ refresh: load })
 </script>
 
 <template>
@@ -156,6 +160,7 @@ function exportCsv() {
           @click="exportCsv"
         />
         <UButton
+          v-if="!hideRefresh"
           icon="i-lucide-refresh-cw"
           color="neutral"
           variant="ghost"
@@ -163,6 +168,7 @@ function exportCsv() {
           :aria-label="t('nuxtUiMongocamp.permissionMatrix.refresh')"
           @click="load"
         />
+        <slot name="toolbar" />
       </div>
     </div>
 

@@ -27,6 +27,32 @@ What an admin wants to see first: how much the server holds and where. Stat card
 | `autoRefresh` | `number` | `0` | Reload every N seconds (at least 1; `0` = off) through [`useMongocampAutoRefresh`](/composables/use-mongocamp-auto-refresh): pauses in a hidden tab, backs off after failures; a failed background reload keeps the numbers on screen |
 | `hideCharts` | `boolean` | `false` | The cards and lists only, no charts |
 | `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. The subtitle goes with it. |
+| `hideRefresh` | `boolean` | `false` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. |
+
+## In a page with its own header
+
+The component can hand its toolbar to the page around it:
+
+- **`refresh()`** is exposed — call it through a template ref from your own reload button, and set `hideRefresh` to drop the built-in one.
+- **`toolbar` slot** — your own buttons, placed beside the built-in ones.
+
+```vue
+<script setup lang="ts">
+const list = useTemplateRef<{ refresh: () => void }>('list')
+</script>
+
+<template>
+  <header>
+    <h1>My title</h1>
+    <UButton icon="i-lucide-refresh-cw" @click="list?.refresh()" />
+  </header>
+  <MongocampServerOverview ref="list" hide-heading hide-refresh>
+    <template #toolbar>
+      <UButton>Mine</UButton>
+    </template>
+  </MongocampServerOverview>
+</template>
+```
 
 ## What it shows
 

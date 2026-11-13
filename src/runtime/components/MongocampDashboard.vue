@@ -14,6 +14,8 @@ const props = withDefaults(defineProps<{
   autoRefresh?: number
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>(), {
   autoRefresh: 0,
   hideHeading: false,
@@ -104,7 +106,7 @@ if (!blocked.value) refresh()
         </p>
       </div>
       <UTooltip
-        v-if="!blocked"
+        v-if="!blocked && !hideRefresh"
         class="ml-auto"
         :text="t('nuxtUiMongocamp.common.refresh')"
       >

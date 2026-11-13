@@ -118,6 +118,8 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 
 `hideHeading` (boolean, default `false`) hides a component's own heading — and its subtitle where it has one — while its toolbar stays: `MongocampUsers`, `Roles`, `RoleGrants`, `PermissionMatrix`, `Jobs`, `Databases`, `Collections`, `ServerOverview`, `Dashboard`, `Settings`, `ServerInfo`. For pages that already show a title (see `.work/mongocamp-server-management`'s `AppPage`, if that unmanaged folder exists locally).
 
+**Page-owned toolbar (plan 21):** `MongocampUsers`, `Roles`, `RoleGrants`, `Jobs`, `Databases`, `Collections`, `ServerOverview`, `PermissionMatrix`, `CollectionData` and `BucketFiles` expose `refresh()`, take `hideRefresh` (also `Dashboard`) and have a `toolbar` slot right after the reload button. `changed` is emitted after an accepted write **and** the component's own reload — by Users, Roles, RoleGrants, Jobs, CollectionData (incl. import and file upload), BucketFiles, Collections; never on a failed or cancelled action or a plain reload. A new write path in one of these must emit it too.
+
 UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.
 
 ### Composables — `src/runtime/composables/`

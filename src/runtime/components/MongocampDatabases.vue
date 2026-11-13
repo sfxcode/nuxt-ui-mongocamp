@@ -17,6 +17,8 @@ interface DatabaseRow {
 defineProps<{
   // hide the component's own heading, e.g. when the page around it already shows a title
   hideHeading?: boolean
+  // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
+  hideRefresh?: boolean
 }>()
 
 const { t } = useI18n()
@@ -100,6 +102,8 @@ const columns = computed<TableColumn<DatabaseRow>[]>(() => [
 ])
 
 if (!blocked.value) fetchDatabases()
+
+defineExpose({ refresh: fetchDatabases })
 </script>
 
 <template>
@@ -121,6 +125,7 @@ if (!blocked.value) fetchDatabases()
         {{ t('nuxtUiMongocamp.databases.heading') }}
       </h2>
       <UTooltip
+        v-if="!hideRefresh"
         class="ml-auto"
         :text="t('nuxtUiMongocamp.common.refresh')"
       >
@@ -133,6 +138,7 @@ if (!blocked.value) fetchDatabases()
           @click="fetchDatabases"
         />
       </UTooltip>
+      <slot name="toolbar" />
     </div>
 
     <MongocampErrorAlert
