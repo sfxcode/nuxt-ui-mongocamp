@@ -26,7 +26,8 @@ All composables are auto-imported.
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
 | [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) | Converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to |
 | [`useMongocampSession`](/composables/use-mongocamp-session) | Is the login still usable? Token-expiry check (no request), optional server check (`verify`), `invalidateSession` |
-| [`useMongocampRoles`](/composables/use-mongocamp-roles) | Role/route-pattern access checks (`isAdmin`, `isManager`, `isAllowedPathForRoute`); powers the global nav guard |
+| [`useMongocampRoles`](/composables/use-mongocamp-roles) | Role/route-pattern access checks (`isAdmin`, `isManager`, `canSeeAdmin`, `canSeeManagement`, `isAllowedPathForRoute`); powers the global nav guard |
+| [`useMongocampProxyMode`](/composables/use-mongocamp-proxy-mode) | `true` in server proxy mode (no login, the api key decides) |
 | [`useMongocampPermissions`](/composables/use-mongocamp-permissions) | May the user read / write / administer a collection? From the grants in the session profile; UI-level gating that fails open |
 | [`useMongocampFetchAll`](/composables/use-mongocamp-fetch-all) | Reads every page of a document or file list with a cap, progress and abort (`fetchAllDocuments`, `fetchAllFiles`) |
 | [`useMongocampExportAll`](/composables/use-mongocamp-export-all) | Exports a whole collection or filter as JSON, NDJSON or CSV (cap, progress, abort; exact 64-bit integers) |

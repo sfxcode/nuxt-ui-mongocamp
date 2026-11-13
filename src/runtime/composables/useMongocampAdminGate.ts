@@ -1,6 +1,6 @@
-import { useRuntimeConfig } from '#app'
 import { useI18n, useMongocampStorage } from '#imports'
 import { computed } from 'vue'
+import { useMongocampProxyMode } from './useMongocampProxyMode'
 
 /**
  * For components that only make sense for an administrator (they call admin endpoints on mount): `blocked` is true when the
@@ -11,10 +11,9 @@ import { computed } from 'vue'
  * blocked.
  */
 export function useMongocampAdminGate() {
-  const config = useRuntimeConfig()
   const state = useMongocampStorage()
   const { t } = useI18n()
-  const isProxyMode: boolean = config.public.nuxtUiMongocampOptions?.useServerProxy ?? false
+  const isProxyMode = useMongocampProxyMode()
 
   const blocked = computed(() => !isProxyMode && state.value?.profile?.isAdmin === false)
   const message = computed(() => t('nuxtUiMongocamp.common.adminOnly'))

@@ -2,6 +2,7 @@ import { useRuntimeConfig } from '#app'
 import { minimatch } from 'minimatch'
 import { useMongocampAuth, useMongocampStorage } from '#imports'
 import { computed } from 'vue'
+import { useMongocampProxyMode } from './useMongocampProxyMode'
 
 export function useMongocampRoles() {
   const config = useRuntimeConfig()
@@ -23,6 +24,13 @@ export function useMongocampRoles() {
     return allowedRoles.some(role => roles.value.includes(role))
   }
   const isManager = computed(() => isAdmin.value || matchesAnyRole(managerRoles))
+
+  // For navigation and other "show it or not" decisions. In server proxy mode there is no profile, so `isAdmin` /
+  // `isManager` are false there — but the api key decides, exactly as `useMongocampAdminGate` and
+  // `useMongocampPermissions` assume. The route checks below deliberately keep using `isAdmin` / `isManager`.
+  const isProxyMode = useMongocampProxyMode()
+  const canSeeAdmin = computed(() => isProxyMode || isAdmin.value)
+  const canSeeManagement = computed(() => isProxyMode || isManager.value)
 
   function matchesAnyPattern(route: string, patterns: string[]): boolean {
     // A trailing-slash variant is also tried so a `/**` pattern covers the directory's own
@@ -49,5 +57,5 @@ export function useMongocampRoles() {
     return true
   }
 
-  return { isLoggedIn, isAdmin, isManager, notAllowedPath, logoutRedirectPath, logoutPath, loginPath, isAllowedPathForRoute }
+  return { isLoggedIn, isAdmin, isManager, isProxyMode, canSeeAdmin, canSeeManagement, notAllowedPath, logoutRedirectPath, logoutPath, loginPath, isAllowedPathForRoute }
 }

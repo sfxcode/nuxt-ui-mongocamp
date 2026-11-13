@@ -20,6 +20,10 @@
     ".": {
       "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs"
+    },
+    "./utils": {
+      "types": "./dist/runtime/publicUtils.d.ts",
+      "import": "./dist/runtime/publicUtils.js"
     }
   },
   "main": "./dist/module.mjs",
@@ -27,6 +31,9 @@
     "*": {
       ".": [
         "./dist/types.d.mts"
+      ],
+      "utils": [
+        "./dist/runtime/publicUtils.d.ts"
       ]
     }
   },

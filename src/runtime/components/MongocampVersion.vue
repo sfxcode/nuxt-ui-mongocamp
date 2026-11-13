@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useI18n, useMongocampStorage, useMongocampSystem } from '#imports'
-import { useNuxtApp, useRuntimeConfig } from '#app'
+import { useI18n, useMongocampProxyMode, useMongocampStorage, useMongocampSystem } from '#imports'
+import { useNuxtApp } from '#app'
 
 const props = withDefaults(defineProps<{
   /** Hide the MongoDB version badge (it is also hidden while the server cannot tell, e.g. before login or below server 1.9.0). */
@@ -12,7 +12,7 @@ const { t } = useI18n()
 const { $mongocampVersion } = useNuxtApp()
 const { getServerInfo } = useMongocampSystem()
 const state = useMongocampStorage()
-const isProxyMode: boolean = useRuntimeConfig().public.nuxtUiMongocampOptions?.useServerProxy ?? false
+const isProxyMode = useMongocampProxyMode()
 
 // `$mongocampVersion` is provided by the module's runtime plugin as a Ref
 const version = computed(() => $mongocampVersion.value)

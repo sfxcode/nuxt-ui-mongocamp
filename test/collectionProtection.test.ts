@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isProtectedCollection, isBucketMemberCollection } from '../src/runtime/utils/collectionProtection'
+import { bucketNameOf, isProtectedCollection, isBucketMemberCollection } from '../src/runtime/utils/collectionProtection'
 
 describe('isProtectedCollection', () => {
   it.each(['mc_users', 'mc_roles', 'mc_'])('protects the MongoCamp system collection %s', (name) => {
@@ -21,5 +21,15 @@ describe('isBucketMemberCollection', () => {
     expect(isBucketMemberCollection('fs.chunks')).toBe(true)
     expect(isBucketMemberCollection('fs')).toBe(false)
     expect(isBucketMemberCollection('mc_users')).toBe(false)
+  })
+})
+
+describe('bucketNameOf', () => {
+  it.each([['fs.files', 'fs'], ['fs.chunks', 'fs'], ['a.b.files', 'a.b']])('%s belongs to bucket %s', (name, bucket) => {
+    expect(bucketNameOf(name)).toBe(bucket)
+  })
+
+  it.each(['files', 'my_files', 'files.backup', 'mc_users'])('%s is not part of a bucket', (name) => {
+    expect(bucketNameOf(name)).toBeNull()
   })
 })

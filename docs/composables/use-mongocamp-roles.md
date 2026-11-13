@@ -7,6 +7,9 @@ const {
   isLoggedIn,           // ComputedRef<boolean> — from useMongocampAuth()
   isAdmin,              // ComputedRef<boolean>
   isManager,            // ComputedRef<boolean>
+  isProxyMode,          // boolean — server proxy mode (no login, no profile)
+  canSeeAdmin,          // ComputedRef<boolean> — isAdmin, or proxy mode
+  canSeeManagement,     // ComputedRef<boolean> — isManager, or proxy mode
   notAllowedPath,       // string — where the plugin's middleware redirects on disallow
   logoutRedirectPath,   // string — where the plugin's middleware redirects after /logout
   isAllowedPathForRoute, // (route: string) => boolean
@@ -38,6 +41,20 @@ Route parts are glob patterns matched with [`minimatch`](https://www.npmjs.com/p
 
 - `isAdmin` reflects `useMongocampStorage().value.profile.isAdmin` directly (`false` if the profile is missing).
 - `isManager` is `true` when the logged-in profile's `roles` includes at least one entry from `managerRoles`, **or** when `isAdmin` is `true` — an admin always counts as a manager, even with no matching role.
+
+## `canSeeAdmin` / `canSeeManagement`
+
+Use these — not `isAdmin` / `isManager` — to decide what a navigation, a dashboard or a toolbar **shows**:
+
+```vue
+<UButton v-if="canSeeAdmin" to="/admin/users" label="Users" />
+```
+
+In [server proxy mode](/guide/server-proxy-auth) nobody logs in, so there is no profile and `isAdmin` / `isManager` are always `false` — yet the admin pages work, because the server-side api key decides. `canSeeAdmin` and `canSeeManagement` are `true` there, the same assumption [`useMongocampAdminGate`](/composables/use-mongocamp-admin-gate) and [`useMongocampPermissions`](/composables/use-mongocamp-permissions) make. In session mode they equal `isAdmin` / `isManager`.
+
+They are display hints only. `isAllowedPathForRoute` and the global middleware keep using `isAdmin` / `isManager`: proxy mode does not unlock a protected route (the two options are not meant to be combined, and the module warns at build time if they are).
+
+`isProxyMode` is the same value [`useMongocampProxyMode()`](/composables/use-mongocamp-proxy-mode) returns.
 
 ## `isAllowedPathForRoute`
 

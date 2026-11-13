@@ -246,3 +246,42 @@ describe('isAllowedPathForRoute', () => {
     expect(isAllowedPathForRoute('/secured/admin/goodbye')).toBe(true)
   })
 })
+
+describe('canSeeAdmin / canSeeManagement', () => {
+  it('follow isAdmin / isManager in session mode', () => {
+    mockOptions.managerRoles = ['manager']
+    expect(useMongocampRoles().canSeeAdmin.value).toBe(false)
+    expect(useMongocampRoles().canSeeManagement.value).toBe(false)
+
+    mockState.value = { profile: { isAdmin: false, roles: ['manager'] } }
+    expect(useMongocampRoles().canSeeAdmin.value).toBe(false)
+    expect(useMongocampRoles().canSeeManagement.value).toBe(true)
+
+    mockState.value = { profile: { isAdmin: true, roles: [] } }
+    expect(useMongocampRoles().canSeeAdmin.value).toBe(true)
+    expect(useMongocampRoles().canSeeManagement.value).toBe(true)
+  })
+
+  it('are true in server proxy mode, where there is no profile — while isAdmin / isManager stay false', () => {
+    mockOptions.useServerProxy = true
+    const { isProxyMode, canSeeAdmin, canSeeManagement, isAdmin, isManager } = useMongocampRoles()
+
+    expect(isProxyMode).toBe(true)
+    expect(canSeeAdmin.value).toBe(true)
+    expect(canSeeManagement.value).toBe(true)
+    expect(isAdmin.value).toBe(false)
+    expect(isManager.value).toBe(false)
+  })
+
+  it('do not unlock a route in proxy mode — the route check keeps using the profile', () => {
+    mockOptions.useServerProxy = true
+    mockOptions.adminRouteParts = ['/admin/**']
+    mockIsLoggedIn.value = true
+
+    expect(useMongocampRoles().isAllowedPathForRoute('/admin/users')).toBe(false)
+  })
+
+  it('isProxyMode is false by default', () => {
+    expect(useMongocampRoles().isProxyMode).toBe(false)
+  })
+})

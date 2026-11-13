@@ -1,7 +1,7 @@
-import { useRuntimeConfig } from '#app'
 import { useMongocampClientApi, useMongocampStorage, useState } from '#imports'
 import { permissionFromGrants } from '../utils/grantMatching'
 import type { GrantPermission } from '../utils/grantMatching'
+import { useMongocampProxyMode } from './useMongocampProxyMode'
 
 interface ServerPermissions {
   read: boolean
@@ -28,10 +28,9 @@ const REQUEST_TIMEOUT_MS = 15_000
  * `load()` changes nothing. Administrators are never asked: everything is allowed.
  */
 export function useMongocampPermissions() {
-  const config = useRuntimeConfig()
   const state = useMongocampStorage()
   const cache = useState<PermissionCache>('mongocamp-permissions', () => ({ user: '', byName: {} }))
-  const isProxyMode: boolean = config.public.nuxtUiMongocampOptions?.useServerProxy ?? false
+  const isProxyMode = useMongocampProxyMode()
 
   const currentUser = () => state.value?.profile?.user ?? ''
   const key = (name: string) => name.trim().toLowerCase()
