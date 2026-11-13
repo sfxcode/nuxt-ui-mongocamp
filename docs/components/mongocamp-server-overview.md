@@ -26,6 +26,7 @@ What an admin wants to see first: how much the server holds and where. Stat card
 | `maxCollections` | `number` | `200` | Read at most this many collections |
 | `autoRefresh` | `number` | `0` | Reload every N seconds (at least 1; `0` = off) through [`useMongocampAutoRefresh`](/composables/use-mongocamp-auto-refresh): pauses in a hidden tab, backs off after failures; a failed background reload keeps the numbers on screen |
 | `hideCharts` | `boolean` | `false` | The cards and lists only, no charts |
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. The subtitle goes with it. |
 
 ## What it shows
 

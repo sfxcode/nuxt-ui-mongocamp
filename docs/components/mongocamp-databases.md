@@ -12,7 +12,9 @@ Read-only table of all databases on the running MongoCamp server: size, collecti
 
 ## Props
 
-None.
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
 
 ## Columns
 

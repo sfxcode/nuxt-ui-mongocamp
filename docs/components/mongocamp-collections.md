@@ -22,6 +22,7 @@ Table of all collections in the default database, with document count, storage s
 | `dataPath` | `string` | `/secured/admin/collections` | Base path for the data-page link: `<dataPath>/<name>/data` |
 | `bucketFilesPath` | `string` | `/secured/admin/buckets` | Base path for the bucket file-browser link (bucket rows only): `<bucketFilesPath>/<bucketName>` — points at a consumer-owned page rendering [`MongocampBucketFiles`](/components/mongocamp-bucket-files) |
 | `canManage` | `boolean` | `true` | Set to `false` to hide **Clear** and **Drop** for ordinary collections even for an admin |
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
 
 ## Events
 

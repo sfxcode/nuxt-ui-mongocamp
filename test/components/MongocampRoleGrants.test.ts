@@ -48,6 +48,15 @@ beforeEach(() => {
 })
 
 describe('MongocampRoleGrants', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountSuspended(withUApp(MongocampRoleGrants), { route: '/', props: { roleName: 'support' } })
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountSuspended(withUApp(MongocampRoleGrants), { route: '/', props: { hideHeading: true, roleName: 'support' } })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('fetches the named role on mount and renders its grants', async () => {
     mockListRoles.mockResolvedValueOnce([
       { name: 'other', isAdmin: false, collectionGrants: [] },

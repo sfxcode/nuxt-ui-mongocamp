@@ -38,6 +38,15 @@ beforeEach(() => {
 })
 
 describe('MongocampDashboard', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountSuspended(withUApp(MongocampDashboard), { route: '/' })
+    expect(shown.find('h1').exists()).toBe(true)
+
+    const hidden = await mountSuspended(withUApp(MongocampDashboard), { route: '/', props: { hideHeading: true } })
+    expect(hidden.find('h1').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('counts collections, users and roles from the admin composable and links each card', async () => {
     const component = await mountSuspended(withUApp(MongocampDashboard), { route: '/' })
     await flushPromises()

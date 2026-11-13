@@ -55,6 +55,15 @@ const text = (c: Mounted, test: string) => c.find(`[data-test="${test}"]`).text(
 const ranked = (c: Mounted) => c.findAll('[data-test="ranked-list"] li').map(li => li.find('a').text())
 
 describe('MongocampServerOverview', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountOverview()
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountOverview({ hideHeading: true })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('shows the totals of the collections and the databases, leaving out MongoCamp\'s own collections', async () => {
     const c = await mountOverview()
     expect(text(c, 'stat-databases')).toBe('2')

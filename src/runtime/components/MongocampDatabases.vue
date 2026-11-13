@@ -14,6 +14,11 @@ interface DatabaseRow {
   collectionCount: number
 }
 
+defineProps<{
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
+}>()
+
 const { t } = useI18n()
 const { getDatabaseInfos, listCollectionsByDatabase } = useMongocampSystem()
 
@@ -109,10 +114,16 @@ if (!blocked.value) fetchDatabases()
     class="flex flex-col gap-4"
   >
     <div class="flex items-center justify-between gap-4">
-      <h2 class="text-xl font-semibold">
+      <h2
+        v-if="!hideHeading"
+        class="text-xl font-semibold"
+      >
         {{ t('nuxtUiMongocamp.databases.heading') }}
       </h2>
-      <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
+      <UTooltip
+        class="ml-auto"
+        :text="t('nuxtUiMongocamp.common.refresh')"
+      >
         <UButton
           icon="i-lucide-refresh-cw"
           color="neutral"

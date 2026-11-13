@@ -15,6 +15,7 @@ Full CRUD table for scheduled background jobs — list, register, edit, execute-
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `autoRefresh` | `number` | `0` | Reloads every N seconds (at least 1; `0` = off, the default) through [`useMongocampAutoRefresh`](/composables/use-mongocamp-auto-refresh): pauses while the tab is hidden, never overlaps a running load and slows down after failures. A failed background reload keeps what is on screen and shows the error banner. |
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
 
 The job list is global, not scoped to a collection or role.
 

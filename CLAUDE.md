@@ -116,6 +116,8 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 | `MongocampErrorAlert` | Failed-load banner; used by every list component. A readable 401 → "session has expired" + **Log in again** (clears the session via `invalidateSession()` *before* `navigateTo(loginPath)`; `loginPath` prop defaults to the module option); a network failure → the plain network message + Retry; `filterRejected` (set by `MongocampCollectionData` on a `400` for a filtered request) → "filter could not be applied" + **Clear filters** |
 | `MongocampEmptyState` | Icon + message for `UTable`'s `#empty` slot |
 
+`hideHeading` (boolean, default `false`) hides a component's own heading — and its subtitle where it has one — while its toolbar stays: `MongocampUsers`, `Roles`, `RoleGrants`, `PermissionMatrix`, `Jobs`, `Databases`, `Collections`, `ServerOverview`, `Dashboard`, `Settings`, `ServerInfo`. For pages that already show a title (see `.work/mongocamp-server-management`'s `AppPage`, if that unmanaged folder exists locally).
+
 UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.
 
 ### Composables — `src/runtime/composables/`

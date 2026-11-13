@@ -15,6 +15,7 @@ Full CRUD table for managing roles — create, edit (admin flag, collection gran
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `grantsPath` | `string` | `/secured/admin/roles` | Base path the key icon links to: `<grantsPath>/<roleName>` |
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
 
 ## Behavior
 

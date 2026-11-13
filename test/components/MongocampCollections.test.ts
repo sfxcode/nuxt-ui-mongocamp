@@ -87,6 +87,15 @@ async function typeName(value: string) {
 }
 
 describe('MongocampCollections — chart', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountCollections()
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountCollections({ hideHeading: true })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('charts storage per collection from the loaded numbers, mc_* and bucket members left out, with no extra request', async () => {
     mockListCollections.mockResolvedValue(['orders', 'users', 'mc_users'])
     mockGetInfo.mockResolvedValue([{ name: 'orders', count: 7, storageSize: 2048, nindexes: 1 }, { name: 'users', count: 3, storageSize: 8192, nindexes: 1 }, { name: 'mc_users', count: 1, storageSize: 1, nindexes: 1 }])

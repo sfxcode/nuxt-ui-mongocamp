@@ -27,7 +27,10 @@ const props = withDefaults(defineProps<{
   autoRefresh?: number
   // the list and the cards only, no charts
   hideCharts?: boolean
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
 }>(), {
+  hideHeading: false,
   infoPath: '/secured/admin/collections',
   dataPath: '/secured/admin/collections',
   jobsPath: '/secured/admin/jobs',
@@ -130,7 +133,10 @@ const seriesMetric = computed(() => [{ key: 'value', label: metricLabel.value }]
     data-test="server-overview"
   >
     <div class="flex flex-wrap items-start justify-between gap-2">
-      <div class="flex flex-col gap-1">
+      <div
+        v-if="!hideHeading"
+        class="flex flex-col gap-1"
+      >
         <h2 class="text-xl font-semibold">
           {{ t('nuxtUiMongocamp.serverOverview.heading') }}
         </h2>
@@ -139,6 +145,7 @@ const seriesMetric = computed(() => [{ key: 'value', label: metricLabel.value }]
         </p>
       </div>
       <UButton
+        class="ml-auto"
         icon="i-lucide-refresh-cw"
         color="neutral"
         variant="ghost"

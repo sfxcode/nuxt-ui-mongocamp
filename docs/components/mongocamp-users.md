@@ -12,7 +12,9 @@ Full CRUD table for managing users — create, edit (roles via a transfer listbo
 
 ## Props
 
-None.
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
 
 ## Behavior
 

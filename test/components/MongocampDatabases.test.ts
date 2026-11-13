@@ -28,6 +28,16 @@ async function mountDatabases() {
 }
 
 describe('MongocampDatabases — chart', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    mockInfos.mockResolvedValue([{ name: 'only', sizeOnDisk: 2048, empty: false }])
+    const shown = await mountDatabases()
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountSuspended(defineComponent({ setup: () => () => h(UApp, () => h(MongocampDatabases, { hideHeading: true })) }), { route: '/' })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('charts the size per database, biggest first, in a collapsed section', async () => {
     mockInfos.mockResolvedValue([{ name: 'small', sizeOnDisk: 2048, empty: false }, { name: 'big', sizeOnDisk: 1048576, empty: false }])
     const c = await mountDatabases()

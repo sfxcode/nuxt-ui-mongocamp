@@ -18,7 +18,10 @@ const props = withDefaults(defineProps<{
   // at most this many collections (columns) and users (rows) are drawn; the filter narrows them
   maxCollections?: number
   maxUsers?: number
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
 }>(), {
+  hideHeading: false,
   grantsPath: '/secured/admin/roles',
   maxCollections: 60,
   maxUsers: 200,
@@ -123,7 +126,10 @@ function exportCsv() {
     data-test="permission-matrix"
   >
     <div class="flex flex-wrap items-start justify-between gap-2">
-      <div class="flex flex-col gap-1">
+      <div
+        v-if="!hideHeading"
+        class="flex flex-col gap-1"
+      >
         <h2 class="text-xl font-semibold">
           {{ t('nuxtUiMongocamp.permissionMatrix.heading') }}
         </h2>
@@ -131,7 +137,7 @@ function exportCsv() {
           {{ t('nuxtUiMongocamp.permissionMatrix.subtitle') }}
         </p>
       </div>
-      <div class="flex items-center gap-1">
+      <div class="ml-auto flex items-center gap-1">
         <UButton
           icon="i-lucide-arrow-left-right"
           color="neutral"

@@ -14,8 +14,11 @@ const props = withDefaults(defineProps<{
   bucketFilesPath?: string
   // set to false to hide clear/drop for ordinary collections even for an admin
   canManage?: boolean
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
 }>(), {
   canManage: true,
+  hideHeading: false,
 })
 
 const emit = defineEmits<{
@@ -310,7 +313,10 @@ fetchCollections()
 <template>
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-4">
-      <h2 class="text-xl font-semibold">
+      <h2
+        v-if="!hideHeading"
+        class="text-xl font-semibold"
+      >
         {{ t('nuxtUiMongocamp.collections.heading') }}
       </h2>
       <div class="flex flex-1 items-center gap-2">

@@ -12,8 +12,11 @@ const props = withDefaults(defineProps<{
   rolesPath?: string
   // reload the counts every N seconds (at least 1; 0 = off). Pauses while the tab is hidden and slows down after failures.
   autoRefresh?: number
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
 }>(), {
   autoRefresh: 0,
+  hideHeading: false,
   collectionsPath: '/secured/admin/collections',
   usersPath: '/secured/admin/users',
   rolesPath: '/secured/admin/roles',
@@ -83,7 +86,10 @@ if (!blocked.value) refresh()
 <template>
   <div class="flex flex-col gap-8 py-8">
     <div class="flex items-start justify-between">
-      <div class="flex flex-col gap-1">
+      <div
+        v-if="!hideHeading"
+        class="flex flex-col gap-1"
+      >
         <h1 class="text-3xl font-bold">
           {{ t('nuxtUiMongocamp.dashboard.heading') }}
         </h1>
@@ -99,6 +105,7 @@ if (!blocked.value) refresh()
       </div>
       <UTooltip
         v-if="!blocked"
+        class="ml-auto"
         :text="t('nuxtUiMongocamp.common.refresh')"
       >
         <UButton

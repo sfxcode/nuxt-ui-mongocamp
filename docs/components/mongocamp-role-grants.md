@@ -15,6 +15,7 @@ Per-role collection grant management — lists collection grants for a named rol
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `roleName` | `string` | yes | Name of the role whose grants are being managed |
+| `hideHeading` | `boolean` | no | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. |
 
 ## Columns
 

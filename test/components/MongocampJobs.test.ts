@@ -51,6 +51,15 @@ beforeEach(() => {
 })
 
 describe('MongocampJobs', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountSuspended(withUApp(MongocampJobs), { route: '/' })
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountSuspended(withUApp(MongocampJobs), { route: '/', props: { hideHeading: true } })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('lists the jobs from the composable', async () => {
     const component = await mountSuspended(withUApp(MongocampJobs), { route: '/' })
     await flushPromises()

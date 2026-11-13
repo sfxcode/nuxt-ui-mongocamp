@@ -17,6 +17,7 @@ Who may do what: **users × collections**, worked out from the roles' grants the
 | `grantsPath` | `string` | `/secured/admin/roles` | Base path of a role's grant page; the role chips link to `<grantsPath>/<role>` (as in [`MongocampRoles`](/components/mongocamp-roles)) |
 | `maxCollections` | `number` | `60` | At most this many collections (columns) are drawn; the note says how many were cut |
 | `maxUsers` | `number` | `200` | The same for users (rows) |
+| `hideHeading` | `boolean` | `false` | Hide the component's own heading, e.g. when the page around it already shows a title. The toolbar stays. The subtitle goes with it. |
 
 ## Reading the matrix
 

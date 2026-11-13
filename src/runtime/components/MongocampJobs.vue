@@ -10,8 +10,11 @@ import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 const props = withDefaults(defineProps<{
   // reload the list every N seconds (at least 1; 0 = off). Pauses while the tab is hidden and slows down after failures.
   autoRefresh?: number
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
 }>(), {
   autoRefresh: 0,
+  hideHeading: false,
 })
 
 const { t } = useI18n()
@@ -349,10 +352,13 @@ if (!blocked.value) fetchJobs()
     class="flex flex-col gap-4"
   >
     <div class="flex items-center justify-between gap-4">
-      <h2 class="text-xl font-semibold">
+      <h2
+        v-if="!hideHeading"
+        class="text-xl font-semibold"
+      >
         {{ t('nuxtUiMongocamp.jobs.heading') }}
       </h2>
-      <div class="flex items-center gap-2">
+      <div class="ml-auto flex items-center gap-2">
         <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
           <UButton
             icon="i-lucide-refresh-cw"

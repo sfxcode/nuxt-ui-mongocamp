@@ -52,6 +52,15 @@ const rows = (c: Mounted) => c.findAll('tbody tr').map(tr => tr.attributes('data
 const headers = (c: Mounted) => c.findAll('thead th').slice(1).map(th => th.text())
 
 describe('MongocampPermissionMatrix', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountMatrix()
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountMatrix({ hideHeading: true })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button .i-lucide\\:refresh-cw, button [class*="refresh-cw"]').exists()).toBe(true)
+  })
+
   it('shows a row per user and a column per collection, without MongoCamp\'s own collections', async () => {
     const c = await mountMatrix()
     expect(rows(c)).toEqual(['ann', 'bob', 'cy', 'dee', 'eve'])

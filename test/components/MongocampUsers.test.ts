@@ -80,6 +80,15 @@ beforeEach(() => {
 })
 
 describe('MongocampUsers', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountSuspended(withUApp(MongocampUsers), { route: '/', props: { hideHeading: true } })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('fetches users and roles on mount and renders users from the mocked composable', async () => {
     mockListUsers.mockResolvedValueOnce([
       { user: 'alice@example.com', isAdmin: true, roles: [] },

@@ -70,6 +70,15 @@ beforeEach(() => {
 })
 
 describe('MongocampRoles', () => {
+  it('hideHeading removes the heading and keeps the toolbar', async () => {
+    const shown = await mountSuspended(withUApp(MongocampRoles), { route: '/' })
+    expect(shown.find('h2').exists()).toBe(true)
+
+    const hidden = await mountSuspended(withUApp(MongocampRoles), { route: '/', props: { hideHeading: true } })
+    expect(hidden.find('h2').exists()).toBe(false)
+    expect(hidden.find('button[aria-label="Refresh"]').exists()).toBe(true)
+  })
+
   it('fetches roles on mount and renders them from the mocked composable, not a real network call', async () => {
     mockListRoles.mockResolvedValueOnce([
       { name: 'admin', isAdmin: true, collectionGrants: [] },

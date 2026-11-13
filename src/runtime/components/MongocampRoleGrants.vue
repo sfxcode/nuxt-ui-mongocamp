@@ -8,6 +8,8 @@ import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 const props = defineProps<{
   roleName: string
+  // hide the component's own heading, e.g. when the page around it already shows a title
+  hideHeading?: boolean
 }>()
 
 const { t } = useI18n()
@@ -282,10 +284,13 @@ if (!blocked.value) {
     class="flex flex-col gap-4"
   >
     <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold">
+      <h2
+        v-if="!hideHeading"
+        class="text-xl font-semibold"
+      >
         {{ t('nuxtUiMongocamp.roleGrants.heading', { roleName }) }}
       </h2>
-      <div class="flex gap-2">
+      <div class="ml-auto flex gap-2">
         <UTooltip :text="t('nuxtUiMongocamp.common.refresh')">
           <UButton
             icon="i-lucide-refresh-cw"
