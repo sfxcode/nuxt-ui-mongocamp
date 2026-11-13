@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { UApp } from '#components'
 import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
+import { useRuntimeConfig } from '#imports'
 import MongocampDashboard from '../../src/runtime/components/MongocampDashboard.vue'
 
 // these components are for administrators: the gate (useMongocampAdminGate) lets an admin profile through
@@ -78,6 +79,21 @@ describe('MongocampDashboard', () => {
     await flushPromises()
 
     expect(component.findAll('a').map(a => a.attributes('href'))).toEqual(['/c', '/u', '/r'])
+  })
+
+  it('falls back to the module option `paths`, and a prop still wins over it', async () => {
+    const options = useRuntimeConfig().public.nuxtUiMongocampOptions as { paths?: Record<string, string> }
+    const before = options.paths
+    options.paths = { collections: '/db/collections/', users: '/people' }
+    try {
+      const component = await mountSuspended(withUApp(MongocampDashboard), { route: '/', props: { usersPath: '/u' } })
+      await flushPromises()
+
+      expect(component.findAll('a').map(a => a.attributes('href'))).toEqual(['/db/collections', '/u', '/secured/admin/roles'])
+    }
+    finally {
+      options.paths = before
+    }
   })
 
   it('shows an error alert instead of zeros when loading fails, and retry recounts', async () => {

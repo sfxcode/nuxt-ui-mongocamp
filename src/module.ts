@@ -5,6 +5,7 @@ import { defu } from 'defu'
 import { consola } from 'consola'
 import { optionWarnings } from './optionWarnings'
 import { defaultFormkitConfigFile } from './formkitConfig'
+import type { MongocampPaths } from './runtime/utils/paths'
 
 // Computed at the top level (needs only `import.meta.url`, not a Nuxt/setup context) so the
 // same absolute paths can be used both in the static `moduleDependencies` config below (for
@@ -102,6 +103,15 @@ export interface ModuleOptions {
   serverProxyPath?: string
 
   /**
+   * Base routes of the app's MongoCamp pages. Every `*Path` prop of the components falls back to
+   * these (and `useMongocampPaths()` returns them), so an app with other routes sets them once
+   * instead of a prop per component. Keys: `collections`, `buckets`, `users`, `roles`, `jobs`,
+   * `settings`, `account`; a key left out keeps its default (`/secured/admin/<key>`,
+   * `/secured/account`).
+   */
+  paths?: Partial<MongocampPaths>
+
+  /**
    * Load the module's default styles for FormKit's label, help text, validation message and form
    * spacing (`runtime/assets/formkit.css`, built on Nuxt UI's `--ui-*` tokens). It is loaded before
    * the app's own stylesheets, so any rule of the app overrides it. Default `true`.
@@ -137,6 +147,7 @@ export default defineNuxtModule<ModuleOptions>({
     useServerProxy: false,
     serverProxyPath: '/api/_mongocamp',
     formkitStyles: true,
+    // `paths` has no entry here: `useMongocampPaths()` fills in the defaults at runtime (`utils/paths.ts`).
   },
 
   // A function, not an object: the FormKit entry depends on the app (does it bring its own config?).

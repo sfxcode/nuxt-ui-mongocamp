@@ -2,7 +2,7 @@
 import { computed, h, ref, resolveComponent, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampError, useMongocampPermissions, useMongocampRoles, useMongocampSchema, useToast } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampError, useMongocampPermissions, useMongocampRoles, useMongocampSchema, useToast, useMongocampPaths } from '#imports'
 import useMongocampCollection from '../composables/useMongocampCollection'
 import { useMongocampBucket } from '../composables/useMongocampBucket'
 import { useMongocampIndex } from '../composables/useMongocampIndex'
@@ -49,7 +49,6 @@ const props = withDefaults(defineProps<{
   hideRefresh?: boolean
 }>(), {
   hideRefresh: false,
-  infoPath: '/secured/admin/collections',
   aggregatePath: '',
   persistState: true,
   stateKey: '',
@@ -61,6 +60,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const paths = useMongocampPaths()
 const { documentApi } = useMongocampClientApi()
 const { pagination, total } = useMongocampCollection()
 const { state: persisted } = useMongocampPersistedState(
@@ -379,7 +379,7 @@ async function indexField(key: string, ascending: boolean) {
       title: t('nuxtUiMongocamp.collectionData.indexCreatedTitle'),
       description: t('nuxtUiMongocamp.collectionData.indexCreatedDescription', { name: created.name, collection: props.collectionName }),
       color: 'success',
-      actions: [{ label: t('nuxtUiMongocamp.collectionData.viewIndexes'), to: `${props.infoPath}/${props.collectionName}` }],
+      actions: [{ label: t('nuxtUiMongocamp.collectionData.viewIndexes'), to: `${props.infoPath ?? paths.collections}/${props.collectionName}` }],
     })
   }
   catch (e: unknown) {

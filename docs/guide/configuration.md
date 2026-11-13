@@ -22,6 +22,7 @@ export default defineNuxtConfig({
     useServerProxy: false,                          // default: false
     serverProxyPath: '/api/_mongocamp',             // default shown
     formkitStyles: true,                            // default: true
+    paths: { collections: '/db/collections' },      // default: '/secured/admin/...' — see below
   },
 })
 ```
@@ -42,6 +43,7 @@ export default defineNuxtConfig({
 | `useServerProxy` | `boolean` | `false` | Opt-in [server proxy auth mode](/guide/server-proxy-auth) — api-key-only, no browser login. Not meant to be combined with `useGlobalAuthMiddleware`'s route protection (a build-time warning fires if both are enabled). |
 | `serverProxyPath` | `string` | `'/api/_mongocamp'` | Local route prefix the proxy listens on when `useServerProxy` is `true`. |
 | `formkitStyles` | `boolean` | `true` | Load the module's default styles for FormKit's label, help text, validation message and form spacing. They are loaded before your own stylesheets, so any rule of yours overrides them. See [Forms](/guide/getting-started#forms-work-without-setup). |
+| `paths` | `object` | see [Paths](#paths) | Base routes of the app's MongoCamp pages. Every `*Path` prop of the components falls back to these. |
 
 **Nothing is protected by default.** With every route-part option left as `[]`, `useGlobalAuthMiddleware: false`, and no page under a protected path, an app that adds this module gets no access restrictions at all — you must explicitly opt in by enabling the middleware and listing your protected route patterns. This is a deliberate design: the module makes no assumption about your app's URL structure (earlier versions hardcoded `/admin`/`/secured` prefixes). See [`useMongocampRoles`](/composables/use-mongocamp-roles) for the composable backing all of this, and [Route Protection](/guide/route-protection) for a full walkthrough.
 
@@ -100,3 +102,46 @@ const { $mongocampVersion } = useNuxtApp()
 ```
 
 Use the [`<MongocampVersion />`](/components/mongocamp-version) component to render this directly.
+
+## Paths
+
+Several components link to other pages: the dashboard to the users list, the collections table to a collection's data page, the command palette to almost everything. They need to know where your app put those pages. Set the routes once with `paths`:
+
+```ts
+export default defineNuxtConfig({
+  nuxtUiMongocamp: {
+    paths: {
+      collections: '/db/collections',
+      buckets: '/db/buckets',
+      users: '/people',
+    },
+  },
+})
+```
+
+| Key | Default | Used for |
+|---|---|---|
+| `collections` | `/secured/admin/collections` | `<collections>/<name>` (overview) and `<collections>/<name>/data` |
+| `buckets` | `/secured/admin/buckets` | `<buckets>/<bucket>` (file browser) |
+| `users` | `/secured/admin/users` | The users list |
+| `roles` | `/secured/admin/roles` | The roles list, and `<roles>/<role>` (a role's grants) |
+| `jobs` | `/secured/admin/jobs` | The jobs list |
+| `settings` | `/secured/admin/settings` | The server settings page |
+| `account` | `/secured/account` | The signed-in user's account page |
+
+A key you leave out keeps its default, and so does an empty value. A trailing slash is removed.
+
+The `*Path` props are still there and win over `paths`, so one component can point somewhere else. Which prop falls back to which key:
+
+| Component | Props → key |
+|---|---|
+| `MongocampCollections` | `infoPath`, `dataPath` → `collections`; `bucketFilesPath` → `buckets` |
+| `MongocampCollectionData` | `infoPath` → `collections` |
+| `MongocampServerOverview` | `infoPath`, `dataPath` → `collections`; `jobsPath` → `jobs` |
+| `MongocampDashboard` | `collectionsPath` → `collections`; `usersPath` → `users`; `rolesPath` → `roles` |
+| `MongocampRoles`, `MongocampPermissionMatrix` | `grantsPath` → `roles` |
+| `MongocampCommandPalette` | `collectionPath` → `collections`; `bucketPath` → `buckets`; `usersPath` → `users`; `rolePath` → `roles`; `jobsPath` → `jobs`; `settingsPath` → `settings`; `accountPath` → `account` |
+
+`MongocampCollectionData`'s `aggregatePath` has no fallback: without it the table shows no link to an aggregation page.
+
+`paths` only tells the components where to link. It creates no pages and protects nothing — the route patterns of the [route protection](/guide/route-protection) are separate options. Your own navigation can read the same values with [`useMongocampPaths()`](/composables/use-mongocamp-paths).

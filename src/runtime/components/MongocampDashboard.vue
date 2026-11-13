@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useI18n } from '#imports'
+import { useI18n, useMongocampPaths } from '#imports'
 import { useNuxtApp } from '#app'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
@@ -19,12 +19,10 @@ const props = withDefaults(defineProps<{
 }>(), {
   autoRefresh: 0,
   hideHeading: false,
-  collectionsPath: '/secured/admin/collections',
-  usersPath: '/secured/admin/users',
-  rolesPath: '/secured/admin/roles',
 })
 
 const { t } = useI18n()
+const paths = useMongocampPaths()
 const { $mongocampVersion } = useNuxtApp()
 const { listUsers, listRoles, listCollections } = useMongocampAdmin()
 
@@ -74,9 +72,9 @@ onMounted(syncAutoRefresh)
 watch(() => props.autoRefresh, syncAutoRefresh)
 
 const boxes = computed(() => [
-  { key: 'collections', label: t('nuxtUiMongocamp.dashboard.collections'), icon: 'i-lucide-database', to: props.collectionsPath },
-  { key: 'users', label: t('nuxtUiMongocamp.dashboard.users'), icon: 'i-lucide-users', to: props.usersPath },
-  { key: 'roles', label: t('nuxtUiMongocamp.dashboard.roles'), icon: 'i-lucide-shield', to: props.rolesPath },
+  { key: 'collections', label: t('nuxtUiMongocamp.dashboard.collections'), icon: 'i-lucide-database', to: props.collectionsPath ?? paths.collections },
+  { key: 'users', label: t('nuxtUiMongocamp.dashboard.users'), icon: 'i-lucide-users', to: props.usersPath ?? paths.users },
+  { key: 'roles', label: t('nuxtUiMongocamp.dashboard.roles'), icon: 'i-lucide-shield', to: props.rolesPath ?? paths.roles },
 ] as const)
 
 // lets a parent that changes data behind the dashboard's back (e.g. a reset button in the slot) re-count

@@ -3,7 +3,7 @@ import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
 import type { Grant, Role } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n, useMongocampError } from '#imports'
+import { useI18n, useMongocampError, useMongocampPaths } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
@@ -23,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const paths = useMongocampPaths()
 const { listRoles, addRole, updateRole, deleteRole } = useMongocampAdmin()
 
 const roles = ref<Role[]>([])
@@ -303,7 +304,7 @@ const columns = computed<TableColumn<Role>[]>(() => [
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': t('nuxtUiMongocamp.roles.manageGrantsTooltip'),
-          'to': props.grantsPath ? `${props.grantsPath}/${row.original.name}` : `/secured/admin/roles/${row.original.name}`,
+          'to': `${props.grantsPath || paths.roles}/${row.original.name}`,
         })),
         withTooltip(t('nuxtUiMongocamp.roles.editRoleTooltip'), h(UButton, {
           'icon': 'i-lucide-pencil',

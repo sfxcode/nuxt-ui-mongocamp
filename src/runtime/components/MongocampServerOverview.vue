@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useI18n } from '#imports'
+import { useI18n, useMongocampPaths } from '#imports'
 import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
 import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 import { useMongocampServerOverview } from '../composables/useMongocampServerOverview'
@@ -33,9 +33,6 @@ const props = withDefaults(defineProps<{
   hideRefresh?: boolean
 }>(), {
   hideHeading: false,
-  infoPath: '/secured/admin/collections',
-  dataPath: '/secured/admin/collections',
-  jobsPath: '/secured/admin/jobs',
   topN: 10,
   maxCollections: 200,
   autoRefresh: 0,
@@ -43,6 +40,7 @@ const props = withDefaults(defineProps<{
 })
 
 const { t, locale } = useI18n()
+const paths = useMongocampPaths()
 const { loadOverview } = useMongocampServerOverview()
 
 const overview = ref<ServerOverview | null>(null)
@@ -316,7 +314,7 @@ defineExpose({ refresh: () => load() })
             >
               <span class="w-6 text-right text-dimmed">{{ index + 1 }}</span>
               <NuxtLink
-                :to="`${infoPath}/${collection.name}`"
+                :to="`${infoPath ?? paths.collections}/${collection.name}`"
                 class="min-w-0 flex-1 truncate font-medium hover:underline"
                 :aria-label="t('nuxtUiMongocamp.serverOverview.openInfo', { name: collection.name })"
               >
@@ -328,7 +326,7 @@ defineExpose({ refresh: () => load() })
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                :to="`${dataPath}/${collection.name}/data`"
+                :to="`${dataPath ?? paths.collections}/${collection.name}/data`"
                 :aria-label="t('nuxtUiMongocamp.serverOverview.openData', { name: collection.name })"
               />
             </li>
@@ -434,7 +432,7 @@ defineExpose({ refresh: () => load() })
               <span class="font-semibold">{{ t('nuxtUiMongocamp.serverOverview.jobsTitle') }}</span>
               <UButton
                 :label="t('nuxtUiMongocamp.serverOverview.allJobs')"
-                :to="jobsPath"
+                :to="jobsPath ?? paths.jobs"
                 color="neutral"
                 variant="link"
                 size="xs"

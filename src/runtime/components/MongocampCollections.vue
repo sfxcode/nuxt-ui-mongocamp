@@ -4,7 +4,7 @@ import { shortenLabel, topNWithOther } from '../utils/chartData'
 import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampBucket, useMongocampRoles, useToast } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampBucket, useMongocampRoles, useToast, useMongocampPaths } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { isProtectedCollection } from '../utils/collectionProtection'
 
@@ -36,6 +36,7 @@ interface CollectionRow {
 }
 
 const { t } = useI18n()
+const paths = useMongocampPaths()
 const { collectionApi } = useMongocampClientApi()
 const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, deleteBucket } = useMongocampBucket()
 const { clearCollection, deleteCollection } = useMongocampAdmin()
@@ -202,7 +203,7 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': t('nuxtUiMongocamp.collections.infoTooltip'),
-          'to': `${props.infoPath ?? '/secured/admin/collections'}/${row.original.name}`,
+          'to': `${props.infoPath ?? paths.collections}/${row.original.name}`,
         })),
         withTooltip(t('nuxtUiMongocamp.collections.dataTooltip'), h(UButton, {
           'icon': 'i-lucide-table',
@@ -210,7 +211,7 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
           'variant': 'ghost',
           'size': 'sm',
           'aria-label': t('nuxtUiMongocamp.collections.dataTooltip'),
-          'to': `${props.dataPath ?? '/secured/admin/collections'}/${row.original.name}/data`,
+          'to': `${props.dataPath ?? paths.collections}/${row.original.name}/data`,
         })),
       ]
       if (isBucketCollection(row.original.name)) {
@@ -222,7 +223,7 @@ const columns = computed<TableColumn<CollectionRow>[]>(() => [
             'variant': 'ghost',
             'size': 'sm',
             'aria-label': t('nuxtUiMongocamp.collections.browseFilesTooltip'),
-            'to': `${props.bucketFilesPath ?? '/secured/admin/buckets'}/${bucketName}`,
+            'to': `${props.bucketFilesPath ?? paths.buckets}/${bucketName}`,
           })),
           withTooltip(t('nuxtUiMongocamp.collections.clearBucketTooltip'), h(UButton, {
             'icon': 'i-lucide-eraser',

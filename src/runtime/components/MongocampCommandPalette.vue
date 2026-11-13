@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { defineShortcuts, navigateTo, useI18n } from '#imports'
+import { defineShortcuts, navigateTo, useI18n, useMongocampPaths } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { useMongocampJobs } from '../composables/useMongocampJobs'
 import { useMongocampPermissions } from '../composables/useMongocampPermissions'
@@ -26,13 +26,6 @@ const props = withDefaults(defineProps<{
   shortcut: 'meta_k',
   cacheMs: 60_000,
   navigate: true,
-  collectionPath: '/secured/admin/collections',
-  bucketPath: '/secured/admin/buckets',
-  usersPath: '/secured/admin/users',
-  rolePath: '/secured/admin/roles',
-  jobsPath: '/secured/admin/jobs',
-  settingsPath: '/secured/admin/settings',
-  accountPath: '/secured/account',
 })
 
 const emit = defineEmits<{
@@ -42,6 +35,7 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
+const basePaths = useMongocampPaths()
 const { listUsers, listRoles, listCollections } = useMongocampAdmin()
 const { listJobs } = useMongocampJobs()
 const { canRead, load: loadPermissions } = useMongocampPermissions()
@@ -54,13 +48,13 @@ const failed = ref<string[]>([])
 let generation = 0
 
 const paths = computed<PalettePaths>(() => ({
-  collectionPath: props.collectionPath,
-  bucketPath: props.bucketPath,
-  usersPath: props.usersPath,
-  rolePath: props.rolePath,
-  jobsPath: props.jobsPath,
-  settingsPath: props.settingsPath,
-  accountPath: props.accountPath,
+  collectionPath: props.collectionPath ?? basePaths.collections,
+  bucketPath: props.bucketPath ?? basePaths.buckets,
+  usersPath: props.usersPath ?? basePaths.users,
+  rolePath: props.rolePath ?? basePaths.roles,
+  jobsPath: props.jobsPath ?? basePaths.jobs,
+  settingsPath: props.settingsPath ?? basePaths.settings,
+  accountPath: props.accountPath ?? basePaths.account,
 }))
 
 async function load() {

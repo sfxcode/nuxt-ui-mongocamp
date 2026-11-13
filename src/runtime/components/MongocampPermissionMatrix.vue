@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useI18n } from '#imports'
+import { useI18n, useMongocampPaths } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import {
   buildPermissionMatrix, cellLetters, collectionsNobodyCan, filterMatrix, matrixToCsvRows, QUICK_VIEWS, usersWithoutRoles,
@@ -24,12 +24,12 @@ const props = withDefaults(defineProps<{
   hideRefresh?: boolean
 }>(), {
   hideHeading: false,
-  grantsPath: '/secured/admin/roles',
   maxCollections: 60,
   maxUsers: 200,
 })
 
 const { t } = useI18n()
+const paths = useMongocampPaths()
 const { listUsers, listRoles, listCollections } = useMongocampAdmin()
 
 const matrix = ref<PermissionMatrix | null>(null)
@@ -299,7 +299,7 @@ defineExpose({ refresh: load })
                     <NuxtLink
                       v-for="roleName in userByName.get(row)!.roles"
                       :key="roleName"
-                      :to="`${grantsPath}/${roleName}`"
+                      :to="`${grantsPath ?? paths.roles}/${roleName}`"
                       class="rounded bg-elevated px-1.5 py-0.5 text-xs hover:underline"
                       :class="userByName.get(row)!.unknownRoles.includes(roleName) ? 'text-warning' : 'text-dimmed'"
                       :title="userByName.get(row)!.unknownRoles.includes(roleName) ? t('nuxtUiMongocamp.permissionMatrix.unknownRoleNote') : t('nuxtUiMongocamp.permissionMatrix.openRole', { role: roleName })"

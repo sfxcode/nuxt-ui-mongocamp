@@ -1,10 +1,10 @@
 # Building an admin app
 
-The module owns no routes or pages: you decide where each component lives and pass the targets in as `*Path` props. The playground is the reference wiring; this page lists the pieces.
+The module owns no routes or pages: you decide where each component lives. Where the components link to each other they use the module option [`paths`](/guide/configuration#paths) — set it once if your routes differ from the playground's `/secured/admin/...`; a `*Path` prop overrides it for one component. The playground is the reference wiring; this page lists the pieces.
 
 ## Pages
 
-| Page | Component | Path props that link onward |
+| Page | Component | Path props that link onward (default: `paths`) |
 |---|---|---|
 | Collections | `MongocampCollections` | `infoPath`, `dataPath`, `bucketFilesPath` |
 | Collection → Data | `MongocampCollectionData` | `infoPath`, `aggregatePath` (adds the link that carries the table's filter to the Aggregate page) |
