@@ -1,6 +1,25 @@
 # Changelog
 
 
+## v1.5.1
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.0...v1.5.1)
+
+### 🚀 Enhancements
+
+- **chart:** Update series colors to use theme variables and improve visibility handling ([b7bb733](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b7bb733))
+- **version:** Show the MongoDB server version ([2f37d36](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/2f37d36))
+- **playground:** Dashboards for every role ([3059ebd](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/3059ebd))
+- **server-info:** MongocampServerInfo panel for MongoDB version, load and capabilities ([badb278](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/badb278))
+
+### 🩹 Fixes
+
+- **release:** Update changelogen command to use patch versioning ([5745256](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/5745256))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.0
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.4.0...v1.5.0)
