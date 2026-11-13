@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v1.5.2
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.1...v1.5.2)
+
+### 🚀 Enhancements
+
+- **components:** HideHeading prop for the list components and the dashboard ([348be73](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/348be73))
+- **components:** Page-owned toolbars and changed events ([93b2314](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/93b2314))
+- **components:** Theme-friendly colours, tabular figures and login options ([75fb588](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/75fb588))
+- **module:** Default FormKit config and styles, consumer setup docs ([de9f57a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/de9f57a))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.1
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.0...v1.5.1)
