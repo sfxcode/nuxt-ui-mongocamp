@@ -16,6 +16,7 @@ const adminLinks = [
   { label: 'Permissions', description: 'Who can access what', icon: 'i-lucide-key-round', to: '/secured/admin/permissions' },
   { label: 'Jobs', description: 'Scheduled background jobs', icon: 'i-lucide-clock', to: '/secured/admin/jobs' },
   { label: 'Databases', description: 'Databases and sizes', icon: 'i-lucide-server', to: '/secured/admin/databases' },
+  { label: 'Server', description: 'MongoDB version, load, capabilities', icon: 'i-lucide-cpu', to: '/secured/admin/server' },
   { label: 'Settings', description: 'Plugins, cluster, configuration', icon: 'i-lucide-settings', to: '/secured/admin/settings' },
 ]
 

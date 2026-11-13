@@ -9,6 +9,8 @@ const {
   getDatabaseInfo,           // (databaseName: string) => Promise<DatabaseInfo>
   listCollectionsByDatabase, // (databaseName: string) => Promise<string[]>
   getCluster,                // () => Promise<{ coordinator, members }>
+  getStats,                  // () => Promise<SystemStats>  — uptime, connections, opcounters, replicaSet; `partial` without clusterMonitor (1.9.0)
+  getCapabilities,           // () => Promise<Capabilities> — features, mongoDbMajor, limits, refused aggregation stages (1.9.0)
   getServerInfo,             // () => Promise<{ mongoDbVersion, mongoDbVersionArray }>  — MongoDB server version, MongoCamp 1.9.0+, login required
   getSettings,               // () => Promise<{ routesPlugins, filePlugins, ignoredPlugins }>
   listConfigurations,        // () => Promise<ConfigRow[]>   — sorted by key, secrets already masked

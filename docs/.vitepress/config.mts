@@ -54,6 +54,7 @@ export default defineConfig({
             { text: 'MongocampAccount', link: '/components/mongocamp-account' },
             { text: 'MongocampDatabases', link: '/components/mongocamp-databases' },
             { text: 'MongocampSettings', link: '/components/mongocamp-settings' },
+            { text: 'MongocampServerInfo', link: '/components/mongocamp-server-info' },
             { text: 'MongocampVersion', link: '/components/mongocamp-version' },
             { text: 'MongocampDashboard', link: '/components/mongocamp-dashboard' },
             { text: 'MongocampBulkDelete', link: '/components/mongocamp-bulk-delete' },

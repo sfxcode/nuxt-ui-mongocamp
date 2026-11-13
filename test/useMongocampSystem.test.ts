@@ -16,7 +16,7 @@ const mockApplicationApi = {
   updateConfiguration: vi.fn(),
 }
 
-const mockSystemApi = { viewCluster: vi.fn(), systemInfo: vi.fn() }
+const mockSystemApi = { viewCluster: vi.fn(), systemInfo: vi.fn(), systemStats: vi.fn(), systemCapabilities: vi.fn() }
 
 vi.mock('#imports', () => ({
   useMongocampClientApi: () => ({ databaseApi: mockDatabaseApi, applicationApi: mockApplicationApi, systemApi: mockSystemApi }),
@@ -159,7 +159,7 @@ describe('read-only server settings', () => {
     await system.getSettings()
     await system.listConfigurations()
 
-    expect(Object.keys(system).sort()).toEqual(['getCluster', 'getConfig', 'getDatabaseInfo', 'getDatabaseInfos', 'getServerInfo', 'getSettings', 'listCollectionsByDatabase', 'listConfigurations', 'listDatabases'])
+    expect(Object.keys(system).sort()).toEqual(['getCapabilities', 'getCluster', 'getConfig', 'getDatabaseInfo', 'getDatabaseInfos', 'getServerInfo', 'getSettings', 'getStats', 'listCollectionsByDatabase', 'listConfigurations', 'listDatabases'])
     expect(mockApplicationApi.shutdown).not.toHaveBeenCalled()
     expect(mockApplicationApi.updateConfiguration).not.toHaveBeenCalled()
   })
@@ -203,5 +203,27 @@ describe('getServerInfo', () => {
     const { getServerInfo } = useMongocampSystem()
 
     expect((await getServerInfo()).mongoDbVersionArray).toEqual([])
+  })
+})
+
+describe('getStats / getCapabilities', () => {
+  it('passes the stats through with a timeout signal', async () => {
+    const stats = { partial: false, uptimeSeconds: 10 }
+    mockSystemApi.systemStats.mockResolvedValueOnce(stats)
+
+    const { getStats } = useMongocampSystem()
+
+    expect(await getStats()).toBe(stats)
+    expect(mockSystemApi.systemStats).toHaveBeenCalledWith(withAbortSignal())
+  })
+
+  it('passes the capabilities through with a timeout signal', async () => {
+    const capabilities = { serverVersion: '1.9.0', limits: { importMaxBytes: 1, grantDeniedStatus: 401 } }
+    mockSystemApi.systemCapabilities.mockResolvedValueOnce(capabilities)
+
+    const { getCapabilities } = useMongocampSystem()
+
+    expect(await getCapabilities()).toBe(capabilities)
+    expect(mockSystemApi.systemCapabilities).toHaveBeenCalledWith(withAbortSignal())
   })
 })

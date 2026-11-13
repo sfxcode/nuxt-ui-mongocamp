@@ -1,5 +1,5 @@
 import { useMongocampClientApi } from '#imports'
-import type { ClusterMemberInformation, DatabaseInfo } from '@sfxcode/nuxt-mongocamp-server'
+import type { Capabilities, ClusterMemberInformation, DatabaseInfo, SystemStats } from '@sfxcode/nuxt-mongocamp-server'
 import { buildConfigRows } from '../utils/configRows'
 import type { ConfigRow } from '../utils/configRows'
 
@@ -90,5 +90,17 @@ export function useMongocampSystem() {
     return { mongoDbVersion: info.mongoDbVersion, mongoDbVersionArray: info.mongoDbVersionArray ?? [] }
   }
 
-  return { getCluster, getServerInfo, listDatabases, getDatabaseInfos, getDatabaseInfo, listCollectionsByDatabase, getSettings, listConfigurations, getConfig }
+  // `GET /system/stats` (server 1.9.0): uptime, connections, operation counters (totals since the database server started)
+  // and the replica set. `partial: true` = the database user lacks the clusterMonitor role, so those parts are absent.
+  async function getStats(): Promise<SystemStats> {
+    return systemApi.systemStats(withTimeout())
+  }
+
+  // `GET /system/capabilities` (server 1.9.0, every logged-in user): feature names, MongoDB major version, limits and the
+  // aggregation operators the server refuses. A server without the route is older than 1.9.0.
+  async function getCapabilities(): Promise<Capabilities> {
+    return systemApi.systemCapabilities(withTimeout())
+  }
+
+  return { getCluster, getServerInfo, getStats, getCapabilities, listDatabases, getDatabaseInfos, getDatabaseInfo, listCollectionsByDatabase, getSettings, listConfigurations, getConfig }
 }

@@ -22,6 +22,7 @@ export function useNavItems() {
     { label: 'Collections', icon: 'i-lucide-database', to: '/secured/admin/collections' },
     { label: 'Jobs', icon: 'i-lucide-clock', to: '/secured/admin/jobs' },
     { label: 'Databases', icon: 'i-lucide-server', to: '/secured/admin/databases' },
+    { label: 'Server', icon: 'i-lucide-cpu', to: '/secured/admin/server' },
     { label: 'Settings', icon: 'i-lucide-settings', to: '/secured/admin/settings' },
   ]
 

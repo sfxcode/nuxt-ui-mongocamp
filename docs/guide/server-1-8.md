@@ -39,3 +39,10 @@ The module needs **MongoCamp server 1.8.1 or later** (`@sfxcode/nuxt-mongocamp-s
 - **`$lookup` and `$unionWith`** are not on the server's deny-list, but the server enforces the caller's grants for the other collection (a non-admin without a grant gets `403`, code `4032`; an admin can read every collection anyway, `mc_users` included). The aggregation builder still refuses them in the UI as an early, friendly stop.
 - **Partial index filters** are listed garbled by `index/details`; the index card shows only that there is one.
 - **Long filters in a URL**: aggregation, export and bucket file lists send the Lucene filter as a query parameter — over ~1 800 encoded characters the module refuses it up front (the server's `414` has no CORS headers). The document list uses `POST …/search` and has no such limit.
+
+## Server 1.9.0 additions (optional)
+
+Nothing here is required — on 1.8.x these parts simply stay out:
+
+- `GET /system/info` → the **MongoDB x.y.z** badge in [`MongocampVersion`](/components/mongocamp-version) (`useMongocampSystem().getServerInfo`, login required).
+- `GET /system/stats` and `GET /system/capabilities` → [`MongocampServerInfo`](/components/mongocamp-server-info) (`getStats`, `getCapabilities`). A 404/405 on capabilities is shown as "older than 1.9.0".
