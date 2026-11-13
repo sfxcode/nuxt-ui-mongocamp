@@ -18,6 +18,13 @@ export interface ServerCluster {
   members: ClusterMemberInformation[]
 }
 
+export interface ServerInfo {
+  /** Version of the MongoDB server the MongoCamp server is connected to, e.g. `9.0.4`. */
+  mongoDbVersion: string
+  /** The same version as numbers (`[9, 0, 4, 0]`), empty if the server sent none. */
+  mongoDbVersionArray: number[]
+}
+
 export interface ServerPlugins {
   routesPlugins: string[]
   filePlugins: string[]
@@ -77,5 +84,11 @@ export function useMongocampSystem() {
     return { coordinator: cluster.coordinator, members: cluster.members?.length ? cluster.members : [cluster.coordinator] }
   }
 
-  return { getCluster, listDatabases, getDatabaseInfos, getDatabaseInfo, listCollectionsByDatabase, getSettings, listConfigurations, getConfig }
+  // `GET /system/info` (server 1.9.0, needs a login): the version of the MongoDB server behind MongoCamp.
+  async function getServerInfo(): Promise<ServerInfo> {
+    const info = await systemApi.systemInfo(withTimeout())
+    return { mongoDbVersion: info.mongoDbVersion, mongoDbVersionArray: info.mongoDbVersionArray ?? [] }
+  }
+
+  return { getCluster, getServerInfo, listDatabases, getDatabaseInfos, getDatabaseInfo, listCollectionsByDatabase, getSettings, listConfigurations, getConfig }
 }

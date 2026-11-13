@@ -16,7 +16,7 @@ const mockApplicationApi = {
   updateConfiguration: vi.fn(),
 }
 
-const mockSystemApi = { viewCluster: vi.fn() }
+const mockSystemApi = { viewCluster: vi.fn(), systemInfo: vi.fn() }
 
 vi.mock('#imports', () => ({
   useMongocampClientApi: () => ({ databaseApi: mockDatabaseApi, applicationApi: mockApplicationApi, systemApi: mockSystemApi }),
@@ -159,7 +159,7 @@ describe('read-only server settings', () => {
     await system.getSettings()
     await system.listConfigurations()
 
-    expect(Object.keys(system).sort()).toEqual(['getCluster', 'getConfig', 'getDatabaseInfo', 'getDatabaseInfos', 'getSettings', 'listCollectionsByDatabase', 'listConfigurations', 'listDatabases'])
+    expect(Object.keys(system).sort()).toEqual(['getCluster', 'getConfig', 'getDatabaseInfo', 'getDatabaseInfos', 'getServerInfo', 'getSettings', 'listCollectionsByDatabase', 'listConfigurations', 'listDatabases'])
     expect(mockApplicationApi.shutdown).not.toHaveBeenCalled()
     expect(mockApplicationApi.updateConfiguration).not.toHaveBeenCalled()
   })
@@ -184,5 +184,24 @@ describe('getCluster', () => {
     const { getCluster } = useMongocampSystem()
 
     expect((await getCluster()).members).toEqual([node])
+  })
+})
+
+describe('getServerInfo', () => {
+  it('returns the MongoDB version with a timeout signal', async () => {
+    mockSystemApi.systemInfo.mockResolvedValueOnce({ mongoDbVersion: '9.0.4', mongoDbVersionArray: [9, 0, 4, 0] })
+
+    const { getServerInfo } = useMongocampSystem()
+
+    expect(await getServerInfo()).toEqual({ mongoDbVersion: '9.0.4', mongoDbVersionArray: [9, 0, 4, 0] })
+    expect(mockSystemApi.systemInfo).toHaveBeenCalledWith(withAbortSignal())
+  })
+
+  it('defaults a missing version array to empty', async () => {
+    mockSystemApi.systemInfo.mockResolvedValueOnce({ mongoDbVersion: '8.0.1' })
+
+    const { getServerInfo } = useMongocampSystem()
+
+    expect((await getServerInfo()).mongoDbVersionArray).toEqual([])
   })
 })

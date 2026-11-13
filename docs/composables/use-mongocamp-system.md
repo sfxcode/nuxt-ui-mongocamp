@@ -9,6 +9,7 @@ const {
   getDatabaseInfo,           // (databaseName: string) => Promise<DatabaseInfo>
   listCollectionsByDatabase, // (databaseName: string) => Promise<string[]>
   getCluster,                // () => Promise<{ coordinator, members }>
+  getServerInfo,             // () => Promise<{ mongoDbVersion, mongoDbVersionArray }>  — MongoDB server version, MongoCamp 1.9.0+, login required
   getSettings,               // () => Promise<{ routesPlugins, filePlugins, ignoredPlugins }>
   listConfigurations,        // () => Promise<ConfigRow[]>   — sorted by key, secrets already masked
   getConfig,                 // (configurationKey: string) => Promise<ConfigRow>  — masked
