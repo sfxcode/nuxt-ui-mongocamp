@@ -316,50 +316,50 @@ async function refreshInfo() {
       class="grid grid-cols-2 gap-3 sm:grid-cols-3"
     >
       <UCard>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.collectionInfos.documents') }}
         </div>
-        <div class="text-2xl font-semibold">
+        <div class="tabular-nums text-2xl font-semibold">
           {{ info.count }}
         </div>
       </UCard>
       <UCard>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.collectionInfos.dataSize') }}
         </div>
-        <div class="text-2xl font-semibold">
+        <div class="tabular-nums text-2xl font-semibold">
           {{ Math.round(info.size / 1024) }} KB
         </div>
       </UCard>
       <UCard>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.collectionInfos.storageSize') }}
         </div>
-        <div class="text-2xl font-semibold">
+        <div class="tabular-nums text-2xl font-semibold">
           {{ Math.round(info.storageSize / 1024) }} KB
         </div>
       </UCard>
       <UCard>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.collectionInfos.avgDocSize') }}
         </div>
-        <div class="text-2xl font-semibold">
+        <div class="tabular-nums text-2xl font-semibold">
           {{ Math.round(info.avgObjSize) }} B
         </div>
       </UCard>
       <UCard>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.collectionInfos.indexes') }}
         </div>
-        <div class="text-2xl font-semibold">
+        <div class="tabular-nums text-2xl font-semibold">
           {{ info.nindexes }}
         </div>
       </UCard>
       <UCard>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.collectionInfos.indexSize') }}
         </div>
-        <div class="text-2xl font-semibold">
+        <div class="tabular-nums text-2xl font-semibold">
           {{ Math.round(info.totalIndexSize / 1024) }} KB
         </div>
       </UCard>

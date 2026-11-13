@@ -1043,7 +1043,7 @@ defineExpose({ refresh: init })
         @input="onFilterInput"
       />
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
+        <span class="text-sm text-muted shrink-0">
           {{ t('nuxtUiMongocamp.collectionData.documentsCount', { count: total }) }}
         </span>
         <UTooltip
@@ -1374,7 +1374,7 @@ defineExpose({ refresh: init })
         <textarea
           v-else
           v-model="editJson"
-          class="w-full h-80 font-mono text-xs p-2 border rounded bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:outline-none resize-y"
+          class="w-full h-80 font-mono text-xs p-2 border rounded bg-muted border-default focus:outline-none resize-y"
           spellcheck="false"
         />
         <p

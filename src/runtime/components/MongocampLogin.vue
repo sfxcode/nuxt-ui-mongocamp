@@ -6,6 +6,8 @@ import { navigateTo, useCookie, useNuxtApp } from '#app'
 
 const props = defineProps<{
   redirectPath?: string
+  // hide the "Login" heading inside the card, e.g. when the page or the `header` slot already has one
+  hideHeading?: boolean
 }>()
 
 const { t } = useI18n()
@@ -16,17 +18,23 @@ const nuxtApp = useNuxtApp()
 const loginMail = useCookie('mongocamp_login', { maxAge: 30 * 24 * 60 * 60 })
 
 const data = ref({ userId: loginMail.value, password: '' })
+// The inputs fill the card: FormKit's wrappers and the input itself would otherwise keep their intrinsic width
+const fullWidth = { outerClass: 'w-full', innerClass: 'w-full', class: 'w-full' }
+
 const schema = reactive(
   [
-    {
-      $el: 'h3',
-      children: t('nuxtUiMongocamp.login.heading'),
-    },
+    ...(props.hideHeading
+      ? []
+      : [{
+          $el: 'h3',
+          children: t('nuxtUiMongocamp.login.heading'),
+        }]),
     {
       $formkit: 'nuxtUIInput',
       name: 'userId',
       label: t('nuxtUiMongocamp.login.email'),
       validation: 'required|email',
+      ...fullWidth,
     },
     {
       $formkit: 'nuxtUIInput',
@@ -34,6 +42,7 @@ const schema = reactive(
       label: t('nuxtUiMongocamp.login.password'),
       inputType: 'password',
       validation: 'required|length:3',
+      ...fullWidth,
     },
   ],
 )
@@ -60,6 +69,8 @@ async function actionLogin() {
 <template>
   <div class="flex flex-col items-center justify-center gap-4 p-4 w-full">
     <UPageCard class="w-full max-w-md">
+      <!-- above the form: a logo, a title, a hint -->
+      <slot name="header" />
       <FUDataEdit
         :data="data"
         :schema="schema"
@@ -73,6 +84,8 @@ async function actionLogin() {
       >
         {{ errorMessage }}
       </div>
+      <!-- below the form and its error: links, legal text -->
+      <slot name="footer" />
     </UPageCard>
   </div>
 </template>

@@ -29,6 +29,8 @@ async function afterImport() {
 </template>
 ```
 
+The component brings no outer padding (it had `py-8` up to 1.5.1) — the page around it decides the spacing, as with every other component.
+
 ## Props
 
 | Prop | Type | Default | Description |

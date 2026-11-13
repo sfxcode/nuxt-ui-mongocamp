@@ -95,7 +95,7 @@ loadProfile()
       </template>
       <div class="flex flex-col gap-3">
         <div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">
+          <div class="text-sm text-muted">
             {{ t('nuxtUiMongocamp.account.user') }}
           </div>
           <div class="text-lg font-medium">
@@ -103,7 +103,7 @@ loadProfile()
           </div>
         </div>
         <div>
-          <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+          <div class="text-sm text-muted mb-1">
             {{ t('nuxtUiMongocamp.account.role') }}
           </div>
           <UBadge
@@ -113,7 +113,7 @@ loadProfile()
           />
         </div>
         <div>
-          <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+          <div class="text-sm text-muted mb-1">
             {{ t('nuxtUiMongocamp.account.roles') }}
           </div>
           <div
@@ -186,7 +186,7 @@ loadProfile()
         v-else
         class="flex items-center justify-between gap-4"
       >
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <p class="text-sm text-muted">
           {{ t('nuxtUiMongocamp.account.regenerateWarning') }}
         </p>
         <UButton

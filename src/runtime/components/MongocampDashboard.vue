@@ -86,7 +86,7 @@ if (!blocked.value) refresh()
 </script>
 
 <template>
-  <div class="flex flex-col gap-8 py-8">
+  <div class="flex flex-col gap-8">
     <div class="flex items-start justify-between">
       <div
         v-if="!hideHeading"
@@ -158,7 +158,7 @@ if (!blocked.value) refresh()
               />
               <div
                 v-else
-                class="text-3xl font-bold"
+                class="tabular-nums text-3xl font-bold"
               >
                 {{ stats?.[box.key] ?? '—' }}
               </div>

@@ -189,7 +189,7 @@ defineExpose({ refresh: () => load() })
             {{ t('nuxtUiMongocamp.serverOverview.statDatabases') }}
           </div>
           <div
-            class="text-2xl font-semibold"
+            class="tabular-nums text-2xl font-semibold"
             data-test="stat-databases"
           >
             {{ overview.databases ? totals.databases : '—' }}
@@ -206,7 +206,7 @@ defineExpose({ refresh: () => load() })
             {{ t('nuxtUiMongocamp.serverOverview.statCollections') }}
           </div>
           <div
-            class="text-2xl font-semibold"
+            class="tabular-nums text-2xl font-semibold"
             data-test="stat-collections"
           >
             {{ number(overview.collectionCount) }}
@@ -217,7 +217,7 @@ defineExpose({ refresh: () => load() })
             {{ t('nuxtUiMongocamp.serverOverview.statDocuments') }}
           </div>
           <div
-            class="text-2xl font-semibold"
+            class="tabular-nums text-2xl font-semibold"
             data-test="stat-documents"
           >
             {{ number(totals.documents) }}
@@ -228,7 +228,7 @@ defineExpose({ refresh: () => load() })
             {{ t('nuxtUiMongocamp.serverOverview.statStorage') }}
           </div>
           <div
-            class="text-2xl font-semibold"
+            class="tabular-nums text-2xl font-semibold"
             data-test="stat-storage"
           >
             {{ formatBytes(totals.storageBytes) }}
@@ -239,7 +239,7 @@ defineExpose({ refresh: () => load() })
             {{ t('nuxtUiMongocamp.serverOverview.statIndexes') }}
           </div>
           <div
-            class="text-2xl font-semibold"
+            class="tabular-nums text-2xl font-semibold"
             data-test="stat-indexes"
           >
             {{ formatBytes(totals.indexBytes) }}

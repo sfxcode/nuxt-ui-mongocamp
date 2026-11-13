@@ -326,7 +326,7 @@ const columns = computed<TableColumn<FileInformation>[]>(() => [
   {
     accessorKey: 'length',
     header: ({ column }) => sortHeader(column, t('nuxtUiMongocamp.bucketFiles.columnSize')),
-    cell: ({ row }) => h('span', formatBytes(row.original.length)),
+    cell: ({ row }) => h('span', { class: 'tabular-nums' }, formatBytes(row.original.length)),
   },
   {
     accessorKey: 'uploadDate',
@@ -432,7 +432,7 @@ defineExpose({ refresh: init })
         @input="onFilterInput"
       />
       <div class="flex items-center gap-2">
-        <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
+        <span class="text-sm text-muted shrink-0">
           {{ t('nuxtUiMongocamp.bucketFiles.filesCount', { count: total }) }}
         </span>
         <UTooltip :text="t('nuxtUiMongocamp.bucketFiles.uploadFileTooltip')">

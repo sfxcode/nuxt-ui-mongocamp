@@ -247,7 +247,10 @@ defineExpose({ refresh })
               <dt class="text-dimmed">
                 {{ t('nuxtUiMongocamp.serverInfo.connectionsCurrent') }}
               </dt>
-              <dd data-testid="connections-current">
+              <dd
+                class="tabular-nums"
+                data-testid="connections-current"
+              >
                 {{ formatCount(stats.connections.current) }}
               </dd>
             </div>
@@ -255,13 +258,17 @@ defineExpose({ refresh })
               <dt class="text-dimmed">
                 {{ t('nuxtUiMongocamp.serverInfo.connectionsAvailable') }}
               </dt>
-              <dd>{{ formatCount(stats.connections.available) }}</dd>
+              <dd class="tabular-nums">
+                {{ formatCount(stats.connections.available) }}
+              </dd>
             </div>
             <div class="flex justify-between gap-4">
               <dt class="text-dimmed">
                 {{ t('nuxtUiMongocamp.serverInfo.connectionsTotal') }}
               </dt>
-              <dd>{{ formatCount(stats.connections.totalCreated) }}</dd>
+              <dd class="tabular-nums">
+                {{ formatCount(stats.connections.totalCreated) }}
+              </dd>
             </div>
           </dl>
         </div>
@@ -278,7 +285,10 @@ defineExpose({ refresh })
               <dt class="text-dimmed">
                 {{ counter.label }}
               </dt>
-              <dd :data-testid="`op-${counter.key}`">
+              <dd
+                class="tabular-nums"
+                :data-testid="`op-${counter.key}`"
+              >
                 {{ counter.value }}
               </dd>
             </div>

@@ -163,7 +163,7 @@ const columns = computed<TableColumn<Row>[]>(() => [
   {
     accessorKey: 'size',
     header: t('nuxtUiMongocamp.indexes.columnSize'),
-    cell: ({ row }) => h('span', row.original.size === undefined ? '—' : formatBytes(row.original.size)),
+    cell: ({ row }) => h('span', { class: 'tabular-nums' }, row.original.size === undefined ? '—' : formatBytes(row.original.size)),
   },
   {
     id: 'usage',

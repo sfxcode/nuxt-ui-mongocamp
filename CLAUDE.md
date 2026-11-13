@@ -120,6 +120,8 @@ Kept in sync with `docs/components/index.md` (the canonical, per-component-docum
 
 **Page-owned toolbar (plan 21):** `MongocampUsers`, `Roles`, `RoleGrants`, `Jobs`, `Databases`, `Collections`, `ServerOverview`, `PermissionMatrix`, `CollectionData` and `BucketFiles` expose `refresh()`, take `hideRefresh` (also `Dashboard`) and have a `toolbar` slot right after the reload button. `changed` is emitted after an accepted write **and** the component's own reload — by Users, Roles, RoleGrants, Jobs, CollectionData (incl. import and file upload), BucketFiles, Collections; never on a failed or cancelled action or a plain reload. A new write path in one of these must emit it too.
 
+**Theming (plan 22):** components use Nuxt UI's semantic classes only (`text-muted`, `text-dimmed`, `bg-muted`, `border-default`, the seven `color` tokens) — never a raw palette class such as `text-gray-500`, which ignores a consumer's neutral colour (`grep -rnE "(text|bg|border)-(gray|slate|zinc)-[0-9]" src/runtime/components` must stay empty). Figures get `tabular-nums` on the number's own element (stat values, size cells), not on a whole table. No component brings outer padding. `MongocampLogin` has `hideHeading` and `header`/`footer` slots; its inputs fill the card.
+
 UTable columns with custom cells use `h()` + `resolveComponent()` (not `<template>`) — see existing components for the pattern.
 
 ### Composables — `src/runtime/composables/`

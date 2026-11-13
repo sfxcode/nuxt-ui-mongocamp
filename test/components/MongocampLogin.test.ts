@@ -48,6 +48,36 @@ beforeEach(() => {
 })
 
 describe('MongocampLogin', () => {
+  it('hideHeading removes the heading; the header and footer slots sit around the form', async () => {
+    const shown = await mountSuspended(withUApp(MongocampLogin), { route: '/' })
+    expect(shown.find('h3').exists()).toBe(true)
+
+    const hidden = await mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(MongocampLogin, { hideHeading: true }, {
+        header: () => h('p', { 'data-test': 'above' }, 'Welcome back'),
+        footer: () => h('p', { 'data-test': 'below' }, 'Need an account?'),
+      })),
+    }), { route: '/' })
+    expect(hidden.find('h3').exists()).toBe(false)
+
+    // order in the card: header slot, form, footer slot
+    const html = hidden.html()
+    expect(html.indexOf('data-test="above"')).toBeGreaterThan(-1)
+    expect(html.indexOf('data-test="above"')).toBeLessThan(html.indexOf('<form'))
+    expect(html.indexOf('data-test="below"')).toBeGreaterThan(html.indexOf('</form>'))
+  })
+
+  it('the inputs fill the card', async () => {
+    const component = await mountSuspended(withUApp(MongocampLogin), { route: '/' })
+    await wait()
+    for (const label of ['Email', 'Password']) {
+      const input = findInputByLabel(component.find('form'), label)
+      // the class lands on the input's root element, FormKit's wrappers get theirs
+      expect(input.element.closest('.w-full')).not.toBeNull()
+      expect(input.element.closest('.formkit-outer')?.classList.contains('w-full')).toBe(true)
+    }
+  })
+
   it('does not render a debug-data panel (regression: used to dump the typed password into the DOM)', async () => {
     const component = await mountSuspended(withUApp(MongocampLogin), { route: '/' })
     expect(component.text()).not.toContain('Debug Data')
