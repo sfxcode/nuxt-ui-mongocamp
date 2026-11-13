@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v1.5.3
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.2...v1.5.3)
+
+### 🚀 Enhancements
+
+- **module:** Public utils export, useMongocampProxyMode and proxy-aware role flags ([e9026ef](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/e9026ef))
+- **module:** Paths option and useMongocampPaths for all link targets ([84cf5fd](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/84cf5fd))
+- **composables:** Shared collection-name list and groupCollectionNames ([b913c71](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/b913c71))
+- **components:** Server status, user access, navigation and breadcrumb data ([7aa4980](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/7aa4980))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.2
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.1...v1.5.2)
