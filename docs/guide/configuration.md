@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     adminRouteParts: ['/secured/admin/**'],          // default: []
     useServerProxy: false,                          // default: false
     serverProxyPath: '/api/_mongocamp',             // default shown
+    formkitStyles: true,                            // default: true
   },
 })
 ```
@@ -40,6 +41,7 @@ export default defineNuxtConfig({
 | `adminRouteParts` | `string[]` | `[]` | Glob patterns requiring the user to be an admin. |
 | `useServerProxy` | `boolean` | `false` | Opt-in [server proxy auth mode](/guide/server-proxy-auth) — api-key-only, no browser login. Not meant to be combined with `useGlobalAuthMiddleware`'s route protection (a build-time warning fires if both are enabled). |
 | `serverProxyPath` | `string` | `'/api/_mongocamp'` | Local route prefix the proxy listens on when `useServerProxy` is `true`. |
+| `formkitStyles` | `boolean` | `true` | Load the module's default styles for FormKit's label, help text, validation message and form spacing. They are loaded before your own stylesheets, so any rule of yours overrides them. See [Forms](/guide/getting-started#forms-work-without-setup). |
 
 **Nothing is protected by default.** With every route-part option left as `[]`, `useGlobalAuthMiddleware: false`, and no page under a protected path, an app that adds this module gets no access restrictions at all — you must explicitly opt in by enabling the middleware and listing your protected route patterns. This is a deliberate design: the module makes no assumption about your app's URL structure (earlier versions hardcoded `/admin`/`/secured` prefixes). See [`useMongocampRoles`](/composables/use-mongocamp-roles) for the composable backing all of this, and [Route Protection](/guide/route-protection) for a full walkthrough.
 

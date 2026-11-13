@@ -1,0 +1,29 @@
+/*
+ * Default look of FormKit's own elements (label, help, validation message, form spacing), on Nuxt UI's
+ * tokens so it follows the app's theme. Loaded before the app's stylesheets: any rule of the app wins.
+ * Switch it off with the module option `formkitStyles: false`.
+ */
+.formkit-form > * + * {
+  margin-top: 0.75rem;
+}
+
+.formkit-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ui-text-muted);
+}
+
+.formkit-help {
+  font-size: 0.75rem;
+  color: var(--ui-text-dimmed);
+}
+
+.formkit-message {
+  font-size: 0.75rem;
+  color: var(--ui-error);
+}
+
+.formkit-debug {
+  padding-top: 0.5rem;
+  font-size: 0.75rem;
+}

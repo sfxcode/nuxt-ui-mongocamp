@@ -1,13 +1,23 @@
+import { existsSync } from 'node:fs'
 import { defineNuxtModule, addPlugin, addComponentsDir, createResolver, addImportsDir, addServerHandler } from '@nuxt/kit'
+import type { ModuleDependencies } from '@nuxt/schema'
 import { defu } from 'defu'
 import { consola } from 'consola'
 import { optionWarnings } from './optionWarnings'
+import { defaultFormkitConfigFile } from './formkitConfig'
 
 // Computed at the top level (needs only `import.meta.url`, not a Nuxt/setup context) so the
 // same absolute paths can be used both in the static `moduleDependencies` config below (for
 // `@nuxtjs/i18n`'s `langDir`) and inside `setup()`.
 const { resolve } = createResolver(import.meta.url)
 const runtimeDir = resolve('./runtime')
+
+// The app's own `formkit.config.*` wins; without one the module's default config is loaded, so the
+// forms of the module's components work without any FormKit setup in the app.
+function formkitDefaults(rootDir: string, configuredFile: string | undefined): { configFile?: string } {
+  const configFile = defaultFormkitConfigFile(rootDir, configuredFile, resolve(runtimeDir, 'formkit.config'), existsSync)
+  return configFile ? { configFile } : {}
+}
 
 // Module options TypeScript interface definition
 
@@ -90,6 +100,13 @@ export interface ModuleOptions {
    * Local route prefix the proxy listens on when `useServerProxy` is enabled.
    */
   serverProxyPath?: string
+
+  /**
+   * Load the module's default styles for FormKit's label, help text, validation message and form
+   * spacing (`runtime/assets/formkit.css`, built on Nuxt UI's `--ui-*` tokens). It is loaded before
+   * the app's own stylesheets, so any rule of the app overrides it. Default `true`.
+   */
+  formkitStyles?: boolean
 }
 
 export interface ModulePublicRuntimeConfig {
@@ -119,12 +136,18 @@ export default defineNuxtModule<ModuleOptions>({
     adminRouteParts: [],
     useServerProxy: false,
     serverProxyPath: '/api/_mongocamp',
+    formkitStyles: true,
   },
 
-  moduleDependencies: {
+  // A function, not an object: the FormKit entry depends on the app (does it bring its own config?).
+  // It has to be decided here — `@formkit/nuxt` is set up before this module's `setup()` runs, the
+  // same ordering trap as the i18n locales below.
+  moduleDependencies: (nuxt): ModuleDependencies => ({
     '@nuxt/ui': {},
     'unocss-nuxt-ui': {},
-    '@formkit/nuxt': {},
+    '@formkit/nuxt': {
+      defaults: formkitDefaults(nuxt.options.rootDir, (nuxt.options as { formkit?: { configFile?: string } }).formkit?.configFile),
+    },
     '@sfxcode/nuxt-ui-formkit': {},
     '@sfxcode/nuxt-mongocamp-server': {
       defaults: {
@@ -145,7 +168,7 @@ export default defineNuxtModule<ModuleOptions>({
         defaultLocale: 'en',
       },
     },
-  },
+  }),
   setup(options, nuxt) {
     // Normalized once here so the build-time route registered below and the runtime-config
     // value the handler reads at request time can never desync over a trailing slash.
@@ -172,6 +195,9 @@ export default defineNuxtModule<ModuleOptions>({
     })
 
     for (const warning of optionWarnings(options)) consola.warn(warning)
+
+    // First in the list, so every stylesheet of the app overrides it
+    if (options.formkitStyles) nuxt.options.css.unshift(resolve(runtimeDir, 'assets/formkit.css'))
 
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolve(runtimeDir, 'plugin'))
