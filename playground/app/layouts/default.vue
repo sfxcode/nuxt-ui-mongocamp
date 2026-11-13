@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { isLoggedIn } = useMongocampAuth()
 const items = useNavItems()
+const breadcrumbs = useMongocampBreadcrumbs()
 </script>
 
 <template>
@@ -16,9 +17,15 @@ const items = useNavItems()
         :items="items"
         class="w-full"
       />
+      <MongocampServerStatus class="mt-4 border-t border-default px-2.5 pt-3" />
     </nav>
     <div class="flex-1 min-w-0">
       <UContainer>
+        <UBreadcrumb
+          v-if="isLoggedIn"
+          :items="breadcrumbs"
+          class="pt-3"
+        />
         <slot />
       </UContainer>
     </div>

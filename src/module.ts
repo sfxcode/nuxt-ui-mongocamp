@@ -105,9 +105,9 @@ export interface ModuleOptions {
   /**
    * Base routes of the app's MongoCamp pages. Every `*Path` prop of the components falls back to
    * these (and `useMongocampPaths()` returns them), so an app with other routes sets them once
-   * instead of a prop per component. Keys: `collections`, `buckets`, `users`, `roles`, `jobs`,
-   * `settings`, `account`; a key left out keeps its default (`/secured/admin/<key>`,
-   * `/secured/account`).
+   * instead of a prop per component. Keys: `home`, `account`, `collections`, `buckets`, `users`,
+   * `roles`, `permissions`, `jobs`, `databases`, `overview`, `server`, `settings`; a key left out
+   * keeps its default (`/secured`, `/secured/account`, `/secured/admin/<key>`).
    */
   paths?: Partial<MongocampPaths>
 

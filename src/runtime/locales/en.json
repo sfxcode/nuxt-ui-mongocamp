@@ -1072,6 +1072,48 @@
       "ariaDescription": "{count} values from the shown page of the result",
       "cut": "Only the first {max} rows of this page are charted.",
       "skipped": "{count} rows without a number were left out."
+    },
+    "navigation": {
+      "home": "Home",
+      "account": "Account",
+      "collections": "Collections",
+      "buckets": "Buckets",
+      "databases": "Databases",
+      "jobs": "Jobs",
+      "users": "Users",
+      "roles": "Roles",
+      "permissions": "Permissions",
+      "overview": "Overview",
+      "server": "Server",
+      "settings": "Settings",
+      "data": "Data",
+      "aggregate": "Aggregate",
+      "groupData": "Data",
+      "groupAccess": "Access",
+      "groupServer": "Server"
+    },
+    "serverStatus": {
+      "ok": "Server reachable",
+      "partial": "Server reachable, some details unavailable",
+      "down": "Server not reachable",
+      "connections": "Connections",
+      "uptime": "Up {time}",
+      "details": "Server status details"
+    },
+    "userAccess": {
+      "heading": "Your access",
+      "collections": "Collections",
+      "canRead": "Can read",
+      "canWrite": "Can write",
+      "canAdministrate": "Can administrate",
+      "collection": "Collection",
+      "read": "Read",
+      "write": "Write",
+      "administrate": "Administrate",
+      "emptyTitle": "No collections yet",
+      "emptyDescription": "No collection has been granted to you. Ask an administrator for access.",
+      "adminTitle": "You are an administrator",
+      "adminDescription": "Administrators may read, write and administrate every collection."
     }
   }
 }

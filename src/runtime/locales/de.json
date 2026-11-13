@@ -1072,6 +1072,48 @@
       "ariaDescription": "{count} Werte der angezeigten Ergebnisseite",
       "cut": "Nur die ersten {max} Zeilen dieser Seite werden dargestellt.",
       "skipped": "{count} Zeilen ohne Zahl wurden ausgelassen."
+    },
+    "navigation": {
+      "home": "Start",
+      "account": "Konto",
+      "collections": "Collections",
+      "buckets": "Buckets",
+      "databases": "Datenbanken",
+      "jobs": "Jobs",
+      "users": "Benutzer",
+      "roles": "Rollen",
+      "permissions": "Berechtigungen",
+      "overview": "Übersicht",
+      "server": "Server",
+      "settings": "Einstellungen",
+      "data": "Daten",
+      "aggregate": "Aggregation",
+      "groupData": "Daten",
+      "groupAccess": "Zugriff",
+      "groupServer": "Server"
+    },
+    "serverStatus": {
+      "ok": "Server erreichbar",
+      "partial": "Server erreichbar, einige Angaben fehlen",
+      "down": "Server nicht erreichbar",
+      "connections": "Verbindungen",
+      "uptime": "Läuft seit {time}",
+      "details": "Details zum Serverstatus"
+    },
+    "userAccess": {
+      "heading": "Ihr Zugriff",
+      "collections": "Collections",
+      "canRead": "Lesbar",
+      "canWrite": "Schreibbar",
+      "canAdministrate": "Verwaltbar",
+      "collection": "Collection",
+      "read": "Lesen",
+      "write": "Schreiben",
+      "administrate": "Verwalten",
+      "emptyTitle": "Noch keine Collections",
+      "emptyDescription": "Ihnen wurde noch keine Collection freigegeben. Bitten Sie einen Administrator um Zugriff.",
+      "adminTitle": "Sie sind Administrator",
+      "adminDescription": "Administratoren dürfen jede Collection lesen, schreiben und verwalten."
     }
   }
 }

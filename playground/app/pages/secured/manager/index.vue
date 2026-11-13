@@ -46,7 +46,7 @@ const reasons = computed(() => {
       </div>
     </div>
 
-    <UserAccess v-if="!isAdmin" />
+    <MongocampUserAccess v-if="!isAdmin" />
     <UAlert
       v-else
       color="info"

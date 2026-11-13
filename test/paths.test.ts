@@ -8,6 +8,8 @@ describe('resolvePaths', () => {
     expect(resolvePaths('nope')).toEqual(DEFAULT_PATHS)
     expect(DEFAULT_PATHS.collections).toBe('/secured/admin/collections')
     expect(DEFAULT_PATHS.account).toBe('/secured/account')
+    expect(Object.keys(DEFAULT_PATHS).sort()).toEqual(['account', 'buckets', 'collections', 'databases', 'home', 'jobs', 'overview', 'permissions', 'roles', 'server', 'settings', 'users'])
+    expect(DEFAULT_PATHS.home).toBe('/secured')
   })
 
   it('overrides only the configured keys', () => {

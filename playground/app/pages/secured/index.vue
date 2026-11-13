@@ -147,7 +147,7 @@ async function resetTestData() {
         </div>
       </UCard>
 
-      <UserAccess />
+      <MongocampUserAccess />
     </template>
 
     <!-- Administrators: server dashboard, shortcuts, test data -->

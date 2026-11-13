@@ -17,6 +17,8 @@ All components are auto-imported — no manual import needed once the module is 
 | [`MongocampSettings`](/components/mongocamp-settings) | Read-only server settings: plugins and a searchable, paged configuration table with secrets masked (admins only); `hide*` props toggle its parts |
 | [`MongocampDatabases`](/components/mongocamp-databases) | Read-only table of all databases (size, collection count) |
 | [`MongocampServerInfo`](/components/mongocamp-server-info) | MongoDB version, database load and server capabilities (server 1.9.0) |
+| [`MongocampServerStatus`](/components/mongocamp-server-status) | Compact server status for a sidebar: health dot, versions, connections meter, uptime; auto-refresh |
+| [`MongocampUserAccess`](/components/mongocamp-user-access) | What the signed-in user may do per collection (counts + read/write/administrate table) |
 | [`MongocampVersion`](/components/mongocamp-version) | Server name/version badge, plus the MongoDB server version once signed in |
 | [`MongocampFilterBuilder`](/components/mongocamp-filter-builder) | Visual filter builder: type-aware conditions, match all/any, emits a Lucene query |
 | [`MongocampBulkDelete`](/components/mongocamp-bulk-delete) | Selection bar + confirmation modal for bulk delete (used by Users, Roles, CollectionData) |

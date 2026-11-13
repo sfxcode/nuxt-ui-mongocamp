@@ -1,35 +1,16 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
+// The module's own pages come from `useMongocampNavigation()` (role-aware, translated, built on the `paths` option);
+// the playground only adds its manager page, which the module knows nothing about.
 export function useNavItems() {
-  const { isAdmin, isManager } = useMongocampRoles()
-
-  const baseItems: NavigationMenuItem[] = [
-    { label: 'Home', icon: 'i-lucide-home', to: '/secured' },
-    { label: 'Account', icon: 'i-lucide-user', to: '/secured/account' },
-  ]
-
-  const managerItems: NavigationMenuItem[] = [
-    { type: 'label', label: 'Manager' },
-    { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/secured/manager' },
-  ]
-
-  const adminItems: NavigationMenuItem[] = [
-    { type: 'label', label: 'Admin' },
-    { label: 'Users', icon: 'i-lucide-users', to: '/secured/admin/users' },
-    { label: 'Roles', icon: 'i-lucide-shield', to: '/secured/admin/roles' },
-    { label: 'Permissions', icon: 'i-lucide-key-round', to: '/secured/admin/permissions' },
-    { label: 'Overview', icon: 'i-lucide-gauge', to: '/secured/admin/overview' },
-    { label: 'Collections', icon: 'i-lucide-database', to: '/secured/admin/collections' },
-    { label: 'Jobs', icon: 'i-lucide-clock', to: '/secured/admin/jobs' },
-    { label: 'Databases', icon: 'i-lucide-server', to: '/secured/admin/databases' },
-    { label: 'Server', icon: 'i-lucide-cpu', to: '/secured/admin/server' },
-    { label: 'Settings', icon: 'i-lucide-settings', to: '/secured/admin/settings' },
-  ]
+  const { menu } = useMongocampNavigation()
+  const { canSeeManagement } = useMongocampRoles()
 
   return computed<NavigationMenuItem[][]>(() => {
-    const groups = [baseItems]
-    if (isManager.value) groups.push(managerItems)
-    if (isAdmin.value) groups.push(adminItems)
-    return groups
+    const [main = [], ...admin] = menu.value
+    return [
+      [...main, ...(canSeeManagement.value ? [{ label: 'Manager', icon: 'i-lucide-briefcase', to: '/secured/manager' }] : [])],
+      ...admin,
+    ]
   })
 }

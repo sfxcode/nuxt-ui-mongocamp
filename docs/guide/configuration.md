@@ -121,6 +121,7 @@ export default defineNuxtConfig({
 
 | Key | Default | Used for |
 |---|---|---|
+| `home` | `/secured` | The landing page: first entry of the navigation and of every breadcrumb |
 | `collections` | `/secured/admin/collections` | `<collections>/<name>` (overview) and `<collections>/<name>/data` |
 | `buckets` | `/secured/admin/buckets` | `<buckets>/<bucket>` (file browser) |
 | `users` | `/secured/admin/users` | The users list |
@@ -128,6 +129,10 @@ export default defineNuxtConfig({
 | `jobs` | `/secured/admin/jobs` | The jobs list |
 | `settings` | `/secured/admin/settings` | The server settings page |
 | `account` | `/secured/account` | The signed-in user's account page |
+| `permissions` | `/secured/admin/permissions` | The permission matrix page |
+| `overview` | `/secured/admin/overview` | The server overview page |
+| `databases` | `/secured/admin/databases` | The databases page |
+| `server` | `/secured/admin/server` | The server status page |
 
 A key you leave out keeps its default, and so does an empty value. A trailing slash is removed.
 
@@ -140,8 +145,9 @@ The `*Path` props are still there and win over `paths`, so one component can poi
 | `MongocampServerOverview` | `infoPath`, `dataPath` → `collections`; `jobsPath` → `jobs` |
 | `MongocampDashboard` | `collectionsPath` → `collections`; `usersPath` → `users`; `rolesPath` → `roles` |
 | `MongocampRoles`, `MongocampPermissionMatrix` | `grantsPath` → `roles` |
+| `MongocampServerStatus` | `detailsPath` → `server` |
 | `MongocampCommandPalette` | `collectionPath` → `collections`; `bucketPath` → `buckets`; `usersPath` → `users`; `rolePath` → `roles`; `jobsPath` → `jobs`; `settingsPath` → `settings`; `accountPath` → `account` |
 
 `MongocampCollectionData`'s `aggregatePath` has no fallback: without it the table shows no link to an aggregation page.
 
-`paths` only tells the components where to link. It creates no pages and protects nothing — the route patterns of the [route protection](/guide/route-protection) are separate options. Your own navigation can read the same values with [`useMongocampPaths()`](/composables/use-mongocamp-paths).
+`paths` only tells the components where to link. It creates no pages and protects nothing — the route patterns of the [route protection](/guide/route-protection) are separate options. `home`, `permissions`, `overview`, `databases` and `server` are used by [`useMongocampNavigation()`](/composables/use-mongocamp-navigation) and [`useMongocampBreadcrumbs()`](/composables/use-mongocamp-breadcrumbs). Your own links can read all values with [`useMongocampPaths()`](/composables/use-mongocamp-paths).

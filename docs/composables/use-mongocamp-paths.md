@@ -5,6 +5,7 @@ Returns the base routes of your app's MongoCamp pages — the module option [`pa
 ```ts
 const paths = useMongocampPaths()
 // {
+//   home: '/secured',
 //   collections: '/secured/admin/collections',
 //   buckets: '/secured/admin/buckets',
 //   users: '/secured/admin/users',
@@ -12,12 +13,16 @@ const paths = useMongocampPaths()
 //   jobs: '/secured/admin/jobs',
 //   settings: '/secured/admin/settings',
 //   account: '/secured/account',
+//   permissions: '/secured/admin/permissions',
+//   overview: '/secured/admin/overview',
+//   databases: '/secured/admin/databases',
+//   server: '/secured/admin/server',
 // }
 ```
 
 It is a plain object, not a ref: the option is fixed when the app is built.
 
-The components use it for every link whose `*Path` prop you did not set. Use it for your own navigation too, and the sidebar, the dashboard cards and the command palette always agree:
+The components use it for every link whose `*Path` prop you did not set. For a ready-made, role-aware menu of these pages see [`useMongocampNavigation`](/composables/use-mongocamp-navigation); for single links of your own, read the values directly:
 
 ```vue
 <script setup lang="ts">

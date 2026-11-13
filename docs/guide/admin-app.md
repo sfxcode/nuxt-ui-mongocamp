@@ -18,6 +18,8 @@ The module owns no routes or pages: you decide where each component lives. Where
 | Server status | `MongocampServerInfo` | — |
 | Jobs, Databases, Settings, Account | `MongocampJobs`, `MongocampDatabases`, `MongocampSettings`, `MongocampAccount` | — |
 
+The shell around the pages is yours, but its data is ready: [`useMongocampNavigation()`](/composables/use-mongocamp-navigation) for the sidebar menu, [`useMongocampBreadcrumbs()`](/composables/use-mongocamp-breadcrumbs) for the page header, [`useMongocampCollectionNames()`](/composables/use-mongocamp-collection-names) for a collection list, [`MongocampServerStatus`](/components/mongocamp-server-status) for the foot of the sidebar and [`MongocampUserAccess`](/components/mongocamp-user-access) as the landing page of users who are not administrators.
+
 Add one [`MongocampCommandPalette`](/components/mongocamp-command-palette) to the layout (⌘K) and the pages are reachable from anywhere.
 
 ## The glue the playground keeps

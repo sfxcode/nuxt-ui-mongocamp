@@ -2,6 +2,7 @@
 // Admin shell for collection and bucket pages: the default layout's frame plus a collection sidebar.
 const { isLoggedIn } = useMongocampAuth()
 const items = useNavItems()
+const breadcrumbs = useMongocampBreadcrumbs()
 </script>
 
 <template>
@@ -15,6 +16,7 @@ const items = useNavItems()
         :items="items"
         class="w-full"
       />
+      <MongocampServerStatus class="mt-4 border-t border-default px-2.5 pt-3" />
     </nav>
     <aside class="sticky top-16 hidden h-[calc(100vh-4rem)] w-56 shrink-0 overflow-y-auto border-r border-(--ui-border) p-3 xl:block">
       <CollectionSidebar />
@@ -33,6 +35,11 @@ const items = useNavItems()
         </details>
       </UContainer>
       <UContainer>
+        <UBreadcrumb
+          v-if="isLoggedIn"
+          :items="breadcrumbs"
+          class="pt-3"
+        />
         <slot />
       </UContainer>
     </div>
