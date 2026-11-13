@@ -111,6 +111,7 @@ export default defineConfig({
             { text: 'useMongocampQueryBuilder', link: '/composables/use-mongocamp-query-builder' },
             { text: 'useMongocampExtendedJson', link: '/composables/use-mongocamp-extended-json' },
             { text: 'useMongocampRoles', link: '/composables/use-mongocamp-roles' },
+            { text: 'useMongocampCollectionNames', link: '/composables/use-mongocamp-collection-names' },
             { text: 'useMongocampPaths', link: '/composables/use-mongocamp-paths' },
             { text: 'useMongocampProxyMode', link: '/composables/use-mongocamp-proxy-mode' },
             { text: 'useMongocampPermissions', link: '/composables/use-mongocamp-permissions' },

@@ -4,7 +4,7 @@ import { shortenLabel, topNWithOther } from '../utils/chartData'
 import { computed, h, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Column } from '@tanstack/vue-table'
-import { useI18n, useMongocampClientApi, useMongocampBucket, useMongocampRoles, useToast, useMongocampPaths } from '#imports'
+import { useI18n, useMongocampClientApi, useMongocampBucket, useMongocampCollectionNames, useMongocampRoles, useToast, useMongocampPaths } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { isProtectedCollection } from '../utils/collectionProtection'
 
@@ -37,6 +37,7 @@ interface CollectionRow {
 
 const { t } = useI18n()
 const paths = useMongocampPaths()
+const sharedNames = useMongocampCollectionNames()
 const { collectionApi } = useMongocampClientApi()
 const { isBucketCollection, bucketNameFor, bucketActionInFlight, clearBucket, deleteBucket } = useMongocampBucket()
 const { clearCollection, deleteCollection } = useMongocampAdmin()
@@ -70,6 +71,8 @@ async function fetchCollections() {
   try {
     // two requests in all — the numbers of every collection come in one answer (server 1.7.0), not one request each
     const [names, infos] = await Promise.all([collectionApi.listCollections(), collectionApi.listCollectionInformation({})])
+    // the list every sidebar / panel shares: current again after each reload here (create, drop, rename, copy), no extra request
+    sharedNames.set(names)
     const byName = new Map(infos.map(info => [info.name, info]))
     const rows = names
       .filter(name => !name.startsWith('mc'))

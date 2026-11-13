@@ -6,4 +6,5 @@
 
 export { formatBytes } from './utils/formatBytes'
 export { connectionUsage, formatCount, formatUptime } from './utils/serverInfo'
+export { groupCollectionNames } from './utils/collectionNames'
 export { bucketNameOf, isBucketMemberCollection, isProtectedCollection } from './utils/collectionProtection'

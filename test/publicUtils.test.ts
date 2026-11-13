@@ -14,6 +14,7 @@ describe('@sfxcode/nuxt-ui-mongocamp/utils', () => {
       'formatBytes',
       'formatCount',
       'formatUptime',
+      'groupCollectionNames',
       'isBucketMemberCollection',
       'isProtectedCollection',
     ])

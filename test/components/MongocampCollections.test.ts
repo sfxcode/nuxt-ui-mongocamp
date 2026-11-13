@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue'
 import { DOMWrapper, enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { UApp } from '#components'
+import { useMongocampCollectionNames } from '#imports'
 import MongocampCollections from '../../src/runtime/components/MongocampCollections.vue'
 
 // UModal's transitions are timer-based and its content is teleported to body — see
@@ -107,6 +108,18 @@ describe('MongocampCollections — chart', () => {
     expect(hidden.findAll('button').filter(button => button.find('[class*="refresh-cw"]').exists())).toHaveLength(reloadButtons - 1)
     expect(hidden.find('[data-test="page-button"]').exists()).toBe(true)
     expect(typeof exposed.current?.refresh).toBe('function')
+  })
+
+  it('puts the list it loaded into the shared collection names — a sidebar needs no request of its own', async () => {
+    const shared = useMongocampCollectionNames()
+    shared.invalidate()
+    await mountSuspended(defineComponent({ setup: () => () => h(UApp, () => h(MongocampCollections)) }), { route: '/' })
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    expect(shared.status.value).toBe('ready')
+    expect(shared.collections.value).toEqual(['orders'])
+    expect(shared.buckets.value).toEqual(['photos'])
+    expect(shared.system.value).toEqual(['mc_users'])
   })
 
   it('hideHeading removes the heading and keeps the toolbar', async () => {

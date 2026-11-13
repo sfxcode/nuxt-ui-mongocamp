@@ -32,19 +32,19 @@ See [`useMongocampSystem`](/composables/use-mongocamp-system) for the exact shap
 |---|---|
 | `isBucketMemberCollection(name)` | `true` for `<bucket>.files` and `<bucket>.chunks`, the two halves of a GridFS bucket |
 | `bucketNameOf(name)` | `'images'` for `images.files` / `images.chunks`; `null` for any other collection |
+| `groupCollectionNames(names)` | `{ collections, buckets, system }` — ordinary collections, bucket names and `mc_*` collections, each sorted and without duplicates |
 | `isProtectedCollection(name)` | `true` for MongoCamp's own `mc_*` collections and for bucket halves — the collections the module never offers to clear, drop, copy or rename |
 
 Splitting a collection list the way the playground's sidebar does:
 
 ```ts
-import { bucketNameOf, isBucketMemberCollection } from '@sfxcode/nuxt-ui-mongocamp/utils'
+import { groupCollectionNames } from '@sfxcode/nuxt-ui-mongocamp/utils'
 
 const names = await useMongocampAdmin().listCollections()
-
-const buckets = [...new Set(names.map(bucketNameOf).filter(name => name !== null))]
-const system = names.filter(name => name.startsWith('mc_'))
-const collections = names.filter(name => !name.startsWith('mc_') && !isBucketMemberCollection(name))
+const { collections, buckets, system } = groupCollectionNames(names)
 ```
+
+For a list that several components share, [`useMongocampCollectionNames`](/composables/use-mongocamp-collection-names) loads it once and returns the same three groups.
 
 ## What is not exported
 
