@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.5.5
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.4...v1.5.5)
+
+### 🚀 Enhancements
+
+- **pagination:** Implement client-side pagination for users, roles, and jobs tables ([f1eae86](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/f1eae86))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.4
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.3...v1.5.4)
