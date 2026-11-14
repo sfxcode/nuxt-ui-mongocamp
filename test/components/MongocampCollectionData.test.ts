@@ -665,6 +665,54 @@ describe('MongocampCollectionData', () => {
     })
   })
 
+  describe('sticky actions column', () => {
+    async function mountData(props: Record<string, unknown> = {}) {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice' }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers', ...props },
+      })
+      await wait()
+      return component
+    }
+
+    it('pins the actions column to the right edge by default', async () => {
+      const component = await mountData()
+      const headers = component.findAll('th')
+      expect(headers[headers.length - 1]!.classes()).toEqual(expect.arrayContaining(['sticky', 'right-0']))
+      const cells = component.find('tbody tr').findAll('td')
+      expect(cells[cells.length - 1]!.classes()).toEqual(expect.arrayContaining(['sticky', 'right-0']))
+    })
+
+    it('lets it scroll with the table when stickyActions is false', async () => {
+      const component = await mountData({ stickyActions: false })
+      const headers = component.findAll('th')
+      expect(headers[headers.length - 1]!.classes()).not.toContain('sticky')
+      const cells = component.find('tbody tr').findAll('td')
+      expect(cells[cells.length - 1]!.classes()).not.toContain('sticky')
+    })
+  })
+
+  describe('sticky id column', () => {
+    async function firstDataHeader(props: Record<string, unknown> = {}) {
+      mockListDocumentsRaw.mockResolvedValue(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice' }], '1'))
+      const component = await mountSuspended(withUApp(MongocampCollectionData), {
+        route: '/',
+        props: { collectionName: 'customers', ...props },
+      })
+      await wait()
+      return component.findAll('th').find(th => th.text() === '_id')!
+    }
+
+    it('scrolls with the table by default', async () => {
+      expect((await firstDataHeader()).classes()).not.toContain('sticky')
+    })
+
+    it('is pinned to the left edge with stickyId', async () => {
+      expect((await firstDataHeader({ stickyId: true })).classes()).toEqual(expect.arrayContaining(['sticky', 'left-0']))
+    })
+  })
+
   describe('remembered table state', () => {
     async function mountData(props: Record<string, unknown> = {}) {
       const component = await mountSuspended(withUApp(MongocampCollectionData), {

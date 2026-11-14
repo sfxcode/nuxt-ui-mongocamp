@@ -47,8 +47,14 @@ const props = withDefaults(defineProps<{
   stateKey?: string
   // hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header
   hideRefresh?: boolean
+  // keep the row actions column in view at the right edge while the table scrolls sideways
+  stickyActions?: boolean
+  // keep the first data column (usually `_id`) in view at the left edge while the table scrolls sideways
+  stickyId?: boolean
 }>(), {
   hideRefresh: false,
+  stickyActions: true,
+  stickyId: false,
   aggregatePath: '',
   persistState: true,
   stateKey: '',
@@ -417,6 +423,19 @@ function columnHeader(column: Column<Row>, key: string) {
 }
 
 const columns = ref<TableColumn<Row>[]>([])
+// columns are pinned here, not where they are built, so the props stay reactive
+const STICKY_ACTIONS = 'sticky right-0 z-10 bg-default'
+const STICKY_ID = 'sticky left-0 z-10 bg-default'
+const tableColumns = computed<TableColumn<Row>[]>(() => {
+  if (!props.stickyActions && !props.stickyId) return columns.value
+  // the first data column: the select and actions columns have an `id`, data columns an `accessorKey`
+  const firstData = columns.value.find(column => 'accessorKey' in column)
+  return columns.value.map((column) => {
+    if (props.stickyActions && column.id === 'actions') return { ...column, meta: { class: { th: STICKY_ACTIONS, td: STICKY_ACTIONS } } }
+    if (props.stickyId && column === firstData) return { ...column, meta: { class: { th: STICKY_ID, td: STICKY_ID } } }
+    return column
+  })
+})
 const documents = ref<Row[]>([])
 const loading = ref(false)
 const filterText = ref('')
@@ -841,12 +860,10 @@ async function fetchDocuments() {
         ...keys.filter(k => k !== '_id' && k !== 'metaData').sort(),
         ...keys.filter(k => k === 'metaData'),
       ]
-      columns.value = orderedKeys.map((key, index) => ({
+      columns.value = orderedKeys.map(key => ({
         accessorKey: key,
         header: ({ column }: { column: Column<Row> }) => columnHeader(column, key),
         cell: makeCell(key, 'string'),
-        // keep the first column (usually _id) pinned so rows stay identifiable when the table scrolls sideways
-        ...(index === 0 ? { meta: { class: { th: 'sticky left-0 z-10 bg-default', td: 'sticky left-0 z-10 bg-default' } } } : {}),
       }))
       filterableColumns.value = orderedKeys.filter(k => k !== '_id' && k !== 'metaData' && typeof firstRow[k] === 'string')
       // `_id` only gets the exact operators (the server matches `_id:"<oid>"`, but
@@ -1250,7 +1267,7 @@ defineExpose({ refresh: init })
       :get-row-id="rowId"
       :sorting-options="{ manualSorting: true }"
       :data="documents"
-      :columns="columns"
+      :columns="tableColumns"
       :loading="loading"
     >
       <template #empty>

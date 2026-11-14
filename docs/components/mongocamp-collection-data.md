@@ -20,6 +20,8 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 | `persistState` | `boolean` | Remember page size, sort and hidden columns per collection in `localStorage` (see [`useMongocampPersistedState`](/composables/use-mongocamp-persisted-state)). Default `true`; the quick search and filters are **not** remembered. |
 | `stateKey` | `string` | Extra key part so two tables over the same collection keep separate state. |
 | `hideRefresh` | `boolean` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. Default `false`. |
+| `stickyActions` | `boolean` | Keep the row actions column (view / edit / delete) fixed at the right edge while the table scrolls sideways. Default `true`; `false` lets it scroll with the other columns. |
+| `stickyId` | `boolean` | Keep the first data column (usually `_id`) fixed at the left edge while the table scrolls sideways. Default `false`. |
 
 ## In a page with its own header
 
