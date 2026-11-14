@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.5.4
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.3...v1.5.4)
+
+### 🚀 Enhancements
+
+- **component:** Add sticky actions and id columns for better table usability ([c150886](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c150886))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.3
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.2...v1.5.3)
