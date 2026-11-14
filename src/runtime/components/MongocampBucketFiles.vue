@@ -197,13 +197,15 @@ function makeMetadataCell() {
     const metadata = row.original.metadata ?? {}
     const keys = Object.keys(metadata)
     if (keys.length === 0) return h('span', { class: 'text-dimmed' }, '—')
+    const label = keys.length === 1 ? t('nuxtUiMongocamp.bucketFiles.keyCount') : t('nuxtUiMongocamp.bucketFiles.keysCount', { count: keys.length })
     return withTooltip(t('nuxtUiMongocamp.bucketFiles.viewMetadataTooltip'), h(UButton, {
       'icon': 'i-lucide-braces',
       'color': 'neutral',
       'variant': 'ghost',
       'size': 'xs',
-      'label': keys.length === 1 ? t('nuxtUiMongocamp.bucketFiles.keyCount') : t('nuxtUiMongocamp.bucketFiles.keysCount', { count: keys.length }),
-      'aria-label': t('nuxtUiMongocamp.bucketFiles.viewMetadataTooltip'),
+      label,
+      // Starts with the visible text, so voice control ("click 1 key") still finds it
+      'aria-label': `${label}: ${t('nuxtUiMongocamp.bucketFiles.viewMetadataTooltip')}`,
       'onClick': () => openMetadataDetail(metadata),
     }))
   }

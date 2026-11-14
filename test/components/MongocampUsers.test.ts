@@ -125,6 +125,33 @@ describe('MongocampUsers', () => {
     expect(component.text()).toContain('bob@example.com')
   })
 
+  describe('paging', () => {
+    // u01 … u30, listed in reverse so the table's sort has something to do
+    const many = Array.from({ length: 30 }, (_, i) => ({ user: `u${String(30 - i).padStart(2, '0')}@example.com`, isAdmin: false, roles: [] }))
+    const shownUsers = (component: { findAll: (s: string) => { text: () => string }[] }) =>
+      component.findAll('tbody tr').map(tr => tr.text().match(/u\d\d@example\.com/)?.[0]).filter(Boolean)
+
+    it('shows 25 users a page with a pager, and the rest on the next page', async () => {
+      mockListUsers.mockResolvedValue(many)
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+
+      expect(shownUsers(component)).toHaveLength(25)
+      const pageTwo = component.findAll('button').find(b => b.text() === '2')
+      expect(pageTwo).toBeDefined()
+      await pageTwo!.trigger('click')
+      await flushPromises()
+      expect(shownUsers(component)).toHaveLength(5)
+    })
+
+    it('shows no pager for a list that fits on one page', async () => {
+      mockListUsers.mockResolvedValue(many.slice(0, 3))
+      const component = await mountSuspended(withUApp(MongocampUsers), { route: '/' })
+      await flushPromises()
+      expect(component.findAll('button').some(b => b.text() === '2')).toBe(false)
+    })
+  })
+
   describe('deleting your own account', () => {
     const users = [
       { user: 'alice@example.com', isAdmin: true, roles: [] }, // the signed-in user, see useMongocampStorage above

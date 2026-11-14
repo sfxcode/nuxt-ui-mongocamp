@@ -115,7 +115,6 @@ defineExpose({ refresh: quietRefresh })
     :to="linkTarget || undefined"
     class="flex flex-col gap-1.5 rounded-md text-xs"
     :class="linkTarget ? 'hover:bg-elevated' : ''"
-    :aria-label="linkTarget ? t('nuxtUiMongocamp.serverStatus.details') : undefined"
     data-test="server-status"
     :data-health="health"
   >
@@ -166,5 +165,10 @@ defineExpose({ refresh: quietRefresh })
     >
       {{ t('nuxtUiMongocamp.serverStatus.uptime', { time: formatUptime(uptimeSeconds) }) }}
     </div>
+    <!-- The visible text names the link (an aria-label would hide it from voice control); this says where it goes -->
+    <span
+      v-if="linkTarget"
+      class="sr-only"
+    >{{ t('nuxtUiMongocamp.serverStatus.details') }}</span>
   </component>
 </template>

@@ -51,8 +51,14 @@ const props = withDefaults(defineProps<{
   stickyActions?: boolean
   // keep the first data column (usually `_id`) in view at the left edge while the table scrolls sideways
   stickyId?: boolean
+  // the page sizes offered in the size select (positive whole numbers; anything else is dropped)
+  pageSizes?: number[]
+  // the size a collection opens with until its own size is remembered; one of `pageSizes`, else the second offered
+  defaultPageSize?: number
 }>(), {
   hideRefresh: false,
+  pageSizes: () => [10, 20, 50, 100],
+  defaultPageSize: 20,
   stickyActions: true,
   stickyId: false,
   aggregatePath: '',
@@ -71,7 +77,8 @@ const { documentApi } = useMongocampClientApi()
 const { pagination, total } = useMongocampCollection()
 const { state: persisted } = useMongocampPersistedState(
   () => `collectionData:${props.collectionName}${props.stateKey ? `:${props.stateKey}` : ''}`,
-  { pageSize: pagination.value.pageSize, sort: [] as SortEntry[], hidden: [] as string[] },
+  // pageSize 0 = nothing remembered yet, so the collection opens with `defaultPageSize`
+  { pageSize: 0, sort: [] as SortEntry[], hidden: [] as string[] },
   { storage: props.persistState ? undefined : null },
 )
 const { isBucketCollection, fileIdForRow, downloadingFileIds, uploading, downloadFile, uploadFile } = useMongocampBucket()
@@ -455,7 +462,14 @@ const filterFields = computed(() => {
 })
 const sorting = ref<SortEntry[]>([])
 const columnVisibility = ref<Record<string, boolean>>({})
-const PAGE_SIZES = [10, 20, 50, 100]
+// A host may offer its own sizes; a bad list falls back to the built-in one rather than an empty select
+const pageSizeOptions = computed(() => {
+  const sizes = [...new Set(props.pageSizes.filter(size => Number.isInteger(size) && size > 0))].sort((a, b) => a - b)
+  return sizes.length > 0 ? sizes : [10, 20, 50, 100]
+})
+const startPageSize = computed(() => pageSizeOptions.value.includes(props.defaultPageSize)
+  ? props.defaultPageSize
+  : pageSizeOptions.value[Math.min(1, pageSizeOptions.value.length - 1)]!)
 const isInitializing = ref(false)
 const detailOpen = ref(false)
 // exactly two ticked rows on screen can be compared side by side
@@ -1011,7 +1025,7 @@ async function init() {
   distinctCache = new Map()
   isInitializing.value = true
   // a remembered state is only trusted in its own shape: a hand-edited or stale entry must not break the table
-  const rememberedSize = PAGE_SIZES.includes(persisted.value.pageSize) ? persisted.value.pageSize : PAGE_SIZES[1]!
+  const rememberedSize = pageSizeOptions.value.includes(persisted.value.pageSize) ? persisted.value.pageSize : startPageSize.value
   pagination.value.pageSize = rememberedSize
   sorting.value = (Array.isArray(persisted.value.sort) ? persisted.value.sort : [])
     .filter(e => typeof e?.id === 'string' && e.id !== '' && typeof e.desc === 'boolean')
@@ -1175,7 +1189,7 @@ defineExpose({ refresh: init })
         </UDropdownMenu>
         <USelect
           v-model="pagination.pageSize"
-          :items="PAGE_SIZES"
+          :items="pageSizeOptions"
           size="sm"
           class="w-20"
           :aria-label="t('nuxtUiMongocamp.collectionData.pageSizeLabel')"

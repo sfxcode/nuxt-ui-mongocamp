@@ -112,6 +112,46 @@ describe('MongocampRoleGrants', () => {
     expect(component.text()).toContain('No grants yet')
   })
 
+  it('says a role does not exist instead of offering an empty, editable grant list', async () => {
+    mockListRoles.mockResolvedValueOnce([{ name: 'other', isAdmin: false, collectionGrants: [] }])
+
+    const component = await mountSuspended(withUApp(MongocampRoleGrants), { route: '/', props: { roleName: 'gone' } })
+    await flushPromises()
+
+    expect(component.find('[data-test="role-not-found"]').text()).toContain('There is no role gone')
+    expect(component.find('table').exists()).toBe(false)
+    expect(component.findAll('button').some(b => b.text() === 'Add Grant')).toBe(false)
+    expect(component.text()).not.toContain('No grants yet')
+  })
+
+  describe('confirms saves that have no dialog of their own', () => {
+    const usersGrant = { name: 'users', read: true, write: false, administrate: false, grantType: 'COLLECTION' }
+
+    it('a removed grant', async () => {
+      mockListRoles.mockResolvedValue([{ name: 'support', isAdmin: false, collectionGrants: [{ ...usersGrant }] }])
+      mockUpdateRole.mockResolvedValueOnce(undefined)
+      const component = await mountSuspended(withUApp(MongocampRoleGrants), { route: '/', props: { roleName: 'support' } })
+      await flushPromises()
+
+      await component.findAll('[aria-label="Remove grant"]')[0]!.trigger('click')
+      await flushPromises()
+      await vi.waitFor(() => expect(modal().text()).toContain('support no longer has a grant for users.'))
+    })
+
+    it('read grants added for every collection without one', async () => {
+      mockListRoles.mockResolvedValue([{ name: 'support', isAdmin: false, collectionGrants: [{ ...usersGrant }] }])
+      mockListCollections.mockResolvedValue(['users', 'orders', 'carts', 'mc_users'])
+      mockUpdateRole.mockResolvedValueOnce(undefined)
+      const component = await mountSuspended(withUApp(MongocampRoleGrants), { route: '/', props: { roleName: 'support' } })
+      await flushPromises()
+
+      await component.findAll('button').find(b => b.text() === 'Add all read-only')!.trigger('click')
+      await flushPromises()
+      expect(mockUpdateRole.mock.calls[0]![2].map((g: { name: string }) => g.name)).toEqual(['users', 'orders', 'carts'])
+      await vi.waitFor(() => expect(modal().text()).toContain('support can now read 2 more collections.'))
+    })
+  })
+
   describe('when saving fails', () => {
     const fetchError = Object.assign(new Error('The request failed'), { name: 'FetchError' })
     const usersGrant = { name: 'users', read: true, write: false, administrate: false, grantType: 'COLLECTION' }

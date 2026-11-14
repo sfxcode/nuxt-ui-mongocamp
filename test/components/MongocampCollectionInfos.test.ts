@@ -80,6 +80,24 @@ const sample = [
   { _id: 'a4', name: 'Di', status: 'active' },
 ]
 
+describe('MongocampCollectionInfos — page contract', () => {
+  it('exposes refresh(), which asks for the numbers, the sample and the indexes again', async () => {
+    const exposed: { current: { refresh?: () => Promise<unknown> } | null } = { current: null }
+    await mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(MongocampCollectionInfos, { collectionName: 'people', ref: (el: unknown) => { exposed.current = el as typeof exposed.current } })),
+    }), { route: '/' })
+    await wait()
+    const before = { info: mockGetCollectionInformation.mock.calls.length, docs: mockListDocuments.mock.calls.length, indexes: mockListIndices.mock.calls.length }
+
+    await exposed.current!.refresh!()
+    await wait()
+
+    expect(mockGetCollectionInformation.mock.calls.length).toBeGreaterThan(before.info)
+    expect(mockListDocuments.mock.calls.length).toBe(before.docs + 1)
+    expect(mockListIndices.mock.calls.length).toBeGreaterThan(before.indexes)
+  })
+})
+
 describe('MongocampCollectionInfos — field statistics', () => {
   it('offers the statistics on demand and does not sample anything until asked', async () => {
     const component = await mountInfos()

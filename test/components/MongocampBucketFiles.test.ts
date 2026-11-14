@@ -60,6 +60,17 @@ async function openDistribution(component: Awaited<ReturnType<typeof mountFiles>
   await wait(100)
 }
 
+describe('metadata cell', () => {
+  it('names the button by its visible key count first, then what it opens', async () => {
+    const file = { id: '6af3', filename: 'red.png', length: 143, uploadDate: '2026-11-10T11:15:44Z', metadata: { contentType: 'image/png' } }
+    mockListFilesRaw.mockResolvedValue({ raw: { headers: { get: () => '1' } }, value: () => Promise.resolve([file]) })
+    const component = await mountFiles()
+
+    const button = component.findAll('tbody button').find(b => b.text() === '1 key')
+    expect(button?.attributes('aria-label')).toBe('1 key: View metadata')
+  })
+})
+
 describe('bucket distribution', () => {
   it('hideRefresh removes the reload button; the toolbar slot and refresh() are there for the page', async () => {
     const exposed: { current: { refresh?: () => unknown } | null } = { current: null }

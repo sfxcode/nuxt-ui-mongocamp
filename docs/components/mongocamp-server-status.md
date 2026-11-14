@@ -36,6 +36,8 @@ The component brings no padding or border — set them with `class`.
 
 The health is always there as text too (visually hidden next to the dot), so it does not depend on colour.
 
+As a link, the block is named by what it shows (so voice control can use the visible server name), followed by visually hidden "Server status details".
+
 What appears depends on who is looking:
 
 | Viewer | Shown | Requests |

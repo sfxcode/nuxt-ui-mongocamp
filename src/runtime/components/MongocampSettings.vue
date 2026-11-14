@@ -127,12 +127,15 @@ const pluginGroups = computed(() => [
 ])
 
 fetchSettings()
+
+// Same page contract as the list components: a page can put the reload in its own header
+defineExpose({ refresh: fetchSettings })
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
     <div
-      v-if="!hideHeading || (isAdmin && !hideRefresh)"
+      v-if="!hideHeading || (isAdmin && !hideRefresh) || $slots.toolbar"
       class="flex items-center justify-between gap-4"
     >
       <h2
@@ -155,6 +158,7 @@ fetchSettings()
           @click="fetchSettings"
         />
       </UTooltip>
+      <slot name="toolbar" />
     </div>
 
     <UAlert
@@ -267,11 +271,15 @@ fetchSettings()
         data-test="grant-hint"
       />
 
+      <!-- Long values make it scroll sideways: focusable and named so a keyboard can scroll it too -->
       <UTable
         v-if="!hideConfigurations"
         :data="pageRows"
         :columns="columns"
         :loading="loading"
+        tabindex="0"
+        role="region"
+        :aria-label="t('nuxtUiMongocamp.settings.configurationsLabel')"
       >
         <template #empty>
           <MongocampEmptyState :title="t('nuxtUiMongocamp.settings.empty')" />

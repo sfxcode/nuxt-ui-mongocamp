@@ -7,6 +7,7 @@ import { useI18n, useMongocampError, useMongocampPaths } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
+import { createListPagination } from '../utils/listPagination'
 import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 const props = defineProps<{
@@ -30,6 +31,7 @@ const roles = ref<Role[]>([])
 const loading = ref(false)
 const filterText = ref('')
 const sorting = ref<{ id: string, desc: boolean }[]>([])
+const { pagination, options: paginationOptions, page, paged, reset: resetPage, pageSize } = createListPagination(() => roles.value.length)
 let filterTimer: ReturnType<typeof setTimeout> | undefined
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -130,7 +132,10 @@ async function fetchRoles() {
 
 function onFilterInput() {
   clearTimeout(filterTimer)
-  filterTimer = setTimeout(() => fetchRoles(), 300)
+  filterTimer = setTimeout(() => {
+    resetPage()
+    fetchRoles()
+  }, 300)
 }
 
 async function handleAddRole() {
@@ -271,7 +276,7 @@ const columns = computed<TableColumn<Role>[]>(() => [
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.isAdmin ? t('nuxtUiMongocamp.common.admin') : t('nuxtUiMongocamp.common.standard'),
-        color: row.original.isAdmin ? 'error' : 'neutral',
+        color: row.original.isAdmin ? 'primary' : 'neutral',
         variant: 'subtle',
       }),
   },
@@ -405,6 +410,8 @@ defineExpose({ refresh: fetchRoles })
     <UTable
       v-model:sorting="sorting"
       v-model:row-selection="rowSelection"
+      v-model:pagination="pagination"
+      :pagination-options="paginationOptions"
       :get-row-id="(row: Role) => row.name"
       :data="roles"
       :columns="columns"
@@ -414,6 +421,16 @@ defineExpose({ refresh: fetchRoles })
         <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.roles')" />
       </template>
     </UTable>
+    <div
+      v-if="paged"
+      class="flex justify-end"
+    >
+      <UPagination
+        v-model:page="page"
+        :total="roles.length"
+        :items-per-page="pageSize"
+      />
+    </div>
 
     <!-- Add Role Modal -->
     <UModal
@@ -533,7 +550,7 @@ defineExpose({ refresh: fetchRoles })
           <div class="flex items-center gap-2">
             <UBadge
               :label="detail.isAdmin ? t('nuxtUiMongocamp.common.admin') : t('nuxtUiMongocamp.common.standard')"
-              :color="detail.isAdmin ? 'error' : 'neutral'"
+              :color="detail.isAdmin ? 'primary' : 'neutral'"
               variant="subtle"
             />
           </div>

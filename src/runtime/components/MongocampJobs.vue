@@ -6,6 +6,7 @@ import type { JobConfig, JobInformation } from '@sfxcode/nuxt-mongocamp-server'
 import { useI18n, useMongocampError, useMongocampJobs, useToast } from '#imports'
 import { useMongocampAutoRefresh } from '../composables/useMongocampAutoRefresh'
 import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
+import { createListPagination } from '../utils/listPagination'
 
 const props = withDefaults(defineProps<{
   // reload the list every N seconds (at least 1; 0 = off). Pauses while the tab is hidden and slows down after failures.
@@ -32,6 +33,7 @@ const toast = useToast()
 const jobs = ref<JobInformation[]>([])
 const loading = ref(false)
 const sorting = ref<{ id: string, desc: boolean }[]>([])
+const { pagination, options: paginationOptions, page, paged, pageSize } = createListPagination(() => jobs.value.length)
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
@@ -400,6 +402,8 @@ defineExpose({ refresh: fetchJobs })
 
     <UTable
       v-model:sorting="sorting"
+      v-model:pagination="pagination"
+      :pagination-options="paginationOptions"
       :data="jobs"
       :columns="columns"
       :loading="loading"
@@ -408,6 +412,16 @@ defineExpose({ refresh: fetchJobs })
         <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.jobs')" />
       </template>
     </UTable>
+    <div
+      v-if="paged"
+      class="flex justify-end"
+    >
+      <UPagination
+        v-model:page="page"
+        :total="jobs.length"
+        :items-per-page="pageSize"
+      />
+    </div>
 
     <!-- Add Job Modal -->
     <UModal

@@ -19,7 +19,7 @@
       "adminOnly": "This area is for administrators only."
     },
     "login": {
-      "heading": "Mongocamp Login",
+      "heading": "MongoCamp Login",
       "email": "Email",
       "password": "Password",
       "submit": "Login",
@@ -103,7 +103,13 @@
       "columnAdmin": "Admin",
       "editGrantTooltip": "Edit grant",
       "removeGrantTooltip": "Remove grant",
-      "errorSave": "Failed to save grants"
+      "errorSave": "Failed to save grants",
+      "notFoundTitle": "There is no role {roleName}",
+      "notFoundText": "It may have been renamed or deleted. Pick it again from the roles list.",
+      "removedTitle": "Grant removed",
+      "removedDescription": "{roleName} no longer has a grant for {name}.",
+      "addedAllReadTitle": "Read grants added",
+      "addedAllReadDescription": "No collection was added to {roleName}. | {roleName} can now read one more collection. | {roleName} can now read {count} more collections."
     },
     "collections": {
       "heading": "Collections",
@@ -355,7 +361,8 @@
       "restartNeeded": "needs restart",
       "empty": "No settings found",
       "grantHintTitle": "A missing grant is answered with 401",
-      "grantHint": "AUTH_GRANT_DENIED_STATUS is 401 (the default). The generated client treats a 401 as a dead session, so this module turns that answer into a 403 itself and nobody is logged out. Set AUTH_GRANT_DENIED_STATUS to 403 on the server to make 403 the server's own answer."
+      "grantHint": "AUTH_GRANT_DENIED_STATUS is 401 (the default). The generated client treats a 401 as a dead session, so this module turns that answer into a 403 itself and nobody is logged out. Set AUTH_GRANT_DENIED_STATUS to 403 on the server to make 403 the server's own answer.",
+      "configurationsLabel": "Server configuration"
     },
     "databases": {
       "heading": "Databases",

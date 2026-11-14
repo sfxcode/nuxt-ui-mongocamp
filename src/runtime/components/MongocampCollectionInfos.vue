@@ -303,6 +303,10 @@ const chartFieldItems = computed(() => columnDefinitions.value
 async function refreshInfo() {
   info.value = await collectionApi.getCollectionInformation({ collectionName: props.collectionName })
 }
+
+// Same page contract as the list components, so a page can put the reload in its own header. The index panel
+// mounts again after the load (it waits for `loading`), so it is asked again too.
+defineExpose({ refresh: fetchInfo })
 </script>
 
 <template>

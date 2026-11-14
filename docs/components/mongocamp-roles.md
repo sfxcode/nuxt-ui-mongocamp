@@ -52,6 +52,7 @@ const list = useTemplateRef<{ refresh: () => void }>('list')
 - **Add / Edit** — name, `isAdmin` flag.
 - **Delete** — confirmation modal before calling `deleteRole`. If the server refuses, the dialog stays open and shows why so you can try again or cancel; the list is only reloaded after a successful delete.
 - **Bulk delete** — a checkbox column (with select-all) and a selection bar; confirming deletes the selected roles a few at a time ([`MongocampBulkDelete`](/components/mongocamp-bulk-delete)). The selection is cleared on every reload; failures are reported and stay selected.
+- **Paging** — 25 rows a page with a pager below the table once there are more. The table pages its *sorted* rows, so a header sort orders the whole list; the selection is kept across pages and select-all selects the page on screen. A shorter list after a delete never leaves you past the last page; a new search starts at page 1.
 - **Errors / empty** — a failed load shows [`MongocampErrorAlert`](/components/mongocamp-error-alert) with retry; no rows shows an empty state.
 - Grant management itself lives in [`MongocampRoleGrants`](/components/mongocamp-role-grants), reached via the key icon.
 

@@ -19,7 +19,7 @@
       "adminOnly": "Dieser Bereich ist nur für Administratoren."
     },
     "login": {
-      "heading": "Mongocamp-Anmeldung",
+      "heading": "MongoCamp-Anmeldung",
       "email": "E-Mail",
       "password": "Passwort",
       "submit": "Anmelden",
@@ -103,7 +103,13 @@
       "columnAdmin": "Admin",
       "editGrantTooltip": "Berechtigung bearbeiten",
       "removeGrantTooltip": "Berechtigung entfernen",
-      "errorSave": "Berechtigungen konnten nicht gespeichert werden"
+      "errorSave": "Berechtigungen konnten nicht gespeichert werden",
+      "notFoundTitle": "Es gibt keine Rolle {roleName}",
+      "notFoundText": "Sie wurde vielleicht umbenannt oder gelöscht. Wählen Sie sie in der Rollenliste erneut aus.",
+      "removedTitle": "Recht entfernt",
+      "removedDescription": "{roleName} hat kein Recht mehr für {name}.",
+      "addedAllReadTitle": "Leserechte hinzugefügt",
+      "addedAllReadDescription": "{roleName} wurde keine Collection hinzugefügt. | {roleName} kann jetzt eine weitere Collection lesen. | {roleName} kann jetzt {count} weitere Collections lesen."
     },
     "collections": {
       "heading": "Collections",
@@ -355,7 +361,8 @@
       "restartNeeded": "Neustart nötig",
       "empty": "Keine Einstellungen gefunden",
       "grantHintTitle": "Ein fehlendes Recht wird mit 401 beantwortet",
-      "grantHint": "AUTH_GRANT_DENIED_STATUS ist 401 (der Standard). Der generierte Client hält ein 401 für eine abgelaufene Sitzung, deshalb macht dieses Modul daraus selbst ein 403 und niemand wird abgemeldet. Mit AUTH_GRANT_DENIED_STATUS=403 am Server wird 403 die eigene Antwort des Servers."
+      "grantHint": "AUTH_GRANT_DENIED_STATUS ist 401 (der Standard). Der generierte Client hält ein 401 für eine abgelaufene Sitzung, deshalb macht dieses Modul daraus selbst ein 403 und niemand wird abgemeldet. Mit AUTH_GRANT_DENIED_STATUS=403 am Server wird 403 die eigene Antwort des Servers.",
+      "configurationsLabel": "Serverkonfiguration"
     },
     "databases": {
       "heading": "Datenbanken",

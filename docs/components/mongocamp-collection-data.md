@@ -22,6 +22,8 @@ Paginated, filterable, sortable document table for a collection, with insert/edi
 | `hideRefresh` | `boolean` | Hide the component's own reload button, e.g. when the page calls the exposed `refresh()` from its own header. Default `false`. |
 | `stickyActions` | `boolean` | Keep the row actions column (view / edit / delete) fixed at the right edge while the table scrolls sideways. Default `true`; `false` lets it scroll with the other columns. |
 | `stickyId` | `boolean` | Keep the first data column (usually `_id`) fixed at the left edge while the table scrolls sideways. Default `false`. |
+| `pageSizes` | `number[]` | Page sizes offered in the size select. Default `[10, 20, 50, 100]`; non-positive or fractional entries and duplicates are dropped (an empty result falls back to the default). |
+| `defaultPageSize` | `number` | Size a collection opens with until a size is remembered for it. Default `20`; if it is not one of `pageSizes`, the second offered size is used. A remembered size counts only while it is still offered. |
 
 ## In a page with its own header
 

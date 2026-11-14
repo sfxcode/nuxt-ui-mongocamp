@@ -31,6 +31,12 @@ All optional; every one defaults to `false` (show everything).
 
 Hiding never reveals anything: masked values stay masked, and non-admins still only see the notice.
 
+## In a page with its own header
+
+Like the list components, it exposes `refresh()` (all parts again) and has a `toolbar` slot after its reload button, so a page can hide the heading and reload (`hide-heading hide-refresh`) and reload from its own header.
+
+The configuration table is a named, keyboard-focusable region ("Server configuration"): long values make it scroll sideways, and a keyboard user can then scroll it too.
+
 ## Behavior
 
 - **Admins only** — for anyone else (`useMongocampRoles().isAdmin` is false) the component shows a short notice and asks the server nothing. Like the other role checks it is UI-level gating; the server decides what a token may read.

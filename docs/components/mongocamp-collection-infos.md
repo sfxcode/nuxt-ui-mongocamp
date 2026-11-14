@@ -17,6 +17,10 @@ Stat-card grid for a single collection — document count, data size, storage si
 | `collectionName` | `string` | — | Required. Collection to inspect. |
 | `sampleSize` | `number` | `500` | Number of documents sampled from the collection to infer the schema. |
 
+## Exposed
+
+`refresh()` loads the numbers, the schema sample and the index card again — for a page that puts the reload in its own header. The component has no reload button or heading of its own.
+
 ## Stat cards
 
 Documents, Data Size, Storage Size, Avg Doc Size, Indexes, Index Size — from `collectionApi.getCollectionInformation()`.

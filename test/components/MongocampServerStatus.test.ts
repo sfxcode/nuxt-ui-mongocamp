@@ -36,7 +36,9 @@ describe('MongocampServerStatus', () => {
     expect(meter.attributes('aria-valuenow')).toBe('25')
     expect(status(component).element.tagName).toBe('A')
     expect(status(component).attributes('href')).toBe('/secured/admin/server')
-    expect(status(component).attributes('aria-label')).toBe('Server status details')
+    // Named by its visible text (label-in-name), with where it leads as screen-reader text
+    expect(status(component).attributes('aria-label')).toBeUndefined()
+    expect(status(component).findAll('.sr-only').at(-1)?.text()).toBe('Server status details')
   })
 
   it('does not ask a known non-administrator for the load, shows no link, and is still ok', async () => {

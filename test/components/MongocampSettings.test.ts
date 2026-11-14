@@ -155,6 +155,32 @@ describe('MongocampSettings', () => {
     expect(component.text()).toContain('local-files')
   })
 
+  it('has the page contract of the list components: refresh() and a toolbar slot, also with the reload hidden', async () => {
+    const exposed: { current: { refresh?: () => Promise<unknown> } | null } = { current: null }
+    const component = await mountSuspended(defineComponent({
+      setup: () => () => h(UApp, () => h(
+        MongocampSettings,
+        { hideHeading: true, hideRefresh: true, ref: (el: unknown) => { exposed.current = el as typeof exposed.current } },
+        { toolbar: () => h('button', { 'data-test': 'page-button' }, 'Mine') },
+      )),
+    }), { route: '/' })
+    await flushPromises()
+    expect(component.find('[data-test="page-button"]').exists()).toBe(true)
+    expect(component.find('button[aria-label="Refresh"]').exists()).toBe(false)
+
+    const calls = mockListConfigurations.mock.calls.length
+    await exposed.current!.refresh!()
+    expect(mockListConfigurations.mock.calls.length).toBe(calls + 1)
+  })
+
+  it('makes the configuration table a named, focusable region, since long values scroll it sideways', async () => {
+    const component = await mountSettings()
+    const region = component.find('[role="region"]')
+    expect(region.attributes('aria-label')).toBe('Server configuration')
+    expect(region.attributes('tabindex')).toBe('0')
+    expect(region.find('table').exists()).toBe(true)
+  })
+
   describe('grant status hint', () => {
     const withGrantStatus = (status: number) => [...rawConfigurations, { key: 'AUTH_GRANT_DENIED_STATUS', value: status, configType: 'Long', needsRestartForActivation: false, comment: '' }]
 

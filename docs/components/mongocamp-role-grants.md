@@ -62,6 +62,8 @@ const list = useTemplateRef<{ refresh: () => void }>('list')
 - **Add all read-only** — one click grants `read` (no `write`/`administrate`) on every collection that has no grant yet, in a single save. MongoCamp's own collections (names starting with `mc_`) are skipped and existing grants are left untouched. The button is disabled when there is nothing left to add.
 - **The table only changes after a confirmed save.** Add, edit and remove build the new grant list as a *copy*, save it, and then reload the role from the server. If the server refuses, nothing in the table changes (it still shows what the server really has) and the reason is shown: inside the dialog for add/edit, which stays open so your input isn't lost, or as a "Failed to save grants" alert above the table for a remove. The alert clears on the next save, reload or dialog open. Edit and remove buttons are disabled while a save is running.
 - A failed load shows [`MongocampErrorAlert`](/components/mongocamp-error-alert) with retry; no grants shows an empty state.
+- **Unknown role** — when `roleName` is not among the server's roles (renamed, deleted, a mistyped link), it says "There is no role …" instead of an empty, editable list: no table, no Add buttons.
+- **Toasts** — the saves that have no dialog of their own confirm with a success toast: **Remove** ("… no longer has a grant for …") and **Add all read-only** (how many collections were added). Add and edit confirm by closing their dialog.
 
 ## Related composables
 

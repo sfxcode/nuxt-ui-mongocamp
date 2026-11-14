@@ -2,7 +2,7 @@
 import { computed, h, reactive, ref, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Grant } from '@sfxcode/nuxt-mongocamp-server'
-import { useI18n, useMongocampError } from '#imports'
+import { useI18n, useMongocampError, useToast } from '#imports'
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
@@ -83,6 +83,8 @@ const editGrantSchema = reactive([
 ])
 
 const loadError = ref<unknown>(null)
+const notFound = ref(false)
+const toast = useToast()
 
 const { blocked, message } = useMongocampAdminGate()
 async function fetchRole() {
@@ -92,9 +94,14 @@ async function fetchRole() {
   try {
     const roles = await listRoles()
     const role = roles.find(r => r.name === props.roleName)
+    // A renamed or deleted role, or a mistyped link: say so instead of an empty, editable grant list
+    notFound.value = !role
     if (role) {
       isAdmin.value = role.isAdmin
       grants.value = (role.collectionGrants ?? []).map(g => ({ ...g }))
+    }
+    else {
+      grants.value = []
     }
   }
   catch (e: unknown) {
@@ -164,8 +171,12 @@ async function handleEditGrant() {
   if (await saveGrants(next)) isEditModalOpen.value = false
 }
 
+// Neither of these has a dialog that closes on success, so a toast says the change landed
 async function removeGrant(index: number) {
-  await saveGrants(grants.value.filter((_, i) => i !== index))
+  const name = grants.value[index]?.name
+  if (await saveGrants(grants.value.filter((_, i) => i !== index))) {
+    toast.add({ title: t('nuxtUiMongocamp.roleGrants.removedTitle'), description: t('nuxtUiMongocamp.roleGrants.removedDescription', { name, roleName: props.roleName }), color: 'success' })
+  }
 }
 
 // collections without a grant yet, minus MongoCamp's own `mc_` tables
@@ -183,7 +194,9 @@ async function addAllReadGrants() {
     grantType: 'COLLECTION',
   }))
   if (!added.length) return
-  await saveGrants([...grants.value, ...added])
+  if (await saveGrants([...grants.value, ...added])) {
+    toast.add({ title: t('nuxtUiMongocamp.roleGrants.addedAllReadTitle'), description: t('nuxtUiMongocamp.roleGrants.addedAllReadDescription', { count: added.length, roleName: props.roleName }, added.length), color: 'success' })
+  }
 }
 
 function openAdd() {
@@ -243,7 +256,7 @@ const columns = computed<TableColumn<Grant>[]>(() => [
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.administrate ? t('nuxtUiMongocamp.common.yes') : t('nuxtUiMongocamp.common.no'),
-        color: row.original.administrate ? 'error' : 'neutral',
+        color: row.original.administrate ? 'primary' : 'neutral',
         variant: 'subtle',
       }),
   },
@@ -315,7 +328,10 @@ defineExpose({ refresh: fetchRole })
           />
         </UTooltip>
         <slot name="toolbar" />
-        <UTooltip :text="t('nuxtUiMongocamp.roleGrants.addAllReadTooltip')">
+        <UTooltip
+          v-if="!notFound"
+          :text="t('nuxtUiMongocamp.roleGrants.addAllReadTooltip')"
+        >
           <UButton
             icon="i-lucide-eye"
             color="neutral"
@@ -326,6 +342,7 @@ defineExpose({ refresh: fetchRole })
           />
         </UTooltip>
         <UButton
+          v-if="!notFound"
           icon="i-lucide-plus"
           :label="t('nuxtUiMongocamp.roleGrants.addGrant')"
           @click="openAdd"
@@ -348,7 +365,16 @@ defineExpose({ refresh: fetchRole })
       :description="saveError"
     />
 
+    <MongocampEmptyState
+      v-if="notFound && !loadError"
+      icon="i-lucide-shield-question"
+      :title="t('nuxtUiMongocamp.roleGrants.notFoundTitle', { roleName })"
+      :description="t('nuxtUiMongocamp.roleGrants.notFoundText')"
+      data-test="role-not-found"
+    />
+
     <UTable
+      v-else
       :data="grants"
       :columns="columns"
       :loading="loading"

@@ -793,6 +793,22 @@ describe('MongocampCollectionData', () => {
       await mountData()
       expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(20)
     })
+
+    it('offers the host\'s page sizes and opens with its default size', async () => {
+      const component = await mountData({ pageSizes: [25, 250, 0, 25, 1000], defaultPageSize: 250 })
+      expect((component.findComponent(USelect).props() as { items?: unknown }).items).toEqual([25, 250, 1000])
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(250)
+    })
+
+    it('keeps a remembered size only while the host still offers it', async () => {
+      localStorage.setItem('nuxt-ui-mongocamp:collectionData:customers', JSON.stringify({ v: 1, data: { pageSize: 50 } }))
+      await mountData({ pageSizes: [25, 100], defaultPageSize: 100 })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(100)
+
+      mockListDocumentsRaw.mockClear()
+      await mountData({ pageSizes: [25, 50, 100], defaultPageSize: 100 })
+      expect(mockListDocumentsRaw.mock.calls[0]![0].rowsPerPage).toBe(50)
+    })
   })
 
   it('fetches the first page on mount and derives columns from the first row\'s keys', async () => {

@@ -7,6 +7,7 @@ import { useI18n, useMongocampError, useMongocampStorage, useToast } from '#impo
 import useMongocampAdmin from '../composables/useMongocampAdmin'
 import { runBulkDelete } from '../utils/bulkDelete'
 import { createSelectColumn } from '../utils/createSelectColumn'
+import { createListPagination } from '../utils/listPagination'
 import { useMongocampAdminGate } from '../composables/useMongocampAdminGate'
 
 interface RoleItem {
@@ -34,6 +35,7 @@ const users = ref<UserProfile[]>([])
 const loading = ref(false)
 const filterText = ref('')
 const sorting = ref<{ id: string, desc: boolean }[]>([])
+const { pagination, options: paginationOptions, page, paged, reset: resetPage, pageSize } = createListPagination(() => users.value.length)
 let filterTimer: ReturnType<typeof setTimeout> | undefined
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -165,7 +167,10 @@ async function fetchUsers() {
 
 function onFilterInput() {
   clearTimeout(filterTimer)
-  filterTimer = setTimeout(() => fetchUsers(), 300)
+  filterTimer = setTimeout(() => {
+    resetPage()
+    fetchUsers()
+  }, 300)
 }
 
 async function fetchRoles() {
@@ -371,7 +376,7 @@ const columns = computed<TableColumn<UserProfile>[]>(() => [
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.isAdmin ? t('nuxtUiMongocamp.users.roleAdmin') : t('nuxtUiMongocamp.users.roleUser'),
-        color: row.original.isAdmin ? 'error' : 'neutral',
+        color: row.original.isAdmin ? 'primary' : 'neutral',
         variant: 'subtle',
       }),
   },
@@ -499,6 +504,8 @@ defineExpose({ refresh: fetchUsers })
     <UTable
       v-model:sorting="sorting"
       v-model:row-selection="rowSelection"
+      v-model:pagination="pagination"
+      :pagination-options="paginationOptions"
       :get-row-id="(row: UserProfile) => row.user"
       :row-selection-options="{ enableRowSelection: canSelectUser }"
       :data="users"
@@ -509,6 +516,16 @@ defineExpose({ refresh: fetchUsers })
         <MongocampEmptyState :title="t('nuxtUiMongocamp.empty.users')" />
       </template>
     </UTable>
+    <div
+      v-if="paged"
+      class="flex justify-end"
+    >
+      <UPagination
+        v-model:page="page"
+        :total="users.length"
+        :items-per-page="pageSize"
+      />
+    </div>
 
     <!-- Add User Modal -->
     <UModal
@@ -669,7 +686,7 @@ defineExpose({ refresh: fetchUsers })
           <div class="flex items-center gap-2">
             <UBadge
               :label="detail.isAdmin ? t('nuxtUiMongocamp.users.roleAdmin') : t('nuxtUiMongocamp.users.roleUser')"
-              :color="detail.isAdmin ? 'error' : 'neutral'"
+              :color="detail.isAdmin ? 'primary' : 'neutral'"
               variant="subtle"
             />
           </div>
