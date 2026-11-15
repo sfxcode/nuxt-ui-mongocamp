@@ -32,7 +32,7 @@ All composables are auto-imported.
 | [`useMongocampBreadcrumbs`](/composables/use-mongocamp-breadcrumbs) | The breadcrumb of the current route among the module's pages |
 | [`useMongocampPaths`](/composables/use-mongocamp-paths) | The base routes of the app's MongoCamp pages (module option `paths`) — what the components' `*Path` props fall back to |
 | [`useMongocampProxyMode`](/composables/use-mongocamp-proxy-mode) | `true` in server proxy mode (no login, the api key decides) |
-| [`useMongocampPermissions`](/composables/use-mongocamp-permissions) | May the user read / write / administer a collection? From the grants in the session profile; UI-level gating that fails open |
+| [`useMongocampPermissions`](/composables/use-mongocamp-permissions) | May the user read / write / administer a collection? From `GET /auth/permissions` (never from the session); UI-level gating that fails open |
 | [`useMongocampFetchAll`](/composables/use-mongocamp-fetch-all) | Reads every page of a document or file list with a cap, progress and abort (`fetchAllDocuments`, `fetchAllFiles`) |
 | [`useMongocampExportAll`](/composables/use-mongocamp-export-all) | Exports a whole collection or filter as JSON, NDJSON or CSV (cap, progress, abort; exact 64-bit integers) |
 | [`useMongocampPersistedState`](/composables/use-mongocamp-persisted-state) | A ref remembered in `localStorage` (versioned, size-capped, never throws) |

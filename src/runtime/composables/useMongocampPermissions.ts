@@ -1,5 +1,5 @@
 import { useMongocampClientApi, useMongocampStorage, useState } from '#imports'
-import { permissionFromGrants } from '../utils/grantMatching'
+import { isBucketMemberCollection } from '../utils/collectionProtection'
 import type { GrantPermission } from '../utils/grantMatching'
 import { useMongocampProxyMode } from './useMongocampProxyMode'
 
@@ -13,6 +13,8 @@ interface PermissionCache {
   /** whose answers these are — a different user starts empty */
   user: string
   byName: Record<string, ServerPermissions>
+  /** a full `load()` (no collection) succeeded: a collection missing from `byName` has no grant */
+  complete: boolean
 }
 
 const REQUEST_TIMEOUT_MS = 15_000
@@ -23,30 +25,31 @@ const REQUEST_TIMEOUT_MS = 15_000
  *
  * `load()` asks the server (`GET /auth/permissions`, server 1.7.0), which resolves roles, grants and the signed-in
  * user's rights itself — and also works in server proxy mode, where there is no profile. `canRead` / `canWrite` /
- * `canAdminister` stay synchronous: they answer from what was loaded, and until then from the grants of the session profile
- * (admin, proxy mode, a profile without a grant list and GridFS bucket members answer "yes" — fail-open). A failing
- * `load()` changes nothing. Administrators are never asked: everything is allowed.
+ * `canAdminister` stay synchronous: they answer from what was loaded. After a full `load()` (no argument) a collection the
+ * server did not list has no grant ("no"); before any answer, or when it failed, they answer "yes" (fail-open — the server
+ * refuses). Admin, proxy mode, no profile and GridFS bucket members are "yes" too. **Grants are never read from the
+ * session** — neither from the token (server 1.9: only `user`/`isAdmin` are in it) nor from the stored profile, which the
+ * session cookie must not carry (4 KB cookie limit). Administrators are never asked: everything is allowed.
  */
 export function useMongocampPermissions() {
   const state = useMongocampStorage()
-  const cache = useState<PermissionCache>('mongocamp-permissions', () => ({ user: '', byName: {} }))
+  const cache = useState<PermissionCache>('mongocamp-permissions', () => ({ user: '', byName: {}, complete: false }))
   const isProxyMode = useMongocampProxyMode()
 
   const currentUser = () => state.value?.profile?.user ?? ''
   const key = (name: string) => name.trim().toLowerCase()
 
-  function fromServer(collectionName: string): ServerPermissions | undefined {
-    if (cache.value.user !== currentUser()) return undefined
-    return cache.value.byName[key(collectionName)]
-  }
+  const ownCache = () => cache.value.user === currentUser()
 
   function allowed(collectionName: string, permission: GrantPermission): boolean {
-    const answered = fromServer(collectionName)
+    const answered = ownCache() ? cache.value.byName[key(collectionName)] : undefined
     if (answered) return answered[permission]
     if (isProxyMode) return true
     const profile = state.value?.profile
     if (!profile || profile.isAdmin) return true
-    return permissionFromGrants(profile.grants, collectionName, permission) ?? true
+    // bucket member grants (`<bucket>.files` / `.chunks`) were never verified — let the server decide
+    if (isBucketMemberCollection(collectionName)) return true
+    return !(ownCache() && cache.value.complete)
   }
 
   const canRead = (collectionName: string): boolean => allowed(collectionName, 'read')
@@ -68,12 +71,13 @@ export function useMongocampPermissions() {
       const { authApi } = useMongocampClientApi()
       const rows = await authApi.userPermissions(collectionName ? { collection: collectionName } : {}, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
       const user = currentUser()
-      const byName = cache.value.user === user ? { ...cache.value.byName } : {}
+      const same = cache.value.user === user
+      const byName = same ? { ...cache.value.byName } : {}
       for (const row of rows) byName[key(row.name)] = { read: row.read, write: row.write, administrate: row.administrate }
-      cache.value = { user, byName }
+      cache.value = { user, byName, complete: !collectionName || (same && cache.value.complete) }
     }
     catch {
-      // the grants of the profile keep answering
+      // earlier answers (or fail-open) keep answering
     }
   }
 

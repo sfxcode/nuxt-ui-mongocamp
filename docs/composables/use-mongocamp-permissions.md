@@ -1,6 +1,6 @@
 # useMongocampPermissions
 
-What the signed-in user may do with a collection — answered by the server (`GET /auth/permissions`, server 1.7.0) once `load()` ran, until then from the grants in the session profile — so a component can hide an action the server would refuse instead of letting the click fail.
+What the signed-in user may do with a collection — answered by the server (`GET /auth/permissions`, server 1.7.0) once `load()` ran — so a component can hide an action the server would refuse instead of letting the click fail.
 
 ```ts
 const { canRead, canWrite, canAdminister, readableCollections, load } = useMongocampPermissions()
@@ -17,7 +17,7 @@ readableCollections(['customers', 'orders'])    // only the ones the user may re
 | `canWrite(collection)` | `write: true` |
 | `canAdminister(collection)` | `administrate: true` |
 | `readableCollections(names)` | `names` filtered to the readable ones, same order |
-| `load(collection?)` | asks the server for the signed-in user's rights (one collection, or all with a grant) and keeps the answer for the synchronous checks above; never throws, a failure leaves the grant-based answers; administrators are never asked |
+| `load(collection?)` | asks the server for the signed-in user's rights (one collection, or all with a grant) and keeps the answer for the synchronous checks above; never throws, a failure leaves the earlier answers (or fail-open); administrators are never asked |
 
 ## UI-level only
 
@@ -25,29 +25,35 @@ This is gating for the interface, like [route protection](/guide/route-protectio
 
 ## The server answer wins
 
-After `load()` the checks answer from the server, which resolves roles, grants and the user itself — so they are right even where the profile's grant list is not (server proxy mode has no profile at all). The answers are cached per signed-in user (`useState`) and merged across calls; a different user starts empty. `MongocampCollectionData` loads its own collection, `MongocampCommandPalette` loads all on first open.
+After `load()` the checks answer from the server, which resolves roles, grants and the user itself (it also works in server proxy mode, which has no profile at all). The answers are cached per signed-in user (`useState`) and merged across calls; a different user starts empty.
+
+After a **full** `load()` (no argument) the list is complete: a collection the server did not list has no grant, so every check is **no** for it. After a single-collection `load()` only that collection is known.
+
+## Grants never come from the session
+
+Grants are not read from the token or from the profile stored in the session cookie. Since MongoCamp server 1.9 the token carries only `user` and `isAdmin` (plus `exp`, `iat`, `jti`, `iss`), and the session cookie should not carry the grant list either — a user with many grants would push it past the browser's 4 KB cookie limit and the session would silently be lost. `GET /auth/permissions` is the only source, and it is always current (the server evaluates grants live). `MongocampCollectionData` loads its own collection, `MongocampCommandPalette` loads all on first open.
 
 ## It fails open
 
-Until the server has answered (and when `load()` fails), when it cannot know, the answer is **yes** and the server decides:
+When it cannot know, the answer is **yes** and the server decides:
 
 - the user is an **administrator** (everything is allowed);
 - [server proxy mode](/guide/server-proxy-auth) — there is no user, the api key's power is the server's decision;
-- the profile has **no grant list** (not signed in, an older session);
+- the server has **not answered yet**, the request failed, or only other single collections were asked;
+- there is **no profile** (not signed in);
 - the collection is a **GridFS bucket member** (`<bucket>.files` / `.chunks`) — what a bucket grant is called and typed was not verified.
 
-A known grant list is taken at its word: no grant for a collection means no permission for it, and an empty list means none at all.
+A full server answer is taken at its word: a collection missing from it means no permission, and an empty answer means none at all.
 
 ## How a grant is matched
 
-Verified on MongoCamp server 1.6.3 with a throwaway non-admin user (2026-11-03):
+The server does the matching; verified on MongoCamp server 1.6.3 with a throwaway non-admin user (2026-11-03):
 
 - the grant's `name` is compared with the collection name **exactly but ignoring case** — there are **no wildcards** (`cust*` gave no access to `customers`) and no prefixes. The helper trims the name, too;
 - `read`, `write` and `administrate` are independent: none implies another;
-- several grants for one name add up — any one that allows it is enough;
-- only collection grants count (`grantType` `COLLECTION`, or none).
+- several grants for one name add up — any one that allows it is enough.
 
-The grants come from the profile the dependency keeps in the session cookie. They are read on every call, so the answers follow the profile when the token refresh brings a new one; until then a grant that was just changed is not reflected (the server evaluates grants live, so a stale profile can show an action the server now refuses, or hide one it now allows — logging in again or the next refresh fixes it).
+The cached answers are looked up by collection name ignoring case as well.
 
 ## Where the module uses it
 

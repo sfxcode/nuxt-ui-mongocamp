@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent, h, ref } from 'vue'
 import { DOMWrapper, enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
+import { clearNuxtState } from '#imports'
 import { UApp, USelect } from '#components'
 import MongocampCollectionData from '../../src/runtime/components/MongocampCollectionData.vue'
 import MongocampCollectionCharts from '../../src/runtime/components/MongocampCollectionCharts.vue'
@@ -60,7 +61,17 @@ const mockGetFileInformation = vi.fn()
 const mockGetFile = vi.fn()
 const mockInsertFile = vi.fn()
 const mockCreateIndexForField = vi.fn()
-const session: { isAdmin: boolean, grants?: unknown } = { isAdmin: false }
+// `grants` = the rows `GET /auth/permissions` knows; undefined ⇒ the request fails (fail-open)
+type PermissionRow = { name: string, read: boolean, write: boolean, administrate: boolean }
+const session: { isAdmin: boolean, grants?: PermissionRow[] } = { isAdmin: false }
+// like the server: one row per asked collection (name ignoring case, all false without a grant)
+const mockUserPermissions = vi.fn(async (request: { collection?: string }) => {
+  if (!session.grants) throw new Error('permissions not available')
+  if (!request.collection) return session.grants
+  const wanted = request.collection.toLowerCase()
+  const found = session.grants.filter(row => row.name.toLowerCase() === wanted)
+  return found.length ? found : [{ name: request.collection, read: false, write: false, administrate: false }]
+})
 
 function mockRawResponse<T>(value: T, totalHeader?: string) {
   return {
@@ -103,11 +114,12 @@ mockNuxtImport('useMongocampApi', () => {
     bucketApi: {},
     collectionApi: { distinctRaw: mockDistinctRaw, getFieldDetails: mockGetFieldDetails },
     indexApi: { createIndexForField: mockCreateIndexForField },
+    authApi: { userPermissions: mockUserPermissions },
   })
 })
 
 // who is signed in decides whether the header index menu is offered
-mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: session.isAdmin, roles: [], grants: session.grants } } }))
+mockNuxtImport('useMongocampStorage', () => () => ({ value: { profile: { user: 'alice@example.com', isAdmin: session.isAdmin, roles: [] } } }))
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -117,6 +129,7 @@ beforeEach(() => {
   localStorage.clear() // remembered table state must not leak between tests
   session.isAdmin = false
   session.grants = undefined
+  clearNuxtState('mongocamp-permissions') // answers of one test must not answer the next
   mockListDocumentsRaw.mockResolvedValue(mockRawResponse([], '0'))
   mockUpdatePartial.mockResolvedValue({ wasAcknowledged: true, matchedCount: 1, modifiedCount: 1 })
 })
@@ -611,7 +624,7 @@ describe('MongocampCollectionData', () => {
     }
 
     it('offers View on a row, also without a write grant, and opens the typed document in a drawer', async () => {
-      session.grants = [{ collection: 'customers', read: true, write: false }]
+      session.grants = [{ name: 'customers', read: true, write: false, administrate: false }]
       const component = await mountRows()
       expect(component.findAll('[aria-label="Edit document"]')).toHaveLength(0)
 
@@ -1121,8 +1134,8 @@ describe('MongocampCollectionData', () => {
     })
   })
 
-  describe('without a write grant (UI-level, from the grants of the profile)', () => {
-    const grant = (name: string, write: boolean) => ({ name, read: true, write, administrate: false, grantType: 'COLLECTION' })
+  describe('without a write grant (UI-level, from GET /auth/permissions)', () => {
+    const grant = (name: string, write: boolean) => ({ name, read: true, write, administrate: false })
 
     async function mountCustomers() {
       mockListDocumentsRaw.mockResolvedValueOnce(mockRawResponse([{ _id: { $oid: 'doc-1' }, name: 'Alice' }], '1'))
@@ -1169,7 +1182,7 @@ describe('MongocampCollectionData', () => {
       expect(writeControls(component)).toEqual({ insert: true, import: true, edit: true, remove: true, select: true })
     })
 
-    it('shows everything when the profile has no grant list — fail open, the server decides', async () => {
+    it('shows everything when the permissions cannot be loaded — fail open, the server decides', async () => {
       session.grants = undefined
       const component = await mountCustomers()
 

@@ -24,7 +24,7 @@ The module needs **MongoCamp server 1.8.1 or later** (`@sfxcode/nuxt-mongocamp-s
 - **`MongocampServerOverview`**: the progress bar and Stop button are gone; `useMongocampServerOverview().loadOverview()` no longer takes `concurrency` or `onProgress`.
 - **`useMongocampCollectionCopy`**: the browser-side copy is gone — `copyCollection` returns `{ target, count, indexes }`; `retryBatches`, `copyIndexes` and the 50 000 cap were removed.
 - **`useMongocampExportAll`**: no `maxRows` default of 50 000; the result is `{ blob, filename, mimeType, format, bytes, documents?, incomplete }` instead of text and `truncated`.
-- **`useMongocampPermissions`** gained `load()`; call it (the module's own components do) to use the server's answer instead of the profile's grants.
+- **`useMongocampPermissions`** gained `load()`; call it (the module's own components do) to get the server's answer — since server 1.9 it is the only source (the profile's grants are no longer used).
 - **`MongocampCollectionData`** edits always read the document first (`extendedJson=canonical`, one extra request), and the document path helper `inferStrings` was removed.
 
 ## Server settings worth knowing

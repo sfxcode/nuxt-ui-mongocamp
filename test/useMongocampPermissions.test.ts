@@ -10,7 +10,7 @@ vi.mock('#app', () => ({
 }))
 
 const mockUserPermissions = vi.fn()
-const mockCache = ref<{ user: string, byName: Record<string, unknown> }>({ user: '', byName: {} })
+const mockCache = ref<{ user: string, byName: Record<string, unknown>, complete: boolean }>({ user: '', byName: {}, complete: false })
 
 vi.mock('#imports', () => ({
   useMongocampStorage: () => mockState,
@@ -21,92 +21,63 @@ vi.mock('#imports', () => ({
 // must come after vi.mock — a static top-level import would resolve before the mocks are wired up
 const { useMongocampPermissions } = await import('../src/runtime/composables/useMongocampPermissions')
 
-const grant = (name: string, read: boolean, write: boolean, administrate = false) => ({ name, read, write, administrate, grantType: 'COLLECTION' })
-const signIn = (grants: unknown, isAdmin = false) => {
-  mockState.value = { profile: { user: 'carol', isAdmin, roles: ['support'], grants } }
+const row = (name: string, read: boolean, write: boolean, administrate = false) => ({ name, read, write, administrate })
+const signIn = (isAdmin = false, user = 'carol') => {
+  mockState.value = { profile: { user, isAdmin, roles: ['support'] } }
 }
 
 beforeEach(() => {
   mockOptions = {}
   mockState.value = {}
-  mockCache.value = { user: '', byName: {} }
+  mockCache.value = { user: '', byName: {}, complete: false }
   mockUserPermissions.mockReset()
 })
 
 describe('useMongocampPermissions', () => {
-  it('answers read / write / administer from the grants of the profile', () => {
-    signIn([grant('customers', true, false), grant('orders', true, true, true)])
+  it('fails open before the server has answered', () => {
+    signIn()
     const { canRead, canWrite, canAdminister } = useMongocampPermissions()
 
-    expect([canRead('customers'), canWrite('customers'), canAdminister('customers')]).toEqual([true, false, false])
-    expect([canRead('orders'), canWrite('orders'), canAdminister('orders')]).toEqual([true, true, true])
+    expect([canRead('customers'), canWrite('customers'), canAdminister('customers')]).toEqual([true, true, true])
   })
 
-  it('says no to everything for a collection without a grant', () => {
-    signIn([grant('customers', true, true)])
-    const { canRead, canWrite, canAdminister } = useMongocampPermissions()
+  it('never reads grants from the session profile', () => {
+    mockState.value = { profile: { user: 'carol', isAdmin: false, roles: [], grants: [{ name: 'customers', read: true, write: false, administrate: false, grantType: 'COLLECTION' }] } }
 
-    expect([canRead('invoices'), canWrite('invoices'), canAdminister('invoices')]).toEqual([false, false, false])
+    expect(useMongocampPermissions().canWrite('customers')).toBe(true)
   })
 
-  it('lets an administrator do everything, whatever the grants say', () => {
-    signIn([], true)
+  it('lets an administrator do everything', () => {
+    signIn(true)
     const { canRead, canWrite, canAdminister } = useMongocampPermissions()
 
     expect([canRead('anything'), canWrite('anything'), canAdminister('anything')]).toEqual([true, true, true])
   })
 
-  it('fails open when it cannot know: no grant list, no profile, a GridFS bucket member', () => {
-    const { canWrite } = useMongocampPermissions()
-
-    signIn(undefined)
-    expect(canWrite('customers')).toBe(true)
-
-    mockState.value = {}
-    expect(canWrite('customers')).toBe(true)
-
-    signIn([grant('customers', true, false)])
-    expect(canWrite('images.files')).toBe(true)
+  it('fails open without a profile', () => {
+    expect(useMongocampPermissions().canWrite('customers')).toBe(true)
   })
 
   it('allows everything in server proxy mode — there is no user, the api key\'s power is the server\'s decision', () => {
     mockOptions = { useServerProxy: true }
-    signIn([])
+    signIn()
     const { canRead, canWrite, canAdminister } = useMongocampPermissions()
 
     expect([canRead('x'), canWrite('x'), canAdminister('x')]).toEqual([true, true, true])
   })
 
-  it('follows the profile when it changes, because it is read on every call', () => {
-    const { canWrite } = useMongocampPermissions()
-    signIn([grant('customers', true, false)])
-    expect(canWrite('customers')).toBe(false)
-
-    signIn([grant('customers', true, true)])
-    expect(canWrite('customers')).toBe(true)
-  })
-
-  it('filters a list down to the readable collections, keeping the order', () => {
-    signIn([grant('b', true, false), grant('d', false, true), grant('a', true, true)])
-    const { readableCollections } = useMongocampPermissions()
-
-    expect(readableCollections(['a', 'b', 'c', 'd'])).toEqual(['a', 'b'])
-    expect(readableCollections([])).toEqual([])
-  })
-
-  it('keeps every collection of the list when the grants are unknown', () => {
-    signIn(undefined)
+  it('keeps every collection of the list while nothing is known', () => {
+    signIn()
 
     expect(useMongocampPermissions().readableCollections(['a', 'b'])).toEqual(['a', 'b'])
   })
 })
 
 describe('useMongocampPermissions.load (server answers)', () => {
-  it('lets the server answer win over the grants of the profile', async () => {
-    signIn([grant('customers', true, false)])
-    mockUserPermissions.mockResolvedValue([{ name: 'Customers', read: true, write: true, administrate: false }])
+  it('answers from the server for one collection, name ignoring case', async () => {
+    signIn()
+    mockUserPermissions.mockResolvedValue([row('Customers', true, true)])
     const { canWrite, canAdminister, load } = useMongocampPermissions()
-    expect(canWrite('customers')).toBe(false)
 
     await load('customers')
 
@@ -115,22 +86,53 @@ describe('useMongocampPermissions.load (server answers)', () => {
     expect(canAdminister('CUSTOMERS')).toBe(false)
   })
 
-  it('asks for every collection without an argument and keeps earlier answers', async () => {
-    signIn([])
-    mockUserPermissions.mockResolvedValueOnce([{ name: 'a', read: true, write: false, administrate: false }])
-    mockUserPermissions.mockResolvedValueOnce([{ name: 'b', read: false, write: false, administrate: false }])
+  it('treats a collection missing from a full answer as not granted', async () => {
+    signIn()
+    mockUserPermissions.mockResolvedValue([row('b', true, false), row('d', false, true), row('a', true, true)])
+    const { canRead, canWrite, readableCollections, load } = useMongocampPermissions()
+
+    await load()
+
+    expect(mockUserPermissions.mock.calls[0]![0]).toEqual({})
+    expect(readableCollections(['a', 'b', 'c', 'd'])).toEqual(['a', 'b'])
+    expect([canRead('c'), canWrite('c')]).toEqual([false, false])
+  })
+
+  it('stays fail-open for unlisted collections after a single-collection answer', async () => {
+    signIn()
+    mockUserPermissions.mockResolvedValue([row('a', true, false)])
+    const { canWrite, load } = useMongocampPermissions()
+
+    await load('a')
+
+    expect([canWrite('a'), canWrite('other')]).toEqual([false, true])
+  })
+
+  it('keeps the full answer complete when one collection is asked again', async () => {
+    signIn()
+    mockUserPermissions.mockResolvedValueOnce([row('a', true, false)])
+    mockUserPermissions.mockResolvedValueOnce([row('b', false, false)])
     const { canRead, load } = useMongocampPermissions()
 
     await load()
     await load('b')
 
-    expect(mockUserPermissions.mock.calls[0]![0]).toEqual({})
-    expect([canRead('a'), canRead('b')]).toEqual([true, false])
+    expect([canRead('a'), canRead('b'), canRead('c')]).toEqual([true, false, false])
+  })
+
+  it('lets GridFS bucket members through even after a full answer', async () => {
+    signIn()
+    mockUserPermissions.mockResolvedValue([])
+    const { canRead, load } = useMongocampPermissions()
+
+    await load()
+
+    expect([canRead('images.files'), canRead('orders')]).toEqual([true, false])
   })
 
   it('works without a profile in server proxy mode', async () => {
     mockOptions = { useServerProxy: true }
-    mockUserPermissions.mockResolvedValue([{ name: 'orders', read: true, write: false, administrate: false }])
+    mockUserPermissions.mockResolvedValue([row('orders', true, false)])
     const { canWrite, canRead, load } = useMongocampPermissions()
     expect(canWrite('orders')).toBe(true) // fail-open until the server has answered
 
@@ -140,31 +142,31 @@ describe('useMongocampPermissions.load (server answers)', () => {
   })
 
   it('never asks for an administrator', async () => {
-    signIn([], true)
+    signIn(true)
     await useMongocampPermissions().load()
 
     expect(mockUserPermissions).not.toHaveBeenCalled()
   })
 
-  it('keeps answering from the grants when the request fails', async () => {
-    signIn([grant('customers', true, false)])
+  it('stays fail-open when the request fails', async () => {
+    signIn()
     mockUserPermissions.mockRejectedValue(new Error('down'))
     const { canWrite, load } = useMongocampPermissions()
 
     await expect(load()).resolves.toBeUndefined()
 
-    expect(canWrite('customers')).toBe(false)
+    expect(canWrite('customers')).toBe(true)
   })
 
   it('forgets the answers of another user', async () => {
-    signIn([grant('customers', true, false)])
-    mockUserPermissions.mockResolvedValue([{ name: 'customers', read: true, write: true, administrate: true }])
-    const { canWrite, load } = useMongocampPermissions()
+    signIn()
+    mockUserPermissions.mockResolvedValue([row('customers', true, false)])
+    const { canWrite, canRead, load } = useMongocampPermissions()
     await load()
-    expect(canWrite('customers')).toBe(true)
+    expect([canWrite('customers'), canRead('orders')]).toEqual([false, false])
 
-    mockState.value = { profile: { user: 'dave', isAdmin: false, roles: [], grants: [grant('customers', true, false)] } }
+    signIn(false, 'dave')
 
-    expect(canWrite('customers')).toBe(false)
+    expect([canWrite('customers'), canRead('orders')]).toEqual([true, true])
   })
 })
