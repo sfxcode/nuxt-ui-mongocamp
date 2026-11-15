@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.5.6
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.5...v1.5.6)
+
+### 💅 Refactors
+
+- **permissions:** Read grants only from /auth/permissions, never from the session ([cdeaa5a](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/cdeaa5a))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.5
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.4...v1.5.5)
