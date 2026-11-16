@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.5.7
+
+[compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.6...v1.5.7)
+
+### 🚀 Enhancements
+
+- **offline:** Keep the session while MongoCamp is unreachable ([c738a8e](https://github.com/sfxcode/nuxt-ui-mongocamp/commit/c738a8e))
+
+### ❤️ Contributors
+
+- Sfxcode ([@sfxcode](https://github.com/sfxcode))
+
 ## v1.5.6
 
 [compare changes](https://github.com/sfxcode/nuxt-ui-mongocamp/compare/v1.5.5...v1.5.6)
