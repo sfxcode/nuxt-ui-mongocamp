@@ -129,6 +129,7 @@ export default defineConfig({
             { text: 'useMongocampSavedPipelines', link: '/composables/use-mongocamp-saved-pipelines' },
             { text: 'useMongocampServerOverview', link: '/composables/use-mongocamp-server-overview' },
             { text: 'useMongocampSession', link: '/composables/use-mongocamp-session' },
+            { text: 'useMongocampConnection', link: '/composables/use-mongocamp-connection' },
             { text: 'useMongocampClientApi', link: '/composables/use-mongocamp-client-api' },
             { text: 'useMongocampProxyApi', link: '/composables/use-mongocamp-proxy-api' },
           ],

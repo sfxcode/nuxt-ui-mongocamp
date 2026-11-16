@@ -11,6 +11,10 @@ interface SessionGuardDeps {
   verify?: () => Promise<VerifyResult>
   // asked *after* the session has been cleared: is this route reachable without a login?
   isAllowed: (path: string) => boolean
+  // module option `offline`: asked right before a session would be cleared — can the server be reached now? If not
+  // (or the check throws), the session is kept as it is, even with an expired token: nothing could renew it, and
+  // clearing it would lock the user out of an app that works offline. The next navigation decides again.
+  serverReachable?: () => Promise<boolean>
 }
 
 // What the `session-guard` route middleware decides for one navigation. A token that says it has
@@ -19,10 +23,12 @@ interface SessionGuardDeps {
 // stays public. The login path is never redirected away from, so this cannot loop. Anything other than
 // an explicit "expired" (valid, or unreadable) does nothing at all — except that, when a `verify` is given,
 // a token that looks valid is also cleared if the server explicitly says it is no longer accepted. A
-// `verify` that throws or answers 'unknown' changes nothing.
+// `verify` that throws or answers 'unknown' changes nothing. With `serverReachable`, a session is only ever cleared
+// while the server can be reached.
 export async function runSessionGuard(deps: SessionGuardDeps): Promise<'continue' | 'redirect'> {
   const expiry = deps.checkExpiry()
   if (expiry !== 'expired' && !(expiry === 'valid' && deps.verify && await isRejectedByServer(deps.verify))) return 'continue'
+  if (deps.serverReachable && !await isReachable(deps.serverReachable)) return 'continue'
   try {
     await deps.invalidate()
   }
@@ -32,6 +38,15 @@ export async function runSessionGuard(deps: SessionGuardDeps): Promise<'continue
   }
   if (deps.path === deps.loginPath) return 'continue'
   return deps.isAllowed(deps.path) ? 'continue' : 'redirect'
+}
+
+async function isReachable(serverReachable: () => Promise<boolean>): Promise<boolean> {
+  try {
+    return await serverReachable()
+  }
+  catch {
+    return false
+  }
 }
 
 async function isRejectedByServer(verify: () => Promise<VerifyResult>): Promise<boolean> {

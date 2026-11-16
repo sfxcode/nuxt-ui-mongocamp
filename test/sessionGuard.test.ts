@@ -129,6 +129,62 @@ describe('runSessionGuard with a server check', () => {
   })
 })
 
+describe('runSessionGuard with module option offline (serverReachable)', () => {
+  function offlineSetup(reachable: () => Promise<boolean>, options: { expiry?: TokenExpiryState, verify?: () => Promise<'valid' | 'invalid' | 'unknown'> } = {}) {
+    const invalidate = vi.fn(async () => {})
+    const serverReachable = vi.fn(reachable)
+    const run = (path: string) => runSessionGuard({
+      path,
+      loginPath: '/login',
+      checkExpiry: () => options.expiry ?? 'expired',
+      invalidate,
+      verify: options.verify,
+      isAllowed: () => false,
+      serverReachable,
+    })
+    return { run, invalidate, serverReachable }
+  }
+
+  it('keeps an expired session while the server cannot be reached', async () => {
+    const { run, invalidate, serverReachable } = offlineSetup(async () => false)
+
+    expect(await run('/secured')).toBe('continue')
+    expect(serverReachable).toHaveBeenCalledTimes(1)
+    expect(invalidate).not.toHaveBeenCalled()
+  })
+
+  it('keeps the session when the reachability check itself throws', async () => {
+    const { run, invalidate } = offlineSetup(async () => {
+      throw new TypeError('Failed to fetch')
+    })
+
+    expect(await run('/secured')).toBe('continue')
+    expect(invalidate).not.toHaveBeenCalled()
+  })
+
+  it('clears an expired session as usual once the server is reachable', async () => {
+    const { run, invalidate } = offlineSetup(async () => true)
+
+    expect(await run('/secured')).toBe('redirect')
+    expect(invalidate).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not ask for reachability when nothing would be cleared', async () => {
+    const { run, invalidate, serverReachable } = offlineSetup(async () => false, { expiry: 'valid' })
+
+    expect(await run('/secured')).toBe('continue')
+    expect(serverReachable).not.toHaveBeenCalled()
+    expect(invalidate).not.toHaveBeenCalled()
+  })
+
+  it('also keeps a session the server rejected while it is unreachable again', async () => {
+    const { run, invalidate } = offlineSetup(async () => false, { expiry: 'valid', verify: async () => 'invalid' })
+
+    expect(await run('/secured')).toBe('continue')
+    expect(invalidate).not.toHaveBeenCalled()
+  })
+})
+
 describe('createVerifyCache', () => {
   it('skips the check for the same token within the ttl, and only after a valid answer', async () => {
     let now = 1000

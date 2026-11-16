@@ -16,6 +16,7 @@ describe('@sfxcode/nuxt-ui-mongocamp/utils', () => {
       'formatUptime',
       'groupCollectionNames',
       'isBucketMemberCollection',
+      'isNetworkFailure',
       'isProtectedCollection',
     ])
   })
@@ -27,6 +28,7 @@ describe('@sfxcode/nuxt-ui-mongocamp/utils', () => {
     expect(publicUtils.connectionUsage(25, 75)).toBe(25)
     expect(publicUtils.isProtectedCollection('mc_users')).toBe(true)
     expect(publicUtils.bucketNameOf('images.files')).toBe('images')
+    expect(publicUtils.isNetworkFailure(new TypeError('Failed to fetch'))).toBe(true)
   })
 
   it('package.json points the ./utils export at the built entry', () => {

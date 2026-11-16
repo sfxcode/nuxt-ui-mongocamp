@@ -63,6 +63,16 @@ export interface ModuleOptions {
   sessionGuardVerify?: boolean
 
   /**
+   * Opt-in for apps that keep working without a network (e.g. an installable PWA with its own local data):
+   * - `useMongocampConnection()` is kept current in the browser (online / offline / server unreachable, with retries);
+   * - the session guard clears a session only while the server can be reached, so an expired token never logs the
+   *   user out while offline (nothing could renew it; the next navigation after the server is back decides);
+   * - the server version (`$mongocampVersion`) loads in the background with a timeout and never holds up the start.
+   * Default false.
+   */
+  offline?: boolean
+
+  /**
    * Path the session guard navigates to after clearing an expired session — e.g. '/login'. Always
    * treated as allowed by the middleware itself, so it can never cause a redirect loop.
    */
@@ -139,6 +149,7 @@ export default defineNuxtModule<ModuleOptions>({
     logoutPath: '/logout',
     sessionGuard: false,
     sessionGuardVerify: false,
+    offline: false,
     loginPath: '/',
     managerRoles: [],
     securedRouteParts: [],

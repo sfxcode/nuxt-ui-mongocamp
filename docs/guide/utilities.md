@@ -46,6 +46,14 @@ const { collections, buckets, system } = groupCollectionNames(names)
 
 For a list that several components share, [`useMongocampCollectionNames`](/composables/use-mongocamp-collection-names) loads it once and returns the same three groups.
 
+## Connection
+
+| Helper | Result |
+|---|---|
+| `isNetworkFailure(error)` | `true` when a request failed without any answer from the server — a network error, timeout or abort, from the generated MongoCamp client, `$fetch`/ofetch or plain `fetch`. An error carrying an HTTP status (401, 404, 500, ...) is an answer and always `false` |
+
+The same test decides what [`useMongocampConnection().report(error)`](/composables/use-mongocamp-connection#report) counts as lost connection — use it in an app's own data layer to tell "the server said no" from "there is no server right now".
+
 ## What is not exported
 
 Only the helpers on this page are public API. The module has many more files under `runtime/utils` — they are internal and can change in any release, so do not import them by a deep path.

@@ -25,6 +25,7 @@ All composables are auto-imported.
 | [`useMongocampQuery`](/composables/use-mongocamp-query) | High-level Lucene query helpers (`equals`, `like`, `inRange`, `and`, `or`, …) |
 | [`useMongocampQueryBuilder`](/composables/use-mongocamp-query-builder) | Low-level Lucene syntax builder used by `useMongocampQuery` |
 | [`useMongocampExtendedJson`](/composables/use-mongocamp-extended-json) | Converts MongoDB extended-JSON documents to/from the plain values `FUAutoForm` binds to |
+| [`useMongocampConnection`](/composables/use-mongocamp-connection) | Can the server be reached? `online` / `offline` / `unreachable`, `check()`, `report(error)`; kept current with the `offline` option |
 | [`useMongocampSession`](/composables/use-mongocamp-session) | Is the login still usable? Token-expiry check (no request), optional server check (`verify`), `invalidateSession` |
 | [`useMongocampRoles`](/composables/use-mongocamp-roles) | Role/route-pattern access checks (`isAdmin`, `isManager`, `canSeeAdmin`, `canSeeManagement`, `isAllowedPathForRoute`); powers the global nav guard |
 | [`useMongocampCollectionNames`](/composables/use-mongocamp-collection-names) | The collection names, loaded once and shared (sidebar, switcher, panel), split into collections / buckets / `mc_*` |

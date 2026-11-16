@@ -44,6 +44,10 @@ export default defineNuxtConfig({
     securedRouteParts: ['/secured/**'],
     managementRouteParts: ['/secured/manager/**'],
     adminRouteParts: ['/secured/admin/**'],
+    // Session guard plus offline mode: an expired token is cleared only while the server can be reached
+    // (docs/guide/session-handling.md#offline-apps)
+    sessionGuard: true,
+    offline: true,
     // Opt-in demo of server proxy auth mode — see docs/guide/server-proxy-auth.md and
     // server/plugins/mongocamp-proxy-guard.ts. Off by default so the playground's normal
     // login-based workflow above is unaffected.

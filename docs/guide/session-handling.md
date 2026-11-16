@@ -19,6 +19,7 @@ What is left is a token that expired while no request was made. The session guar
 | **Session guard** | `sessionGuard: true` | Looks at the token's own expiry on every navigation and clears a session that says it has run out |
 
 | **Server check** | `sessionGuard: true` + `sessionGuardVerify: true` | Also asks the server whether a token that looks valid is still accepted |
+| **Offline apps** | `offline: true` | Never clears a session while the server cannot be reached; tracks the connection in [`useMongocampConnection`](/composables/use-mongocamp-connection) |
 
 None of these does anything in [server proxy mode](/guide/server-proxy-auth): there is no login, token or session there.
 
@@ -47,6 +48,27 @@ nuxtUiMongocamp: {
 ```
 
 The `exp` check cannot see a token the server has stopped accepting — a logout invalidates the token on the server while its `exp` is still hours away. With `sessionGuardVerify` the guard also calls `GET /auth/authenticated` for a token that looks valid. A **readable 401** clears the session exactly like an expired token (and redirects only if the route needs a login); a network failure, timeout or any other answer changes nothing. The cost is one request per navigation, but at most once per 30 seconds for the same token, and only in the browser — so on a hard page load a server-rendered page may show briefly before the check clears the session and redirects. Without `sessionGuard` the option does nothing (build-time warning), and it has no effect in server proxy mode.
+
+### Offline apps
+
+An app that keeps working without a network — an installable PWA with its own local copy of its data — must not lose its login just because the token expired while there was no connection: nothing could have renewed it, and clearing it would lock the user out of an app that otherwise works offline.
+
+```ts
+nuxtUiMongocamp: {
+  sessionGuard: true,
+  offline: true,   // default: false
+}
+```
+
+With `offline`:
+
+- **The session guard clears a session only while the server can be reached.** Right before it would clear one (an expired token, or a token `sessionGuardVerify` saw rejected) it checks the server (`GET /version`, 5 s timeout). If there is no answer, the session stays as it is and the next navigation decides again. The check costs a request only in that moment, never on an ordinary navigation.
+- **[`useMongocampConnection`](/composables/use-mongocamp-connection) is kept current** in the browser: `online`, `offline` or `unreachable`, with retries while unreachable and a check when the tab becomes visible.
+- **The start never waits for the server.** `$mongocampVersion` loads in the background with a 5 s timeout instead of being awaited in the browser (a WLAN without internet can stall a request for minutes).
+
+Once the server answers again, an expired token is handled as usual: the guard clears it and sends the user to `loginPath` if the route needs a login. Unsynced data in your app's local storage is yours to keep across that new login. A token refresh (`mongocamp.refreshToken`) that fails for lack of a network never logs anyone out either — the dependency only does that on a readable 401 or 403.
+
+`offline` covers the login only. Caching the app shell (a service worker) and the data an app needs offline is the app's job.
 
 ### Log in again
 
